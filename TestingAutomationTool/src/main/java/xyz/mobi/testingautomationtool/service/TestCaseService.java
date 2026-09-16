@@ -1,4 +1,4 @@
 package xyz.mobi.testingautomationtool.service;
 
-public interface TestcaseService {
+public interface TestCaseService {
 }
