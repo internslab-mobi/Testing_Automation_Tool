@@ -1,4 +1,4 @@
 package xyz.mobi.testingautomationtool.service.impl;
 
-public class TestcaseServiceImpl {
+public class TestCaseServiceImpl {
 }
