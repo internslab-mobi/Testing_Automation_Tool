@@ -11,7 +11,4 @@ public interface TestCaseService {
     TestCaseExecutionResponse createTestCaseByUpload(
             TestCaseExecutionRequest request);
 
-    TestCaseExecutionResponse getById(int id);
-
-    TestCaseExecutionResponse getByAll();
 }

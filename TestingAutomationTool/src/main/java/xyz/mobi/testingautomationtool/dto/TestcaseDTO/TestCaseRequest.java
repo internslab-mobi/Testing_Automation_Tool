@@ -2,6 +2,7 @@ package xyz.mobi.testingautomationtool.dto.TestcaseDTO;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
@@ -15,24 +16,28 @@ import xyz.mobi.testingautomationtool.enums.TestType;
 @Builder
 public class TestCaseRequest {
 
-    @NotNull
+    @NotNull(message = "Feature ID is required")
+    @Positive(message = "Feature ID must be greater than 0")
     private Integer featureId;
 
-    @NotBlank
-    @Size(max = 300)
+    @NotBlank(message = "Title is required")
+    @Size(max = 300, message = "Title cannot exceed 300 characters")
     private String title;
 
-    @NotNull
+    @NotNull(message = "Test type is required")
     private TestType testType;
 
+    @NotNull(message = "Test priority is required")
     private TestPriority testPriority;
 
-    private TestCaseStatus testcaseStatus;
+//    @NotNull(message = "Test case status is required")
+//    private TestCaseStatus testcaseStatus;
 
-    @NotNull
+    @NotNull(message = "Created by is required")
+    @Positive(message = "Created by must be greater than 0")
     private Integer createdBy;
 
-    @NotBlank
-    @Size(max = 20)
+    @NotBlank(message = "Test case format ID is required")
+    @Size(max = 20, message = "Test case format ID cannot exceed 20 characters")
     private String testcaseFormatId;
 }
