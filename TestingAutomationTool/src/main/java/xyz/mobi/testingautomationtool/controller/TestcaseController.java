@@ -23,17 +23,6 @@ public class TestcaseController {
         this.testCaseService = testCaseService;
     }
 
-//    @PostMapping("/manual")
-//    public ResponseEntity<TestCaseExecutionResponse> createTestCaseByManual(
-//            @RequestBody TestCaseExecutionRequest request) {
-//
-//        TestCaseExecutionResponse response =
-//                testCaseService.createTestCaseByManual(request);
-//
-//        return ResponseEntity
-//                .status(HttpStatus.CREATED)
-//                .body(response);
-//    }
     @PutMapping("/{id}/updateDetails")
     public ResponseEntity<PutMethodResponse> updateDetails(@Valid @RequestBody PutMethodDto putMethodDto, @PathVariable("id") Integer id)
     {
