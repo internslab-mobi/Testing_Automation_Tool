@@ -49,6 +49,7 @@ public class User extends Auditable {
     @Column(name = "skills", columnDefinition = "TEXT")
     private String skills;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "role", nullable = false, length = 255)
     private Role role;
 
