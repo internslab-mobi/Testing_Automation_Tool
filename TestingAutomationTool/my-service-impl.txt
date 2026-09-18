@@ -1,0 +1,92 @@
+package xyz.mobi.testingautomationtool.service.impl;
+
+import org.springframework.stereotype.Service;
+import xyz.mobi.testingautomationtool.dto.PackageMethodDto.TestPatchMethodDto;
+import xyz.mobi.testingautomationtool.dto.PutMethodDtos.PutMethodDto;
+import xyz.mobi.testingautomationtool.dto.PutMethodDtos.PutMethodResponse;
+import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionRequest;
+import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionResponse;
+import xyz.mobi.testingautomationtool.dto.TestcaseDTO.TestCaseResponse;
+import xyz.mobi.testingautomationtool.entity.TestCase;
+import xyz.mobi.testingautomationtool.entity.TestingExecution;
+import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
+import xyz.mobi.testingautomationtool.mapper.PatchMethodMapper;
+import xyz.mobi.testingautomationtool.mapper.PutMethodMapper;
+import xyz.mobi.testingautomationtool.repository.TestCaseRepository;
+import xyz.mobi.testingautomationtool.repository.TestingExecutionRepository;
+import xyz.mobi.testingautomationtool.service.TestCaseService;
+
+@Service
+public class TestCaseServiceImpl implements TestCaseService {
+
+    private final TestCaseRepository testCaseRepository;
+    private final TestingExecutionRepository testingExecutionRepository;
+    private final PutMethodMapper putMethodMapper;
+    private final PatchMethodMapper patchMethodMapper;
+    public TestCaseServiceImpl(TestCaseRepository testCaseRepository,
+                               TestingExecutionRepository testingExecutionRepository,PutMethodMapper putMethodMapper,PatchMethodMapper patchMethodMapper) {
+        this.testCaseRepository = testCaseRepository;
+        this.testingExecutionRepository = testingExecutionRepository;
+        this.putMethodMapper = putMethodMapper;
+        this.patchMethodMapper = patchMethodMapper;
+    }
+
+
+    @Override
+    public TestCaseExecutionResponse createTestCaseByManual(
+            TestCaseExecutionRequest request) {
+        return null;
+    }
+
+    @Override
+    public TestCaseExecutionResponse createTestCaseByUpload(TestCaseExecutionRequest request) {
+        return null;
+    }
+
+    @Override
+    public TestCaseExecutionResponse getById(int id) {
+        return null;
+    }
+
+    @Override
+    public TestCaseExecutionResponse getByAll() {
+        return null;
+    }
+
+    @Override
+    public PutMethodResponse updateTestcaseDetails(PutMethodDto putMethodDto, Integer id) {
+        TestCase testCase = testCaseRepository.findById(id).orElseThrow(()->new ResourceNotFoundException(" case is not present with id:"+id));
+        TestCase testcase1 =  putMethodMapper.putMethodMapper(putMethodDto,testCase);
+        testCaseRepository.save(testcase1);
+        TestingExecution testingExecution = testingExecutionRepository.findByTestCase(testCase).orElseThrow(()->new ResourceNotFoundException("Execution details are not present in this id:"+id));
+        TestingExecution testingExecution1 = putMethodMapper.putMethodToExecution(putMethodDto, testingExecution);
+        testingExecutionRepository.save(testingExecution1);
+        return putMethodMapper.convertToResponse(testcase1,testingExecution1);
+    }
+
+    @Override
+    public TestCaseResponse patchTestCaseDetails(TestPatchMethodDto testPatchMethodDto, Integer id){
+        TestCase testCase = testCaseRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Test case is not present"));
+        if(testPatchMethodDto.getTestType()!=null){
+            testCase.setTestType(testPatchMethodDto.getTestType());
+        }
+        if (testPatchMethodDto.getTestPriority()!=null) {
+            testCase.setTestPriority(testPatchMethodDto.getTestPriority());
+        }
+        if (testPatchMethodDto.getIsActive()!=null) {
+            testCase.setIsActive(testPatchMethodDto.getIsActive());
+        }
+        TestCase updatedTestCase = testCaseRepository.save(testCase);
+       return patchMethodMapper.testPatchToResponse(updatedTestCase);
+    }
+
+}
+
+
+
+
+
+
+
+
+

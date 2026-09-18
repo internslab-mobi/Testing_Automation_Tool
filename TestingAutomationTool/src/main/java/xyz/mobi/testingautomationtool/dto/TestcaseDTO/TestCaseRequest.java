@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 import xyz.mobi.testingautomationtool.enums.TestPriority;
 import xyz.mobi.testingautomationtool.enums.TestType;
@@ -35,7 +36,7 @@ public class TestCaseRequest {
 
     @NotNull(message = "Created by is required")
     @Positive(message = "Created by must be greater than 0")
-    private Integer createdBy;
+    private User createdBy;
 
     @NotBlank(message = "Test case format ID is required")
     @Size(max = 20, message = "Test case format ID cannot exceed 20 characters")

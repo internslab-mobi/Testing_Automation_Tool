@@ -11,10 +11,6 @@ import xyz.mobi.testingautomationtool.entity.TestingExecution;
 @Mapper(componentModel = "spring")
 public interface TestCaseMapper {
 
-    @Mapping(target = "testcaseId", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    TestCase toEntity(TestCaseExecutionRequest request);
 
     TestCaseResponse toResponse(TestCase testCase);
 
