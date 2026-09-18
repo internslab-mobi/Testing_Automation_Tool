@@ -1,7 +1,7 @@
 package xyz.mobi.testingautomationtool.enums;
 
-public enum TestPriority {
+public enum BugPriority {
     LOW,
     MEDIUM,
-    HIGH,
+    HIGH
 }
