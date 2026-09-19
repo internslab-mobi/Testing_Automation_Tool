@@ -1,6 +1,7 @@
 package xyz.mobi.testingautomationtool.service.impl;
 
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import xyz.mobi.testingautomationtool.dto.PackageMethodDto.TestPatchMethodDto;
 import xyz.mobi.testingautomationtool.dto.PutMethodDtos.PutMethodDto;
@@ -20,6 +21,7 @@ import xyz.mobi.testingautomationtool.service.TestCaseService;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class TestCaseServiceImpl implements TestCaseService {
 
     private final TestCaseRepository testCaseRepository;
@@ -28,16 +30,16 @@ public class TestCaseServiceImpl implements TestCaseService {
     private final PutMethodMapper putMethodMapper;
     private final PatchMethodMapper patchMethodMapper;
 
-    public TestCaseServiceImpl(TestCaseRepository testCaseRepository,
-                               TestingExecutionRepository testingExecutionRepository,
-                               TestCaseMapper testCaseMapper,PutMethodMapper putMethodMapper,
-                               PatchMethodMapper patchMethodMapper) {
-        this.testCaseRepository = testCaseRepository;
-        this.testingExecutionRepository = testingExecutionRepository;
-        this.testCaseMapper = testCaseMapper;
-        this.putMethodMapper = putMethodMapper;
-        this.patchMethodMapper = patchMethodMapper;
-    }
+//    public TestCaseServiceImpl(TestCaseRepository testCaseRepository,
+//                               TestingExecutionRepository testingExecutionRepository,
+//                               TestCaseMapper testCaseMapper,PutMethodMapper putMethodMapper,
+//                               PatchMethodMapper patchMethodMapper) {
+//        this.testCaseRepository = testCaseRepository;
+//        this.testingExecutionRepository = testingExecutionRepository;
+//        this.testCaseMapper = testCaseMapper;
+//        this.putMethodMapper = putMethodMapper;
+//        this.patchMethodMapper = patchMethodMapper;
+//    }
 
 //    @Override
 //    public TestCaseExecutionResponse createTestCaseByManual(
