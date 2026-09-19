@@ -36,6 +36,4 @@ public class TestingExecutionResponse {
 
     private String comments;
 
-    private Integer executedBy;
-
 }

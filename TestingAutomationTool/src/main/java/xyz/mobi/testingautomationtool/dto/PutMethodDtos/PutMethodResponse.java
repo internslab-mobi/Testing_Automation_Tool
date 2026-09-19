@@ -1,4 +1,4 @@
-package xyz.mobi.testingautomationtool.dto.TestcaseDTO;
+package xyz.mobi.testingautomationtool.dto.PutMethodDtos;
 
 import lombok.*;
 import xyz.mobi.testingautomationtool.entity.Feature;
@@ -11,14 +11,13 @@ import java.time.LocalDateTime;
 
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class TestCaseResponse {
-
+public class PutMethodResponse {
     private Integer testcaseId;
 
-    private Feature featureId;
+    private Feature feature;
 
     private String title;
 
@@ -28,11 +27,28 @@ public class TestCaseResponse {
 
     private TestCaseStatus testcaseStatus;
 
-    private User createdBy;
+    private Boolean isActive;
 
-    private LocalDateTime createdAt;
+    private User createdBy;
 
     private LocalDateTime updatedAt;
 
     private String testcaseFormatId;
+
+    private String testExecution;
+
+    private String testValidation;
+
+    private String precondition;
+
+    private String testData;
+
+    private String executionSteps;
+
+    private String uiValidations;
+
+    private String dbValidations;
+
+    private String comments;
+
 }
