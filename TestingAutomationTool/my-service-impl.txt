@@ -1,17 +1,17 @@
 package xyz.mobi.testingautomationtool.service.impl;
 
 import org.springframework.stereotype.Service;
-import xyz.mobi.testingautomationtool.dto.PackageMethodDto.TestPatchMethodDto;
-import xyz.mobi.testingautomationtool.dto.PutMethodDtos.PutMethodDto;
-import xyz.mobi.testingautomationtool.dto.PutMethodDtos.PutMethodResponse;
-import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionRequest;
-import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionResponse;
-import xyz.mobi.testingautomationtool.dto.TestcaseDTO.TestCaseResponse;
+import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.TestPatchMethodDto;
+import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.PutMethodDto;
+import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.PutMethodResponse;
+import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.TestCaseExecutionRequest;
+import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseExecutionResponse;
+import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseResponse;
 import xyz.mobi.testingautomationtool.entity.TestCase;
 import xyz.mobi.testingautomationtool.entity.TestingExecution;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
-import xyz.mobi.testingautomationtool.mapper.PatchMethodMapper;
-import xyz.mobi.testingautomationtool.mapper.PutMethodMapper;
+import xyz.mobi.testingautomationtool.mapper.patchMapper.PatchMethodMapper;
+import xyz.mobi.testingautomationtool.mapper.putMapper.PutMethodMapper;
 import xyz.mobi.testingautomationtool.repository.TestCaseRepository;
 import xyz.mobi.testingautomationtool.repository.TestingExecutionRepository;
 import xyz.mobi.testingautomationtool.service.TestCaseService;

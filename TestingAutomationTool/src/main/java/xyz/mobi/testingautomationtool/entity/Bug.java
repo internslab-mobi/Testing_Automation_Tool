@@ -77,4 +77,8 @@ public class Bug extends Auditable {
 
     @Column(name = "bug_occurance")
     private Integer bugOccurrence;
+
+    @Column(name = "is_active")
+    @Builder.Default
+    private boolean active = true;
 }

@@ -1,37 +1,137 @@
 package xyz.mobi.testingautomationtool.controller;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
-import xyz.mobi.testingautomationtool.dto.PackageMethodDto.TestPatchMethodDto;
-import xyz.mobi.testingautomationtool.dto.PutMethodDtos.PutMethodDto;
-import xyz.mobi.testingautomationtool.dto.PutMethodDtos.PutMethodResponse;
-import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionRequest;
-import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionResponse;
-import xyz.mobi.testingautomationtool.dto.TestcaseDTO.TestCaseResponse;
+import org.springframework.web.multipart.MultipartFile;
+import xyz.mobi.testingautomationtool.dto.excelDTO.ExcelUploadResponse;
+import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.TestCasePatchRequest;
+import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.UpdateExecutionStatusRequest;
+import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.TestCaseExecutionRequest;
+import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.TestCasePutRequest;
+import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseExecutionResponse;
+import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseResponse;
+import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.TestCasePutResponse;
 import xyz.mobi.testingautomationtool.service.TestCaseService;
 
+import java.util.List;
+
 @RestController
+@RequiredArgsConstructor
 public class TestcaseController {
 
     private final TestCaseService testCaseService;
 
+    // Manual test case creation
+    @PostMapping("/manual")
+    public ResponseEntity<TestCaseExecutionResponse> createTestCaseByManual(
+            @Valid @RequestBody TestCaseExecutionRequest request) {
 
-    public TestcaseController(TestCaseService testCaseService) {
-        this.testCaseService = testCaseService;
+        TestCaseExecutionResponse response =
+                testCaseService.createTestCaseByManual(request);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(response);
+    }
+
+    // Excel test case upload
+    @PostMapping(
+            value = "/upload",
+            consumes = "multipart/form-data"
+    )
+    public ResponseEntity<ExcelUploadResponse> createTestCaseByUpload(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("featureId") Integer featureId) {
+
+        ExcelUploadResponse response =
+                testCaseService.createTestCaseByUpload(
+                        file,
+                        featureId
+                );
+
+        return ResponseEntity.ok(response);
     }
 
     @PutMapping("/{id}/updateDetails")
-    public ResponseEntity<PutMethodResponse> updateDetails(@Valid @RequestBody PutMethodDto putMethodDto, @PathVariable("id") Integer id)
-    {
-        PutMethodResponse response = testCaseService.updateTestcaseDetails(putMethodDto, id);
+    public ResponseEntity<TestCasePutResponse> updateDetails(
+            @Valid @RequestBody TestCasePutRequest testCasePutRequest,
+            @PathVariable("id") Integer id) {
+
+        TestCasePutResponse response = testCaseService
+                .updateTestcaseDetails(testCasePutRequest, id);
+
         return ResponseEntity.ok(response);
     }
+
+
     @PatchMapping("/{id}/updatePatch")
-    public ResponseEntity<TestCaseResponse> patchDetails(@RequestBody TestPatchMethodDto testPatchMethodDto, @PathVariable("id") Integer id) {
-        TestCaseResponse response = testCaseService.patchTestCaseDetails(testPatchMethodDto, id);
+    public ResponseEntity<TestCaseResponse> patchDetails(
+            @RequestBody TestCasePatchRequest testCasePatchRequest,
+            @PathVariable("id") Integer id) {
+
+        TestCaseResponse response = testCaseService
+                .patchTestCaseDetails(testCasePatchRequest, id);
         return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{id}/remove")
+    public ResponseEntity<String> softDeleteTestCase(
+            @PathVariable Integer id) {
+
+        String response = testCaseService.softDeleteTestCase(id);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("{id}/delete")
+    public ResponseEntity<String> hardDeleteTestCase(
+            @PathVariable Integer id) {
+
+        String response = testCaseService.hardDeleteTestCase(id);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/executions/{executionId}/status")
+    public ResponseEntity<TestCaseExecutionResponse> updateExecutionStatus(
+            @PathVariable Integer executionId,
+            @Valid @RequestBody UpdateExecutionStatusRequest request) {
+
+        TestCaseExecutionResponse response =
+                testCaseService.updateExecutionStatus(
+                        executionId,
+                        request
+                );
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<TestCaseExecutionResponse> getById(
+            @PathVariable int id) {
+
+        return ResponseEntity.ok(
+                testCaseService.getById(id)
+        );
+    }
+
+    @GetMapping
+    public ResponseEntity<List<TestCaseExecutionResponse>> getByAll() {
+
+        return ResponseEntity.ok(
+                testCaseService.getByAll()
+        );
+    }
+
+    @GetMapping("/feature/{featureId}")
+    public ResponseEntity<List<TestCaseExecutionResponse>> getByFeatureId(
+            @PathVariable Integer featureId) {
+
+        return ResponseEntity.ok(
+                testCaseService.getByFeatureId(featureId)
+        );
     }
 }

@@ -1,21 +1,45 @@
 package xyz.mobi.testingautomationtool.service;
 
-import xyz.mobi.testingautomationtool.dto.PackageMethodDto.TestPatchMethodDto;
-import xyz.mobi.testingautomationtool.dto.PutMethodDtos.PutMethodDto;
-import xyz.mobi.testingautomationtool.dto.PutMethodDtos.PutMethodResponse;
-import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionRequest;
-import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionResponse;
-import xyz.mobi.testingautomationtool.dto.TestcaseDTO.TestCaseResponse;
+import org.springframework.web.multipart.MultipartFile;
+import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.TestCasePatchRequest;
+import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.UpdateExecutionStatusRequest;
+import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.TestCaseExecutionRequest;
+import xyz.mobi.testingautomationtool.dto.excelDTO.ExcelUploadResponse;
+import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.TestCasePutRequest;
+import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseExecutionResponse;
+import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseResponse;
+import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.TestCasePutResponse;
+
+import java.util.List;
 
 public interface TestCaseService {
 
-//    TestCaseExecutionResponse createTestCaseByManual(
-//            TestCaseExecutionRequest request);
+    TestCaseExecutionResponse createTestCaseByManual(
+            TestCaseExecutionRequest request);
 
-//    TestCaseExecutionResponse createTestCaseByUpload(TestCaseExecutionRequest request);
-//    TestCaseExecutionResponse getById(int id);
-//    TestCaseExecutionResponse getByAll();
-    PutMethodResponse updateTestcaseDetails(PutMethodDto testCaseRequest, Integer id);
-    TestCaseResponse patchTestCaseDetails(TestPatchMethodDto testPatchMethodDto, Integer id);
+    ExcelUploadResponse createTestCaseByUpload(
+            MultipartFile file, Integer featureId);
+
+    TestCaseExecutionResponse getById(int id);
+
+    List<TestCaseExecutionResponse> getByAll();
+
+    List<TestCaseExecutionResponse> getByFeatureId(Integer featureId);
+
+    TestCasePutResponse updateTestcaseDetails(
+            TestCasePutRequest testCaseRequest,
+            Integer id);
+
+    TestCaseResponse patchTestCaseDetails(
+            TestCasePatchRequest testPatchMethodDto,
+            Integer id);
+
+    String softDeleteTestCase(Integer id);
+
+    String hardDeleteTestCase(Integer id);
+
+    TestCaseExecutionResponse updateExecutionStatus(
+            Integer executionId,
+            UpdateExecutionStatusRequest request);
 
 }
