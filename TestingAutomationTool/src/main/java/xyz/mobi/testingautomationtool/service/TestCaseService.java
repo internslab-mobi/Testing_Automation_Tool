@@ -1,11 +1,13 @@
 package xyz.mobi.testingautomationtool.service;
 
+import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.TestCasePatchRequest;
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.UpdateExecutionStatusRequest;
 import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.TestCaseExecutionRequest;
 import xyz.mobi.testingautomationtool.dto.excelDTO.ExcelUploadResponse;
 import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.TestCasePutRequest;
+import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.ExecutionStatusResponse;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseExecutionResponse;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseResponse;
 import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.TestCasePutResponse;
@@ -24,7 +26,7 @@ public interface TestCaseService {
 
     List<TestCaseExecutionResponse> getByAll();
 
-    List<TestCaseExecutionResponse> getByFeatureId(Integer featureId);
+    Page<TestCaseExecutionResponse> getByFeatureId(Integer featureId, int page, int size);
 
     TestCasePutResponse updateTestcaseDetails(
             TestCasePutRequest testCaseRequest,
@@ -38,7 +40,7 @@ public interface TestCaseService {
 
     String hardDeleteTestCase(Integer id);
 
-    TestCaseExecutionResponse updateExecutionStatus(
+    ExecutionStatusResponse updateExecutionStatus(
             Integer executionId,
             UpdateExecutionStatusRequest request);
 

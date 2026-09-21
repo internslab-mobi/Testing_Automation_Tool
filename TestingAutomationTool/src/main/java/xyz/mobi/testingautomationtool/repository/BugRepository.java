@@ -18,4 +18,6 @@ public interface BugRepository extends JpaRepository<Bug, Integer> {
 
     List<Bug> findByFeature_FeatureIdOrderByBugIdAsc(
             Integer featureId);
+
+    Optional<List<Bug>> findByTestCase_TestcaseId(Integer id);
 }

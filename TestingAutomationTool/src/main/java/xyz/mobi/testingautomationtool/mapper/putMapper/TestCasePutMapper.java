@@ -34,6 +34,7 @@ public interface TestCasePutMapper {
     @Mapping(source = "testingExecution.uiValidations", target = "uiValidations")
     @Mapping(source = "testingExecution.dbValidations", target = "dbValidations")
     @Mapping(source = "testingExecution.comments", target = "comments")
+    @Mapping(source = "testcase.active", target = "active")
     TestCasePutResponse convertToResponse(
             TestCase testCase,
             TestingExecution testingExecution

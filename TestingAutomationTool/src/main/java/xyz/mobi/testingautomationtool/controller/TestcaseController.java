@@ -2,6 +2,7 @@ package xyz.mobi.testingautomationtool.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -11,6 +12,7 @@ import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.TestCasePatchRe
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.UpdateExecutionStatusRequest;
 import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.TestCaseExecutionRequest;
 import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.TestCasePutRequest;
+import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.ExecutionStatusResponse;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseExecutionResponse;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseResponse;
 import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.TestCasePutResponse;
@@ -96,11 +98,11 @@ public class TestcaseController {
     }
 
     @PatchMapping("/executions/{executionId}/status")
-    public ResponseEntity<TestCaseExecutionResponse> updateExecutionStatus(
+    public ResponseEntity<ExecutionStatusResponse> updateExecutionStatus(
             @PathVariable Integer executionId,
             @Valid @RequestBody UpdateExecutionStatusRequest request) {
 
-        TestCaseExecutionResponse response =
+        ExecutionStatusResponse response =
                 testCaseService.updateExecutionStatus(
                         executionId,
                         request
@@ -127,11 +129,13 @@ public class TestcaseController {
     }
 
     @GetMapping("/feature/{featureId}")
-    public ResponseEntity<List<TestCaseExecutionResponse>> getByFeatureId(
-            @PathVariable Integer featureId) {
+    public ResponseEntity<Page<TestCaseExecutionResponse>> getByFeatureId(
+            @PathVariable Integer featureId,
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size) {
 
         return ResponseEntity.ok(
-                testCaseService.getByFeatureId(featureId)
+                testCaseService.getByFeatureId(featureId, page, size)
         );
     }
 }

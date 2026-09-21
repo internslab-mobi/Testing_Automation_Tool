@@ -1,6 +1,8 @@
 package xyz.mobi.testingautomationtool.repository;
 
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import xyz.mobi.testingautomationtool.entity.TestCase;
 import org.springframework.data.jpa.repository.JpaRepository;
 
@@ -13,5 +15,7 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Integer> {
             Integer featureId,
             String testcaseFormatId);
 
-    List<TestCase> findByFeature_FeatureId(Integer featureId);
+//    Page<TestCase> findByFeature_FeatureId(Integer featureId, Pageable pageable);
+
+    Page<TestCase> findByFeature_FeatureIdAndTestCase_IsActive(Integer featureId, Pageable pageable);
 }

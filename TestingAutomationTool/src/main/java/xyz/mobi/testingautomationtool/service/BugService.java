@@ -2,12 +2,15 @@ package xyz.mobi.testingautomationtool.service;
 
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.BugAssignRequest;
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.BugStatusRequest;
+import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.BugRequest;
 import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.BugPutRequest;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.BugResponse;
 
 import java.util.List;
 
 public interface BugService {
+
+    BugResponse createBug(BugRequest request, Integer testCaseId);
 
     String softDeleteBug(Integer bugId);
 

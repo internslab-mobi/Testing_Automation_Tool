@@ -2,6 +2,9 @@ package xyz.mobi.testingautomationtool.service.impl;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.dto.excelDTO.ExcelParseResult;
@@ -12,6 +15,7 @@ import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.UpdateExecution
 import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.TestCaseExecutionRequest;
 import xyz.mobi.testingautomationtool.dto.excelDTO.ExcelUploadResponse;
 import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.TestCasePutRequest;
+import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.ExecutionStatusResponse;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseExecutionResponse;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseResponse;
 import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.TestCasePutResponse;
@@ -24,11 +28,10 @@ import xyz.mobi.testingautomationtool.mapper.putMapper.TestCasePutMapper;
 import xyz.mobi.testingautomationtool.repository.*;
 import xyz.mobi.testingautomationtool.service.TestCaseExcelService;
 import xyz.mobi.testingautomationtool.service.TestCaseService;
+import xyz.mobi.testingautomationtool.utils.Utils;
 
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
@@ -41,7 +44,6 @@ public class TestCaseServiceImpl implements TestCaseService {
     private final TestingExecutionRepository testingExecutionRepository;
     private final FeatureRepository featureRepository;
     private final UserRepository userRepository;
-    private final AuditLogRepository AuditLogRepository;
     private final BugRepository bugRepository;
 
     private final TestCaseMapper testCaseMapper;
@@ -49,6 +51,8 @@ public class TestCaseServiceImpl implements TestCaseService {
     private final TestCasePatchMapper testCasePatchMapper;
 
     private final TestCaseExcelService testCaseExcelService;
+
+    private final Utils utils;
 
 
 
@@ -169,7 +173,6 @@ public class TestCaseServiceImpl implements TestCaseService {
         }
 
         // 6. Everything is valid.
-
         for (ExcelTestCaseRow row : result.getRows()) {
 
             // Create TestCase
@@ -284,6 +287,10 @@ public class TestCaseServiceImpl implements TestCaseService {
                                 new RuntimeException(
                                         "Execution not found for test case ID: " + id));
 
+        if(!testCase.isActive()){
+            throw  new RuntimeException("The testcase has been removed");
+        }
+
         return TestCaseExecutionResponse.builder()
                 .testCaseResponse(testCaseMapper.toResponse(testCase))
                 .executionResponse(testCaseMapper.toResponse(execution))
@@ -315,12 +322,14 @@ public class TestCaseServiceImpl implements TestCaseService {
     }
 
     @Override
-    public List<TestCaseExecutionResponse> getByFeatureId(Integer featureId) {
+    public Page<TestCaseExecutionResponse> getByFeatureId(Integer featureId,int page,int size) {
+        Pageable pageable = PageRequest.of(page,size);
+        Page<TestCase> testCases =
+                testCaseRepository.findByFeature_FeatureIdAndTestCase_IsActive(
+                        featureId,
+                        pageable);
 
-        List<TestCase> testCases =
-                testCaseRepository.findByFeature_FeatureId(featureId);
-
-        return testCases.stream()
+        return testCases
                 .map(testCase -> {
 
                     TestingExecution execution =
@@ -336,8 +345,7 @@ public class TestCaseServiceImpl implements TestCaseService {
                                             ? testCaseMapper.toResponse(execution)
                                             : null)
                             .build();
-                })
-                .toList();
+                });
     }
 
 
@@ -420,6 +428,13 @@ public class TestCaseServiceImpl implements TestCaseService {
 
         testCase.setActive(false);
 
+        List<Bug> bugList = bugRepository.findByTestCase_TestcaseId(id).
+                orElseThrow(()->new ResourceNotFoundException("No bugs are available for this testcase"));
+
+        bugList.forEach(bug -> bug.setActive(false));
+
+        bugRepository.saveAll(bugList);
+
         testCaseRepository.save(testCase);
 
         return "Test case " + testcaseFormatId + " disabled successfully";
@@ -440,18 +455,21 @@ public class TestCaseServiceImpl implements TestCaseService {
     }
 
     @Override
-    @Transactional
-    public TestCaseExecutionResponse updateExecutionStatus(
-            Integer executionId,
+    public ExecutionStatusResponse updateExecutionStatus(
+            Integer testCaseId,
             UpdateExecutionStatusRequest request) {
 
-        TestingExecution execution =
-                testingExecutionRepository.findById(executionId)
+        TestCase testCase =
+                testCaseRepository.findById(testCaseId)
                         .orElseThrow(() ->
                                 new RuntimeException(
-                                        "Execution not found with ID: " + executionId));
+                                        "Testcase not found with ID: " + testCaseId));
 
-        TestCase testCase = execution.getTestCase();
+        TestingExecution execution =
+                testingExecutionRepository.findByTestCase(testCase)
+                        .orElseThrow(() ->
+                                new RuntimeException(
+                                        "Execution not found with ID: " + testCaseId));;
         
         //1. Update execution status
         execution.setExecutionStatus(request.getExecutionStatus());
@@ -470,113 +488,40 @@ public class TestCaseServiceImpl implements TestCaseService {
 
         execution.setExecutionNumber(execution.getExecutionNumber() + 1);
 
-        if(request.getExecutionStatus() == ExecutionStatus.FAIL){
-            execution.setBugsCount(execution.getBugsCount()+1);
+//        if(request.getExecutionStatus() == ExecutionStatus.FAIL){
+//            execution.setBugsCount(execution.getBugsCount()+1);
+//        }
+
+        if(request.getExecutionStatus()==ExecutionStatus.PASS){
+            utils.trigger(testCase,testCase.getCreatedBy());
         }
 
          //3. Save execution + testcase
-        testingExecutionRepository.save(execution);
+        TestingExecution updateTestingExecution = testingExecutionRepository.save(execution);
         testCaseRepository.save(testCase);
+        return testCasePatchMapper.patchExecutionUpdate(updateTestingExecution);
 
-        //4. Create Bug only when execution FAILS
-        Bug bug = null;
-
-        if (request.getExecutionStatus() == ExecutionStatus.FAIL) {
-
-            //Validate bug information
-            if (request.getBugTitle() == null
-                    || request.getBugTitle().trim().isEmpty()) {
-
-                throw new IllegalArgumentException(
-                        "Bug title is required when execution status is FAIL");
-            }
-
-            if (request.getBugSeverity() == null) {
-                throw new IllegalArgumentException(
-                        "Bug severity is required when execution status is FAIL");
-            }
-
-            if (request.getBugPriority() == null) {
-                throw new IllegalArgumentException(
-                        "Bug priority is required when execution status is FAIL");
-            }
-
-            if (request.getBugStatus() == null) {
-                throw new IllegalArgumentException(
-                        "Bug status is required when execution status is FAIL");
-            }
-
-
-             // Temporary dummy user
-
-            User dummyUser = userRepository.findById(1)
-                    .orElseThrow(() ->
-                            new RuntimeException("Dummy user not found"));
-
-
-             //Generate BUG-000001 format
-            String bugFormatId = generateBugFormatId(testCase.getTestcaseId());
-            
-            //Create Bug
-            bug = Bug.builder()
-                    .bugFormatId(bugFormatId)
-                    .testCase(testCase)
-                    .feature(testCase.getFeature())
-                    .title(request.getBugTitle())
-                    .description(request.getBugDescription())
-                    .severity(request.getBugSeverity())
-                    .priority(request.getBugPriority())
-                    .status(request.getBugStatus())
-                    .reportedBy(dummyUser)
-                    .bugOccurrence(1)
-                    .build();
-
-            bug = bugRepository.save(bug);
-        }
-
-         //5. Create Audit Log
-        User dummyUser = userRepository.findById(1)
-                .orElseThrow(() ->
-                        new RuntimeException("Dummy user not found"));
-
-        TestingAuditLog auditLog = TestingAuditLog.builder()
-                .testCase(testCase)
-                .bug(bug)
-                .testcaseStatus(testCaseStatus)
-                .executedBy(dummyUser.getUserId())
-                .executedAt(LocalDateTime.now())
-                .build();
-
-        AuditLogRepository.save(auditLog);
-
-
-         // 6. Return response
-        return TestCaseExecutionResponse.builder()
-                .testCaseResponse(testCaseMapper.toResponse(testCase))
-                .executionResponse(testCaseMapper.toResponse(execution))
-                .build();
     }
 
-    private String generateBugFormatId(Integer testcaseId) {
-
-        Optional<Bug> latestBug =
-                bugRepository.findTopByTestCase_TestcaseIdOrderByBugIdDesc(
-                        testcaseId);
-
-        int nextNumber = latestBug
-                .map(bug -> {
-                    String bugFormatId = bug.getBugFormatId();
-
-                    String numberPart =
-                            bugFormatId.substring(
-                                    bugFormatId.lastIndexOf("-") + 1);
-
-                    return Integer.parseInt(numberPart) + 1;
-                })
-                .orElse(1);
-
-        return String.format("BUG-%03d", nextNumber);
-    }
-
-
+//    private String generateBugFormatId(Integer testcaseId) {
+//
+//        Optional<Bug> latestBug =
+//                bugRepository.findTopByTestCase_TestcaseIdOrderByBugIdDesc(
+//                        testcaseId);
+//
+//        int nextNumber = latestBug
+//                .map(bug -> {
+//                    String bugFormatId = bug.getBugFormatId();
+//
+//                    String numberPart =
+//                            bugFormatId.substring(
+//                                    bugFormatId.lastIndexOf("-") + 1);
+//
+//                    return Integer.parseInt(numberPart) + 1;
+//                })
+//                .orElse(1);
+//
+//        return String.format("BUG-%03d", nextNumber);
+//    }
+//
 }

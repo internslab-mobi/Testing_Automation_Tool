@@ -5,15 +5,19 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.BugAssignRequest;
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.BugStatusRequest;
+import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.BugRequest;
 import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.BugPutRequest;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.BugResponse;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.NotificationResponse;
 import xyz.mobi.testingautomationtool.entity.Bug;
+import xyz.mobi.testingautomationtool.entity.Feature;
+import xyz.mobi.testingautomationtool.entity.TestCase;
 import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.BugStatus;
 import xyz.mobi.testingautomationtool.enums.NotificationStatus;
 import xyz.mobi.testingautomationtool.mapper.getMapper.BugMapper;
 import xyz.mobi.testingautomationtool.repository.BugRepository;
+import xyz.mobi.testingautomationtool.repository.TestCaseRepository;
 import xyz.mobi.testingautomationtool.repository.UserRepository;
 import xyz.mobi.testingautomationtool.service.BugService;
 import xyz.mobi.testingautomationtool.service.EmailService;
@@ -25,6 +29,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class BugServiceImpl implements BugService {
 
     private final BugRepository bugRepository;
@@ -33,11 +38,61 @@ public class BugServiceImpl implements BugService {
     private final NotificationService notificationService;
     private final EmailService emailService;
 
+    private final TestCaseRepository testCaseRepository;
 
-    // =========================================================
-    // 1. SOFT DELETE
-    // PATCH /bugs/{bugId}/delete
-    // =========================================================
+
+    @Override
+    public BugResponse createBug(BugRequest request, Integer testCaseId) {
+
+        TestCase testCase = testCaseRepository.findById(testCaseId)
+                .orElseThrow(() -> new RuntimeException("Test case not found"));
+
+//        Integer featureId = request.getFeatureId() != null ? request.getFeatureId() : testCase.getFeatureId();
+//        Feature feature = featureRepository.findById(featureId)
+//                .orElseThrow(() -> new RuntimeException("Feature not found"));
+
+//        User dummyUser = userRepository.findById(1)
+//                .orElseThrow(()-> new RuntimeException("User not found"));
+
+
+        User reportedBy = userRepository.findById(1)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        User assignedTo = null;
+        if (request.getAssignedTo() != null) {
+            assignedTo = userRepository.findById(request.getAssignedTo())
+                    .orElseThrow(() -> new RuntimeException("Assigned user not found"));
+        }
+
+        Bug bug = new Bug();
+
+        bug.setBugFormatId(request.getBugFormatId());
+        bug.setTestCase(testCase);
+//        bug.setFeature(feature);
+        bug.setTitle(request.getTitle());
+        bug.setDescription(request.getDescription());
+        bug.setSeverity(request.getSeverity());
+        bug.setPriority(request.getPriority());
+        bug.setReportedBy(reportedBy);
+        bug.setAssignedTo(assignedTo);
+        bug.setBugOccurrence(1);
+
+        Bug savedBug = bugRepository.save(bug);
+
+
+        return BugResponse.builder()
+                .bugId(savedBug.getBugId())
+                .bugFormatId(savedBug.getBugFormatId())
+                .title(savedBug.getTitle())
+                .description(savedBug.getDescription())
+                .severity(savedBug.getSeverity())
+                .priority(savedBug.getPriority())
+                .status(savedBug.getStatus())
+                .reportedBy(String.valueOf(savedBug.getReportedBy().getUserId()))
+                .assignedTo(String.valueOf(savedBug.getAssignedTo() != null ? savedBug.getAssignedTo().getUserId() : null))
+                .bugOccurrence(savedBug.getBugOccurrence())
+                .build();
+    }
 
     @Override
     @Transactional
@@ -56,11 +111,6 @@ public class BugServiceImpl implements BugService {
     }
 
 
-    // =========================================================
-    // 2. HARD DELETE
-    // DELETE /bugs/{bugId}
-    // =========================================================
-
     @Override
     @Transactional
     public String hardDeleteBug(Integer bugId) {
@@ -75,11 +125,6 @@ public class BugServiceImpl implements BugService {
         return "Bug permanently deleted";
     }
 
-
-    // =========================================================
-    // 3. FULL UPDATE
-    // PUT /bugs/{bugId}
-    // =========================================================
 
     @Override
     @Transactional
@@ -98,10 +143,7 @@ public class BugServiceImpl implements BugService {
         bug.setSeverity(request.getSeverity());
         bug.setStatus(request.getStatus());
 
-        /*
-         * If PUT changes the status to RESOLVED,
-         * update resolved_at automatically.
-         */
+
         if (request.getStatus() == BugStatus.RESOLVED) {
 
             if (bug.getResolvedAt() == null) {
@@ -117,12 +159,6 @@ public class BugServiceImpl implements BugService {
 
         return bugMapper.toResponse(bug);
     }
-
-
-    // =========================================================
-    // 4. ASSIGN USER
-    // PATCH /bugs/{bugId}/assign
-    // =========================================================
 
     @Override
     @Transactional
@@ -188,13 +224,7 @@ public class BugServiceImpl implements BugService {
     }
 
 
-    // =========================================================
-    // 5. CHANGE STATUS
-    // PATCH /bugs/{bugId}/status
-    // =========================================================
-
     @Override
-    @Transactional
     public BugResponse updateStatus(
             Integer bugId,
             BugStatusRequest request) {
@@ -223,11 +253,6 @@ public class BugServiceImpl implements BugService {
     }
 
 
-    // =========================================================
-    // 6. GET BY ID
-    // GET /bugs/{bugId}
-    // =========================================================
-
     @Override
     public BugResponse getById(Integer bugId) {
 
@@ -240,11 +265,6 @@ public class BugServiceImpl implements BugService {
     }
 
 
-    // =========================================================
-    // 7. GET ALL
-    // GET /bugs
-    // =========================================================
-
     @Override
     public List<BugResponse> getByAll() {
 
@@ -253,12 +273,6 @@ public class BugServiceImpl implements BugService {
                 .map(bugMapper::toResponse)
                 .toList();
     }
-
-
-    // =========================================================
-    // 8. GET BY TESTCASE ID
-    // GET /bugs/testcase/{testcaseId}
-    // =========================================================
 
     @Override
     public List<BugResponse> getByTestcaseId(
@@ -283,12 +297,6 @@ public class BugServiceImpl implements BugService {
                 .toList();
     }
 
-
-    // =========================================================
-    // 9. RE-OCCURRENCE
-    // POST /bugs/{bugId}/reoccurrence
-    // =========================================================
-
     @Override
     @Transactional
     public BugResponse createReoccurrence(
@@ -298,18 +306,6 @@ public class BugServiceImpl implements BugService {
                 .orElseThrow(() ->
                         new RuntimeException(
                                 "Bug not found with ID: " + bugId));
-
-        /*
-         * Find the latest bug in the occurrence chain.
-         *
-         * Example:
-         *
-         * BUG-000001
-         *      ↓
-         * BUG-000002
-         *      ↓
-         * BUG-000003
-         */
 
         Bug latestBug = findLatestOccurrence(oldBug);
 
@@ -322,20 +318,11 @@ public class BugServiceImpl implements BugService {
                 currentOccurrence + 1;
 
 
-        /*
-         * Generate next Bug Format ID
-         * for this testcase.
-         */
-
         String bugFormatId =
                 generateBugFormatId(
                         latestBug.getTestCase()
                                 .getTestcaseId());
 
-
-        /*
-         * Copy the bug details.
-         */
 
         Bug newBug = Bug.builder()
                 .bugFormatId(bugFormatId)
@@ -358,9 +345,6 @@ public class BugServiceImpl implements BugService {
                 .priority(
                         latestBug.getPriority())
 
-                /*
-                 * New occurrence starts as OPEN.
-                 */
                 .status(BugStatus.OPEN)
 
                 .reportedBy(
@@ -371,9 +355,6 @@ public class BugServiceImpl implements BugService {
 
                 .resolvedAt(null)
 
-                /*
-                 * Point to previous occurrence.
-                 */
                 .bugReoccurred(
                         latestBug)
 
@@ -388,11 +369,6 @@ public class BugServiceImpl implements BugService {
 
         return bugMapper.toResponse(newBug);
     }
-
-
-    // =========================================================
-    // FIND LATEST OCCURRENCE
-    // =========================================================
 
     private Bug findLatestOccurrence(Bug bug) {
 
@@ -410,11 +386,6 @@ public class BugServiceImpl implements BugService {
             current = nextBug.get();
         }
     }
-
-
-    // =========================================================
-    // GENERATE BUG FORMAT ID
-    // =========================================================
 
     private String generateBugFormatId(
             Integer testcaseId) {

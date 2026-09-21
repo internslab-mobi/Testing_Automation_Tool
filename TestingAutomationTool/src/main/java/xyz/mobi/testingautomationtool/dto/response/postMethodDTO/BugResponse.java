@@ -20,8 +20,6 @@ public class BugResponse {
 
     private Integer testcaseId;
 
-    private Integer featureId;
-
     private String title;
 
     private String description;
@@ -32,9 +30,9 @@ public class BugResponse {
 
     private BugStatus status;
 
-    private Integer reportedBy;
+    private String reportedBy;
 
-    private Integer assignedTo;
+    private String assignedTo;
 
     private LocalDateTime resolvedAt;
 

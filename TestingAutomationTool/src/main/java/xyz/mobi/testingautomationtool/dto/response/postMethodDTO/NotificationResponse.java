@@ -14,7 +14,7 @@ public class NotificationResponse {
 
     private Integer notificationId;
 
-    private Integer employeeId;
+    private String employeeName;
 
     private String message;
 
