@@ -11,4 +11,7 @@ public interface TestingExecutionRepository
         extends JpaRepository<TestingExecution, Integer> {
 
     Optional<TestingExecution> findByTestCase(TestCase testCase);
+
+    Optional<TestingExecution> findByTestCaseTestcaseId(Integer testcaseId);
+
 }

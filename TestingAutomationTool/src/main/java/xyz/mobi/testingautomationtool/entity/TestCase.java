@@ -49,10 +49,12 @@ public class TestCase extends Auditable {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "testcase_status", nullable = false, length = 255)
-    private TestCaseStatus testcaseStatus;
+    @Builder.Default
+    private TestCaseStatus testcaseStatus = TestCaseStatus.NO_RUN;
 
     @Column(name = "is_active", nullable = false)
-    private boolean active;
+    @Builder.Default
+    private boolean active = true;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)

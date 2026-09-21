@@ -40,7 +40,8 @@ public class Bug extends Auditable {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "feature_id")
-    private Feature feature;
+    @Builder.Default
+    private Feature feature = null;
 
     @Column(name = "title", nullable = false, length = 300)
     private String title;
@@ -50,15 +51,18 @@ public class Bug extends Auditable {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "severity", nullable = false, length = 255)
-    private BugSeverity severity;
+    @Builder.Default
+    private BugSeverity severity = BugSeverity.MEDIUM;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "priority", nullable = false, length = 255)
-    private BugPriority priority;
+    @Builder.Default
+    private BugPriority priority = BugPriority.MEDIUM;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 255)
-    private BugStatus status;
+    @Builder.Default
+    private BugStatus status = BugStatus.OPEN;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "reported_by", nullable = false)
@@ -77,4 +81,8 @@ public class Bug extends Auditable {
 
     @Column(name = "bug_occurance")
     private Integer bugOccurrence;
+
+    @Column(name = "is_active")
+    @Builder.Default
+    private boolean active = true;
 }

@@ -27,7 +27,7 @@ public class Notification {
     @Column(name = "message", nullable = false, columnDefinition = "TEXT")
     private String message;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "bug_id", nullable = false)
     private Bug bug;
 
