@@ -1,27 +1,28 @@
 package xyz.mobi.testingautomationtool.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.BugPatchRequest;
-import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.DeveloperBugStatusRequest;
-import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.NotificationRequest;
-import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.BugPutRequest;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.BugResponse;
+
 import xyz.mobi.testingautomationtool.entity.Bug;
+
 import xyz.mobi.testingautomationtool.entity.User;
+import xyz.mobi.testingautomationtool.enums.BugPriority;
+import xyz.mobi.testingautomationtool.enums.BugSeverity;
 import xyz.mobi.testingautomationtool.enums.BugStatus;
+
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
-import xyz.mobi.testingautomationtool.mapper.postMapper.BugMapper;
+import xyz.mobi.testingautomationtool.mapper.getMapper.BugMapper;
 import xyz.mobi.testingautomationtool.repository.BugRepository;
+
 import xyz.mobi.testingautomationtool.repository.UserRepository;
 import xyz.mobi.testingautomationtool.service.BugService;
-import xyz.mobi.testingautomationtool.service.InAppNotificationService;
-import xyz.mobi.testingautomationtool.service.NotificationService;
-import xyz.mobi.testingautomationtool.utils.Utils;
+import java.util.List;
 
-import java.time.Instant;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -31,438 +32,339 @@ public class BugServiceImpl implements BugService {
     private final BugRepository bugRepository;
     private final UserRepository userRepository;
     private final BugMapper bugMapper;
-    private final NotificationService notificationService;
-    private final InAppNotificationService inAppNotificationService;
-    private final Utils utils;
 
+//    @Override
+//    public BugResponse createBug(BugRequest request, Integer testCaseId) {
+//
+//        TestCase testCase = testCaseRepository.findById(testCaseId)
+//                .orElseThrow(() -> new ResourceNotFoundException("Test case not found with ID: " + testCaseId));
+//
+//        User reportedBy = userRepository.findById(1)
+//                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: 1"));
+//
+//        User assignedTo = null;
+//        if (request.getAssignedTo() != null) {
+//            assignedTo = userRepository.findById(request.getAssignedTo())
+//                    .orElseThrow(() -> new ResourceNotFoundException("Assigned user not found with ID: " + request.getAssignedTo()));
+//        }
+//
+//        Bug bug = new Bug();
+//        bug.setBugFormatId(request.getBugFormatId());
+//        bug.setTestCase(testCase);
+//        bug.setFeature(testCase.getFeature());
+//        bug.setTitle(request.getTitle());
+//        bug.setDescription(request.getDescription());
+//        bug.setSeverity(request.getSeverity());
+//        bug.setPriority(request.getPriority());
+//        bug.setReportedBy(reportedBy);
+//        bug.setAssignedTo(assignedTo);
+//        bug.setBugOccurrence(1);
+//        bug.setActive(true);
+//
+//        Bug savedBug = bugRepository.save(bug);
+//
+//        return bugMapper.toResponse(savedBug);
+//    }
+//
+//    @Override
+//    @Transactional
+//    public String softDeleteBug(Integer bugId) {
+//
+//        Bug bug = bugRepository.findById(bugId)
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException("Bug not found with ID: " + bugId));
+//
+//        if (!bug.isActive()) {
+//            throw new IllegalStateException("Bug with ID " + bugId + " is already deleted");
+//        }
+//
+//        bug.setActive(false);
+//        bugRepository.save(bug);
+//
+//        return "Bug deleted successfully";
+//    }
+//
+//    @Override
+//    @Transactional
+//    public String hardDeleteBug(Integer bugId) {
+//
+//        Bug bug = bugRepository.findById(bugId)
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException("Bug not found with ID: " + bugId));
+//
+//        bugRepository.delete(bug);
+//
+//        return "Bug permanently deleted";
+//    }
+//
+//    @Override
+//    @Transactional
+//    public BugResponse updateBug(Integer bugId, BugPutRequest request) {
+//
+//        Bug bug = bugRepository.findById(bugId)
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException("Bug not found with ID: " + bugId));
+//
+//        if (!bug.isActive()) {
+//            throw new IllegalStateException("Cannot update disabled bug with ID: " + bugId);
+//        }
+//
+//        bug.setTitle(request.getTitle());
+//        bug.setDescription(request.getDescription());
+//        bug.setPriority(request.getPriority());
+//        bug.setSeverity(request.getSeverity());
+//        bug.setStatus(request.getStatus());
+//
+//        if (request.getStatus() == BugStatus.RESOLVED) {
+//            if (bug.getResolvedAt() == null) {
+//                bug.setResolvedAt(LocalDateTime.now());
+//            }
+//        } else {
+//            bug.setResolvedAt(null);
+//        }
+//
+//        bug = bugRepository.save(bug);
+//
+//        return bugMapper.toResponse(bug);
+//    }
+//
+//    @Override
+//    @Transactional
+//    public BugResponse assignBug(Integer bugId, BugAssignRequest request) {
+//
+//        Bug bug = bugRepository.findById(bugId)
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException("Bug not found with ID: " + bugId));
+//
+//        if (!bug.isActive()) {
+//            throw new IllegalStateException("Cannot assign disabled bug with ID: " + bugId);
+//        }
+//
+//        User assignedUser = userRepository.findById(request.getAssignedTo())
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException("User not found with ID: " + request.getAssignedTo()));
+//
+//        bug.setAssignedTo(assignedUser);
+//        bug = bugRepository.save(bug);
+//
+//        String message = "Bug " + bug.getBugFormatId() + " has been assigned to you.";
+//
+//        NotificationResponse notification = notificationService.createNotification(
+//                assignedUser.getUserId(),
+//                bug.getBugId(),
+//                message
+//        );
+//
+//        try {
+//            emailService.sendBugAssignmentEmail(
+//                    assignedUser.getEmail(),
+//                    bug
+//            );
+//
+//            notificationService.updateStatus(
+//                    notification.getNotificationId(),
+//                    NotificationStatus.SENT
+//            );
+//        } catch (Exception exception) {
+//            notificationService.updateStatus(
+//                    notification.getNotificationId(),
+//                    NotificationStatus.FAIL
+//            );
+//        }
+//
+//        return bugMapper.toResponse(bug);
+//    }
+//
+//    @Override
+//    public BugResponse updateStatus(Integer bugId, BugStatusRequest request) {
+//
+//        Bug bug = bugRepository.findById(bugId)
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException("Bug not found with ID: " + bugId));
+//
+//        if (!bug.isActive()) {
+//            throw new IllegalStateException("Cannot update status of disabled bug with ID: " + bugId);
+//        }
+//
+//        BugStatus newStatus = request.getStatus();
+//        bug.setStatus(newStatus);
+//
+//        if (newStatus == BugStatus.RESOLVED) {
+//            bug.setResolvedAt(LocalDateTime.now());
+//        } else {
+//            bug.setResolvedAt(null);
+//        }
+//
+//        bug = bugRepository.save(bug);
+//
+//        return bugMapper.toResponse(bug);
+//    }
 
     @Override
-    public BugResponse updateBug(Integer bugId, BugPutRequest request) {
+    @Transactional(readOnly = true)
+    public BugResponse getById(Integer bugId) {
 
         Bug bug = bugRepository.findById(bugId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Bug not found with ID: " + bugId));
 
         if (!bug.isActive()) {
-            throw new IllegalStateException(
-                    "Cannot update disabled bug with ID: " + bugId);
-        }
-
-        if (bug.isDeleted()) {
-            throw new IllegalStateException(
-                    "Cannot update deleted bug with ID: " + bugId);
-        }
-
-        Integer oldAssignedUserId =
-                bug.getAssignedTo() != null
-                        ? bug.getAssignedTo().getUserId()
-                        : null;
-
-        BugStatus oldStatus = bug.getStatus();
-
-        // dummy user
-        User updatedBy = userRepository.findById(1)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Updated user not found"));
-
-        //well same as the above dummy user
-        User executedBy = bug.getExecutedBy();
-
-        if (!Objects.equals(oldStatus, request.getStatus())) {
-
-            executedBy = userRepository.findById(1).orElseThrow(() ->
-                    new ResourceNotFoundException(
-                            "Executed user not found"));
-
-            executedBy = updatedBy;
-        }
-
-        User assignedTo = bug.getAssignedTo();
-
-        if (request.getAssignedTo() != null) {
-
-            assignedTo = userRepository.findById(
-                    request.getAssignedTo()
-            ).orElseThrow(() ->
-                    new ResourceNotFoundException(
-                            "Assigned user not found with ID: "
-                                    + request.getAssignedTo()
-                    ));
-        }
-
-        bugMapper.updateEntity(bug, request);
-
-        bug.setExecutedBy(executedBy);
-        bug.setAssignedTo(assignedTo);
-        bug.setUpdatedBy(updatedBy);
-
-        if(assignedTo != null) {
-            bug.setStatus(BugStatus.IN_PROGRESS);
-        }
-
-
-        if (request.getStatus() == BugStatus.RESOLVED) {
-            if (bug.getResolvedAt() == null) {
-                bug.setResolvedAt(Instant.now());
-            }
-        } else {
-            bug.setResolvedAt(null);
-        }
-
-        // Determine changes
-        boolean statusChanged =
-                !Objects.equals(oldStatus, bug.getStatus());
-
-        Integer newAssignedUserId =
-                bug.getAssignedTo() != null
-                        ? bug.getAssignedTo().getUserId()
-                        : null;
-
-        boolean assignmentChanged =
-                !Objects.equals(
-                        oldAssignedUserId,
-                        newAssignedUserId
-                );
-
-        bug = bugRepository.save(bug);
-
-        // Create history
-        if (statusChanged || assignmentChanged) {
-
-            utils.bugHistory(
-                    bug,
-                    bug.getExecutedBy() != null
-                            ? bug.getExecutedBy()
-                            : updatedBy
-            );
-        }
-
-
-        if (assignmentChanged && newAssignedUserId != null) {
-
-            if (oldAssignedUserId == null) {
-                // First-time assignment
-                notificationService.createNotification(
-                        NotificationRequest.builder()
-                                .employeeId(bug.getUpdatedBy().getUserId())
-                                .assignedId(newAssignedUserId)
-                                .bugId(bug.getBugId())
-                                .build()
-                );
-
-            } else {
-                // Reassignment: old → new
-                notificationService.createReassignNotification(
-                        oldAssignedUserId,
-                        newAssignedUserId,
-                        bug.getBugId()
-                );
-            }
-        }
-
-        return bugMapper.toResponse(bug);
-
-    }
-
-    @Override
-    public BugResponse patchBug(Integer bugId, BugPatchRequest request) {
-
-        Bug bug = bugRepository.findById(bugId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Bug not found with ID: " + bugId
-                        ));
-
-        if (!bug.isActive()) {
-            throw new IllegalStateException(
-                    "Cannot update disabled bug with ID: " + bugId
-            );
-        }
-
-        if (bug.isDeleted()) {
-            throw new IllegalStateException(
-                    "Cannot update deleted bug with ID: " + bugId
-            );
-        }
-
-        if (request.getAssignment() == null
-                && request.getStatus() == null) {
-
-            throw new IllegalArgumentException(
-                    "At least one patch operation is required"
-            );
-        }
-
-        Integer oldAssignedUserId =
-                bug.getAssignedTo() != null
-                        ? bug.getAssignedTo().getUserId()
-                        : null;
-
-        BugStatus oldStatus = bug.getStatus();
-
-
-        User currentUser = userRepository.findById(1)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Current user not found"
-                        ));
-
-        boolean assignmentChanged = false;
-        boolean statusChanged = false;
-
-
-        if (request.getAssignment() != null) {
-
-            Integer assignedUserId =
-                    request.getAssignment().getAssignedTo();
-
-            User assignedUser =
-                    userRepository.findById(assignedUserId)
-                            .orElseThrow(() ->
-                                    new ResourceNotFoundException(
-                                            "User not found with ID: "
-                                                    + assignedUserId
-                                    ));
-
-            assignmentChanged =
-                    !Objects.equals(
-                            oldAssignedUserId,
-                            assignedUserId
-                    );
-
-            bugMapper.updateAssignment(
-                    request.getAssignment(),
-                    bug
-            );
-
-            bug.setAssignedTo(assignedUser);
-        }
-
-
-        if (request.getStatus() != null) {
-
-            BugStatus newStatus =
-                    request.getStatus().getStatus();
-
-            statusChanged =
-                    !Objects.equals(
-                            oldStatus,
-                            newStatus
-                    );
-
-            bugMapper.updateStatus(
-                    request.getStatus(),
-                    bug
-            );
-
-            if (statusChanged) {
-                bug.setExecutedBy(currentUser);
-            }
-
-            // RESOLVED DATE
-            if (newStatus == BugStatus.RESOLVED) {
-
-                if (bug.getResolvedAt() == null) {
-                    bug.setResolvedAt(Instant.now());
-                }
-
-            } else {
-                bug.setResolvedAt(null);
-            }
-        }
-
-
-        bug.setUpdatedBy(currentUser);
-
-        bug = bugRepository.save(bug);
-
-
-        if (assignmentChanged || statusChanged) {
-
-            utils.bugHistory(
-                    bug,
-                    statusChanged
-                            ? bug.getExecutedBy()
-                            : currentUser
-            );
-        }
-
-
-        if (assignmentChanged) {
-
-            Integer newAssignedUserId =
-                    bug.getAssignedTo() != null
-                            ? bug.getAssignedTo().getUserId()
-                            : null;
-
-            if (newAssignedUserId != null) {
-
-                if (oldAssignedUserId == null) {
-
-                    notificationService.createNotification(
-                            NotificationRequest.builder()
-                                    .employeeId(
-                                            currentUser.getUserId()
-                                    )
-                                    .assignedId(
-                                            newAssignedUserId
-                                    )
-                                    .bugId(
-                                            bug.getBugId()
-                                    )
-                                    .build()
-                    );
-
-                } else {
-
-                    notificationService.createReassignNotification(
-                            oldAssignedUserId,
-                            newAssignedUserId,
-                            bug.getBugId()
-                    );
-                }
-            }
+            throw new ResourceNotFoundException("The bug has been removed with ID: " + bugId);
         }
 
         return bugMapper.toResponse(bug);
     }
 
     @Override
-    public void softDeleteBug(Integer bugId) {
-
-        Bug bug = bugRepository.findById(bugId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Bug not found with ID: " + bugId
-                        ));
-
-        if (bug.isDeleted()) {
-            throw new IllegalStateException(
-                    "Bug is already deleted with ID: " + bugId
-            );
-        }
-
-        if (!bug.isActive()) {
-            throw new IllegalStateException(
-                    "Bug is already inactive with ID: " + bugId
-            );
-        }
-
-        // Current logged-in user
-        User currentUser = userRepository.findById(1)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Current user not found"
-                        ));
-
-        bug.setActive(false);
-        bug.setDeleted(true);
-        bug.setUpdatedBy(currentUser);
-
-        bugRepository.save(bug);
+    @Transactional(readOnly = true)
+    public List<BugResponse> getByAll() {
+        return bugRepository.findByActiveTrue()
+                .stream()
+                .map(bugMapper::toResponse)
+                .toList();
     }
 
     @Override
-    @Transactional
-    public void hardDeleteBug(Integer bugId) {
-
-        Bug bug = bugRepository.findById(bugId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Bug not found with ID: " + bugId
-                        ));
-
-        bugRepository.delete(bug);
+    @Transactional(readOnly = true)
+    public Page<BugResponse> getAllBugs(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return bugRepository.findByActiveTrue(pageable)
+                .map(bugMapper::toResponse);
     }
 
     @Override
-    public BugResponse updateDeveloperStatus(
-            Integer bugId,
-            DeveloperBugStatusRequest request) {
-
-        Bug bug = bugRepository.findById(bugId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Bug not found with ID: " + bugId
-                        ));
-
-        if (!bug.isActive()) {
-            throw new IllegalStateException(
-                    "Cannot update disabled bug with ID: " + bugId
-            );
-        }
-
-        if (bug.isDeleted()) {
-            throw new IllegalStateException(
-                    "Cannot update deleted bug with ID: " + bugId
-            );
-        }
-
-        if (request == null || request.getStatus() == null) {
-            throw new IllegalArgumentException(
-                    "Developer status is required"
-            );
-        }
-
-        if (bug.getAssignedTo() == null) {
-            throw new IllegalStateException(
-                    "Bug is not assigned to any developer"
-            );
-        }
-
-        User currentUser = userRepository.findById(1)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Current user not found"
-                        ));
-
-        if (!Objects.equals(
-                bug.getAssignedTo().getUserId(),
-                currentUser.getUserId())) {
-
-            throw new IllegalStateException(
-                    "You are not assigned to this bug"
-            );
-        }
-
-        BugStatus oldStatus = bug.getStatus();
-
-        BugStatus newStatus = switch (request.getStatus()) {
-
-            case OPEN ->
-                    BugStatus.IN_PROGRESS;
-
-            case FIXED ->
-                    BugStatus.FIXED;
-
-            case NOT_A_BUG ->
-                    BugStatus.NOT_A_BUG;
-        };
-
-        boolean statusChanged =
-                !Objects.equals(oldStatus, newStatus);
-
-        if (!statusChanged) {
-            return bugMapper.toResponse(bug);
-        }
-
-        bug.setStatus(newStatus);
-        bug.setExecutedBy(currentUser);
-        bug.setUpdatedBy(currentUser);
-
-
-        bug = bugRepository.save(bug);
-
-        if (newStatus == BugStatus.FIXED) {
-            inAppNotificationService.createBugFixedNotification(bug);
-        }
-
-        utils.bugHistory(
-                bug,
-                currentUser
-        );
-
-        return bugMapper.toResponse(bug);
+    @Transactional(readOnly = true)
+    public List<BugResponse> getByTestcaseId(Integer testcaseId) {
+        return bugRepository.findByTestCase_TestcaseIdAndActiveTrueOrderByBugIdAsc(testcaseId)
+                .stream()
+                .map(bugMapper::toResponse)
+                .toList();
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BugResponse> getByTestcaseId(Integer testcaseId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return bugRepository.findByTestCase_TestcaseIdAndActiveTrue(testcaseId, pageable)
+                .map(bugMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BugResponse> getByFeatureId(Integer featureId) {
+        return bugRepository.findByFeature_FeatureIdAndActiveTrueOrderByBugIdAsc(featureId)
+                .stream()
+                .map(bugMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BugResponse> getByFeatureId(Integer featureId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return bugRepository.findByFeature_FeatureIdAndActiveTrue(featureId, pageable)
+                .map(bugMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BugResponse> getByStatus(BugStatus status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return bugRepository.findByStatusAndActiveTrue(status, pageable)
+                .map(bugMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BugResponse> getByAssignedTo(Integer userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return bugRepository.findByAssignedTo_UserIdAndActiveTrue(userId, pageable)
+                .map(bugMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BugResponse> getBySeverity(BugSeverity severity, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return bugRepository.findBySeverityAndActiveTrue(severity, pageable)
+                .map(bugMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BugResponse> getByPriority(BugPriority priority, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return bugRepository.findByPriorityAndActiveTrue(priority, pageable)
+                .map(bugMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BugResponse> getByReportedBy(Integer id, int page, int size) {
+        User user = userRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("User is not present for this Id:"+id));
+        Pageable pageable = PageRequest.of(page,size);
+        return bugRepository.findByReportedByAndActiveTrue(user,pageable).map(bugMapper::toResponse);
+    }
+
+//    @Override
+//    @Transactional
+//    public BugResponse createReoccurrence(Integer bugId) {
+//
+//        Bug oldBug = bugRepository.findById(bugId)
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException("Bug not found with ID: " + bugId));
+//
+//        Bug latestBug = findLatestOccurrence(oldBug);
+//
+//        Integer currentOccurrence = latestBug.getBugOccurrence() == null ? 1 : latestBug.getBugOccurrence();
+//        Integer nextOccurrence = currentOccurrence + 1;
+//
+//        String bugFormatId = generateBugFormatId(latestBug.getTestCase().getTestcaseId());
+//
+//        Bug newBug = Bug.builder()
+//                .bugFormatId(bugFormatId)
+//                .testCase(latestBug.getTestCase())
+//                .feature(latestBug.getFeature())
+//                .title(latestBug.getTitle())
+//                .description(latestBug.getDescription())
+//                .severity(latestBug.getSeverity())
+//                .priority(latestBug.getPriority())
+//                .status(BugStatus.OPEN)
+//                .reportedBy(latestBug.getReportedBy())
+//                .assignedTo(latestBug.getAssignedTo())
+//                .resolvedAt(null)
+//                .bugReoccurred(latestBug)
+//                .bugOccurrence(nextOccurrence)
+//                .active(true)
+//                .build();
+//
+//        newBug = bugRepository.save(newBug);
+//
+//        return bugMapper.toResponse(newBug);
+//    }
+//
+//    private Bug findLatestOccurrence(Bug bug) {
+//        Bug current = bug;
+//        while (true) {
+//            Optional<Bug> nextBug = bugRepository.findByBugReoccurred(current);
+//            if (nextBug.isEmpty()) {
+//                return current;
+//            }
+//            current = nextBug.get();
+//        }
+//    }
+//
+//    private String generateBugFormatId(Integer testcaseId) {
+//        Optional<Bug> latestBug = bugRepository.findTopByTestCase_TestcaseIdOrderByBugIdDesc(testcaseId);
+//
+//        int nextNumber = latestBug
+//                .map(bug -> {
+//                    String bugFormatId = bug.getBugFormatId();
+//                    String numberPart = bugFormatId.substring(bugFormatId.lastIndexOf("-") + 1);
+//                    return Integer.parseInt(numberPart) + 1;
+//                })
+//                .orElse(1);
+//
+//        return String.format("BUG-%03d", nextNumber);
+//    }
 }
