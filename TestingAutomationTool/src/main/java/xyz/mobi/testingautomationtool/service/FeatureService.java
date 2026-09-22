@@ -1,26 +1,11 @@
 package xyz.mobi.testingautomationtool.service;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.http.ResponseEntity;
-import xyz.mobi.testingautomationtool.dto.request.getmethoddto.FeatureSearchRequest;
-import xyz.mobi.testingautomationtool.dto.response.getMethodDTO.FeatureResponse;
+import org.springframework.web.multipart.MultipartFile;
+import xyz.mobi.testingautomationtool.dto.request.featureRequest.FeatureRequest;
+import xyz.mobi.testingautomationtool.dto.response.featureResponse.FeatureResponse;
 
-public interface FeatureService {
+import java.io.IOException;
 
-    FeatureResponse getFeatureById(Integer featureId);
-
-    Page<FeatureResponse> getFeaturesByProject(
-            Integer projectId,
-            Pageable pageable
-    );
-
-    Page<FeatureResponse> searchFeatures(
-            FeatureSearchRequest request,
-            Pageable pageable
-    );
-
-    ResponseEntity<byte[]> downloadFile(Integer featureId);
-
-    byte[] downloadTemplate(Integer projectId, Integer featureId);
+public interface FeatureService  {
+    public FeatureResponse createFeature( FeatureRequest request);
 }

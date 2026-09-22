@@ -1,111 +1,39 @@
 package xyz.mobi.testingautomationtool.service.impl;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.cache.annotation.Cacheable;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import xyz.mobi.testingautomationtool.dto.request.getmethoddto.FeatureSearchRequest;
-import xyz.mobi.testingautomationtool.dto.response.getMethodDTO.FeatureResponse;
-import xyz.mobi.testingautomationtool.entity.Attachment;
+import org.springframework.web.multipart.MultipartFile;
+import xyz.mobi.testingautomationtool.dto.request.featureRequest.FeatureRequest;
+import xyz.mobi.testingautomationtool.dto.response.featureResponse.FeatureResponse;
 import xyz.mobi.testingautomationtool.entity.Feature;
+import xyz.mobi.testingautomationtool.entity.Project;
+import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
-import xyz.mobi.testingautomationtool.mapper.getMapper.FeatureMapper;
-import xyz.mobi.testingautomationtool.repository.AttachmentRepository;
+import xyz.mobi.testingautomationtool.mapper.featureMapper.FeatureMapper;
 import xyz.mobi.testingautomationtool.repository.FeatureRepository;
 import xyz.mobi.testingautomationtool.repository.ProjectRepository;
+import xyz.mobi.testingautomationtool.repository.UserRepository;
 import xyz.mobi.testingautomationtool.service.FeatureService;
+
+import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
 public class FeatureServiceImpl implements FeatureService {
-
-    private final FeatureRepository featureRepository;
     private final ProjectRepository projectRepository;
-    private final AttachmentRepository attachmentRepository;
+    private final UserRepository userRepository;
     private final FeatureMapper featureMapper;
-
-    private final ExcelTemplateService excelTemplateService;
-
-    @Cacheable(value = "features", key = "#featureId")
+    private final FeatureRepository featureRepository;
     @Override
-    @Transactional(readOnly = true)
-    public FeatureResponse getFeatureById(Integer featureId) {
-
-        Feature feature = featureRepository.findById(featureId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Feature not found with ID: " + featureId
-                        ));
-
+    public FeatureResponse createFeature(FeatureRequest request)  {
+        Project project = projectRepository.findById(request.getProjectId()).orElseThrow(()->new ResourceNotFoundException("Project is not available for this id:"+request.getProjectId()));
+        User user = userRepository.findById(request.getCreatedBy()).orElseThrow(()->new ResourceNotFoundException("User not found for this id"+request.getCreatedBy()));
+        Feature feature = featureMapper.toEntity(request);
+        feature.setProject(project);
+        feature.setCreatedBy(user);
+        featureRepository.save(feature);
         return featureMapper.toResponse(feature);
     }
 
-    @Cacheable(
-            value = "featuresByProject",
-            key = "#projectId + '_' + #pageable"
-    )
-    @Override
-    @Transactional(readOnly = true)
-    public Page<FeatureResponse> getFeaturesByProject(
-            Integer projectId,
-            Pageable pageable) {
 
-        projectRepository.findById(projectId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Project not found with ID: " + projectId
-                        ));
-
-        return featureRepository
-                .findByProject_ProjectId(projectId, pageable)
-                .map(featureMapper::toResponse);
-    }
-
-    @Cacheable(value = "featureSearch", key = "#request + '_' + #pageable")
-    @Override
-    @Transactional(readOnly = true)
-    public Page<FeatureResponse> searchFeatures(
-            FeatureSearchRequest request,
-            Pageable pageable) {
-
-        Specification<Feature> specification =
-                FeatureSpecification.search(request);
-
-        return featureRepository
-                .findAll(specification, pageable)
-                .map(featureMapper::toResponse);
-    }
-
-    @Override
-    public ResponseEntity<byte[]> downloadFile(Integer featureId) {
-
-        Feature feature = featureRepository.findById(featureId)
-                .orElseThrow(()-> new ResourceNotFoundException(
-                        "Feature data is not present"));
-
-        Attachment attachment = attachmentRepository.findByFeatureFeatureId(featureId)
-                .orElseThrow(()-> new ResourceNotFoundException(
-                        "Attachment data is not present"));
-
-                return ResponseEntity.ok()
-                        .header(HttpHeaders.CONTENT_DISPOSITION,
-                "attachment; filename=\"" + attachment.getFileName()+ "\"")
-
-                .contentType(MediaType.parseMediaType(attachment.getFileType()))
-
-                .body(attachment.getFileBlob());
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public byte[] downloadTemplate(Integer projectId, Integer featureId) {
-
-        return excelTemplateService.generateTemplate(projectId, featureId);
-    }
 }

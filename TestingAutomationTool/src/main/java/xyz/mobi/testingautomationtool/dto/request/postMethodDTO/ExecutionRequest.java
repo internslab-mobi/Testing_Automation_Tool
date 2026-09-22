@@ -14,7 +14,13 @@ import xyz.mobi.testingautomationtool.enums.ExecutionStatus;
 @Builder
 public class ExecutionRequest {
 
+//    @NotNull(message = "Test case ID is required")
+//    @Positive(message = "Test case ID must be greater than 0")
+//    private Integer testcaseId;
+
     private AutomationFeasibility automationFeasibility;
+
+    private ExecutionStatus executionStatus;
 
     @Size(max = 65535, message = "Test execution cannot exceed the allowed length")
     private String testExecution;

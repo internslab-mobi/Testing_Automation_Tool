@@ -15,15 +15,13 @@ import xyz.mobi.testingautomationtool.enums.TestType;
 @Builder
 public class TestCaseRequest {
 
-    @NotNull(message = "Feature is required")
-    @Positive(message = "Feature must be greater than 0")
+    @Positive(message = "Feature ID must be greater than 0")
     private Integer featureId;
 
-    @NotBlank(message = "Test case format ID is required")
     @Size(max = 225, message = "Test case format ID cannot exceed 20 characters")
     private String testcaseFormatId;
 
-    @Size(max = 300, message = "Title cannot exceed 300 characters")
+    @Size(max = 500, message = "Title cannot exceed 500 characters")
     private String title;
 
     private TestType testType;
