@@ -33,6 +33,115 @@ public class BugServiceImpl implements BugService {
     private final UserRepository userRepository;
     private final BugMapper bugMapper;
 
+    @Override
+    @Transactional(readOnly = true)
+    public BugResponse getById(Integer bugId) {
+
+        Bug bug = bugRepository.findById(bugId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Bug not found with ID: " + bugId));
+
+        if (!bug.isActive()) {
+            throw new ResourceNotFoundException("The bug has been removed with ID: " + bugId);
+        }
+
+        return bugMapper.toResponse(bug);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BugResponse> getByAll() {
+        return bugRepository.findByActiveTrue()
+                .stream()
+                .map(bugMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BugResponse> getAllBugs(int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return bugRepository.findByActiveTrue(pageable)
+                .map(bugMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BugResponse> getByTestcaseId(Integer testcaseId) {
+        return bugRepository.findByTestCase_TestcaseIdAndActiveTrueOrderByBugIdAsc(testcaseId)
+                .stream()
+                .map(bugMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BugResponse> getByTestcaseId(Integer testcaseId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return bugRepository.findByTestCase_TestcaseIdAndActiveTrue(testcaseId, pageable)
+                .map(bugMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BugResponse> getByFeatureId(Integer featureId) {
+        return bugRepository.findByFeature_FeatureIdAndActiveTrueOrderByBugIdAsc(featureId)
+                .stream()
+                .map(bugMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BugResponse> getByFeatureId(Integer featureId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return bugRepository.findByFeature_FeatureIdAndActiveTrue(featureId, pageable)
+                .map(bugMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BugResponse> getByStatus(BugStatus status, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return bugRepository.findByStatusAndActiveTrue(status, pageable)
+                .map(bugMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BugResponse> getByAssignedTo(Integer userId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return bugRepository.findByAssignedTo_UserIdAndActiveTrue(userId, pageable)
+                .map(bugMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BugResponse> getBySeverity(BugSeverity severity, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return bugRepository.findBySeverityAndActiveTrue(severity, pageable)
+                .map(bugMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BugResponse> getByPriority(BugPriority priority, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size);
+        return bugRepository.findByPriorityAndActiveTrue(priority, pageable)
+                .map(bugMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BugResponse> getByReportedBy(Integer id, int page, int size) {
+        User user = userRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("User is not present for this Id:"+id));
+        Pageable pageable = PageRequest.of(page,size);
+        return bugRepository.findByReportedByAndActiveTrue(user,pageable).map(bugMapper::toResponse);
+    }
+
+
+
+
 //    @Override
 //    public BugResponse createBug(BugRequest request, Integer testCaseId) {
 //
@@ -200,111 +309,7 @@ public class BugServiceImpl implements BugService {
 //        return bugMapper.toResponse(bug);
 //    }
 
-    @Override
-    @Transactional(readOnly = true)
-    public BugResponse getById(Integer bugId) {
 
-        Bug bug = bugRepository.findById(bugId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Bug not found with ID: " + bugId));
-
-        if (!bug.isActive()) {
-            throw new ResourceNotFoundException("The bug has been removed with ID: " + bugId);
-        }
-
-        return bugMapper.toResponse(bug);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<BugResponse> getByAll() {
-        return bugRepository.findByActiveTrue()
-                .stream()
-                .map(bugMapper::toResponse)
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<BugResponse> getAllBugs(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return bugRepository.findByActiveTrue(pageable)
-                .map(bugMapper::toResponse);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<BugResponse> getByTestcaseId(Integer testcaseId) {
-        return bugRepository.findByTestCase_TestcaseIdAndActiveTrueOrderByBugIdAsc(testcaseId)
-                .stream()
-                .map(bugMapper::toResponse)
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<BugResponse> getByTestcaseId(Integer testcaseId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return bugRepository.findByTestCase_TestcaseIdAndActiveTrue(testcaseId, pageable)
-                .map(bugMapper::toResponse);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<BugResponse> getByFeatureId(Integer featureId) {
-        return bugRepository.findByFeature_FeatureIdAndActiveTrueOrderByBugIdAsc(featureId)
-                .stream()
-                .map(bugMapper::toResponse)
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<BugResponse> getByFeatureId(Integer featureId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return bugRepository.findByFeature_FeatureIdAndActiveTrue(featureId, pageable)
-                .map(bugMapper::toResponse);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<BugResponse> getByStatus(BugStatus status, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return bugRepository.findByStatusAndActiveTrue(status, pageable)
-                .map(bugMapper::toResponse);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<BugResponse> getByAssignedTo(Integer userId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return bugRepository.findByAssignedTo_UserIdAndActiveTrue(userId, pageable)
-                .map(bugMapper::toResponse);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<BugResponse> getBySeverity(BugSeverity severity, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return bugRepository.findBySeverityAndActiveTrue(severity, pageable)
-                .map(bugMapper::toResponse);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<BugResponse> getByPriority(BugPriority priority, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
-        return bugRepository.findByPriorityAndActiveTrue(priority, pageable)
-                .map(bugMapper::toResponse);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public Page<BugResponse> getByReportedBy(Integer id, int page, int size) {
-        User user = userRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("User is not present for this Id:"+id));
-        Pageable pageable = PageRequest.of(page,size);
-        return bugRepository.findByReportedByAndActiveTrue(user,pageable).map(bugMapper::toResponse);
-    }
 
 //    @Override
 //    @Transactional

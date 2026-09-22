@@ -26,37 +26,6 @@ public class TestcaseController {
 
     private final TestCaseService testCaseService;
 
-    // Manual test case creation
-    @PostMapping("/manual")
-    public ResponseEntity<TestCaseExecutionResponse> createTestCaseByManual(
-            @Valid @RequestBody TestCaseExecutionRequest request) {
-
-        TestCaseExecutionResponse response =
-                testCaseService.createTestCaseByManual(request);
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(response);
-    }
-
-    // Excel test case upload
-    @PostMapping(
-            value = "/upload",
-            consumes = "multipart/form-data"
-    )
-    public ResponseEntity<ExcelUploadResponse> createTestCaseByUpload(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("featureId") Integer featureId) {
-
-        ExcelUploadResponse response =
-                testCaseService.createTestCaseByUpload(
-                        file,
-                        featureId
-                );
-
-        return ResponseEntity.ok(response);
-    }
-
     @PutMapping("/{id}")
     public ResponseEntity<TestCasePutResponse> updateTestCaseDetails(
             @Valid @RequestBody TestCasePutRequest testCasePutRequest,
@@ -110,24 +79,66 @@ public class TestcaseController {
         return ResponseEntity.ok(response);
     }
 
-    @GetMapping("/{id}")
+
+
+
+
+
+
+
+
+
+ /*   // Manual test case creation
+//    @PostMapping("/manual")
+//    public ResponseEntity<TestCaseExecutionResponse> createTestCaseByManual(
+//            @Valid @RequestBody TestCaseExecutionRequest request) {
+//
+//        TestCaseExecutionResponse response =
+//                testCaseService.createTestCaseByManual(request);
+//
+//        return ResponseEntity
+//                .status(HttpStatus.CREATED)
+//                .body(response);
+//    }*/
+
+    // Excel test case upload
+    /*@PostMapping(
+            value = "/upload",
+            consumes = "multipart/form-data"
+    )
+    public ResponseEntity<ExcelUploadResponse> createTestCaseByUpload(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("featureId") Integer featureId) {
+
+        ExcelUploadResponse response =
+                testCaseService.createTestCaseByUpload(
+                        file,
+                        featureId
+                );
+
+        return ResponseEntity.ok(response);
+    }*/
+
+
+
+   /* @GetMapping("/{id}")
     public ResponseEntity<TestCaseExecutionResponse> getById(
             @PathVariable int id) {
 
         return ResponseEntity.ok(
                 testCaseService.getById(id)
         );
-    }
+    }*/
 
-    @GetMapping
+    /*@GetMapping
     public ResponseEntity<List<TestCaseExecutionResponse>> getByAll() {
 
         return ResponseEntity.ok(
                 testCaseService.getByAll()
         );
-    }
+    }*/
 
-    @GetMapping("/feature/{featureId}")
+    /*@GetMapping("/feature/{featureId}")
     public ResponseEntity<Page<TestCaseExecutionResponse>> getByFeatureId(
             @PathVariable Integer featureId,
             @RequestParam(defaultValue = "0") Integer page,
@@ -136,5 +147,5 @@ public class TestcaseController {
         return ResponseEntity.ok(
                 testCaseService.getByFeatureId(featureId, page, size)
         );
-    }
+    }*/
 }

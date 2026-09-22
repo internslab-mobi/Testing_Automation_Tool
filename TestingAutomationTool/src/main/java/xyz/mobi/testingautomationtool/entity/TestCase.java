@@ -61,7 +61,7 @@ public class TestCase extends Auditable {
     private User createdBy;
 
     @Convert(converter = xyz.mobi.testingautomationtool.utils.JsonToMapConverter.class)
-    @Column(name = "dynamic_fields", columnDefinition = "TEXT")
+    @Column(name = "dynamic_fields", columnDefinition = "JSON")
     @Builder.Default
     private java.util.Map<String, Object> dynamicFields = new java.util.HashMap<>();
 }

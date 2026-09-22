@@ -16,7 +16,7 @@ import java.util.List;
 
 public interface TestCaseService {
 
-    TestCaseExecutionResponse createTestCaseByManual(
+    /*TestCaseExecutionResponse createTestCaseByManual(
             TestCaseExecutionRequest request);
 
     ExcelUploadResponse createTestCaseByUpload(
@@ -26,7 +26,7 @@ public interface TestCaseService {
 
     List<TestCaseExecutionResponse> getByAll();
 
-    Page<TestCaseExecutionResponse> getByFeatureId(Integer featureId, int page, int size);
+    Page<TestCaseExecutionResponse> getByFeatureId(Integer featureId, int page, int size);*/
 
     TestCasePutResponse updateTestcaseDetails(
             TestCasePutRequest testCaseRequest,
