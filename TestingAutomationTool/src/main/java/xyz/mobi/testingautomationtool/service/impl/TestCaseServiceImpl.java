@@ -325,7 +325,7 @@ public class TestCaseServiceImpl implements TestCaseService {
     public Page<TestCaseExecutionResponse> getByFeatureId(Integer featureId,int page,int size) {
         Pageable pageable = PageRequest.of(page,size);
         Page<TestCase> testCases =
-                testCaseRepository.findByFeature_FeatureIdAndTestCase_IsActive(
+                testCaseRepository.findByFeature_FeatureIdAndActiveTrue(
                         featureId,
                         pageable);
 
@@ -354,39 +354,54 @@ public class TestCaseServiceImpl implements TestCaseService {
                                                      Integer id) {
         
         TestCase testCase = testCaseRepository.findById(id)
-                .orElseThrow(()->
-                        new ResourceNotFoundException(" case is not present with id:"+id));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Test case not found with ID: " + id));
+
+        if (!testCase.isActive()) {
+            throw new IllegalStateException("Cannot update disabled test case with ID: " + id);
+        }
         
-        TestCase updatedTestCase =  testCasePutMapper.putMethodMapper(testCasePutRequest,testCase);
+        TestCase updatedTestCase = testCasePutMapper.putMethodMapper(testCasePutRequest, testCase);
+
+        if (testCasePutRequest.getDynamicFields() != null) {
+            updatedTestCase.setDynamicFields(new java.util.HashMap<>(testCasePutRequest.getDynamicFields()));
+        }
         
         testCaseRepository.save(updatedTestCase);
         
         TestingExecution testingExecution = testingExecutionRepository.findByTestCase(testCase)
-                .orElseThrow(()->
-                        new ResourceNotFoundException("Execution details are not present in this id:"+id));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Execution details not found for test case ID: " + id));
         
         TestingExecution updatedExecution = testCasePutMapper.putMethodToExecution(testCasePutRequest, 
                 testingExecution);
         
         testingExecutionRepository.save(updatedExecution);
         
-        return testCasePutMapper.convertToResponse(updatedTestCase,updatedExecution);
+        return testCasePutMapper.convertToResponse(updatedTestCase, updatedExecution);
     }
 
 
     @Override
     public TestCaseResponse patchTestCaseDetails(TestCasePatchRequest testCasePatchRequest,
-                                                 Integer id){
+                                                 Integer id) {
 
         TestCase testCase = testCaseRepository.findById(id)
-                .orElseThrow(()->
-                        new ResourceNotFoundException("Test case is not present"));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Test case not found with ID: " + id));
 
-        if (testCasePatchRequest.getTestType() == null &&
-                testCasePatchRequest.getTestPriority() == null) {
+        if (!testCase.isActive()) {
+            throw new IllegalStateException("Cannot patch disabled test case with ID: " + id);
+        }
+
+        if (testCasePatchRequest == null ||
+                (testCasePatchRequest.getTestType() == null &&
+                 testCasePatchRequest.getTestPriority() == null &&
+                 (testCasePatchRequest.getComments() == null || testCasePatchRequest.getComments().trim().isEmpty()) &&
+                 (testCasePatchRequest.getDynamicFields() == null || testCasePatchRequest.getDynamicFields().isEmpty()))) {
 
             throw new IllegalArgumentException(
-                    "At least one field (testType or testPriority) must be provided"
+                    "At least one field (testType, testPriority, comments, or dynamicFields) must be provided"
             );
         }
 
@@ -398,13 +413,29 @@ public class TestCaseServiceImpl implements TestCaseService {
             testCase.setTestPriority(testCasePatchRequest.getTestPriority());
         }
 
+        if (testCasePatchRequest.getDynamicFields() != null) {
+            if (testCase.getDynamicFields() == null) {
+                testCase.setDynamicFields(new java.util.HashMap<>());
+            }
+            testCasePatchRequest.getDynamicFields().forEach((key, value) -> {
+                if (value == null) {
+                    testCase.getDynamicFields().remove(key);
+                } else {
+                    testCase.getDynamicFields().put(key, value);
+                }
+            });
+        }
+
         TestingExecution execution = testingExecutionRepository
                 .findByTestCaseTestcaseId(testCase.getTestcaseId())
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "Execution is not present for this test case"));
+                                "Execution details not found for test case ID: " + id));
 
-        execution.setComments(testCasePatchRequest.getComments());
+        if (testCasePatchRequest.getComments() != null) {
+            execution.setComments(testCasePatchRequest.getComments());
+            testingExecutionRepository.save(execution);
+        }
 
         TestCase updatedTestCase = testCaseRepository.save(testCase);
 
@@ -416,24 +447,22 @@ public class TestCaseServiceImpl implements TestCaseService {
 
         TestCase testCase = testCaseRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Test case is not present"));
+                        new ResourceNotFoundException("Test case not found with ID: " + id));
 
         String testcaseFormatId = testCase.getTestcaseFormatId();
 
         if (!testCase.isActive()) {
-            throw new IllegalArgumentException(
+            throw new IllegalStateException(
                     "Test case " + testcaseFormatId + " is already disabled"
             );
         }
 
         testCase.setActive(false);
 
-        List<Bug> bugList = bugRepository.findByTestCase_TestcaseId(id).
-                orElseThrow(()->new ResourceNotFoundException("No bugs are available for this testcase"));
-
-        bugList.forEach(bug -> bug.setActive(false));
-
-        bugRepository.saveAll(bugList);
+        bugRepository.findByTestCase_TestcaseId(id).ifPresent(bugList -> {
+            bugList.forEach(bug -> bug.setActive(false));
+            bugRepository.saveAll(bugList);
+        });
 
         testCaseRepository.save(testCase);
 
@@ -445,9 +474,15 @@ public class TestCaseServiceImpl implements TestCaseService {
 
         TestCase testCase = testCaseRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Test case is not present"));
+                        new ResourceNotFoundException("Test case not found with ID: " + id));
 
         String testcaseFormatId = testCase.getTestcaseFormatId();
+
+        testingExecutionRepository.findByTestCase(testCase)
+                .ifPresent(testingExecutionRepository::delete);
+
+        bugRepository.findByTestCase_TestcaseId(id)
+                .ifPresent(bugRepository::deleteAll);
 
         testCaseRepository.delete(testCase);
 
@@ -488,9 +523,6 @@ public class TestCaseServiceImpl implements TestCaseService {
 
         execution.setExecutionNumber(execution.getExecutionNumber() + 1);
 
-//        if(request.getExecutionStatus() == ExecutionStatus.FAIL){
-//            execution.setBugsCount(execution.getBugsCount()+1);
-//        }
 
         if(request.getExecutionStatus()==ExecutionStatus.PASS){
             utils.trigger(testCase,testCase.getCreatedBy());

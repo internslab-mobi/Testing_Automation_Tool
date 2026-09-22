@@ -33,4 +33,5 @@ public class TestCaseRequest {
     @NotNull(message = "Test priority is required")
     private TestPriority testPriority;
 
+    private java.util.Map<String, Object> dynamicFields;
 }

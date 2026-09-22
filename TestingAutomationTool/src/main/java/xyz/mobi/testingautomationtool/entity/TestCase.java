@@ -59,4 +59,9 @@ public class TestCase extends Auditable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
+
+    @Convert(converter = xyz.mobi.testingautomationtool.utils.JsonToMapConverter.class)
+    @Column(name = "dynamic_fields", columnDefinition = "TEXT")
+    @Builder.Default
+    private java.util.Map<String, Object> dynamicFields = new java.util.HashMap<>();
 }

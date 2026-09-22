@@ -50,4 +50,5 @@ public class TestCasePutResponse {
 
     private String comments;
 
+    private java.util.Map<String, Object> dynamicFields;
 }

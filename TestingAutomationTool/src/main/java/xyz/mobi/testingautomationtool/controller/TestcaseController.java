@@ -57,8 +57,8 @@ public class TestcaseController {
         return ResponseEntity.ok(response);
     }
 
-    @PutMapping("/{id}/updateDetails")
-    public ResponseEntity<TestCasePutResponse> updateDetails(
+    @PutMapping("/{id}")
+    public ResponseEntity<TestCasePutResponse> updateTestCaseDetails(
             @Valid @RequestBody TestCasePutRequest testCasePutRequest,
             @PathVariable("id") Integer id) {
 
@@ -68,9 +68,8 @@ public class TestcaseController {
         return ResponseEntity.ok(response);
     }
 
-
-    @PatchMapping("/{id}/updatePatch")
-    public ResponseEntity<TestCaseResponse> patchDetails(
+    @PatchMapping("/{id}")
+    public ResponseEntity<TestCaseResponse> patchTestCaseDetails(
             @RequestBody TestCasePatchRequest testCasePatchRequest,
             @PathVariable("id") Integer id) {
 
@@ -79,18 +78,18 @@ public class TestcaseController {
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/{id}/remove")
+    @PatchMapping("/{id}/delete")
     public ResponseEntity<String> softDeleteTestCase(
-            @PathVariable Integer id) {
+            @PathVariable("id") Integer id) {
 
         String response = testCaseService.softDeleteTestCase(id);
 
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("{id}/delete")
+    @DeleteMapping("/{id}")
     public ResponseEntity<String> hardDeleteTestCase(
-            @PathVariable Integer id) {
+            @PathVariable("id") Integer id) {
 
         String response = testCaseService.hardDeleteTestCase(id);
 

@@ -50,4 +50,6 @@ public class TestCasePutRequest {
 
     @NotBlank(message = "Test comments cannot be empty")
     private String comments;
+
+    private java.util.Map<String, Object> dynamicFields;
 }

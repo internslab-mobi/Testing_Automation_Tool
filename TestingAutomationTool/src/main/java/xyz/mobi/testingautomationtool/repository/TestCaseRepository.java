@@ -17,5 +17,5 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Integer> {
 
 //    Page<TestCase> findByFeature_FeatureId(Integer featureId, Pageable pageable);
 
-    Page<TestCase> findByFeature_FeatureIdAndTestCase_IsActive(Integer featureId, Pageable pageable);
+    Page<TestCase> findByFeature_FeatureIdAndActiveTrue(Integer featureId, Pageable pageable);
 }

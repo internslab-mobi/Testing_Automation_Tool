@@ -33,4 +33,6 @@ public class TestCaseResponse {
     private LocalDateTime createdAt;
 
     private LocalDateTime updatedAt;
+
+    private java.util.Map<String, Object> dynamicFields;
 }

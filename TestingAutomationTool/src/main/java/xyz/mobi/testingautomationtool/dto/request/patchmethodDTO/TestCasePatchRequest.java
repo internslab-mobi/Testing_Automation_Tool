@@ -17,4 +17,5 @@ public class TestCasePatchRequest {
 
     private String comments;
 
+    private java.util.Map<String, Object> dynamicFields;
 }
