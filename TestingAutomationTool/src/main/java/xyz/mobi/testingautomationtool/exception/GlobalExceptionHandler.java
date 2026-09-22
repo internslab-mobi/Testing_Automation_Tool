@@ -105,9 +105,10 @@ public class GlobalExceptionHandler {
         String message = ex.getMessage() != null ? ex.getMessage() : "Internal Server Error";
         return buildErrorResponse(mapping, message, HttpStatus.INTERNAL_SERVER_ERROR);
     }
-    private String getErrorCode(String exceptionName){
-        Error mapping = errorDataRepository.findByExceptionName(exceptionName)
-                .orElseThrow();
-        return mapping.getErrorCode();
+    private String getErrorCode(String exceptionName) {
+
+        return errorDataRepository.findByExceptionName(exceptionName)
+                .map(Error::getErrorCode)
+                .orElse("ERR_500");
     }
 }

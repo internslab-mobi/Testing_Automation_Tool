@@ -15,22 +15,17 @@ import xyz.mobi.testingautomationtool.enums.TestType;
 @Builder
 public class TestCaseRequest {
 
-    @NotNull(message = "Feature ID is required")
     @Positive(message = "Feature ID must be greater than 0")
     private Integer featureId;
 
-    @NotBlank(message = "Test case format ID is required")
     @Size(max = 225, message = "Test case format ID cannot exceed 20 characters")
     private String testcaseFormatId;
 
-    @NotBlank(message = "Title is required")
-    @Size(max = 300, message = "Title cannot exceed 300 characters")
+    @Size(max = 500, message = "Title cannot exceed 500 characters")
     private String title;
 
-    @NotNull(message = "Test type is required")
     private TestType testType;
 
-    @NotNull(message = "Test priority is required")
     private TestPriority testPriority;
 
     private java.util.Map<String, Object> dynamicFields;

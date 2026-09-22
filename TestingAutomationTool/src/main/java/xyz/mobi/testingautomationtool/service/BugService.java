@@ -13,25 +13,6 @@ import xyz.mobi.testingautomationtool.enums.BugStatus;
 import java.util.List;
 
 public interface BugService {
-
-//    BugResponse createBug(BugRequest request, Integer testCaseId);
-//
-//    String softDeleteBug(Integer bugId);
-//
-//    String hardDeleteBug(Integer bugId);
-//
-//    BugResponse updateBug(
-//            Integer bugId,
-//            BugPutRequest request);
-//
-//    BugResponse assignBug(
-//            Integer bugId,
-//            BugAssignRequest request);
-//
-//    BugResponse updateStatus(
-//            Integer bugId,
-//            BugStatusRequest request);
-
     BugResponse getById(Integer bugId);
 
     List<BugResponse> getByAll();
@@ -55,6 +36,26 @@ public interface BugService {
     Page<BugResponse> getByPriority(BugPriority priority, int page, int size);
 
     Page<BugResponse> getByReportedBy(Integer id,int page,int size);
+
+//    BugResponse createBug(BugRequest request, Integer testCaseId);
+//
+//    String softDeleteBug(Integer bugId);
+//
+//    String hardDeleteBug(Integer bugId);
+//
+//    BugResponse updateBug(
+//            Integer bugId,
+//            BugPutRequest request);
+//
+//    BugResponse assignBug(
+//            Integer bugId,
+//            BugAssignRequest request);
+//
+//    BugResponse updateStatus(
+//            Integer bugId,
+//            BugStatusRequest request);
+
+
 //
 //    BugResponse createReoccurrence(Integer bugId);
 }

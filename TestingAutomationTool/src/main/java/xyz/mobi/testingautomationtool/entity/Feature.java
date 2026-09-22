@@ -55,4 +55,14 @@ public class Feature extends Auditable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
+
+    @Lob
+    @Column(name = "testcase_file", columnDefinition = "LONGBLOB")
+    private byte[] testcaseFile;
+
+    @Column(name = "testcase_excel_blob_name", length = 255)
+    private String testcaseFileName;
+
+    @Column(name = "testcase_file_type", length = 100)
+    private String testcaseFileType;
 }

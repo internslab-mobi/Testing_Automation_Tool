@@ -11,11 +11,8 @@ import lombok.*;
 @Builder
 public class TestCaseExecutionRequest {
 
-    @NotNull(message = "Test case data is required")
-    @Valid
+
     private TestCaseRequest testCase;
 
-    @NotNull(message = "Testing execution data is required")
-    @Valid
     private ExecutionRequest executionRequest;
 }

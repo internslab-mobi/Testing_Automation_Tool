@@ -18,8 +18,6 @@ import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseRespons
 import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.TestCasePutResponse;
 import xyz.mobi.testingautomationtool.service.TestCaseService;
 
-import java.util.List;
-
 @RestController
 @RequiredArgsConstructor
 public class TestcaseController {
@@ -78,16 +76,6 @@ public class TestcaseController {
 
         return ResponseEntity.ok(response);
     }
-
-
-
-
-
-
-
-
-
-
  /*   // Manual test case creation
 //    @PostMapping("/manual")
 //    public ResponseEntity<TestCaseExecutionResponse> createTestCaseByManual(

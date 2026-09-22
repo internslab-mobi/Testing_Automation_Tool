@@ -211,10 +211,10 @@ public class TestCaseServiceImpl implements TestCaseService {
                                 new RuntimeException(
                                         "Execution not found with ID: " + testCaseId));;
 
-        //1. Update execution status
+        //Update execution status
         execution.setExecutionStatus(request.getExecutionStatus());
 
-        //2. Update TestCase status
+        //Update TestCase status
         TestCaseStatus testCaseStatus = switch (request.getExecutionStatus()) {
             case PASS -> TestCaseStatus.PASSED;
             case FAIL -> TestCaseStatus.FAILED;
@@ -230,10 +230,10 @@ public class TestCaseServiceImpl implements TestCaseService {
 
 
         if(request.getExecutionStatus()==ExecutionStatus.PASS){
-            utils.trigger(testCase,testCase.getCreatedBy());
+            utils.trigger(testCase,testCase.getCreatedBy(),null);
         }
 
-        //3. Save execution + testcase
+        //Save execution + testcase
         TestingExecution updateTestingExecution = testingExecutionRepository.save(execution);
         testCaseRepository.save(testCase);
         return testCasePatchMapper.patchExecutionUpdate(updateTestingExecution);

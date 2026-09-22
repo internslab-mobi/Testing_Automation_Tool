@@ -18,10 +18,8 @@ public class ExecutionRequest {
 //    @Positive(message = "Test case ID must be greater than 0")
 //    private Integer testcaseId;
 
-    @NotNull(message = "Automation feasibility is required")
     private AutomationFeasibility automationFeasibility;
 
-    @NotNull(message = "Execution status is required")
     private ExecutionStatus executionStatus;
 
     @Size(max = 65535, message = "Test execution cannot exceed the allowed length")
