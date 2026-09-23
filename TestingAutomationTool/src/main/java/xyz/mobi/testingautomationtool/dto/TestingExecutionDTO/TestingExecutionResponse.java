@@ -38,4 +38,5 @@ public class TestingExecutionResponse {
 
     private Integer executedBy;
 
+    private LocalDateTime executedAt;
 }

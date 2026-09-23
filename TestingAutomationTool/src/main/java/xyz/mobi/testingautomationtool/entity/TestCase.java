@@ -2,10 +2,11 @@ package xyz.mobi.testingautomationtool.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
-import xyz.mobi.testingautomationtool.audit.Auditable;
 import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 import xyz.mobi.testingautomationtool.enums.TestPriority;
 import xyz.mobi.testingautomationtool.enums.TestType;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Table(
@@ -22,16 +23,15 @@ import xyz.mobi.testingautomationtool.enums.TestType;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TestCase extends Auditable {
+public class TestCase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     @Column(name = "testcase_id")
     private Integer testcaseId;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "feature_id", nullable = false)
-    private Feature feature;
+    @Column(name = "feature_id", nullable = false)
+    private Integer featureId;
 
     @Column(name = "testcase_format_id", nullable = false, length = 255)
     private String testcaseFormatId;
@@ -52,9 +52,14 @@ public class TestCase extends Auditable {
     private TestCaseStatus testcaseStatus;
 
     @Column(name = "is_active", nullable = false)
-    private boolean active;
+    private boolean activeStatus;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
-    private User createdBy;
+    @Column(name = "created_by", nullable = false)
+    private Integer createdBy;
+
+    @Column(name = "created_at", nullable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 }

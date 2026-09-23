@@ -3,7 +3,6 @@ package xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO;
 import lombok.*;
 import xyz.mobi.testingautomationtool.dto.TestcaseDTO.TestCaseResponse;
 import xyz.mobi.testingautomationtool.dto.TestingExecutionDTO.TestingExecutionResponse;
-import xyz.mobi.testingautomationtool.entity.TestingExecution;
 
 @Getter
 @Setter
@@ -13,7 +12,5 @@ import xyz.mobi.testingautomationtool.entity.TestingExecution;
 public class TestCaseExecutionResponse {
 
     private TestCaseResponse testCaseResponse;
-
     private TestingExecutionResponse testingExecutionResponse;
-
 }

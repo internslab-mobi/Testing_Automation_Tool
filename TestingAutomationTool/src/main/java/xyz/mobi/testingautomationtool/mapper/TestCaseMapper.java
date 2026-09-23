@@ -1,23 +1,40 @@
 package xyz.mobi.testingautomationtool.mapper;
 
-import org.mapstruct.Mapper;
-import org.mapstruct.Mapping;
-import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionRequest;
+import org.springframework.stereotype.Component;
 import xyz.mobi.testingautomationtool.dto.TestcaseDTO.TestCaseResponse;
-import xyz.mobi.testingautomationtool.dto.TestingExecutionDTO.TestingExecutionResponse;
 import xyz.mobi.testingautomationtool.entity.TestCase;
 import xyz.mobi.testingautomationtool.entity.TestingExecution;
 
-@Mapper(componentModel = "spring")
-public interface TestCaseMapper {
+@Component
+public class TestCaseMapper {
 
-    @Mapping(target = "testcaseId", ignore = true)
-    @Mapping(target = "createdAt", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    TestCase toEntity(TestCaseExecutionRequest request);
+    public TestCaseResponse toResponse(
+            TestCase testCase,
+            TestingExecution execution) {
 
-    TestCaseResponse toResponse(TestCase testCase);
+        TestCaseResponse.TestCaseResponseBuilder builder = TestCaseResponse.builder()
+                .testcaseId(testCase.getTestcaseId())
+                .testcaseFormatId(testCase.getTestcaseFormatId())
+                .featureId(testCase.getFeatureId())
+                .title(testCase.getTitle())
+                .testType(testCase.getTestType())
+                .testPriority(testCase.getTestPriority())
+                .testcaseStatus(testCase.getTestcaseStatus());
 
-    @Mapping(source = "testCase.testcaseId", target = "testcaseId")
-    TestingExecutionResponse toResponse(TestingExecution testingExecution);
+        if (execution != null) {
+            builder.executionId(execution.getExecutionId())
+                    .testExecution(execution.getTestExecution())
+                    .testValidation(execution.getTestValidation())
+                    .precondition(execution.getPrecondition())
+                    .testData(execution.getTestData())
+                    .executionSteps(execution.getExecutionSteps())
+                    .uiValidations(execution.getUiValidations())
+                    .dbValidations(execution.getDbValidations())
+                    .automationFeasibility(execution.getAutomationFeasibility())
+                    .bugsCount(execution.getBugsCount())
+                    .comments(execution.getComments());
+        }
+
+        return builder.build();
+    }
 }
