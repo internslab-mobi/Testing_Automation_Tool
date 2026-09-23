@@ -7,6 +7,8 @@ import xyz.mobi.testingautomationtool.dto.BugDTO.BugResponse;
 import xyz.mobi.testingautomationtool.entity.*;
 import xyz.mobi.testingautomationtool.enums.BugStatus;
 import xyz.mobi.testingautomationtool.enums.NotificationStatus;
+import xyz.mobi.testingautomationtool.exception.CustomException;
+import xyz.mobi.testingautomationtool.exception.ErrorCode;
 import xyz.mobi.testingautomationtool.repository.*;
 import xyz.mobi.testingautomationtool.service.BugService;
 
@@ -40,31 +42,31 @@ public class BugServiceImpl implements BugService {
 
         // Step 1: Duplicate guard - verify bugFormatId is unique
         if (bugRepository.existsByBugFormatId(request.getBugFormatId())) {
-            throw new RuntimeException("Bug with format ID '" + request.getBugFormatId() + "' already exists");
+            throw new CustomException(ErrorCode.DUPLICATE_RESOURCE);
         }
 
         // Step 2: Restrict bug creation status to OPEN only
         if (request.getStatus() != null && request.getStatus() != BugStatus.OPEN) {
-            throw new RuntimeException("New bug can only be created with OPEN status, received: " + request.getStatus());
+            throw new CustomException(ErrorCode.BUSINESS_RULE_VIOLATION);
         }
 
         // Step 3: Fetch and validate test case
         TestCase testCase = testCaseRepository.findById(request.getTestCaseId())
-                .orElseThrow(() -> new RuntimeException("Test case not found with id: " + request.getTestCaseId()));
+                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
 
         Integer featureId = request.getFeatureId() != null ? request.getFeatureId() : testCase.getFeatureId();
         Feature feature = featureRepository.findById(featureId)
-                .orElseThrow(() -> new RuntimeException("Feature not found with id: " + featureId));
+                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
 
         // Step 4: Fetch reportedBy user
         User reportedBy = userRepository.findById(request.getReportedBy())
-                .orElseThrow(() -> new RuntimeException("User not found with id: " + request.getReportedBy()));
+                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
 
         // Step 5: Fetch optional assignedTo user
         User assignedTo = null;
         if (request.getAssignedTo() != null) {
             assignedTo = userRepository.findById(request.getAssignedTo())
-                    .orElseThrow(() -> new RuntimeException("Assigned user not found with id: " + request.getAssignedTo()));
+                    .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
         }
 
         // Step 6: Validate reoccurred bug relevance and compute occurrence server-side
@@ -72,15 +74,12 @@ public class BugServiceImpl implements BugService {
         int occurrence = 1;
         if (request.getBugReoccurredId() != null) {
             bugReoccurred = bugRepository.findById(request.getBugReoccurredId())
-                    .orElseThrow(() -> new RuntimeException("Previous bug not found with id: " + request.getBugReoccurredId()));
+                    .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
 
             // Ensure the reoccurred bug belongs to the same test case
             if (bugReoccurred.getTestCase() != null &&
                     !bugReoccurred.getTestCase().getTestcaseId().equals(testCase.getTestcaseId())) {
-                throw new RuntimeException("Reoccurred bug (ID: " + request.getBugReoccurredId()
-                        + ") does not belong to the same test case (expected testCaseId: "
-                        + testCase.getTestcaseId() + ", but was: "
-                        + bugReoccurred.getTestCase().getTestcaseId() + ")");
+                throw new CustomException(ErrorCode.BUSINESS_RULE_VIOLATION);
             }
 
             int previousOccurrence = bugReoccurred.getBugOccurrence() != null ? bugReoccurred.getBugOccurrence() : 1;

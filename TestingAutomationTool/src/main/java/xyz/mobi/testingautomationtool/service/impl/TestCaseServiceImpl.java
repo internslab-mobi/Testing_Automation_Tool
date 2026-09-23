@@ -12,6 +12,8 @@ import xyz.mobi.testingautomationtool.entity.TestingExecution;
 import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 import xyz.mobi.testingautomationtool.enums.TestPriority;
 import xyz.mobi.testingautomationtool.enums.TestType;
+import xyz.mobi.testingautomationtool.exception.CustomException;
+import xyz.mobi.testingautomationtool.exception.ErrorCode;
 import xyz.mobi.testingautomationtool.mapper.TestCaseMapper;
 import xyz.mobi.testingautomationtool.repository.TestCaseRepository;
 import xyz.mobi.testingautomationtool.repository.TestingExecutionRepository;
@@ -60,10 +62,10 @@ public class TestCaseServiceImpl implements TestCaseService {
 
         // Step 1: Validate page and size inputs
         if (pageable.getPageNumber() < 0) {
-            throw new IllegalArgumentException("Page index must not be less than zero");
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
         if (pageable.getPageSize() <= 0) {
-            throw new IllegalArgumentException("Page size must be greater than zero");
+            throw new CustomException(ErrorCode.INVALID_REQUEST);
         }
 
         // Step 2: Cap max page size to 100 to prevent uncontrolled DB fetch
@@ -106,11 +108,11 @@ public class TestCaseServiceImpl implements TestCaseService {
     public TestCaseResponse getById(Integer id, boolean includeInactive) {
         // Step 1: Distinct check for test case existence
         TestCase testCase = testCaseRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Test case not found with id: " + id));
+                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
 
         // Step 2: Distinct check for active status vs inactive
         if (!includeInactive && !testCase.isActiveStatus()) {
-            throw new RuntimeException("Test case is inactive with id: " + id);
+            throw new CustomException(ErrorCode.BUSINESS_RULE_VIOLATION);
         }
 
         // Step 3: Treat execution as optional (do not throw if test case hasn't run yet)

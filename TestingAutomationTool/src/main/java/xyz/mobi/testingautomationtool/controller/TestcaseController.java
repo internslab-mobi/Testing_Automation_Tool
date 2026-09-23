@@ -20,9 +20,9 @@ public class TestcaseController {
 
     private final TestCaseService testCaseService;
 
-    @GetMapping("/feature/{featureId}")
-    public ResponseEntity<Page<TestCaseResponse>> getAllTestCasesByFeature(
-            @PathVariable Integer featureId,
+    @GetMapping({"", "/feature/{featureId}"})
+    public ResponseEntity<Page<TestCaseResponse>> getAllTestCases(
+            @PathVariable(name = "featureId", required = false) Integer featureId,
             @RequestParam(required = false) TestCaseStatus status,
             @RequestParam(required = false) TestType type,
             @RequestParam(required = false) TestPriority priority,

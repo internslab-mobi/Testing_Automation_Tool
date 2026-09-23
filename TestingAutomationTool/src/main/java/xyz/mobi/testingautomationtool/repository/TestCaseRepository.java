@@ -16,7 +16,7 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Integer> {
 
     Page<TestCase> findByFeatureId(Integer featureId, Pageable pageable);
 
-    @Query("SELECT tc FROM TestCase tc WHERE tc.featureId = :featureId " +
+    @Query("SELECT tc FROM TestCase tc WHERE (:featureId IS NULL OR tc.featureId = :featureId) " +
            "AND (:status IS NULL OR tc.testcaseStatus = :status) " +
            "AND (:type IS NULL OR tc.testType = :type) " +
            "AND (:priority IS NULL OR tc.testPriority = :priority)")
