@@ -1,35 +1,38 @@
 package xyz.mobi.testingautomationtool.dto.TestcaseDTO;
 
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 import xyz.mobi.testingautomationtool.enums.TestPriority;
 import xyz.mobi.testingautomationtool.enums.TestType;
-import xyz.mobi.testingautomationtool.enums.AutomationFeasibility;
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TestCaseResponse {
+public class TestCaseRequest {
 
-    private Integer testcaseId;
-    private String testcaseFormatId;
+    @NotNull
     private Integer featureId;
 
+    @NotBlank
+    @Size(max = 300)
     private String title;
 
+    @NotNull
     private TestType testType;
 
     private TestPriority testPriority;
 
     private TestCaseStatus testcaseStatus;
 
-    private String createdBy;
+    @NotNull
+    private Integer createdBy;
 
-    private Instant createdAt;
-
-    private Instant updatedAt;
-
-    private java.util.Map<String, Object> dynamicFields;
+    @NotBlank
+    @Size(max = 20)
+    private String testcaseFormatId;
 }

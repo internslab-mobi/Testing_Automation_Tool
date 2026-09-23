@@ -1,5 +1,6 @@
-package xyz.mobi.testingautomationtool.dto.response.postMethodDTO;
+package xyz.mobi.testingautomationtool.dto.TestingExecutionDTO;
 
+import xyz.mobi.testingautomationtool.enums.AutomationFeasibility;
 import lombok.*;
 import xyz.mobi.testingautomationtool.enums.AutomationFeasibility;
 

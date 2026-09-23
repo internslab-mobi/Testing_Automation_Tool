@@ -8,7 +8,15 @@ import xyz.mobi.testingautomationtool.enums.ExecutionStatus;
 import java.time.Instant;
 
 @Entity
-@Table(name = "testing_executions")
+@Table(
+        name = "testing_executions",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uq_testcase_execution",
+                        columnNames = {"testcase_id", "bugs_count"}
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor

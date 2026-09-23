@@ -1,9 +1,23 @@
 package xyz.mobi.testingautomationtool.service.impl;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.stereotype.Service;
+import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionRequest;
+import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionResponse;
+import xyz.mobi.testingautomationtool.dto.TestcaseDTO.TestCaseResponse;
+import xyz.mobi.testingautomationtool.entity.TestCase;
+import xyz.mobi.testingautomationtool.entity.TestingExecution;
+import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
+import xyz.mobi.testingautomationtool.enums.TestPriority;
+import xyz.mobi.testingautomationtool.enums.TestType;
+import xyz.mobi.testingautomationtool.mapper.TestCaseMapper;
+import xyz.mobi.testingautomationtool.repository.TestCaseRepository;
+import xyz.mobi.testingautomationtool.repository.TestingExecutionRepository;
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.TestCasePatchRequest;
 import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.TestCasePutRequest;
 import xyz.mobi.testingautomationtool.dto.response.DeleteMethodDto.PatchTestCaseDeleteResponse;
@@ -18,12 +32,11 @@ import xyz.mobi.testingautomationtool.mapper.putMapper.TestCasePutMapper;
 import xyz.mobi.testingautomationtool.repository.*;
 
 import xyz.mobi.testingautomationtool.service.TestCaseService;
-import xyz.mobi.testingautomationtool.utils.Utils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Collections;
 import java.util.List;
-
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 @Transactional
@@ -202,6 +215,81 @@ public class TestCaseServiceImpl implements TestCaseService {
         return "Test case with ID " + id + " updated successfully. Changed fields: " + String.join(", ", updatedFields);
     }
 
+    @Override
+    public Page<TestCaseResponse> getAll(
+            Integer featureId,
+            TestCaseStatus status,
+            TestType type,
+            TestPriority priority,
+            Pageable pageable) {
+
+        // Step 1: Validate page and size inputs
+        if (pageable.getPageNumber() < 0) {
+            throw new IllegalArgumentException("Page index must not be less than zero");
+        }
+        if (pageable.getPageSize() <= 0) {
+            throw new IllegalArgumentException("Page size must be greater than zero");
+        }
+
+        // Step 2: Cap max page size to 100 to prevent uncontrolled DB fetch
+        int boundedSize = Math.min(pageable.getPageSize(), 100);
+        Pageable safePageable = PageRequest.of(pageable.getPageNumber(), boundedSize, pageable.getSort());
+
+        // Step 3: Fetch filtered test cases for the feature
+        Page<TestCase> testCasesPage = testCaseRepository.findByFeatureIdWithFilters(
+                featureId, status, type, priority, safePageable);
+
+        // Step 4: Fix N+1 query - batch fetch executions in one query for all test case IDs
+        List<Integer> testCaseIds = testCasesPage.getContent().stream()
+                .map(TestCase::getTestcaseId)
+                .toList();
+
+        Map<Integer, TestingExecution> executionMap = Collections.emptyMap();
+        if (!testCaseIds.isEmpty()) {
+            List<TestingExecution> executions = testingExecutionRepository.findByTestCaseTestcaseIdIn(testCaseIds);
+            executionMap = executions.stream()
+                    .collect(Collectors.toMap(
+                            e -> e.getTestCase().getTestcaseId(),
+                            e -> e,
+                            (existing, replacement) -> existing
+                    ));
+        }
+
+        // Step 5: Map test cases with their optional executions (null if never executed)
+        final Map<Integer, TestingExecution> finalExecutionMap = executionMap;
+        return testCasesPage.map(testCase ->
+                testCaseMapper.toResponse(testCase, finalExecutionMap.get(testCase.getTestcaseId()))
+        );
+    }
+
+    @Override
+    public Page<TestCaseResponse> getAll(Integer featureId, int page, int size) {
+        return getAll(featureId, null, null, null, PageRequest.of(page, size));
+    }
+
+    @Override
+    public TestCaseResponse getById(Integer id, boolean includeInactive) {
+        // Step 1: Distinct check for test case existence
+        TestCase testCase = testCaseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Test case not found with id: " + id));
+
+        // Step 2: Distinct check for active status vs inactive
+        if (!includeInactive && !testCase.isActiveStatus()) {
+            throw new RuntimeException("Test case is inactive with id: " + id);
+        }
+
+        // Step 3: Treat execution as optional (do not throw if test case hasn't run yet)
+        TestingExecution execution = testingExecutionRepository
+                .findByTestCaseTestcaseId(id)
+                .orElse(null);
+
+        return testCaseMapper.toResponse(testCase, execution);
+    }
+
+    @Override
+    public TestCaseResponse getById(Integer id) {
+        return getById(id, false);
+    }
 
     @Override
     public String hardDeleteTestCase(Integer id) {
@@ -221,9 +309,8 @@ public class TestCaseServiceImpl implements TestCaseService {
         testCaseRepository.delete(testCase);
 
         return "Test case " + testcaseFormatId + " deleted successfully";
-    }
 
-    @Override
+
     public PatchTestCaseDeleteResponse softDeleteTestCase(Integer id) {
         TestCase testCase = testCaseRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("TestCase is not present for this id:" + id));
         testCase.setDeleted(true);
@@ -240,318 +327,5 @@ public class TestCaseServiceImpl implements TestCaseService {
 
 
     /*    *//*@Override
-    public TestCaseExecutionResponse createTestCaseByManual(
-            TestCaseExecutionRequest request) {
 
-        String formatId = request.getTestCase().getTestcaseFormatId();
-
-        if (testCaseRepository.existsByTestcaseFormatId(formatId)) {
-                throw new IllegalArgumentException(
-                    "Test case format ID already exists: " + formatId
-            );
-        }
-
-        TestCase testCase = testCaseMapper.toEntity(request.getTestCase());
-
-//        System.out.println("STATUS AFTER MAPPER = " + testCase.getTestcaseStatus());
-
-        Feature feature = featureRepository.findById(
-                request.getTestCase().getFeatureId()
-        ).orElseThrow(() -> new RuntimeException("Feature not found"));
-
-        testCase.setFeature(feature);
-
-        //current user
-//        User createdBy = userRepository.findById(
-//                request.getTestCase().getCreatedBy()
-//        ).orElseThrow(() ->
-//                new RuntimeException("Created by user not found")
-//        );
-//
-//        User currentUser = getCurrentUser();
-
-        User dummyUser = userRepository.findById(1)
-                .orElseThrow(() ->
-                        new RuntimeException("Dummy user not found")
-                );
-
-        testCase.setCreatedBy(dummyUser);
-
-        testCase = testCaseRepository.save(testCase);
-
-
-
-        TestingExecution execution = testCaseMapper.toEntity(request.getExecutionRequest());
-
-        execution.setTestCase(testCase);
-
-        execution = testingExecutionRepository.save(execution);
-
-        return TestCaseExecutionResponse.builder()
-                .testCaseResponse(testCaseMapper.toResponse(testCase))
-                .executionResponse(testCaseMapper.toResponse(execution))
-                .build();
-    }
-*//*
-
-    *//*@Override
-    @Transactional
-    public ExcelUploadResponse createTestCaseByUpload(
-            MultipartFile file,
-            Integer featureId) {
-
-        // 1. Parse and validate Excel
-        ExcelParseResult result =
-                testCaseExcelService.parseAndValidate(file, featureId);
-
-        // 2. If Excel validation failed, save nothing
-        if (!result.getErrors().isEmpty()) {
-
-            return ExcelUploadResponse.builder()
-                    .message("Excel upload failed")
-                    .totalRows(result.getRows().size())
-                    .successRows(0)
-                    .failedRows(result.getErrors().size())
-                    .errors(result.getErrors())
-                    .build();
-        }
-
-        // 3. Find feature
-        Feature feature = featureRepository.findById(featureId)
-                .orElseThrow(() ->
-                        new RuntimeException("Feature not found with ID: " + featureId));
-
-        // 4. Check duplicate TestcaseFormatId
-        for (ExcelTestCaseRow row : result.getRows()) {
-
-            if (testCaseRepository
-                    .existsByFeature_FeatureIdAndTestcaseFormatId(
-                            featureId, row.getTestcaseFormatId()
-                    )) {
-
-                ExcelUploadErrorResponse error =
-                        ExcelUploadErrorResponse.builder()
-                                .row(row.getRowNumber())
-                                .column("TestcaseID")
-                                .value(row.getTestcaseFormatId())
-                                .message(
-                                        "TestcaseID already exists for this feature"
-                                )
-                                .build();
-
-                result.getErrors().add(error);
-            }
-        }
-
-        // 5. If DB duplicate found, save NOTHING
-        if (!result.getErrors().isEmpty()) {
-
-            return ExcelUploadResponse.builder()
-                    .message("Excel upload failed")
-                    .totalRows(result.getRows().size())
-                    .successRows(0)
-                    .failedRows(result.getErrors().size())
-                    .errors(result.getErrors())
-                    .build();
-        }
-
-        // 6. Everything is valid.
-        for (ExcelTestCaseRow row : result.getRows()) {
-
-            // Create TestCase
-
-            TestCase testCase = new TestCase();
-
-            testCase.setFeature(feature);
-
-            // Excel TestcaseID → testcaseFormatId
-            testCase.setTestcaseFormatId(row.getTestcaseFormatId());
-
-            testCase.setTitle(row.getTitle());
-
-            testCase.setTestType(
-                    TestType.valueOf(
-                            row.getTestType()
-                                    .trim()
-                                    .toUpperCase()
-                    )
-            );
-
-            testCase.setTestPriority(
-                    TestPriority.valueOf(
-                            row.getAutomationPriority()
-                                    .trim()
-                                    .toUpperCase()
-                    )
-            );
-
-            // Default = NO_RUN
-            if (!isBlank(row.getActualStatus())) {
-
-                testCase.setTestcaseStatus(
-                        TestCaseStatus.valueOf(
-                                row.getActualStatus()
-                                        .trim()
-                                        .toUpperCase()
-                        )
-                );
-            }
-
-            User dummyUser = userRepository.findById(1)
-                    .orElseThrow(() ->
-                            new RuntimeException("Dummy user not found")
-                    );
-
-            testCase.setCreatedBy(dummyUser);
-
-            // DB testcase_id is generated automatically
-            testCase = testCaseRepository.save(testCase);
-
-            // Create TestingExecution
-            TestingExecution execution = new TestingExecution();
-
-            execution.setTestCase(testCase);
-
-            // Excel Automation Status
-            if (!isBlank(row.getAutomationStatus())) {
-
-                execution.setAutomationFeasibility(
-                        AutomationFeasibility.valueOf(
-                                row.getAutomationStatus()
-                                        .trim()
-                                        .toUpperCase()
-                        )
-                );
-
-            } else {
-                execution.setAutomationFeasibility(AutomationFeasibility.PENDING);
-            }
-
-            execution.setTestExecution(row.getTestExecution());
-
-            execution.setTestValidation(row.getTestValidation());
-
-            execution.setPrecondition(row.getPreCondition());
-
-            execution.setTestData(row.getTestData());
-
-            execution.setExecutionSteps(row.getExecutionSteps());
-
-            execution.setUiValidations(row.getUiValidations());
-
-            execution.setDbValidations(row.getDbValidations());
-
-            execution.setComments(row.getComments());
-
-            testingExecutionRepository.save(execution);
-        }
-
-        // 7. Everything saved successfully
-        return ExcelUploadResponse.builder()
-                .message("Excel uploaded successfully")
-                .totalRows(result.getRows().size())
-                .successRows(result.getRows().size())
-                .failedRows(0)
-                .errors(Collections.emptyList())
-                .build();
-    }*//*
-
-    *//*@Override
-    public TestCaseExecutionResponse getById(int id) {
-
-        TestCase testCase = testCaseRepository.findById(id)
-                .orElseThrow(() ->
-                        new RuntimeException(
-                                "Test case not found with ID: " + id));
-
-        TestingExecution execution =
-                testingExecutionRepository.findByTestCase(testCase)
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Execution not found for test case ID: " + id));
-
-        if(!testCase.isActive()){
-            throw  new RuntimeException("The testcase has been removed");
-        }
-
-        return TestCaseExecutionResponse.builder()
-                .testCaseResponse(testCaseMapper.toResponse(testCase))
-                .executionResponse(testCaseMapper.toResponse(execution))
-                .build();
-    }*//*
-
-    *//*@Override
-    public List<TestCaseExecutionResponse> getByAll() {
-
-        List<TestCase> testCases = testCaseRepository.findAll();
-
-        return testCases.stream()
-                .map(testCase -> {
-
-                    TestingExecution execution =
-                            testingExecutionRepository.findByTestCase(testCase)
-                                    .orElse(null);
-
-                    return TestCaseExecutionResponse.builder()
-                            .testCaseResponse(
-                                    testCaseMapper.toResponse(testCase))
-                            .executionResponse(
-                                    execution != null
-                                            ? testCaseMapper.toResponse(execution)
-                                            : null)
-                            .build();
-                })
-                .toList();
-    }*//*
-
-   *//* @Override
-    public Page<TestCaseExecutionResponse> getByFeatureId(Integer featureId,int page,int size) {
-        Pageable pageable = PageRequest.of(page,size);
-        Page<TestCase> testCases =
-                testCaseRepository.findByFeature_FeatureIdAndActiveTrue(
-                        featureId,
-                        pageable);
-
-        return testCases
-                .map(testCase -> {
-
-                    TestingExecution execution =
-                            testingExecutionRepository
-                                    .findByTestCase(testCase)
-                                    .orElse(null);
-
-                    return TestCaseExecutionResponse.builder()
-                            .testCaseResponse(
-                                    testCaseMapper.toResponse(testCase))
-                            .executionResponse(
-                                    execution != null
-                                            ? testCaseMapper.toResponse(execution)
-                                            : null)
-                            .build();
-                });
-    }
-*//*
-
-
-
-//    private String generateBugFormatId(Integer testcaseId) {
-//
-//        Optional<Bug> latestBug =
-//                bugRepository.findTopByTestCase_TestcaseIdOrderByBugIdDesc(
-//                        testcaseId);
-//
-//        int nextNumber = latestBug
-//                .map(bug -> {
-//                    String bugFormatId = bug.getBugFormatId();
-//
-//                    String numberPart =
-//                            bugFormatId.substring(
-//                                    bugFormatId.lastIndexOf("-") + 1);
-//
-//                    return Integer.parseInt(numberPart) + 1;
-//                })
-//                .orElse(1);
-//
-//        return String.format("BUG-%03d", nextNumber);
-//    }
-//*/
+}

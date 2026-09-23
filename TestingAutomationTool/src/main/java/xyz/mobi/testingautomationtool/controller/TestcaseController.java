@@ -5,6 +5,11 @@ import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -19,6 +24,11 @@ import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.PatchTestCaseR
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseExecutionResponse;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseResponse;
 import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.TestCasePutResponse;
+import org.springframework.web.bind.annotation.*;
+import xyz.mobi.testingautomationtool.dto.TestcaseDTO.TestCaseResponse;
+import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
+import xyz.mobi.testingautomationtool.enums.TestPriority;
+import xyz.mobi.testingautomationtool.enums.TestType;
 import xyz.mobi.testingautomationtool.service.TestCaseService;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
@@ -31,6 +41,28 @@ import org.springframework.security.access.prepost.PreAuthorize;
 public class TestcaseController {
 
     private final TestCaseService testCaseService;
+
+    @GetMapping("/feature/{featureId}")
+    public ResponseEntity<Page<TestCaseResponse>> getAllTestCasesByFeature(
+            @PathVariable Integer featureId,
+            @RequestParam(required = false) TestCaseStatus status,
+            @RequestParam(required = false) TestType type,
+            @RequestParam(required = false) TestPriority priority,
+            @PageableDefault(page = 0, size = 10, sort = "testcaseId") Pageable pageable) {
+        if (pageable.getPageSize() <= 0) {
+            pageable = PageRequest.of(pageable.getPageNumber(), 10, pageable.getSort());
+        }
+        return ResponseEntity.ok(
+                testCaseService.getAll(featureId, status, type, priority, pageable)
+        );
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<TestCaseResponse> getTestCaseById(
+            @PathVariable Integer id,
+            @RequestParam(defaultValue = "false") boolean includeInactive) {
+        return ResponseEntity.ok(testCaseService.getById(id, includeInactive));
+    }
 
     @PutMapping("/{id}/update")
     public ResponseEntity<TestCasePutResponse> updateTestCaseDetails(
@@ -68,89 +100,4 @@ public class TestcaseController {
 
         return ResponseEntity.ok(response);
     }
-
-    /*@PatchMapping("/{id}/delete")
-    public ResponseEntity<String> softDeleteTestCase(
-            @PathVariable("id") Integer id) {
-
-        String response = testCaseService.softDeleteTestCase(id);
-
-        return ResponseEntity.ok(response);
-    }*/
-
-
-
-   /* @PatchMapping("/executions/{executionId}/status")
-    public ResponseEntity<ExecutionStatusResponse> updateExecutionStatus(
-            @PathVariable Integer executionId,
-            @Valid @RequestBody UpdateExecutionStatusRequest request) {
-
-        ExecutionStatusResponse response =
-                testCaseService.updateExecutionStatus(
-                        executionId,
-                        request
-                );
-
-        return ResponseEntity.ok(response);
-    }*/
- /*   // Manual test case creation
-//    @PostMapping("/manual")
-//    public ResponseEntity<TestCaseExecutionResponse> createTestCaseByManual(
-//            @Valid @RequestBody TestCaseExecutionRequest request) {
-//
-//        TestCaseExecutionResponse response =
-//                testCaseService.createTestCaseByManual(request);
-//
-//        return ResponseEntity
-//                .status(HttpStatus.CREATED)
-//                .body(response);
-//    }*/
-
-    // Excel test case upload
-    /*@PostMapping(
-            value = "/upload",
-            consumes = "multipart/form-data"
-    )
-    public ResponseEntity<ExcelUploadResponse> createTestCaseByUpload(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("featureId") Integer featureId) {
-
-        ExcelUploadResponse response =
-                testCaseService.createTestCaseByUpload(
-                        file,
-                        featureId
-                );
-
-        return ResponseEntity.ok(response);
-    }*/
-
-
-
-   /* @GetMapping("/{id}")
-    public ResponseEntity<TestCaseExecutionResponse> getById(
-            @PathVariable int id) {
-
-        return ResponseEntity.ok(
-                testCaseService.getById(id)
-        );
-    }*/
-
-    /*@GetMapping
-    public ResponseEntity<List<TestCaseExecutionResponse>> getByAll() {
-
-        return ResponseEntity.ok(
-                testCaseService.getByAll()
-        );
-    }*/
-
-    /*@GetMapping("/feature/{featureId}")
-    public ResponseEntity<Page<TestCaseExecutionResponse>> getByFeatureId(
-            @PathVariable Integer featureId,
-            @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "10") Integer size) {
-
-        return ResponseEntity.ok(
-                testCaseService.getByFeatureId(featureId, page, size)
-        );
-    }*/
 }

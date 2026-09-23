@@ -2,6 +2,7 @@ package xyz.mobi.testingautomationtool.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.BugAssignRequest;
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.BugStatusRequest;
 import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.BugRequest;
@@ -14,6 +15,8 @@ import xyz.mobi.testingautomationtool.enums.BugStatus;
 
 import java.time.LocalDate;
 import java.util.List;
+import xyz.mobi.testingautomationtool.dto.BugDTO.BugRequest;
+import xyz.mobi.testingautomationtool.dto.BugDTO.BugResponse;
 
 public interface BugService {
     BugResponse getById(Integer bugId);
@@ -38,4 +41,8 @@ public interface BugService {
     );
 
 
+    BugResponse createBug(BugRequest request);
+
+    @Transactional
+    xyz.mobi.testingautomationtool.dto.BugDTO.BugResponse createBug(xyz.mobi.testingautomationtool.dto.BugDTO.BugRequest request);
 }

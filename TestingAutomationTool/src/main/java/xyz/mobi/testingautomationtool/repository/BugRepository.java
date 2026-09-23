@@ -30,20 +30,20 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
-    UPDATE Bug b
-    SET b.isActive = false
-    WHERE b.testCase.testcaseId = :testCaseId
-""")
+                UPDATE Bug b
+                SET b.isActive = false
+                WHERE b.testCase.testcaseId = :testCaseId
+            """)
     int deactivateBugs(@Param("testCaseId") Integer testCaseId);
 
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
-    UPDATE Bug b
-    SET b.isActive = true
-    WHERE b.testCase.testcaseId = :testCaseId
-      AND b.isDeleted = false
-""")
+                UPDATE Bug b
+                SET b.isActive = true
+                WHERE b.testCase.testcaseId = :testCaseId
+                  AND b.isDeleted = false
+            """)
     int activateNonDeletedBugs(@Param("testCaseId") Integer testCaseId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
@@ -57,5 +57,7 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Bug b SET b.isActive = true WHERE b.feature.project.projectId = :projectId")
     int activateBugsByProjectId(@Param("projectId") Integer projectId);
+
+    boolean existsByBugFormatId(String bugFormatId);
 
 }
