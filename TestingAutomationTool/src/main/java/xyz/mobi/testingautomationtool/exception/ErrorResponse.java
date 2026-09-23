@@ -1,24 +1,25 @@
 package xyz.mobi.testingautomationtool.exception;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
-import java.time.Instant;
+import java.time.LocalDateTime;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-public class ErrorResponse {
+public record ErrorResponse(
+        String errorCode,
+        String errorMessage,
+        Integer errorStatusCode,
+        @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
+        LocalDateTime time) {
 
-    private String errorCode;
-
-    private Instant errorTime;
-
-    private Integer errorStatus;
-
-    private String errorMessage;
+    public ErrorResponse(
+            String errorCode,
+            String errorMessage,
+            Integer errorStatusCode,
+            LocalDateTime time) {
+        this.errorCode = errorCode;
+        this.errorMessage = errorMessage;
+        this.errorStatusCode = errorStatusCode;
+        this.time = time;
+    }
 
 }

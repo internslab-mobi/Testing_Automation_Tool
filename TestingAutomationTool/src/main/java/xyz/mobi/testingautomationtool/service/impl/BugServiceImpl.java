@@ -1,10 +1,5 @@
 package xyz.mobi.testingautomationtool.service.impl;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.mobi.testingautomationtool.dto.BugDTO.BugRequest;
@@ -37,8 +32,8 @@ public class BugServiceImpl implements BugService {
     private final NotificationRepository notificationRepository;
 
 
-    @Transactional
     @Override
+    @Transactional
     public BugResponse createBug(BugRequest request) {
 
         // Step 1: Duplicate guard - verify bugFormatId is unique
