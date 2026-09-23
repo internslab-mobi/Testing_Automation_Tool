@@ -56,6 +56,7 @@ public class NotificationServiceImpl
     @Transactional
     public NotificationResponse createNotification(
             Integer employeeId,
+            Integer assignedId,
             Integer bugId,
             String message) {
 
@@ -65,6 +66,12 @@ public class NotificationServiceImpl
                                 "User not found with ID: "
                                         + employeeId));
 
+        User assigned = userRepository.findById(assignedId)
+                .orElseThrow(() ->
+                        new RuntimeException(
+                                "User not found with ID: "
+                                +assignedId));
+
         Bug bug = bugRepository.findById(bugId)
                 .orElseThrow(() ->
                         new RuntimeException(
@@ -73,10 +80,11 @@ public class NotificationServiceImpl
 
         Notification notification = Notification.builder()
                 .employee(employee)
+                .assigned(assigned)
                 .bug(bug)
                 .message(message)
                 .createdAt(LocalDateTime.now())
-                .notificationStatus(NotificationStatus.PENDING)
+                .notificationStatus(NotificationStatus.FAIL)
                 .build();
 
         notification =

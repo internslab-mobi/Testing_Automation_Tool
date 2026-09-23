@@ -27,7 +27,7 @@ public class TestcaseController {
     private final TestCaseService testCaseService;
 
     // Manual test case creation
-    @PostMapping("/manual")
+    @PostMapping
     public ResponseEntity<TestCaseExecutionResponse> createTestCaseByManual(
             @Valid @RequestBody TestCaseExecutionRequest request) {
 

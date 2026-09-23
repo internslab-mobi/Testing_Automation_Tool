@@ -15,9 +15,11 @@ import java.time.LocalDateTime;
 public class ErrorResponse {
 
     private String errorCode;
+
+    private Integer errorStatus;
+
     private String errorMessage;
-    private Integer errorStatusCode;
 
     @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private LocalDateTime time;
+    private LocalDateTime errorTime;
 }

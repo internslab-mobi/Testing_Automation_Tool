@@ -24,6 +24,10 @@ public class Notification {
     @JoinColumn(name = "employee_id", nullable = false)
     private User employee;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="assigned_id",nullable = false)
+    private User assigned;
+
     @Column(name = "message", nullable = false, columnDefinition = "TEXT")
     private String message;
 

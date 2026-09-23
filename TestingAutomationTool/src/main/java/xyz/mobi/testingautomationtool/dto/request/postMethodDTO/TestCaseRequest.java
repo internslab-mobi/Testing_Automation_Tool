@@ -23,14 +23,11 @@ public class TestCaseRequest {
     @Size(max = 225, message = "Test case format ID cannot exceed 20 characters")
     private String testcaseFormatId;
 
-    @NotBlank(message = "Title is required")
     @Size(max = 300, message = "Title cannot exceed 300 characters")
     private String title;
 
-    @NotNull(message = "Test type is required")
     private TestType testType;
 
-    @NotNull(message = "Test priority is required")
     private TestPriority testPriority;
 
     private java.util.Map<String, Object> dynamicFields;

@@ -40,10 +40,10 @@ public class TestingExecution {
     private Integer executionNumber = 0;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "automation_feasibility",nullable = false, length = 255)
+    @Column(name = "automation_feasibility", length = 255)
     @Builder.Default
     private AutomationFeasibility automationFeasibility =
-            AutomationFeasibility.PENDING;
+            AutomationFeasibility.YES;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "execution_status",length = 255)

@@ -2,6 +2,7 @@ package xyz.mobi.testingautomationtool.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import xyz.mobi.testingautomationtool.enums.BugStatus;
 import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 
 import java.time.LocalDateTime;
@@ -29,8 +30,12 @@ public class TestingAuditLog {
     private Bug bug;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "testcase_status", nullable = false, length = 255)
+    @Column(name = "testcase_status", nullable = false)
     private TestCaseStatus testcaseStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name="bug_status")
+    private BugStatus bugStatus;
 
     @Column(name = "executed_by", nullable = false)
     private Integer executedBy;

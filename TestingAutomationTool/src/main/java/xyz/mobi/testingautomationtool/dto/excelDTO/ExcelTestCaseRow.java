@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Map;
+
 @Getter
 @Setter
 @NoArgsConstructor
@@ -29,4 +31,5 @@ public class ExcelTestCaseRow {
     private String automationStatus;
     private String actualStatus;
     private String comments;
+    private Map<String, Object> dynamicFields;
 }

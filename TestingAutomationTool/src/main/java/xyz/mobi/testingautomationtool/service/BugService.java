@@ -14,23 +14,23 @@ import java.util.List;
 
 public interface BugService {
 
-//    BugResponse createBug(BugRequest request, Integer testCaseId);
-//
-//    String softDeleteBug(Integer bugId);
-//
-//    String hardDeleteBug(Integer bugId);
-//
-//    BugResponse updateBug(
-//            Integer bugId,
-//            BugPutRequest request);
-//
-//    BugResponse assignBug(
-//            Integer bugId,
-//            BugAssignRequest request);
-//
-//    BugResponse updateStatus(
-//            Integer bugId,
-//            BugStatusRequest request);
+    BugResponse createBug(BugRequest request, Integer testCaseId);
+
+    String softDeleteBug(Integer bugId);
+
+    String hardDeleteBug(Integer bugId);
+
+    BugResponse updateBug(
+            Integer bugId,
+            BugPutRequest request);
+
+    BugResponse assignBug(
+            Integer bugId,
+            BugAssignRequest request);
+
+    BugResponse updateStatus(
+            Integer bugId,
+            BugStatusRequest request);
 
     BugResponse getById(Integer bugId);
 
@@ -38,11 +38,11 @@ public interface BugService {
 
     Page<BugResponse> getAllBugs(int page, int size);
 
-    List<BugResponse> getByTestcaseId(Integer testcaseId);
+//    List<BugResponse> getByTestcaseId(Integer testcaseId);
 
     Page<BugResponse> getByTestcaseId(Integer testcaseId, int page, int size);
 
-    List<BugResponse> getByFeatureId(Integer featureId);
+//    List<BugResponse> getByFeatureId(Integer featureId);
 
     Page<BugResponse> getByFeatureId(Integer featureId, int page, int size);
 
@@ -55,6 +55,4 @@ public interface BugService {
     Page<BugResponse> getByPriority(BugPriority priority, int page, int size);
 
     Page<BugResponse> getByReportedBy(Integer id,int page,int size);
-//
-//    BugResponse createReoccurrence(Integer bugId);
 }

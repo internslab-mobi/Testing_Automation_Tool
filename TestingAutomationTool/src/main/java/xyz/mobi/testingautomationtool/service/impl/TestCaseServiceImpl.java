@@ -7,13 +7,11 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import xyz.mobi.testingautomationtool.dto.excelDTO.ExcelParseResult;
 import xyz.mobi.testingautomationtool.dto.excelDTO.ExcelTestCaseRow;
-import xyz.mobi.testingautomationtool.dto.excelDTO.ExcelUploadErrorResponse;
+import xyz.mobi.testingautomationtool.dto.excelDTO.ExcelUploadResponse;
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.TestCasePatchRequest;
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.UpdateExecutionStatusRequest;
 import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.TestCaseExecutionRequest;
-import xyz.mobi.testingautomationtool.dto.excelDTO.ExcelUploadResponse;
 import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.TestCasePutRequest;
 import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.ExecutionStatusResponse;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseExecutionResponse;
@@ -21,19 +19,21 @@ import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseRespons
 import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.TestCasePutResponse;
 import xyz.mobi.testingautomationtool.entity.*;
 import xyz.mobi.testingautomationtool.enums.*;
+import xyz.mobi.testingautomationtool.exception.ExcelProcessingException;
+import xyz.mobi.testingautomationtool.exception.ExcelValidationException;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.mapper.patchMapper.TestCasePatchMapper;
 import xyz.mobi.testingautomationtool.mapper.postMapper.TestCaseMapper;
 import xyz.mobi.testingautomationtool.mapper.putMapper.TestCasePutMapper;
 import xyz.mobi.testingautomationtool.repository.*;
-import xyz.mobi.testingautomationtool.service.TestCaseExcelService;
+
 import xyz.mobi.testingautomationtool.service.TestCaseService;
 import xyz.mobi.testingautomationtool.utils.Utils;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-
-import static org.apache.commons.lang3.StringUtils.isBlank;
 
 @Service
 @Transactional
@@ -53,8 +53,6 @@ public class TestCaseServiceImpl implements TestCaseService {
     private final TestCaseExcelService testCaseExcelService;
 
     private final Utils utils;
-
-
 
     @Override
     public TestCaseExecutionResponse createTestCaseByManual(
@@ -94,15 +92,20 @@ public class TestCaseServiceImpl implements TestCaseService {
 
         testCase.setCreatedBy(dummyUser);
 
+        if (request.getTestCase().getDynamicFields() != null) {
+            testCase.setDynamicFields(request.getTestCase().getDynamicFields());
+        } else {
+            testCase.setDynamicFields(new HashMap<>());
+        }
+
         testCase = testCaseRepository.save(testCase);
-
-
 
         TestingExecution execution = testCaseMapper.toEntity(request.getExecutionRequest());
 
         execution.setTestCase(testCase);
 
         execution = testingExecutionRepository.save(execution);
+
 
         return TestCaseExecutionResponse.builder()
                 .testCaseResponse(testCaseMapper.toResponse(testCase))
@@ -112,165 +115,192 @@ public class TestCaseServiceImpl implements TestCaseService {
 
 
     @Override
-    @Transactional
     public ExcelUploadResponse createTestCaseByUpload(
-            MultipartFile file,
-            Integer featureId) {
+            MultipartFile file, Integer featureId) {
 
-        // 1. Parse and validate Excel
-        ExcelParseResult result =
-                testCaseExcelService.parseAndValidate(file, featureId);
+        try {
 
-        // 2. If Excel validation failed, save nothing
-        if (!result.getErrors().isEmpty()) {
+            // 1. Parse and validate the complete Excel file
+            List<ExcelTestCaseRow> rows = testCaseExcelService.parseExcel(file);
 
-            return ExcelUploadResponse.builder()
-                    .message("Excel upload failed")
-                    .totalRows(result.getRows().size())
-                    .successRows(0)
-                    .failedRows(result.getErrors().size())
-                    .errors(result.getErrors())
-                    .build();
-        }
-
-        // 3. Find feature
-        Feature feature = featureRepository.findById(featureId)
-                .orElseThrow(() ->
-                        new RuntimeException("Feature not found with ID: " + featureId));
-
-        // 4. Check duplicate TestcaseFormatId
-        for (ExcelTestCaseRow row : result.getRows()) {
-
-            if (testCaseRepository
-                    .existsByFeature_FeatureIdAndTestcaseFormatId(
-                            featureId, row.getTestcaseFormatId()
-                    )) {
-
-                ExcelUploadErrorResponse error =
-                        ExcelUploadErrorResponse.builder()
-                                .row(row.getRowNumber())
-                                .column("TestcaseID")
-                                .value(row.getTestcaseFormatId())
-                                .message(
-                                        "TestcaseID already exists for this feature"
-                                )
-                                .build();
-
-                result.getErrors().add(error);
-            }
-        }
-
-        // 5. If DB duplicate found, save NOTHING
-        if (!result.getErrors().isEmpty()) {
-
-            return ExcelUploadResponse.builder()
-                    .message("Excel upload failed")
-                    .totalRows(result.getRows().size())
-                    .successRows(0)
-                    .failedRows(result.getErrors().size())
-                    .errors(result.getErrors())
-                    .build();
-        }
-
-        // 6. Everything is valid.
-        for (ExcelTestCaseRow row : result.getRows()) {
-
-            // Create TestCase
-
-            TestCase testCase = new TestCase();
-
-            testCase.setFeature(feature);
-
-            // Excel TestcaseID → testcaseFormatId
-            testCase.setTestcaseFormatId(row.getTestcaseFormatId());
-
-            testCase.setTitle(row.getTitle());
-
-            testCase.setTestType(
-                    TestType.valueOf(
-                            row.getTestType()
-                                    .trim()
-                                    .toUpperCase()
-                    )
-            );
-
-            testCase.setTestPriority(
-                    TestPriority.valueOf(
-                            row.getAutomationPriority()
-                                    .trim()
-                                    .toUpperCase()
-                    )
-            );
-
-            // Default = NO_RUN
-            if (!isBlank(row.getActualStatus())) {
-
-                testCase.setTestcaseStatus(
-                        TestCaseStatus.valueOf(
-                                row.getActualStatus()
-                                        .trim()
-                                        .toUpperCase()
-                        )
-                );
-            }
-
-            User dummyUser = userRepository.findById(1)
+            // 2. Get feature
+            Feature feature = featureRepository.findById(featureId)
                     .orElseThrow(() ->
-                            new RuntimeException("Dummy user not found")
+                            new ResourceNotFoundException(
+                                    "Feature not found with id: "
+                                            + featureId
+                            )
                     );
 
-            testCase.setCreatedBy(dummyUser);
+            feature.setTestcaseFileName(file.getOriginalFilename());
+            feature.setTestcaseFileType(file.getContentType());
+            feature.setTestcaseFile(file.getBytes());
 
-            // DB testcase_id is generated automatically
-            testCase = testCaseRepository.save(testCase);
+            featureRepository.save(feature);
 
-            // Create TestingExecution
-            TestingExecution execution = new TestingExecution();
+            // 3. Temporary logged-in user
+            User createdBy = userRepository.findById(1)
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException(
+                                    "User not found with id: 1"
+                            )
+                    );
 
-            execution.setTestCase(testCase);
+            List<TestCase> testCases = new ArrayList<>();
 
-            // Excel Automation Status
-            if (!isBlank(row.getAutomationStatus())) {
+            // 4. Convert Excel rows into TestCase entities
+            for (ExcelTestCaseRow row : rows) {
 
-                execution.setAutomationFeasibility(
-                        AutomationFeasibility.valueOf(
-                                row.getAutomationStatus()
+                TestCase testCase = TestCase.builder()
+                        .feature(feature)
+                        .testcaseFormatId(row.getTestcaseFormatId())
+                        .title(isBlank(row.getTitle())
+                                        ? null
+                                        : row.getTitle().trim()
+                        )
+                        .testType(
+                                isBlank(row.getTestType())
+                                        ? null
+                                        : TestType.valueOf(
+                                        row.getTestType()
                                         .trim()
                                         .toUpperCase()
+                                )
                         )
-                );
-
-            } else {
-                execution.setAutomationFeasibility(AutomationFeasibility.PENDING);
+                        .testPriority(
+                                isBlank(row.getAutomationPriority())
+                                        ? null
+                                        : TestPriority.valueOf(
+                                        row.getAutomationPriority()
+                                        .trim()
+                                        .toUpperCase()
+                                )
+                        )
+                        .testcaseStatus(
+                                isBlank(row.getActualStatus())
+                                        ? TestCaseStatus.NO_RUN
+                                        : TestCaseStatus.valueOf(
+                                        row.getActualStatus()
+                                        .trim()
+                                        .toUpperCase()
+                                )
+                        )
+                        // Dynamic Excel columns
+                        .dynamicFields(row.getDynamicFields())
+                        .createdBy(createdBy)
+                        .active(true)
+                        .build();
+                testCases.add(testCase);
             }
 
-            execution.setTestExecution(row.getTestExecution());
+            // 5. Save all test cases
+            List<TestCase> savedTestCases = testCaseRepository.saveAll(testCases);
 
-            execution.setTestValidation(row.getTestValidation());
+            List<TestingExecution> executions =
+                    new ArrayList<>();
 
-            execution.setPrecondition(row.getPreCondition());
+            for (int i = 0; i < savedTestCases.size(); i++) {
 
-            execution.setTestData(row.getTestData());
+                TestCase savedTestCase =
+                        savedTestCases.get(i);
 
-            execution.setExecutionSteps(row.getExecutionSteps());
+                ExcelTestCaseRow row =
+                        rows.get(i);
 
-            execution.setUiValidations(row.getUiValidations());
+                TestingExecution execution =
+                        TestingExecution.builder()
 
-            execution.setDbValidations(row.getDbValidations());
+                                .testCase(savedTestCase)
 
-            execution.setComments(row.getComments());
+                                .bugsCount(0)
 
-            testingExecutionRepository.save(execution);
+                                .executionNumber(0)
+
+                                .automationFeasibility(
+                                        isBlank(
+                                                row.getAutomationStatus()
+                                        )
+                                                ? AutomationFeasibility.YES
+                                                : AutomationFeasibility.valueOf(
+                                                row.getAutomationStatus()
+                                                .trim()
+                                                .toUpperCase()
+                                        )
+                                )
+
+                                .executionStatus(null)
+
+                                .testExecution(
+                                        row.getTestExecution()
+                                )
+
+                                .testValidation(
+                                        row.getTestValidation()
+                                )
+
+                                .uiValidations(
+                                        row.getUiValidations()
+                                )
+
+                                .dbValidations(
+                                        row.getDbValidations()
+                                )
+
+                                .comments(
+                                        row.getComments()
+                                )
+
+                                .precondition(
+                                        row.getPreCondition()
+                                )
+
+                                .executionSteps(
+                                        row.getExecutionSteps()
+                                )
+
+                                .testData(
+                                        row.getTestData()
+                                )
+
+                                .executedAt(null)
+
+                                .executedBy(null)
+
+                                .build();
+
+                executions.add(execution);
+            }
+
+            testingExecutionRepository.saveAll(executions);
+
+            // 6. Build response
+            return ExcelUploadResponse.builder()
+                    .message("Excel upload successful")
+                    .totalRows(rows.size())
+                    .successRows(savedTestCases.size())
+                    .failedRows(0)
+                    .errors(Collections.emptyList())
+                    .build();
+
+        } catch (ExcelValidationException ex) {
+
+            // Validation errors are already detailed
+            // and contain row/column information.
+            throw ex;
+
+        } catch (ExcelProcessingException ex) {
+
+            throw ex;
+
+        } catch (Exception ex) {
+
+            throw new ExcelProcessingException(
+                    "Failed to upload test cases from Excel");
         }
+    }
 
-        // 7. Everything saved successfully
-        return ExcelUploadResponse.builder()
-                .message("Excel uploaded successfully")
-                .totalRows(result.getRows().size())
-                .successRows(result.getRows().size())
-                .failedRows(0)
-                .errors(Collections.emptyList())
-                .build();
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isBlank();
     }
 
     @Override
@@ -525,7 +555,7 @@ public class TestCaseServiceImpl implements TestCaseService {
 
 
         if(request.getExecutionStatus()==ExecutionStatus.PASS){
-            utils.trigger(testCase,testCase.getCreatedBy());
+            utils.trigger(testCase,testCase.getCreatedBy(),null);
         }
 
          //3. Save execution + testcase
@@ -535,25 +565,4 @@ public class TestCaseServiceImpl implements TestCaseService {
 
     }
 
-//    private String generateBugFormatId(Integer testcaseId) {
-//
-//        Optional<Bug> latestBug =
-//                bugRepository.findTopByTestCase_TestcaseIdOrderByBugIdDesc(
-//                        testcaseId);
-//
-//        int nextNumber = latestBug
-//                .map(bug -> {
-//                    String bugFormatId = bug.getBugFormatId();
-//
-//                    String numberPart =
-//                            bugFormatId.substring(
-//                                    bugFormatId.lastIndexOf("-") + 1);
-//
-//                    return Integer.parseInt(numberPart) + 1;
-//                })
-//                .orElse(1);
-//
-//        return String.format("BUG-%03d", nextNumber);
-//    }
-//
 }

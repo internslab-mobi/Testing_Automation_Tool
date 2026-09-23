@@ -2,10 +2,14 @@ package xyz.mobi.testingautomationtool.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import xyz.mobi.testingautomationtool.audit.Auditable;
 import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 import xyz.mobi.testingautomationtool.enums.TestPriority;
 import xyz.mobi.testingautomationtool.enums.TestType;
+
+import java.util.Map;
 
 @Entity
 @Table(
@@ -36,19 +40,19 @@ public class TestCase extends Auditable {
     @Column(name = "testcase_format_id", nullable = false, length = 255)
     private String testcaseFormatId;
 
-    @Column(name = "title", nullable = false, length = 300)
+    @Column(name = "title",  length = 300)
     private String title;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "test_type", nullable = false, length = 255)
+    @Column(name = "test_type",  length = 255)
     private TestType testType;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "test_priority", nullable = false, length = 255)
+    @Column(name = "test_priority", length = 255)
     private TestPriority testPriority;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "testcase_status", nullable = false, length = 255)
+    @Column(name = "testcase_status", length = 255)
     @Builder.Default
     private TestCaseStatus testcaseStatus = TestCaseStatus.NO_RUN;
 
@@ -60,8 +64,9 @@ public class TestCase extends Auditable {
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
-    @Convert(converter = xyz.mobi.testingautomationtool.utils.JsonToMapConverter.class)
-    @Column(name = "dynamic_fields", columnDefinition = "TEXT")
+//    @Convert(converter = xyz.mobi.testingautomationtool.utils.JsonToMapConverter.class)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "dynamic_fields", columnDefinition = "JSON")
     @Builder.Default
-    private java.util.Map<String, Object> dynamicFields = new java.util.HashMap<>();
+    private Map<String, Object> dynamicFields = new java.util.HashMap<>();
 }

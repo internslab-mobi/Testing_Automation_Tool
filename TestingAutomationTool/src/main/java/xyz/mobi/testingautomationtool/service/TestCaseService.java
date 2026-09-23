@@ -1,5 +1,6 @@
 package xyz.mobi.testingautomationtool.service;
 
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.TestCasePatchRequest;

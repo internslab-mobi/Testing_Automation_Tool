@@ -22,8 +22,6 @@ public interface BugRepository extends JpaRepository<Bug, Integer> {
 
     Page<Bug> findByTestCase_TestcaseIdAndActiveTrue(Integer testcaseId, Pageable pageable);
 
-    Optional<Bug> findByBugReoccurred(Bug bug);
-
     List<Bug> findByFeature_FeatureIdOrderByBugIdAsc(Integer featureId);
 
     List<Bug> findByFeature_FeatureIdAndActiveTrueOrderByBugIdAsc(Integer featureId);

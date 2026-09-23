@@ -23,48 +23,48 @@ public class BugController {
 
     private final BugService bugService;
 
-//    @PatchMapping("/{bugId}/delete")
-//    public ResponseEntity<String> softDeleteBug(
-//            @PathVariable Integer bugId) {
-//
-//        return ResponseEntity.ok(
-//                bugService.softDeleteBug(bugId));
-//    }
-//
-//    @DeleteMapping("/{bugId}")
-//    public ResponseEntity<String> hardDeleteBug(
-//            @PathVariable Integer bugId) {
-//
-//        return ResponseEntity.ok(
-//                bugService.hardDeleteBug(bugId));
-//    }
-//
-//    @PutMapping("/{bugId}")
-//    public ResponseEntity<BugResponse> updateBug(
-//            @PathVariable Integer bugId,
-//            @Valid @RequestBody BugPutRequest request) {
-//
-//        return ResponseEntity.ok(
-//                bugService.updateBug(bugId, request));
-//    }
-//
-//    @PatchMapping("/{bugId}/assign")
-//    public ResponseEntity<BugResponse> assignBug(
-//            @PathVariable Integer bugId,
-//            @Valid @RequestBody BugAssignRequest request) {
-//
-//        return ResponseEntity.ok(
-//                bugService.assignBug(bugId, request));
-//    }
-//
-//    @PatchMapping("/{bugId}/status")
-//    public ResponseEntity<BugResponse> updateStatus(
-//            @PathVariable Integer bugId,
-//            @Valid @RequestBody BugStatusRequest request) {
-//
-//        return ResponseEntity.ok(
-//                bugService.updateStatus(bugId, request));
-//    }
+    @PatchMapping("/{bugId}/delete")
+    public ResponseEntity<String> softDeleteBug(
+            @PathVariable Integer bugId) {
+
+        return ResponseEntity.ok(
+                bugService.softDeleteBug(bugId));
+    }
+
+    @DeleteMapping("/{bugId}")
+    public ResponseEntity<String> hardDeleteBug(
+            @PathVariable Integer bugId) {
+
+        return ResponseEntity.ok(
+                bugService.hardDeleteBug(bugId));
+    }
+
+    @PutMapping("/{bugId}")
+    public ResponseEntity<BugResponse> updateBug(
+            @PathVariable Integer bugId,
+            @Valid @RequestBody BugPutRequest request) {
+
+        return ResponseEntity.ok(
+                bugService.updateBug(bugId, request));
+    }
+
+    @PatchMapping("/{bugId}/assign")
+    public ResponseEntity<BugResponse> assignBug(
+            @PathVariable Integer bugId,
+            @Valid @RequestBody BugAssignRequest request) {
+
+        return ResponseEntity.ok(
+                bugService.assignBug(bugId, request));
+    }
+
+    @PatchMapping("/{bugId}/status")
+    public ResponseEntity<BugResponse> updateStatus(
+            @PathVariable Integer bugId,
+            @Valid @RequestBody BugStatusRequest request) {
+
+        return ResponseEntity.ok(
+                bugService.updateStatus(bugId, request));
+    }
 
     @GetMapping("/{bugId}")
     public ResponseEntity<BugResponse> getById(
@@ -159,12 +159,4 @@ public class BugController {
         return ResponseEntity.ok(
                 bugService.getByReportedBy(testerId, page, size));
     }
-
-//    @PostMapping("/{bugId}/reoccurrence")
-//    public ResponseEntity<BugResponse> createReoccurrence(
-//            @PathVariable Integer bugId) {
-//
-//        return ResponseEntity.ok(
-//                bugService.createReoccurrence(bugId));
-//    }
 }

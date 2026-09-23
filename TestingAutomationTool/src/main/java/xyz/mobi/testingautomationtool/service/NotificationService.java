@@ -15,6 +15,7 @@ public interface NotificationService {
 
     NotificationResponse createNotification(
             Integer employeeId,
+            Integer assignedId,
             Integer bugId,
             String message);
 

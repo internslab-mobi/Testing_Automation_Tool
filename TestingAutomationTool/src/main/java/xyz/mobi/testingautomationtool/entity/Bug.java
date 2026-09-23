@@ -2,23 +2,19 @@ package xyz.mobi.testingautomationtool.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import xyz.mobi.testingautomationtool.audit.Auditable;
+import xyz.mobi.testingautomationtool.enums.BugCategory;
 import xyz.mobi.testingautomationtool.enums.BugPriority;
 import xyz.mobi.testingautomationtool.enums.BugSeverity;
 import xyz.mobi.testingautomationtool.enums.BugStatus;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Entity
-@Table(
-        name = "testing_bugs",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "testing_bugs_testcase_id_bug_format_id_unique",
-                        columnNames = {"testcase_id", "bug_format_id"}
-                )
-        }
-)
+@Table(name = "testing_bugs")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -39,9 +35,8 @@ public class Bug extends Auditable {
     private TestCase testCase;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "feature_id")
-    @Builder.Default
-    private Feature feature = null;
+    @JoinColumn(name = "feature_id", nullable = false)
+    private Feature feature;
 
     @Column(name = "title", nullable = false, length = 300)
     private String title;
@@ -60,6 +55,11 @@ public class Bug extends Auditable {
     private BugPriority priority = BugPriority.MEDIUM;
 
     @Enumerated(EnumType.STRING)
+    @Column(name="category",nullable = false)
+    @Builder.Default
+    private BugCategory category = BugCategory.PRE_PRODUCTION;
+
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 255)
     @Builder.Default
     private BugStatus status = BugStatus.OPEN;
@@ -69,15 +69,15 @@ public class Bug extends Auditable {
     private User reportedBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "executed_by")
+    private User executedBy;
+
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "assigned_to")
     private User assignedTo;
 
     @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
-
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "bug_reoccured_id")
-    private Bug bugReoccurred;
 
     @Column(name = "bug_occurance")
     private Integer bugOccurrence;
@@ -85,4 +85,12 @@ public class Bug extends Auditable {
     @Column(name = "is_active")
     @Builder.Default
     private boolean active = true;
+
+    @Column(name= "rca_comments")
+    private String comments;
+
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "dynamic_fields", columnDefinition = "JSON")
+    @Builder.Default
+    private Map<String, Object> dynamicFields = new java.util.HashMap<>();
 }
