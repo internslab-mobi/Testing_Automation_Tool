@@ -3,7 +3,7 @@ package xyz.mobi.testingautomationtool.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import xyz.mobi.testingautomationtool.audit.Auditable;
-import xyz.mobi.testingautomationtool.enums.Role;
+import xyz.mobi.testingautomationtool.entity.Role;
 
 @Entity
 @Table(
