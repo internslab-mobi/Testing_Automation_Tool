@@ -11,7 +11,6 @@ import xyz.mobi.testingautomationtool.enums.BugSeverity;
 import xyz.mobi.testingautomationtool.enums.BugStatus;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.Map;
 
 @Entity

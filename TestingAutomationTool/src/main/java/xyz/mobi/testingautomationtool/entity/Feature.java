@@ -6,7 +6,6 @@ import xyz.mobi.testingautomationtool.audit.Auditable;
 import xyz.mobi.testingautomationtool.enums.FeatureStatus;
 
 import java.time.Instant;
-import java.time.LocalTime;
 
 @Entity
 @Table(
