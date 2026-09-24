@@ -11,6 +11,7 @@ import lombok.*;
 @AllArgsConstructor
 @Builder
 public class Error {
+
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;

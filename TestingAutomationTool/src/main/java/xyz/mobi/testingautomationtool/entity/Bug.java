@@ -10,11 +10,24 @@ import xyz.mobi.testingautomationtool.enums.BugPriority;
 import xyz.mobi.testingautomationtool.enums.BugSeverity;
 import xyz.mobi.testingautomationtool.enums.BugStatus;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.Map;
 
 @Entity
-@Table(name = "testing_bugs")
+@Table(
+        name = "testing_bugs",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "testing_bugs_feature_id_bug_format_id_unique",
+                        columnNames = {"feature_id", "bug_format_id"}
+                ),
+                @UniqueConstraint(
+                        name = "testing_bugs_unique",
+                        columnNames = "bug_format_id"
+                )
+        }
+)
 @Getter
 @Setter
 @NoArgsConstructor
@@ -31,11 +44,23 @@ public class Bug extends Auditable {
     private String bugFormatId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "testcase_id", nullable = false)
+    @JoinColumn(
+            name = "testcase_id",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "testing_bugs_testcase_id_foreign"
+            )
+    )
     private TestCase testCase;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "feature_id", nullable = false)
+    @JoinColumn(
+            name = "feature_id",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "testing_bugs_feature_id_foreign"
+            )
+    )
     private Feature feature;
 
     @Column(name = "title", nullable = false, length = 300)
@@ -65,26 +90,42 @@ public class Bug extends Auditable {
     private BugStatus status = BugStatus.OPEN;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "reported_by", nullable = false)
+    @JoinColumn(
+            name = "reported_by",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "FKfll9ine04l2kyxqm2enmch6g5"
+            )
+    )
     private User reportedBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "executed_by")
+    @JoinColumn(
+            name = "executed_by",
+            foreignKey = @ForeignKey(
+                    name = "testing_bugs_executed_by_foreign"
+            )
+    )
     private User executedBy;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_to")
+    @JoinColumn(
+            name = "assigned_to",
+            foreignKey = @ForeignKey(
+                    name = "testing_bugs_assigned_to_foreign"
+            )
+    )
     private User assignedTo;
 
     @Column(name = "resolved_at")
-    private LocalDateTime resolvedAt;
+    private Instant resolvedAt;
 
     @Column(name = "bug_occurance")
     private Integer bugOccurrence;
 
     @Column(name = "is_active")
     @Builder.Default
-    private boolean active = true;
+    private boolean isActive = true;
 
     @Column(name= "rca_comments")
     private String comments;

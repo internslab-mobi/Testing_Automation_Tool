@@ -5,7 +5,7 @@ import lombok.*;
 import xyz.mobi.testingautomationtool.enums.AutomationFeasibility;
 import xyz.mobi.testingautomationtool.enums.ExecutionStatus;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "testing_executions")
@@ -40,7 +40,7 @@ public class TestingExecution {
     private Integer executionNumber = 0;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "automation_feasibility", length = 255)
+    @Column(name = "automation_feasibility",nullable = false, length = 255)
     @Builder.Default
     private AutomationFeasibility automationFeasibility =
             AutomationFeasibility.YES;
@@ -75,10 +75,12 @@ public class TestingExecution {
 
     @Column(name = "executed_at")
     @Builder.Default
-    private LocalDateTime executedAt = null;
+    private Instant executedAt = null;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "executed_by")
-    @Builder.Default
-    private User executedBy = null;
+    @JoinColumn(
+            name = "executed_by",
+            foreignKey = @ForeignKey(name = "testing_executions_executed_by_foreign")
+    )
+    private User executedBy;
 }

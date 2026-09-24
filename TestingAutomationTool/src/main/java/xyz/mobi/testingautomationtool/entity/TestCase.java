@@ -9,6 +9,7 @@ import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 import xyz.mobi.testingautomationtool.enums.TestPriority;
 import xyz.mobi.testingautomationtool.enums.TestType;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @Entity
@@ -18,6 +19,10 @@ import java.util.Map;
                 @UniqueConstraint(
                         name = "testing_test_cases_feature_id_testcase_format_id_unique",
                         columnNames = {"feature_id", "testcase_format_id"}
+                ),
+                @UniqueConstraint(
+                        name = "testing_test_cases_unique",
+                        columnNames = "testcase_format_id"
                 )
         }
 )
@@ -34,7 +39,13 @@ public class TestCase extends Auditable {
     private Integer testcaseId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "feature_id", nullable = false)
+    @JoinColumn(
+            name = "feature_id",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "testing_test_cases_feature_id_foreign"
+            )
+    )
     private Feature feature;
 
     @Column(name = "testcase_format_id", nullable = false, length = 255)
@@ -45,11 +56,13 @@ public class TestCase extends Auditable {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "test_type",  length = 255)
-    private TestType testType;
+    @Builder.Default
+    private TestType testType = TestType.E2E;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "test_priority", length = 255)
-    private TestPriority testPriority;
+    @Builder.Default
+    private TestPriority testPriority = TestPriority.MEDIUM;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "testcase_status", length = 255)
@@ -58,15 +71,21 @@ public class TestCase extends Auditable {
 
     @Column(name = "is_active", nullable = false)
     @Builder.Default
-    private boolean active = true;
+    private boolean isActive = true;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
+    @JoinColumn(
+            name = "created_by",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "testing_test_cases_created_by_foreign"
+            )
+    )
     private User createdBy;
 
 //    @Convert(converter = xyz.mobi.testingautomationtool.utils.JsonToMapConverter.class)
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "dynamic_fields", columnDefinition = "JSON")
     @Builder.Default
-    private Map<String, Object> dynamicFields = new java.util.HashMap<>();
+    private Map<String, Object> dynamicFields = new HashMap<>();
 }

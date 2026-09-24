@@ -4,7 +4,8 @@ import jakarta.persistence.*;
 import lombok.*;
 import xyz.mobi.testingautomationtool.enums.NotificationStatus;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
+
 
 @Entity
 @Table(name = "testing_notifications")
@@ -21,22 +22,36 @@ public class Notification {
     private Integer notificationId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "employee_id", nullable = false)
+    @JoinColumn(
+            name = "employee_id",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "testing_notifications_employee_id_foreign"
+            )
+    )
     private User employee;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="assigned_id",nullable = false)
+    @JoinColumn(
+            name = "assigned_to",
+            foreignKey = @ForeignKey(
+                    name = "testing_notifications_assigned_to_foreign"
+            )
+    )
     private User assigned;
 
-    @Column(name = "message", nullable = false, columnDefinition = "TEXT")
-    private String message;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "bug_id", nullable = false)
+    @JoinColumn(
+            name = "bug_id",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "testing_notifications_bug_id_foreign"
+            )
+    )
     private Bug bug;
 
     @Column(name = "created_at", nullable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "notification_status", nullable = false, length = 255)

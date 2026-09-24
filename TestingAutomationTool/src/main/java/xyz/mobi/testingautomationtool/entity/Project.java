@@ -37,7 +37,7 @@ public class Project extends Auditable {
     @Column(name = "status", nullable = false)
     private ProjectStatus status = ProjectStatus.ACTIVE;
 
-    @Column(name = "region", nullable = false)
+    @Column(name = "region", nullable = false, length = 255)
     private String region;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -49,5 +49,8 @@ public class Project extends Auditable {
             )
     )
     private User createdBy;
+
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
 
 }
