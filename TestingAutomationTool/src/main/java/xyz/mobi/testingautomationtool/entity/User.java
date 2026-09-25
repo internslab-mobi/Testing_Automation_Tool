@@ -3,7 +3,7 @@ package xyz.mobi.testingautomationtool.entity;
 import jakarta.persistence.*;
 import lombok.*;
 import xyz.mobi.testingautomationtool.audit.Auditable;
-import xyz.mobi.testingautomationtool.enums.Role;
+import xyz.mobi.testingautomationtool.entity.Role;
 
 @Entity
 @Table(
@@ -49,9 +49,14 @@ public class User extends Auditable {
     @Column(name = "skills", columnDefinition = "TEXT")
     private String skills;
 
-    @Column(name = "role", nullable = false, length = 255)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(
+            name = "user_role_id",
+            nullable = false,
+            foreignKey = @ForeignKey(name = "fk_testing_users_role")
+    )
     private Role role;
 
     @Column(name = "is_active", nullable = false)
-    private boolean active;
+    private boolean isActive = true;
 }

@@ -2,10 +2,15 @@ package xyz.mobi.testingautomationtool.entity;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import xyz.mobi.testingautomationtool.audit.Auditable;
 import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 import xyz.mobi.testingautomationtool.enums.TestPriority;
 import xyz.mobi.testingautomationtool.enums.TestType;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @Entity
 @Table(
@@ -30,31 +35,65 @@ public class TestCase extends Auditable {
     private Integer testcaseId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "feature_id", nullable = false)
+    @JoinColumn(
+            name = "feature_id",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "testing_test_cases_feature_id_foreign"
+            )
+    )
     private Feature feature;
 
     @Column(name = "testcase_format_id", nullable = false, length = 255)
     private String testcaseFormatId;
 
-    @Column(name = "title", nullable = false, length = 300)
+    @Column(name = "title",  length = 300)
     private String title;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "test_type", nullable = false, length = 255)
-    private TestType testType;
+    @Column(name = "test_type",  length = 255)
+    @Builder.Default
+    private TestType testType = TestType.E2E;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "test_priority", nullable = false, length = 255)
-    private TestPriority testPriority;
+    @Column(name = "test_priority", length = 255)
+    @Builder.Default
+    private TestPriority testPriority = TestPriority.MEDIUM;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "testcase_status", nullable = false, length = 255)
-    private TestCaseStatus testcaseStatus;
+    @Column(name = "testcase_status", length = 255)
+    @Builder.Default
+    private TestCaseStatus testcaseStatus = TestCaseStatus.NO_RUN;
 
     @Column(name = "is_active", nullable = false)
-    private boolean active;
+    @Builder.Default
+    private boolean isActive = true;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
+    @JoinColumn(
+            name = "created_by",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "testing_test_cases_created_by_foreign"
+            )
+    )
     private User createdBy;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "updated_by",
+            foreignKey = @ForeignKey(
+                    name = "fk_test_cases_updated_by"
+            )
+    )
+    private User updatedBy = null;
+
+//    @Convert(converter = xyz.mobi.testingautomationtool.utils.JsonToMapConverter.class)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "dynamic_fields", columnDefinition = "JSON")
+    @Builder.Default
+    private Map<String, Object> dynamicFields = new HashMap<>();
 }

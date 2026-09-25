@@ -5,7 +5,7 @@ import lombok.*;
 import xyz.mobi.testingautomationtool.audit.Auditable;
 import xyz.mobi.testingautomationtool.enums.FeatureStatus;
 
-import java.time.LocalTime;
+import java.time.Instant;
 
 @Entity
 @Table(
@@ -30,7 +30,13 @@ public class Feature extends Auditable {
     private Integer featureId;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id", nullable = false)
+    @JoinColumn(
+            name = "project_id",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "testing_features_project_id_foreign"
+            )
+    )
     private Project project;
 
     @Column(name = "feature_name", nullable = false, length = 200)
@@ -41,18 +47,43 @@ public class Feature extends Auditable {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 255)
-    private FeatureStatus status;
+    private FeatureStatus status = FeatureStatus.ACTIVE;
 
-    @Column(name = "duration", nullable = false)
-    private LocalTime duration;
+    @Column(name = "duration")
+    private Long duration = 0L;
+
+    @Column(name = "start_time")
+    private Instant startTime;
 
     @Column(name = "sprint", nullable = false)
     private Integer sprint;
 
-    @Column(name = "version", nullable = false, length = 255)
+    @Column(name = "version", length = 255)
     private String version;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
+    @JoinColumn(
+            name = "created_by",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "testing_features_created_by_foreign"
+            )
+    )
     private User createdBy;
+
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
+
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "updated_by",
+            foreignKey = @ForeignKey(
+                    name = "fk_features_updated_by"
+            )
+    )
+    private User updatedBy=null;
+
 }

@@ -5,7 +5,7 @@ import lombok.*;
 import xyz.mobi.testingautomationtool.enums.AutomationFeasibility;
 import xyz.mobi.testingautomationtool.enums.ExecutionStatus;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "testing_executions")
@@ -32,18 +32,22 @@ public class TestingExecution {
     private TestCase testCase;
 
     @Column(name = "bugs_count", nullable = false)
-    private Integer bugsCount;
+    @Builder.Default
+    private Integer bugsCount = 0;
 
     @Column(name = "execution_number", nullable = false)
-    private Integer executionNumber;
+    @Builder.Default
+    private Integer executionNumber = 0;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "automation_feasibility", length = 255)
-    private AutomationFeasibility automationFeasibility;
+    @Column(name = "automation_feasibility",nullable = false, length = 255)
+    @Builder.Default
+    private AutomationFeasibility automationFeasibility =
+            AutomationFeasibility.YES;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "execution_status", nullable = false, length = 255)
-    private ExecutionStatus executionStatus;
+    @Column(name = "execution_status",length = 255)
+    private ExecutionStatus executionStatus = null;
 
     @Column(name = "test_execution", columnDefinition = "TEXT")
     private String testExecution;
@@ -70,12 +74,13 @@ public class TestingExecution {
     private String testData;
 
     @Column(name = "executed_at")
-    private LocalDateTime executedAt;
+    @Builder.Default
+    private Instant executedAt = null;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "executed_by",
-            nullable = false
+            foreignKey = @ForeignKey(name = "testing_executions_executed_by_foreign")
     )
     private User executedBy;
 }
