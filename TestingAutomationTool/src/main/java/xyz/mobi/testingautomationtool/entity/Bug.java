@@ -129,6 +129,19 @@ public class Bug extends Auditable {
     @Column(name= "rca_comments")
     private String comments;
 
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "updated_by",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "fk_bugs_updated_by"
+            )
+    )
+    private User updatedBy;
+
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "dynamic_fields", columnDefinition = "JSON")
     @Builder.Default

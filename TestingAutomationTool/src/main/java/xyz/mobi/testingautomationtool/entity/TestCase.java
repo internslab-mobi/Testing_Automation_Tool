@@ -83,6 +83,19 @@ public class TestCase extends Auditable {
     )
     private User createdBy;
 
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "updated_by",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "fk_test_cases_updated_by"
+            )
+    )
+    private User updatedBy;
+
 //    @Convert(converter = xyz.mobi.testingautomationtool.utils.JsonToMapConverter.class)
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "dynamic_fields", columnDefinition = "JSON")

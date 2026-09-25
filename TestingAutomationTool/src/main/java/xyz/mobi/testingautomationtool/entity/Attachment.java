@@ -65,5 +65,19 @@ public class Attachment extends Auditable {
     )
     private User uploadedBy;
 
+    @Column(name = "is_active", nullable = false)
+    private boolean isActive = true;
 
+    @Column(name = "is_deleted", nullable = false)
+    private boolean isDeleted = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "updated_by",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "fk_attachments_updated_by"
+            )
+    )
+    private User updatedBy;
 }
