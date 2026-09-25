@@ -19,10 +19,6 @@ import java.util.Map;
                 @UniqueConstraint(
                         name = "testing_test_cases_feature_id_testcase_format_id_unique",
                         columnNames = {"feature_id", "testcase_format_id"}
-                ),
-                @UniqueConstraint(
-                        name = "testing_test_cases_unique",
-                        columnNames = "testcase_format_id"
                 )
         }
 )
@@ -89,12 +85,11 @@ public class TestCase extends Auditable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "updated_by",
-            nullable = false,
             foreignKey = @ForeignKey(
                     name = "fk_test_cases_updated_by"
             )
     )
-    private User updatedBy;
+    private User updatedBy = null;
 
 //    @Convert(converter = xyz.mobi.testingautomationtool.utils.JsonToMapConverter.class)
     @JdbcTypeCode(SqlTypes.JSON)

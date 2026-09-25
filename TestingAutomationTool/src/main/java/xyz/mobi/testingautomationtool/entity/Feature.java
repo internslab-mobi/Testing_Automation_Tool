@@ -80,11 +80,10 @@ public class Feature extends Auditable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "updated_by",
-            nullable = false,
             foreignKey = @ForeignKey(
                     name = "fk_features_updated_by"
             )
     )
-    private User updatedBy;
+    private User updatedBy=null;
 
 }

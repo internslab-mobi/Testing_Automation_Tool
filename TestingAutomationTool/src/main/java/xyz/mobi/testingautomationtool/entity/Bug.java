@@ -135,12 +135,11 @@ public class Bug extends Auditable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "updated_by",
-            nullable = false,
             foreignKey = @ForeignKey(
                     name = "fk_bugs_updated_by"
             )
     )
-    private User updatedBy;
+    private User updatedBy=null;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "dynamic_fields", columnDefinition = "JSON")
