@@ -1,8 +1,9 @@
-package xyz.mobi.testingautomationtool.dto.response.featureResponse;
+package xyz.mobi.testingautomationtool.dto.response.postMethodDTO;
 
 import lombok.*;
 import xyz.mobi.testingautomationtool.enums.FeatureStatus;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 
@@ -23,7 +24,7 @@ public class FeatureResponse {
 
     private FeatureStatus status;
 
-    private LocalTime duration;
+    private Long duration;
 
     private Integer sprint;
 
@@ -31,11 +32,7 @@ public class FeatureResponse {
 
     private String createdBy;
 
-    private String testcaseFileName;
+    private Instant createdAt;
 
-    private String testcaseFileType;
-
-    private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 }

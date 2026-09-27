@@ -2,38 +2,26 @@ package xyz.mobi.testingautomationtool.service.impl;
 
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
-import xyz.mobi.testingautomationtool.dto.excelDTO.ExcelParseResult;
-import xyz.mobi.testingautomationtool.dto.excelDTO.ExcelTestCaseRow;
-import xyz.mobi.testingautomationtool.dto.excelDTO.ExcelUploadErrorResponse;
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.TestCasePatchRequest;
-import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.UpdateExecutionStatusRequest;
-import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.TestCaseExecutionRequest;
-import xyz.mobi.testingautomationtool.dto.excelDTO.ExcelUploadResponse;
 import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.TestCasePutRequest;
-import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.ExecutionStatusResponse;
-import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseExecutionResponse;
-import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseResponse;
+import xyz.mobi.testingautomationtool.dto.response.DeleteMethodDto.PatchTestCaseDeleteResponse;
+import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.PatchExecutionResponse;
+import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.PatchTestCaseResponse;
 import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.TestCasePutResponse;
 import xyz.mobi.testingautomationtool.entity.*;
 import xyz.mobi.testingautomationtool.enums.*;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
-import xyz.mobi.testingautomationtool.mapper.patchMapper.TestCasePatchMapper;
-import xyz.mobi.testingautomationtool.mapper.postMapper.TestCaseMapper;
+
 import xyz.mobi.testingautomationtool.mapper.putMapper.TestCasePutMapper;
 import xyz.mobi.testingautomationtool.repository.*;
-import xyz.mobi.testingautomationtool.service.TestCaseExcelService;
+
 import xyz.mobi.testingautomationtool.service.TestCaseService;
 import xyz.mobi.testingautomationtool.utils.Utils;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.HashMap;
 
-import static org.apache.commons.lang3.StringUtils.isBlank;
 
 @Service
 @Transactional
@@ -42,15 +30,10 @@ public class TestCaseServiceImpl implements TestCaseService {
 
     private final TestCaseRepository testCaseRepository;
     private final TestingExecutionRepository testingExecutionRepository;
-    private final FeatureRepository featureRepository;
     private final UserRepository userRepository;
     private final BugRepository bugRepository;
 
-    private final TestCaseMapper testCaseMapper;
     private final TestCasePutMapper testCasePutMapper;
-    private final TestCasePatchMapper testCasePatchMapper;
-
-    private final TestCaseExcelService testCaseExcelService;
 
     private final Utils utils;
 
@@ -62,8 +45,8 @@ public class TestCaseServiceImpl implements TestCaseService {
                 .orElseThrow(() ->
                         new ResourceNotFoundException("Test case not found with ID: " + id));
 
-        if (!testCase.isActive()) {
-            throw new IllegalStateException("Cannot update disabled test case with ID: " + id);
+        if (!testCase.isActive() || testCase.isDeleted()) {
+            throw new IllegalStateException("Cannot update disabled/deleted test case with ID: " + id);
         }
 
         TestCase updatedTestCase = testCasePutMapper.putMethodMapper(testCasePutRequest, testCase);
@@ -83,46 +66,86 @@ public class TestCaseServiceImpl implements TestCaseService {
 
         testingExecutionRepository.save(updatedExecution);
 
-        return testCasePutMapper.convertToResponse(updatedTestCase, updatedExecution);
+        return testCasePutMapper.toResponse(updatedTestCase, updatedExecution);
     }
 
 
     @Override
-    public TestCaseResponse patchTestCaseDetails(TestCasePatchRequest testCasePatchRequest,
-                                                 Integer id) {
-
+    @Transactional
+    public PatchTestCaseResponse patchTestCaseDetails(
+            TestCasePatchRequest request,
+            Integer id) {
+        if (request == null) {
+            throw new IllegalArgumentException(
+                    "Patch request cannot be null");
+        }
         TestCase testCase = testCaseRepository.findById(id)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Test case not found with ID: " + id));
+                        new ResourceNotFoundException(
+                                "Test case not found with ID: " + id));
 
-        if (!testCase.isActive()) {
-            throw new IllegalStateException("Cannot patch disabled test case with ID: " + id);
+        if (testCase.isDeleted() || !testCase.isActive()) {
+            throw new ResourceNotFoundException("Test case is deleted id:" + id);
         }
+        boolean hasUpdate =
+                request.getTestType() != null ||
+                        request.getTestPriority() != null ||
+                        request.getIsActive() != null ||
+                        request.getComments() != null ||
+                        request.getDynamicFields() != null ||
+                        request.getExecutionStatus() != null ||
+                        request.getAutomationFeasibility() != null;
 
-        if (testCasePatchRequest == null ||
-                (testCasePatchRequest.getTestType() == null &&
-                        testCasePatchRequest.getTestPriority() == null &&
-                        (testCasePatchRequest.getComments() == null || testCasePatchRequest.getComments().trim().isEmpty()) &&
-                        (testCasePatchRequest.getDynamicFields() == null || testCasePatchRequest.getDynamicFields().isEmpty()))) {
-
+        if (!hasUpdate) {
             throw new IllegalArgumentException(
-                    "At least one field (testType, testPriority, comments, or dynamicFields) must be provided"
-            );
+                    "At least one field must be provided for update");
         }
 
-        if (testCasePatchRequest.getTestType() != null) {
-            testCase.setTestType(testCasePatchRequest.getTestType());
+
+        if (request.getTestType() != null) {
+            testCase.setTestType(request.getTestType());
         }
 
-        if (testCasePatchRequest.getTestPriority() != null) {
-            testCase.setTestPriority(testCasePatchRequest.getTestPriority());
+
+        if (request.getTestPriority() != null) {
+            testCase.setTestPriority(request.getTestPriority());
         }
 
-        if (testCasePatchRequest.getDynamicFields() != null) {
-            if (testCase.getDynamicFields() == null) {
-                testCase.setDynamicFields(new java.util.HashMap<>());
+        if (request.getIsActive() != null) {
+
+            boolean active = request.getIsActive();
+
+            testCase.setActive(active);
+            if (!active) {
+                bugRepository.deactivateBugs(id);
+            } else {
+                bugRepository.activateNonDeletedBugs(id);
             }
-            testCasePatchRequest.getDynamicFields().forEach((key, value) -> {
+        }
+
+        // 6. Update soft-delete status
+
+
+        //After user creation the value is need to change by the login user
+
+
+        User user = userRepository.findById(1)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "User not found with ID: "
+                                        + 1));
+
+        testCase.setUpdatedBy(user);
+
+
+        if (request.getDynamicFields() != null) {
+
+            if (testCase.getDynamicFields() == null) {
+                testCase.setDynamicFields(new HashMap<>());
+            }
+
+            request.getDynamicFields().forEach((key, value) -> {
+
                 if (value == null) {
                     testCase.getDynamicFields().remove(key);
                 } else {
@@ -131,48 +154,117 @@ public class TestCaseServiceImpl implements TestCaseService {
             });
         }
 
-        TestingExecution execution = testingExecutionRepository
-                .findByTestCaseTestcaseId(testCase.getTestcaseId())
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Execution details not found for test case ID: " + id));
+        // 9. Find execution details
+        TestingExecution execution =
+                testingExecutionRepository
+                        .findByTestCase(testCase)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Execution details not found for test case ID: "
+                                                + id));
 
-        if (testCasePatchRequest.getComments() != null) {
-            execution.setComments(testCasePatchRequest.getComments());
-            testingExecutionRepository.save(execution);
+        // 10. Update comments
+        if (request.getComments() != null) {
+            execution.setComments(request.getComments());
         }
 
-        TestCase updatedTestCase = testCaseRepository.save(testCase);
+        // 11. Update automation feasibility
+        if (request.getAutomationFeasibility() != null) {
 
-        return testCasePatchMapper.toResponse(updatedTestCase);
-    }
-
-    @Override
-    public String softDeleteTestCase(Integer id) {
-
-        TestCase testCase = testCaseRepository.findById(id)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Test case not found with ID: " + id));
-
-        String testcaseFormatId = testCase.getTestcaseFormatId();
-
-        if (!testCase.isActive()) {
-            throw new IllegalStateException(
-                    "Test case " + testcaseFormatId + " is already disabled"
-            );
+            execution.setAutomationFeasibility(
+                    request.getAutomationFeasibility());
         }
 
-        testCase.setActive(false);
+        // 12. Update execution status
+        if (request.getExecutionStatus() != null) {
 
-        bugRepository.findByTestCase_TestcaseId(id).ifPresent(bugList -> {
-            bugList.forEach(bug -> bug.setActive(false));
-            bugRepository.saveAll(bugList);
-        });
+            ExecutionStatus executionStatus =
+                    request.getExecutionStatus();
 
-        testCaseRepository.save(testCase);
+            execution.setExecutionStatus(executionStatus);
 
-        return "Test case " + testcaseFormatId + " disabled successfully";
+            TestCaseStatus testCaseStatus =
+                    switch (executionStatus) {
+
+                        case PASS -> TestCaseStatus.PASSED;
+
+                        case FAIL -> TestCaseStatus.FAILED;
+
+                        case DESCOPE -> TestCaseStatus.DESCOPE;
+
+                        default -> throw new IllegalArgumentException(
+                                "Unsupported execution status: "
+                                        + executionStatus);
+                    };
+
+            testCase.setTestcaseStatus(testCaseStatus);
+
+            execution.setExecutionNumber(
+                    execution.getExecutionNumber() + 1);
+
+            if (executionStatus == ExecutionStatus.PASS) {
+                utils.trigger(
+                        testCase,
+                        testCase.getCreatedBy(),
+                        null);
+            }
+        }
+
+        testingExecutionRepository.save(execution);
+
+        TestCase savedTestCase =
+                testCaseRepository.save(testCase);
+        PatchTestCaseResponse response = PatchTestCaseResponse.builder()
+                .testcaseId(savedTestCase.getTestcaseId())
+                .featureId(savedTestCase.getFeature().getFeatureId())
+                .testcaseFormatId(savedTestCase.getTestcaseFormatId())
+                .build();
+        if (request.getTestType() != null) {
+            response.setTestType(savedTestCase.getTestType());
+        }
+
+        if (request.getTestPriority() != null) {
+            response.setTestPriority(savedTestCase.getTestPriority());
+        }
+
+        if (request.getIsActive() != null) {
+            response.setIsActive(savedTestCase.isActive());
+        }
+
+        if (request.getDynamicFields() != null) {
+            response.setDynamicFields(savedTestCase.getDynamicFields());
+        }
+
+        if (request.getComments() != null
+                || request.getExecutionStatus() != null
+                || request.getAutomationFeasibility() != null) {
+
+            PatchExecutionResponse patchExecutionResponse =
+                    PatchExecutionResponse.builder()
+                            .build();
+
+            if (request.getComments() != null) {
+                patchExecutionResponse.setComments(
+                        request.getComments());
+            }
+
+            if (request.getExecutionStatus() != null) {
+                patchExecutionResponse.setExecutionStatus(
+                        request.getExecutionStatus());
+            }
+
+            if (request.getAutomationFeasibility() != null) {
+                patchExecutionResponse.setAutomationFeasibility(
+                        request.getAutomationFeasibility());
+            }
+
+            response.setExecution(patchExecutionResponse);
+
+
+        }
+        return response;
     }
+
 
     @Override
     public String hardDeleteTestCase(Integer id) {
@@ -195,54 +287,22 @@ public class TestCaseServiceImpl implements TestCaseService {
     }
 
     @Override
-    public ExecutionStatusResponse updateExecutionStatus(
-            Integer testCaseId,
-            UpdateExecutionStatusRequest request) {
-
-        TestCase testCase =
-                testCaseRepository.findById(testCaseId)
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Testcase not found with ID: " + testCaseId));
-
-        TestingExecution execution =
-                testingExecutionRepository.findByTestCase(testCase)
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Execution not found with ID: " + testCaseId));;
-
-        //Update execution status
-        execution.setExecutionStatus(request.getExecutionStatus());
-
-        //Update TestCase status
-        TestCaseStatus testCaseStatus = switch (request.getExecutionStatus()) {
-            case PASS -> TestCaseStatus.PASSED;
-            case FAIL -> TestCaseStatus.FAILED;
-            case DESCOPE -> TestCaseStatus.DESCOPE;
-            default -> throw new IllegalArgumentException(
-                    "Unsupported execution status: "
-                            + request.getExecutionStatus());
-        };
-
-        testCase.setTestcaseStatus(testCaseStatus);
-
-        execution.setExecutionNumber(execution.getExecutionNumber() + 1);
-
-
-        if(request.getExecutionStatus()==ExecutionStatus.PASS){
-            utils.trigger(testCase,testCase.getCreatedBy(),null);
-        }
-
-        //Save execution + testcase
-        TestingExecution updateTestingExecution = testingExecutionRepository.save(execution);
+    public PatchTestCaseDeleteResponse softDeleteTestCase(Integer id) {
+        TestCase testCase = testCaseRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("TestCase is not present for this id:" + id));
+        testCase.setDeleted(true);
+        testCase.setActive(false);
+        bugRepository.softDeleteBugsByTestCaseId(id);
         testCaseRepository.save(testCase);
-        return testCasePatchMapper.patchExecutionUpdate(updateTestingExecution);
-
+        return PatchTestCaseDeleteResponse.builder()
+                .testcaseId(id)
+                .message("TestCase deleted successfully")
+                .build();
     }
+}
 
 
 
-    /*@Override
+    /*    *//*@Override
     public TestCaseExecutionResponse createTestCaseByManual(
             TestCaseExecutionRequest request) {
 
@@ -295,9 +355,9 @@ public class TestCaseServiceImpl implements TestCaseService {
                 .executionResponse(testCaseMapper.toResponse(execution))
                 .build();
     }
-*/
+*//*
 
-    /*@Override
+    *//*@Override
     @Transactional
     public ExcelUploadResponse createTestCaseByUpload(
             MultipartFile file,
@@ -457,9 +517,9 @@ public class TestCaseServiceImpl implements TestCaseService {
                 .failedRows(0)
                 .errors(Collections.emptyList())
                 .build();
-    }*/
+    }*//*
 
-    /*@Override
+    *//*@Override
     public TestCaseExecutionResponse getById(int id) {
 
         TestCase testCase = testCaseRepository.findById(id)
@@ -481,9 +541,9 @@ public class TestCaseServiceImpl implements TestCaseService {
                 .testCaseResponse(testCaseMapper.toResponse(testCase))
                 .executionResponse(testCaseMapper.toResponse(execution))
                 .build();
-    }*/
+    }*//*
 
-    /*@Override
+    *//*@Override
     public List<TestCaseExecutionResponse> getByAll() {
 
         List<TestCase> testCases = testCaseRepository.findAll();
@@ -505,9 +565,9 @@ public class TestCaseServiceImpl implements TestCaseService {
                             .build();
                 })
                 .toList();
-    }*/
+    }*//*
 
-   /* @Override
+   *//* @Override
     public Page<TestCaseExecutionResponse> getByFeatureId(Integer featureId,int page,int size) {
         Pageable pageable = PageRequest.of(page,size);
         Page<TestCase> testCases =
@@ -533,7 +593,7 @@ public class TestCaseServiceImpl implements TestCaseService {
                             .build();
                 });
     }
-*/
+*//*
 
 
 
@@ -557,5 +617,4 @@ public class TestCaseServiceImpl implements TestCaseService {
 //
 //        return String.format("BUG-%03d", nextNumber);
 //    }
-//
-}
+//*/

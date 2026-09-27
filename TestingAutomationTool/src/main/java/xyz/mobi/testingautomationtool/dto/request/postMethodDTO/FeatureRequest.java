@@ -1,4 +1,4 @@
-package xyz.mobi.testingautomationtool.dto.request.featureRequest;
+package xyz.mobi.testingautomationtool.dto.request.postMethodDTO;
 
 
 import jakarta.validation.constraints.NotBlank;
@@ -6,8 +6,6 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
 import xyz.mobi.testingautomationtool.enums.FeatureStatus;
-
-import java.time.LocalTime;
 
 @Getter
 @Setter
@@ -27,9 +25,6 @@ public class FeatureRequest {
 
     @NotNull(message = "Feature status cannot be null")
     private FeatureStatus status;
-
-    @NotNull(message = "Duration cannot be null")
-    private LocalTime duration;
 
     @NotNull(message = "Sprint cannot be null")
     private Integer sprint;

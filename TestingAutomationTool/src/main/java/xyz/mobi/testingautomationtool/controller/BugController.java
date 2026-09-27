@@ -2,18 +2,21 @@ package xyz.mobi.testingautomationtool.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.BugAssignRequest;
-import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.BugStatusRequest;
-import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.BugPutRequest;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.BugResponse;
+import xyz.mobi.testingautomationtool.enums.BugCategory;
 import xyz.mobi.testingautomationtool.enums.BugPriority;
 import xyz.mobi.testingautomationtool.enums.BugSeverity;
 import xyz.mobi.testingautomationtool.enums.BugStatus;
 import xyz.mobi.testingautomationtool.service.BugService;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -38,82 +41,63 @@ public class BugController {
         return ResponseEntity.ok(
                 bugService.getAllBugs(page, size));
     }
+    @GetMapping("/search")
+    public ResponseEntity<Page<BugResponse>> globalSearch(
 
-    @GetMapping("/all")
-    public ResponseEntity<List<BugResponse>> getByAll() {
+            @RequestParam(required = false)
+            String keyword,
 
-        return ResponseEntity.ok(
-                bugService.getByAll());
+            @RequestParam(required = false)
+            BugSeverity severity,
+
+            @RequestParam(required = false)
+            BugPriority priority,
+
+            @RequestParam(required = false)
+            BugStatus status,
+
+            @RequestParam(required = false)
+            BugCategory category,
+
+            @RequestParam(required = false)
+            Integer bugOccurrence,
+
+            @RequestParam(required = false)
+            Boolean isActive,
+
+            @RequestParam(required = false)
+            LocalDate resolvedFrom,
+
+            @RequestParam(required = false)
+            LocalDate resolvedTo,
+
+            @RequestParam(required = false)
+            String timeZone,
+
+            @PageableDefault(
+                    size = 10,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            )
+            @ParameterObject
+            Pageable pageable
+    ) {
+
+        Page<BugResponse> response =
+                bugService.globalSearch(
+                        keyword,
+                        severity,
+                        priority,
+                        status,
+                        category,
+                        bugOccurrence,
+                        isActive,
+                        resolvedFrom,
+                        resolvedTo,
+                        timeZone,
+                        pageable
+                );
+
+        return ResponseEntity.ok(response);
     }
-
-    @GetMapping("/testcase/{testcaseId}")
-    public ResponseEntity<Page<BugResponse>> getByTestcaseId(
-            @PathVariable Integer testcaseId,
-            @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "10") Integer size) {
-
-        return ResponseEntity.ok(
-                bugService.getByTestcaseId(testcaseId, page, size));
-    }
-
-    @GetMapping("/feature/{featureId}")
-    public ResponseEntity<Page<BugResponse>> getByFeatureId(
-            @PathVariable Integer featureId,
-            @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "10") Integer size) {
-
-        return ResponseEntity.ok(
-                bugService.getByFeatureId(featureId, page, size));
-    }
-
-    @GetMapping("/status/{status}")
-    public ResponseEntity<Page<BugResponse>> getByStatus(
-            @PathVariable BugStatus status,
-            @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "10") Integer size) {
-
-        return ResponseEntity.ok(
-                bugService.getByStatus(status, page, size));
-    }
-
-    @GetMapping("/assigned/{userId}")
-    public ResponseEntity<Page<BugResponse>> getByAssignedTo(
-            @PathVariable Integer userId,
-            @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "10") Integer size) {
-
-        return ResponseEntity.ok(
-                bugService.getByAssignedTo(userId, page, size));
-    }
-
-    @GetMapping("/severity/{severity}")
-    public ResponseEntity<Page<BugResponse>> getBySeverity(
-            @PathVariable BugSeverity severity,
-            @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "10") Integer size) {
-
-        return ResponseEntity.ok(
-                bugService.getBySeverity(severity, page, size));
-    }
-
-    @GetMapping("/priority/{priority}")
-    public ResponseEntity<Page<BugResponse>> getByPriority(
-            @PathVariable BugPriority priority,
-            @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "10") Integer size) {
-
-        return ResponseEntity.ok(
-                bugService.getByPriority(priority, page, size));
-    }
-
-    @GetMapping("/tester/{testerId}/bugs")
-    public ResponseEntity<Page<BugResponse>> getByAssignedBYTester(
-            @PathVariable(name = "testerId") Integer testerId,
-            @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "10") Integer size) {
-
-        return ResponseEntity.ok(
-                bugService.getByReportedBy(testerId, page, size));
-    }
-
 }
