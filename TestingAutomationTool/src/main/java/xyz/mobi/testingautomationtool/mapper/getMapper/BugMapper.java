@@ -11,7 +11,6 @@ public interface BugMapper {
     @Mapping(source = "testCase.testcaseId", target = "testcaseId")
     @Mapping(source = "reportedBy.username", target = "reportedBy")
     @Mapping(source = "assignedTo.username", target = "assignedTo")
-    @Mapping(source = "bugReoccurred.bugId", target = "bugReoccurredId")
 
     BugResponse toResponse(Bug bug);
 }

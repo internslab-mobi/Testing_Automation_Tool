@@ -11,7 +11,6 @@ import xyz.mobi.testingautomationtool.enums.*;
 @Builder
 public class UpdateExecutionStatusRequest {
 
-    @NotNull(message = "Execution status is required")
     private ExecutionStatus executionStatus;
 
     private AutomationFeasibility automationFeasibility;

@@ -1,6 +1,7 @@
 package xyz.mobi.testingautomationtool.controller;
 
 import jakarta.validation.Valid;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpStatus;
@@ -12,7 +13,9 @@ import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.TestCasePatchRe
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.UpdateExecutionStatusRequest;
 import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.TestCaseExecutionRequest;
 import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.TestCasePutRequest;
+import xyz.mobi.testingautomationtool.dto.response.DeleteMethodDto.PatchTestCaseDeleteResponse;
 import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.ExecutionStatusResponse;
+import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.PatchTestCaseResponse;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseExecutionResponse;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseResponse;
 import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.TestCasePutResponse;
@@ -24,7 +27,7 @@ public class TestcaseController {
 
     private final TestCaseService testCaseService;
 
-    @PutMapping("/{id}")
+    @PutMapping("/{id}/update")
     public ResponseEntity<TestCasePutResponse> updateTestCaseDetails(
             @Valid @RequestBody TestCasePutRequest testCasePutRequest,
             @PathVariable("id") Integer id) {
@@ -36,23 +39,21 @@ public class TestcaseController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<TestCaseResponse> patchTestCaseDetails(
+    public ResponseEntity<PatchTestCaseResponse> patchTestCaseDetails(
             @RequestBody TestCasePatchRequest testCasePatchRequest,
             @PathVariable("id") Integer id) {
 
-        TestCaseResponse response = testCaseService
+        PatchTestCaseResponse response = testCaseService
                 .patchTestCaseDetails(testCasePatchRequest, id);
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/{id}/delete")
-    public ResponseEntity<String> softDeleteTestCase(
-            @PathVariable("id") Integer id) {
-
-        String response = testCaseService.softDeleteTestCase(id);
-
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<PatchTestCaseDeleteResponse> softDelete(@PathVariable("id") Integer id){
+        PatchTestCaseDeleteResponse response = testCaseService.softDeleteTestCase(id);
         return ResponseEntity.ok(response);
     }
+
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> hardDeleteTestCase(
@@ -63,7 +64,18 @@ public class TestcaseController {
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/executions/{executionId}/status")
+    /*@PatchMapping("/{id}/delete")
+    public ResponseEntity<String> softDeleteTestCase(
+            @PathVariable("id") Integer id) {
+
+        String response = testCaseService.softDeleteTestCase(id);
+
+        return ResponseEntity.ok(response);
+    }*/
+
+
+
+   /* @PatchMapping("/executions/{executionId}/status")
     public ResponseEntity<ExecutionStatusResponse> updateExecutionStatus(
             @PathVariable Integer executionId,
             @Valid @RequestBody UpdateExecutionStatusRequest request) {
@@ -75,7 +87,7 @@ public class TestcaseController {
                 );
 
         return ResponseEntity.ok(response);
-    }
+    }*/
  /*   // Manual test case creation
 //    @PostMapping("/manual")
 //    public ResponseEntity<TestCaseExecutionResponse> createTestCaseByManual(

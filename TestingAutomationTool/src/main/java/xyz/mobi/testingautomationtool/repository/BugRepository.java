@@ -3,6 +3,10 @@ package xyz.mobi.testingautomationtool.repository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import xyz.mobi.testingautomationtool.entity.Bug;
 import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.BugPriority;
@@ -12,23 +16,7 @@ import xyz.mobi.testingautomationtool.enums.BugStatus;
 import java.util.List;
 import java.util.Optional;
 
-public interface BugRepository extends JpaRepository<Bug, Integer> {
-
-    Optional<Bug> findTopByTestCase_TestcaseIdOrderByBugIdDesc(Integer testcaseId);
-
-    List<Bug> findByTestCase_TestcaseIdOrderByBugIdAsc(Integer testcaseId);
-
-    List<Bug> findByTestCase_TestcaseIdAndActiveTrueOrderByBugIdAsc(Integer testcaseId);
-
-    Page<Bug> findByTestCase_TestcaseIdAndActiveTrue(Integer testcaseId, Pageable pageable);
-
-    Optional<Bug> findByBugReoccurred(Bug bug);
-
-    List<Bug> findByFeature_FeatureIdOrderByBugIdAsc(Integer featureId);
-
-    List<Bug> findByFeature_FeatureIdAndActiveTrueOrderByBugIdAsc(Integer featureId);
-
-    Page<Bug> findByFeature_FeatureIdAndActiveTrue(Integer featureId, Pageable pageable);
+public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecificationExecutor<Bug> {
 
     Optional<List<Bug>> findByTestCase_TestcaseId(Integer id);
 
@@ -36,13 +24,26 @@ public interface BugRepository extends JpaRepository<Bug, Integer> {
 
     List<Bug> findByActiveTrue();
 
-    Page<Bug> findByStatusAndActiveTrue(BugStatus status, Pageable pageable);
+    @Modifying
+    @Query("UPDATE Bug b SET b.isDeleted=true,b.isActive=false WHERE b.testCase.testcaseId =:id")
+    void softDeleteBugsByTestCaseId(@Param("id") Integer id);
 
-    Page<Bug> findByAssignedTo_UserIdAndActiveTrue(Integer userId, Pageable pageable);
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+    UPDATE Bug b
+    SET b.isActive = false
+    WHERE b.testCase.testcaseId = :testCaseId
+""")
+    int deactivateBugs(@Param("testCaseId") Integer testCaseId);
 
-    Page<Bug> findBySeverityAndActiveTrue(BugSeverity severity, Pageable pageable);
 
-    Page<Bug> findByPriorityAndActiveTrue(BugPriority priority, Pageable pageable);
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("""
+    UPDATE Bug b
+    SET b.isActive = true
+    WHERE b.testCase.testcaseId = :testCaseId
+      AND b.isDeleted = false
+""")
+    int activateNonDeletedBugs(@Param("testCaseId") Integer testCaseId);
 
-    Page<Bug> findByReportedByAndActiveTrue(User user,Pageable pageable);
 }

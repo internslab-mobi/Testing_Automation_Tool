@@ -4,5 +4,6 @@ public enum FeatureStatus {
     ACTIVE,
     IN_PROGRESS,
     COMPLETED,
-    DEPRECATED
+    DEPRECATED,
+    ON_HOLD
 }

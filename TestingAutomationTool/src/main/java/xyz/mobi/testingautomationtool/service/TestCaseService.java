@@ -7,7 +7,9 @@ import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.UpdateExecution
 import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.TestCaseExecutionRequest;
 import xyz.mobi.testingautomationtool.dto.excelDTO.ExcelUploadResponse;
 import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.TestCasePutRequest;
+import xyz.mobi.testingautomationtool.dto.response.DeleteMethodDto.PatchTestCaseDeleteResponse;
 import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.ExecutionStatusResponse;
+import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.PatchTestCaseResponse;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseExecutionResponse;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseResponse;
 import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.TestCasePutResponse;
@@ -32,16 +34,11 @@ public interface TestCaseService {
             TestCasePutRequest testCaseRequest,
             Integer id);
 
-    TestCaseResponse patchTestCaseDetails(
+    PatchTestCaseResponse patchTestCaseDetails(
             TestCasePatchRequest testPatchMethodDto,
             Integer id);
 
-    String softDeleteTestCase(Integer id);
-
     String hardDeleteTestCase(Integer id);
 
-    ExecutionStatusResponse updateExecutionStatus(
-            Integer executionId,
-            UpdateExecutionStatusRequest request);
-
+    PatchTestCaseDeleteResponse softDeleteTestCase(Integer id);
 }

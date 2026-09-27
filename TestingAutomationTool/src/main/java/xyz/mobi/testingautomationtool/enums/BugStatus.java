@@ -6,5 +6,6 @@ public enum BugStatus {
     RESOLVED,
     CLOSED,
     REOPENED,
-    WONT_FIX
+    NOT_A_BUG,
+    DEFERRED,
 }

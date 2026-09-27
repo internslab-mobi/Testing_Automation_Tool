@@ -1,13 +1,13 @@
 package xyz.mobi.testingautomationtool.dto.response.putMethodDTO;
 
 import lombok.*;
-import xyz.mobi.testingautomationtool.entity.Feature;
-import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 import xyz.mobi.testingautomationtool.enums.TestPriority;
 import xyz.mobi.testingautomationtool.enums.TestType;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -30,25 +30,11 @@ public class TestCasePutResponse {
 
     private String username;
 
-    private LocalDateTime updatedAt;
+    private Instant updatedAt;
 
     private String testcaseFormatId;
 
-    private String testExecution;
+    private TestCaseValidationResponse validation;
 
-    private String testValidation;
-
-    private String precondition;
-
-    private String testData;
-
-    private String executionSteps;
-
-    private String uiValidations;
-
-    private String dbValidations;
-
-    private String comments;
-
-    private java.util.Map<String, Object> dynamicFields;
+    private Map<String, Object> dynamicFields;
 }
