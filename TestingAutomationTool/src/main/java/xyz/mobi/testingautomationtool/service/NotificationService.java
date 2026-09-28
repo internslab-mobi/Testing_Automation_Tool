@@ -1,5 +1,7 @@
 package xyz.mobi.testingautomationtool.service;
 
+import org.springframework.transaction.annotation.Transactional;
+import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.NotificationRequest;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.NotificationResponse;
 import xyz.mobi.testingautomationtool.enums.NotificationStatus;
 
@@ -7,19 +9,20 @@ import java.util.List;
 
 public interface NotificationService {
 
-    List<NotificationResponse> getMyNotifications(
-            Integer employeeId);
-
-    NotificationResponse getById(
-            Integer notificationId);
-
     NotificationResponse createNotification(
-            Integer employeeId,
-            Integer assignedId,
-            Integer bugId,
-            String message);
+            NotificationRequest request);
 
-    void updateStatus(
-            Integer notificationId,
-            NotificationStatus status);
+    void createReassignNotification(
+            Integer oldAssignedId,
+            Integer newAssignedId,
+            Integer bugId
+    );
+
+    List<NotificationResponse> getByAll();
+
+    List<NotificationResponse> getByAssignedId(
+            Integer assignedId
+    );
+
+   void deleteNotification(Integer notificationId);
 }

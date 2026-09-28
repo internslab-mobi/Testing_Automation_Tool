@@ -86,4 +86,9 @@ public class Feature extends Auditable {
     )
     private User updatedBy=null;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    @Builder.Default
+    private Long version2 = 0L;
+
 }

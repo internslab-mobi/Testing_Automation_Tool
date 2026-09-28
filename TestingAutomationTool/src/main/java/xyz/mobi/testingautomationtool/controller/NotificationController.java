@@ -15,23 +15,32 @@ public class NotificationController {
 
     private final NotificationService notificationService;
 
-    // Get all notifications for an employee
-    @GetMapping("/employee/{employeeId}")
-    public ResponseEntity<List<NotificationResponse>> getMyNotifications(
-            @PathVariable Integer employeeId) {
+    @GetMapping("/assigned/{assignedId}")
+    public ResponseEntity<List<NotificationResponse>> getByAssignedId(
+            @PathVariable Integer assignedId) {
 
         return ResponseEntity.ok(
-                notificationService.getMyNotifications(employeeId)
+                notificationService.getByAssignedId(assignedId)
         );
     }
 
-    // Get notification by ID
-    @GetMapping("/{notificationId}")
-    public ResponseEntity<NotificationResponse> getById(
+    // Get all notifications
+    @GetMapping
+    public ResponseEntity<List<NotificationResponse>> getAllNotifications() {
+
+        return ResponseEntity.ok(
+                notificationService.getByAll()
+        );
+    }
+
+    // Delete notification
+    @DeleteMapping("/{notificationId}")
+    public ResponseEntity<Void> deleteNotification(
             @PathVariable Integer notificationId) {
 
-        return ResponseEntity.ok(
-                notificationService.getById(notificationId)
-        );
+        notificationService.deleteNotification(notificationId);
+
+        return ResponseEntity.noContent().build();
     }
+
 }

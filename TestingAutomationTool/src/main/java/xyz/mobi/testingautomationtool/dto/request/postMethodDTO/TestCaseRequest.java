@@ -15,8 +15,8 @@ import xyz.mobi.testingautomationtool.enums.TestType;
 @Builder
 public class TestCaseRequest {
 
-    @NotNull(message = "Feature ID is required")
-    @Positive(message = "Feature ID must be greater than 0")
+    @NotNull(message = "Feature is required")
+    @Positive(message = "Feature must be greater than 0")
     private Integer featureId;
 
     @NotBlank(message = "Test case format ID is required")

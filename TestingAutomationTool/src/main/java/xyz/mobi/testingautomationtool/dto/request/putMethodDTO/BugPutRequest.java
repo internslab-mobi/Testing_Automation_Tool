@@ -27,15 +27,15 @@ public class BugPutRequest {
 
     private BugSeverity severity;
 
-    private BugStatus status;
-
     private BugCategory category;
 
-    private User executed_by;
+    private BugStatus status;
 
-    private User assignedTo;
+    private Integer assignedTo;
 
     private String comments;
 
     private Map<String, Object> dynamicFields;
+
+    private Integer updatedBy;
 }

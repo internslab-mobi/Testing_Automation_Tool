@@ -3,7 +3,7 @@ package xyz.mobi.testingautomationtool.dto.response.postMethodDTO;
 import lombok.*;
 import xyz.mobi.testingautomationtool.enums.NotificationStatus;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Getter
 @Setter
@@ -14,15 +14,13 @@ public class NotificationResponse {
 
     private Integer notificationId;
 
-    private String employeeName;
+    private Integer employeeId;
 
-    private String message;
+    private Integer assignedId;
 
     private Integer bugId;
 
-    private String bugFormatId;
-
-    private LocalDateTime createdAt;
-
     private NotificationStatus notificationStatus;
+
+    private Instant createdAt;
 }

@@ -51,9 +51,11 @@ public class Project extends Auditable {
     private User createdBy;
 
     @Column(name = "is_active", nullable = false)
+    @Builder.Default
     private boolean isActive = true;
 
     @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
     private boolean isDeleted = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -64,5 +66,11 @@ public class Project extends Auditable {
             )
     )
     private User updatedBy=null;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    @Builder.Default
+    private Long version = 0L;
+
 
 }

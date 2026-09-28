@@ -1,6 +1,5 @@
-package xyz.mobi.testingautomationtool.dto.response;
+package xyz.mobi.testingautomationtool.exception;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,10 +15,10 @@ public class ErrorResponse {
 
     private String errorCode;
 
+    private Instant errorTime;
+
     private Integer errorStatus;
 
     private String errorMessage;
 
-    @JsonFormat(pattern = "yyyy-MM-dd'T'HH:mm:ss")
-    private Instant errorTime;
 }

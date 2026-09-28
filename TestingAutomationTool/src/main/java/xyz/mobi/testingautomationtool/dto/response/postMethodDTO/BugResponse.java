@@ -5,7 +5,7 @@ import xyz.mobi.testingautomationtool.enums.BugPriority;
 import xyz.mobi.testingautomationtool.enums.BugSeverity;
 import xyz.mobi.testingautomationtool.enums.BugStatus;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Getter
 @Setter
@@ -30,15 +30,13 @@ public class BugResponse {
 
     private BugStatus status;
 
-    private String reportedBy;
-
     private String assignedTo;
 
-    private LocalDateTime resolvedAt;
-
-    private Integer bugReoccurredId;
+    private Instant resolvedAt;
 
     private Integer bugOccurrence;
 
-    private boolean active;
+    private boolean isActive;
+
+    private Instant updatedAt;
 }

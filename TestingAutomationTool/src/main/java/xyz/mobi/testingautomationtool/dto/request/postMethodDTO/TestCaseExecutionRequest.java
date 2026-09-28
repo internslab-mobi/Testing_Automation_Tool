@@ -15,7 +15,7 @@ public class TestCaseExecutionRequest {
     @Valid
     private TestCaseRequest testCase;
 
-    @NotNull(message = "Testing execution data is required")
+//    @NotNull(message = "Testing execution data is required")
     @Valid
     private ExecutionRequest executionRequest;
 }

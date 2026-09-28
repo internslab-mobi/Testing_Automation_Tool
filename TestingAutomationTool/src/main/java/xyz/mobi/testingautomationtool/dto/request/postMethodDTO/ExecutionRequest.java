@@ -16,8 +16,6 @@ public class ExecutionRequest {
 
     private AutomationFeasibility automationFeasibility;
 
-    private ExecutionStatus executionStatus;
-
     @Size(max = 65535, message = "Test execution cannot exceed the allowed length")
     private String testExecution;
 

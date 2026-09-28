@@ -5,7 +5,7 @@ import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 import xyz.mobi.testingautomationtool.enums.TestPriority;
 import xyz.mobi.testingautomationtool.enums.TestType;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Getter
 @Setter
@@ -14,7 +14,6 @@ import java.time.LocalDateTime;
 @Builder
 public class TestCaseResponse {
 
-    private Integer testcaseId;
 
     private Integer featureId;
 
@@ -30,9 +29,7 @@ public class TestCaseResponse {
 
     private String createdBy;
 
-    private LocalDateTime createdAt;
-
-    private LocalDateTime updatedAt;
+    private Instant createdAt;
 
     private java.util.Map<String, Object> dynamicFields;
 }

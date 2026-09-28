@@ -91,6 +91,11 @@ public class TestCase extends Auditable {
     )
     private User updatedBy = null;
 
+    @Version
+    @Column(name = "version", nullable = false)
+    @Builder.Default
+    private Long version = 0L;
+
 //    @Convert(converter = xyz.mobi.testingautomationtool.utils.JsonToMapConverter.class)
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "dynamic_fields", columnDefinition = "JSON")

@@ -1,10 +1,16 @@
 package xyz.mobi.testingautomationtool.service.impl;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
+
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+
 import xyz.mobi.testingautomationtool.entity.Bug;
 import xyz.mobi.testingautomationtool.entity.TestCase;
 import xyz.mobi.testingautomationtool.entity.TestingExecution;
@@ -22,283 +28,615 @@ public class EmailServiceImpl implements EmailService {
     @Value("${spring.mail.username}")
     private String fromEmail;
 
+
+    @Async
     @Override
-    public void sendBugAssignmentEmail(
-            String to,
+    public void sendBugAssignedEmail(
+            String recipientEmail,
             Bug bug) {
 
-        // Get testcase connected to the bug
+
+        if (bug == null
+                || recipientEmail == null
+                || recipientEmail.isBlank()) {
+
+            return;
+        }
+
         TestCase testCase = bug.getTestCase();
 
-        // Get execution details connected to the testcase
-        TestingExecution testingExecution =
-                testingExecutionRepository
-                        .findByTestCase(testCase)
-                        .orElse(null);
-
-        StringBuilder message = new StringBuilder();
-
-        message.append("Hello,\n\n");
-
-        message.append("A bug has been assigned to you.\n\n");
-
-        // =====================================================
-        // BUG DETAILS
-        // =====================================================
-
-        message.append("====================================\n");
-        message.append("            BUG DETAILS\n");
-        message.append("====================================\n\n");
-
-        message.append("Bug ID        : ")
-                .append(safeValue(bug.getBugFormatId()))
-                .append("\n");
-
-        message.append("Database ID   : ")
-                .append(safeValue(bug.getBugId()))
-                .append("\n");
-
-        message.append("Title         : ")
-                .append(safeValue(bug.getTitle()))
-                .append("\n");
-
-        message.append("Description   : ")
-                .append(safeValue(bug.getDescription()))
-                .append("\n");
-
-        message.append("Severity      : ")
-                .append(safeValue(bug.getSeverity()))
-                .append("\n");
-
-        message.append("Priority      : ")
-                .append(safeValue(bug.getPriority()))
-                .append("\n");
-
-        message.append("Status        : ")
-                .append(safeValue(bug.getStatus()))
-                .append("\n");
-
-        message.append("Occurrence    : ")
-                .append(safeValue(bug.getBugOccurrence()))
-                .append("\n");
-
-        message.append("Reported By   : ")
-                .append(
-                        bug.getReportedBy() != null
-                                ? safeValue(
-                                bug.getReportedBy().getUsername())
-                                : "N/A"
-                )
-                .append("\n");
-
-        message.append("Assigned To   : ")
-                .append(
-                        bug.getAssignedTo() != null
-                                ? safeValue(
-                                bug.getAssignedTo().getUsername())
-                                : "N/A"
-                )
-                .append("\n");
-
-        message.append("Resolved At   : ")
-                .append(safeValue(bug.getResolvedAt()))
-                .append("\n\n");
-
-        // =====================================================
-        // TEST CASE DETAILS
-        // =====================================================
-
-        message.append("====================================\n");
-        message.append("          TEST CASE DETAILS\n");
-        message.append("====================================\n\n");
+        TestingExecution testingExecution = null;
 
         if (testCase != null) {
 
-            message.append("Test Case ID  : ")
-                    .append(
-                            safeValue(
-                                    testCase.getTestcaseFormatId()))
-                    .append("\n");
-
-            message.append("Database ID   : ")
-                    .append(
-                            safeValue(
-                                    testCase.getTestcaseId()))
-                    .append("\n");
-
-            message.append("Title         : ")
-                    .append(
-                            safeValue(
-                                    testCase.getTitle()))
-                    .append("\n");
-
-            message.append("Test Type     : ")
-                    .append(
-                            safeValue(
-                                    testCase.getTestType()))
-                    .append("\n");
-
-            message.append("Priority      : ")
-                    .append(
-                            safeValue(
-                                    testCase.getTestPriority()))
-                    .append("\n");
-
-            message.append("Status        : ")
-                    .append(
-                            safeValue(
-                                    testCase.getTestcaseStatus()))
-                    .append("\n");
-
-            message.append("Active        : ")
-                    .append(
-                            safeValue(
-                                    testCase.isActive()))
-                    .append("\n\n");
-
-        } else {
-            message.append("Testcase details are unavailable.\n\n");
+            testingExecution =
+                    testingExecutionRepository
+                            .findByTestCase_TestcaseId(
+                                    testCase.getTestcaseId()
+                            )
+                            .orElse(null);
         }
 
-        // =====================================================
-        // TESTING EXECUTION DETAILS
-        // =====================================================
+        StringBuilder message = new StringBuilder();
 
-        message.append("====================================\n");
-        message.append("       TESTING EXECUTION DETAILS\n");
-        message.append("====================================\n\n");
+        appendHtmlHeader(
+                message,
+                "Bug Assigned",
+                "A new bug has been assigned to you."
+        );
+
+
+        message.append("""
+                <p style="margin: 0 0 20px 0;">
+                    Hello,
+                </p>
+
+                <p style="margin: 0 0 20px 0;">
+                    A bug has been assigned to you.
+                    Please review the details below and take
+                    the necessary action.
+                </p>
+                """);
+
+        appendSectionStart(message, "Bug Details");
+        appendRow(message, "Bug ID", bug.getBugFormatId());
+        appendRow(message, "Title", bug.getTitle());
+
+        appendRow(
+                message,
+                "Severity",
+                bug.getSeverity()
+        );
+
+        appendRow(
+                message,
+                "Priority",
+                bug.getPriority()
+        );
+
+        appendRow(
+                message,
+                "Status",
+                bug.getStatus()
+        );
+
+        appendRow(
+                message,
+                "Reported By",
+                bug.getReportedBy() != null
+                        ? bug.getReportedBy().getUsername()
+                        : null
+        );
+
+        appendRow(
+                message,
+                "Assigned To",
+                bug.getAssignedTo() != null
+                        ? bug.getAssignedTo().getUsername()
+                        : null
+        );
+
+        appendSectionEnd(message);
+
+
+        if (testCase != null) {
+
+            appendSectionStart(
+                    message,
+                    "Test Case Details"
+            );
+
+            appendRow(
+                    message,
+                    "Test Case ID",
+                    testCase.getTestcaseFormatId()
+            );
+
+            appendRow(
+                    message,
+                    "Title",
+                    testCase.getTitle()
+            );
+
+            appendRow(
+                    message,
+                    "Test Type",
+                    testCase.getTestType()
+            );
+
+            appendRow(
+                    message,
+                    "Priority",
+                    testCase.getTestPriority()
+            );
+
+            appendRow(
+                    message,
+                    "Status",
+                    testCase.getTestcaseStatus()
+            );
+
+            appendSectionEnd(message);
+        }
+
 
         if (testingExecution != null) {
 
-            message.append("Execution ID       : ")
-                    .append(
-                            safeValue(
-                                    testingExecution.getExecutionId()))
-                    .append("\n");
+            appendSectionStart(
+                    message,
+                    "Testing Execution Details"
+            );
 
-            message.append("Execution Number   : ")
-                    .append(
-                            safeValue(
-                                    testingExecution.getExecutionNumber()))
-                    .append("\n");
+            appendRow(
+                    message,
+                    "Automation Feasibility",
+                    testingExecution.getAutomationFeasibility()
+            );
 
-            message.append("Automation Status  : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getAutomationFeasibility()))
-                    .append("\n");
+            appendRow(
+                    message,
+                    "Execution Status",
+                    testingExecution.getExecutionStatus()
+            );
 
-            message.append("Execution Status   : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getExecutionStatus()))
-                    .append("\n");
+            appendRow(
+                    message,
+                    "Test Execution",
+                    testingExecution.getTestExecution()
+            );
 
-            message.append("Test Execution     : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getTestExecution()))
-                    .append("\n\n");
+            appendRow(
+                    message,
+                    "Test Validation",
+                    testingExecution.getTestValidation()
+            );
 
-            message.append("Test Validation    : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getTestValidation()))
-                    .append("\n\n");
+            appendRow(
+                    message,
+                    "Precondition",
+                    testingExecution.getPrecondition()
+            );
 
-            message.append("Precondition       : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getPrecondition()))
-                    .append("\n\n");
+            appendRow(
+                    message,
+                    "Test Data",
+                    testingExecution.getTestData()
+            );
 
-            message.append("Test Data          : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getTestData()))
-                    .append("\n\n");
+            appendRow(
+                    message,
+                    "Execution Steps",
+                    testingExecution.getExecutionSteps()
+            );
 
-            message.append("Execution Steps    : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getExecutionSteps()))
-                    .append("\n\n");
+            appendRow(
+                    message,
+                    "UI Validations",
+                    testingExecution.getUiValidations()
+            );
 
-            message.append("UI Validations     : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getUiValidations()))
-                    .append("\n\n");
+            appendRow(
+                    message,
+                    "DB Validations",
+                    testingExecution.getDbValidations()
+            );
 
-            message.append("DB Validations     : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getDbValidations()))
-                    .append("\n\n");
+            appendRow(
+                    message,
+                    "Comments",
+                    testingExecution.getComments()
+            );
 
-            message.append("Comments           : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getComments()))
-                    .append("\n\n");
+            appendRow(
+                    message,
+                    "Executed By",
+                    testingExecution.getExecutedBy() != null
+                            ? testingExecution
+                              .getExecutedBy()
+                              .getUsername()
+                            : null
+            );
 
-            message.append("Executed At        : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getExecutedAt()))
-                    .append("\n");
-
-            message.append("Executed By        : ")
-                    .append(
-                            testingExecution.getExecutedBy() != null
-                                    ? safeValue(
-                                    testingExecution
-                                    .getExecutedBy()
-                                    .getUsername())
-                                    : "N/A"
-                    )
-                    .append("\n\n");
-
-        } else {
-            message.append(
-                    "Testing execution details are unavailable.\n\n");
+            appendSectionEnd(message);
         }
 
-        message.append("====================================\n");
-        message.append("Please review the bug and take the necessary action.\n\n");
 
-        message.append("Regards,\n");
-        message.append("Testing Automation Tool");
+        message.append("""
+                <p style="margin-top: 28px;">
+                    Please review the bug and take the necessary action.
+                </p>
+                """);
 
-        // =====================================================
-        // SEND EMAIL
-        // =====================================================
 
-        SimpleMailMessage mail = new SimpleMailMessage();
+        appendHtmlFooter(message);
 
-        mail.setFrom(fromEmail);
-        mail.setTo(to);
-        mail.setSubject(
-                "Bug Assigned - " + bug.getBugFormatId());
-        mail.setText(message.toString());
 
-        mailSender.send(mail);
+        sendHtmlEmail(
+                recipientEmail,
+                "Bug Assigned - "
+                        + safeValue(bug.getBugFormatId()),
+                message.toString()
+        );
     }
 
-    private String safeValue(Object value) {
+
+    @Async
+    @Override
+    public void sendBugReassignedEmail(
+            String recipientEmail,
+            Bug bug) {
+
+
+        if (bug == null
+                || recipientEmail == null
+                || recipientEmail.isBlank()) {
+
+            return;
+        }
+
+
+        StringBuilder message = new StringBuilder();
+
+        appendHtmlHeader(
+                message,
+                "Bug Reassigned",
+                "This bug has been reassigned to another developer."
+        );
+
+        message.append("""
+                <p style="margin: 0 0 20px 0;">
+                    Hello,
+                </p>
+
+                <p style="margin: 0 0 20px 0;">
+                    Your previously assigned bug has been reassigned
+                    to another developer.
+                </p>
+                """);
+
+        appendSectionStart(
+                message,
+                "Bug Details"
+        );
+
+        appendRow(
+                message,
+                "Bug ID",
+                bug.getBugFormatId()
+        );
+
+        appendRow(
+                message,
+                "Title",
+                bug.getTitle()
+        );
+
+        appendRow(
+                message,
+                "Severity",
+                bug.getSeverity()
+        );
+
+        appendRow(
+                message,
+                "Priority",
+                bug.getPriority()
+        );
+
+        appendRow(
+                message,
+                "Status",
+                bug.getStatus()
+        );
+
+        appendRow(
+                message,
+                "Reassigned To",
+                bug.getAssignedTo() != null
+                        ? bug.getAssignedTo().getUsername()
+                        : null
+        );
+
+        appendSectionEnd(message);
+
+
+        message.append("""
+                <p style="
+                    margin-top: 28px;
+                    padding: 15px;
+                    background-color: #fff7ed;
+                    border-left: 4px solid #f97316;
+                    border-radius: 4px;
+                ">
+                    You no longer need to work on this bug.
+                </p>
+                """);
+
+
+        appendHtmlFooter(message);
+
+
+        sendHtmlEmail(
+                recipientEmail,
+                "Bug Reassigned - "
+                        + safeValue(bug.getBugFormatId()),
+                message.toString()
+        );
+    }
+
+
+    private void appendHtmlHeader(
+            StringBuilder message,
+            String title,
+            String subtitle) {
+
+        message.append("""
+                <!DOCTYPE html>
+
+                <html>
+
+                <head>
+
+                    <meta charset="UTF-8">
+
+                    <meta
+                        name="viewport"
+                        content="width=device-width, initial-scale=1.0"
+                    >
+
+                </head>
+
+                <body style="
+                    margin: 0;
+                    padding: 0;
+                    background-color: #f4f6f8;
+                    font-family: Arial, Helvetica, sans-serif;
+                    color: #333333;
+                ">
+
+                    <div style="
+                        max-width: 700px;
+                        margin: 30px auto;
+                        background-color: #ffffff;
+                        border-radius: 10px;
+                        overflow: hidden;
+                        border: 1px solid #e5e7eb;
+                    ">
+
+                        <div style="
+                            background-color: #1f2937;
+                            color: #ffffff;
+                            padding: 25px 30px;
+                        ">
+
+                            <div style="
+                                font-size: 22px;
+                                font-weight: bold;
+                                margin-bottom: 7px;
+                            ">
+                """);
+
+        message.append(
+                escapeHtml(title)
+        );
+
+        message.append("""
+                            </div>
+
+                            <div style="
+                                font-size: 14px;
+                                color: #d1d5db;
+                            ">
+                """);
+
+        message.append(
+                escapeHtml(subtitle)
+        );
+
+        message.append("""
+                            </div>
+
+                        </div>
+
+                        <div style="
+                            padding: 30px;
+                        ">
+                """);
+    }
+
+
+
+    private void appendSectionStart(
+            StringBuilder message,
+            String title) {
+
+        message.append("""
+                <div style="
+                    margin-top: 22px;
+                    border: 1px solid #e5e7eb;
+                    border-radius: 8px;
+                    overflow: hidden;
+                ">
+
+                    <div style="
+                        background-color: #f8fafc;
+                        padding: 14px 18px;
+                        font-size: 16px;
+                        font-weight: bold;
+                        color: #1f2937;
+                        border-bottom: 1px solid #e5e7eb;
+                    ">
+                """);
+
+        message.append(
+                escapeHtml(title)
+        );
+
+        message.append("""
+                    </div>
+
+                    <div style="
+                        padding: 15px 18px;
+                    ">
+                """);
+    }
+
+
+    private void appendSectionEnd(
+            StringBuilder message) {
+
+        message.append("""
+                    </div>
+
+                </div>
+                """);
+    }
+
+
+    private void appendRow(
+            StringBuilder message,
+            String label,
+            Object value) {
+
+        message.append("""
+                <div style="
+                    display: table;
+                    width: 100%;
+                    border-bottom: 1px solid #f1f5f9;
+                    padding: 9px 0;
+                ">
+
+                    <div style="
+                        display: table-cell;
+                        width: 190px;
+                        font-weight: bold;
+                        color: #64748b;
+                        vertical-align: top;
+                        padding-right: 10px;
+                    ">
+                """);
+
+        message.append(
+                escapeHtml(label)
+        );
+
+        message.append("""
+                    </div>
+
+                    <div style="
+                        display: table-cell;
+                        color: #1e293b;
+                        vertical-align: top;
+                        word-break: break-word;
+                    ">
+                """);
+
+        message.append(
+                escapeHtml(
+                        safeValue(value)
+                )
+        );
+
+        message.append("""
+                    </div>
+
+                </div>
+                """);
+    }
+
+
+    private void appendHtmlFooter(
+            StringBuilder message) {
+
+        message.append("""
+                        </div>
+
+                        <div style="
+                            background-color: #f8fafc;
+                            padding: 20px 30px;
+                            color: #64748b;
+                            font-size: 13px;
+                            border-top: 1px solid #e5e7eb;
+                        ">
+
+                            Regards,<br>
+
+                            <strong>
+                                Testing Automation Tool
+                            </strong>
+
+                        </div>
+
+                    </div>
+
+                </body>
+
+                </html>
+                """);
+    }
+
+
+    private void sendHtmlEmail(
+            String recipientEmail,
+            String subject,
+            String content) {
+
+        try {
+
+            MimeMessage mail =
+                    mailSender.createMimeMessage();
+
+            MimeMessageHelper helper =
+                    new MimeMessageHelper(
+                            mail,
+                            false,
+                            "UTF-8"
+                    );
+
+            helper.setFrom(fromEmail);
+
+            helper.setTo(recipientEmail);
+
+            helper.setSubject(subject);
+
+            // true = HTML email
+            helper.setText(
+                    content,
+                    true
+            );
+
+            mailSender.send(mail);
+
+        } catch (MessagingException | MailException ex) {
+
+            throw new RuntimeException(
+                    "Failed to send email",
+                    ex
+            );
+        }
+    }
+
+    private String safeValue(
+            Object value) {
+
         return value != null
                 ? String.valueOf(value)
                 : "N/A";
+    }
+
+
+    private String escapeHtml(
+            String value) {
+
+        if (value == null) {
+            return "N/A";
+        }
+
+        return value
+                .replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&#39;");
     }
 }

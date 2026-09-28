@@ -4,7 +4,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import xyz.mobi.testingautomationtool.entity.TestCase;
 import xyz.mobi.testingautomationtool.entity.TestingExecution;
 
-import java.util.List;
 import java.util.Optional;
 
 public interface TestingExecutionRepository
@@ -14,4 +13,5 @@ public interface TestingExecutionRepository
 
     Optional<TestingExecution> findByTestCaseTestcaseId(Integer testcaseId);
 
+    Optional<TestingExecution> findByTestCase_TestcaseId(Integer testcaseId);
 }
