@@ -5,12 +5,16 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import xyz.mobi.testingautomationtool.dto.request.getmethoddto.FeatureSearchRequest;
 import xyz.mobi.testingautomationtool.dto.response.getMethodDTO.FeatureResponse;
 import xyz.mobi.testingautomationtool.service.FeatureService;
+import xyz.mobi.testingautomationtool.service.impl.ExcelTemplateService;
+import xyz.mobi.testingautomationtool.service.impl.TestCaseExcelService;
 
 @RestController
 @RequestMapping("/api/features")
@@ -67,4 +71,35 @@ public class FeatureController {
                 )
         );
     }
+
+    @GetMapping("/{projectId}/features/{featureId}/template")
+    public ResponseEntity<byte[]> downloadTemplate(
+            @PathVariable Integer projectId,
+            @PathVariable Integer featureId) {
+
+        byte[] excelFile =
+                featureService.downloadTemplate(
+                        projectId,
+                        featureId);
+
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=Feature_"
+                                + featureId
+                                + "_TestCases_Bugs.xlsx"
+                )
+                .contentType(MediaType.parseMediaType(
+                        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(excelFile);
+    }
+
+        @GetMapping("/features/{featureId}/download")
+        public ResponseEntity<byte[]> downloadFile(
+                @PathVariable Integer featureId) {
+
+            return featureService.downloadFile(featureId);
+    }
+
+
 }

@@ -2,6 +2,7 @@ package xyz.mobi.testingautomationtool.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.http.ResponseEntity;
 import xyz.mobi.testingautomationtool.dto.request.getmethoddto.FeatureSearchRequest;
 import xyz.mobi.testingautomationtool.dto.response.getMethodDTO.FeatureResponse;
 
@@ -18,4 +19,8 @@ public interface FeatureService {
             FeatureSearchRequest request,
             Pageable pageable
     );
+
+    ResponseEntity<byte[]> downloadFile(Integer featureId);
+
+    byte[] downloadTemplate(Integer projectId, Integer featureId);
 }

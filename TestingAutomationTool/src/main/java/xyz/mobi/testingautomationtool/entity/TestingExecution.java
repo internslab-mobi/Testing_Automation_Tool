@@ -83,4 +83,9 @@ public class TestingExecution {
             foreignKey = @ForeignKey(name = "testing_executions_executed_by_foreign")
     )
     private User executedBy;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    @Builder.Default
+    private Long version = 0L;
 }

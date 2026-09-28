@@ -58,8 +58,8 @@ public class Feature extends Auditable {
     @Column(name = "sprint", nullable = false)
     private Integer sprint;
 
-    @Column(name = "version", length = 255)
-    private String version;
+    @Column(name = "feature_version", length = 255)
+    private String featureVersion;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
@@ -86,9 +86,12 @@ public class Feature extends Auditable {
     )
     private User updatedBy=null;
 
+    @Column(name = "comments")
+    private String comments;
+
     @Version
     @Column(name = "version", nullable = false)
     @Builder.Default
-    private Long version2 = 0L;
+    private Long version = 0L;
 
 }

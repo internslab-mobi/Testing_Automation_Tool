@@ -15,7 +15,6 @@ public interface ProjectMapper {
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "isActive", ignore = true)
     @Mapping(target = "isDeleted", ignore = true)
-    @Mapping(target = "version", ignore = true)
     Project toEntity(ProjectRequest request);
 
     @Mapping(

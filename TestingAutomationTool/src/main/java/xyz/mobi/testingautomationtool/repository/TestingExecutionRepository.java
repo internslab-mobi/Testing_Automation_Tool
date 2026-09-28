@@ -11,7 +11,7 @@ public interface TestingExecutionRepository
 
     Optional<TestingExecution> findByTestCase(TestCase testCase);
 
-    Optional<TestingExecution> findByTestCaseTestcaseId(Integer testcaseId);
+    TestingExecution findByTestCaseTestcaseId(Integer testcaseId);
 
     Optional<TestingExecution> findByTestCase_TestcaseId(Integer testcaseId);
 }

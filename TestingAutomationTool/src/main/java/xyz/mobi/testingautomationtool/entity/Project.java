@@ -67,6 +67,9 @@ public class Project extends Auditable {
     )
     private User updatedBy=null;
 
+    @Column(name = "comments")
+    private String comments;
+
     @Version
     @Column(name = "version", nullable = false)
     @Builder.Default

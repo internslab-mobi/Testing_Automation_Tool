@@ -5,13 +5,18 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.mobi.testingautomationtool.dto.request.getmethoddto.FeatureSearchRequest;
 import xyz.mobi.testingautomationtool.dto.response.getMethodDTO.FeatureResponse;
+import xyz.mobi.testingautomationtool.entity.Attachment;
 import xyz.mobi.testingautomationtool.entity.Feature;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.mapper.getMapper.FeatureMapper;
+import xyz.mobi.testingautomationtool.repository.AttachmentRepository;
 import xyz.mobi.testingautomationtool.repository.FeatureRepository;
 import xyz.mobi.testingautomationtool.repository.ProjectRepository;
 import xyz.mobi.testingautomationtool.service.FeatureService;
@@ -22,7 +27,10 @@ public class FeatureServiceImpl implements FeatureService {
 
     private final FeatureRepository featureRepository;
     private final ProjectRepository projectRepository;
+    private final AttachmentRepository attachmentRepository;
     private final FeatureMapper featureMapper;
+
+    private final ExcelTemplateService excelTemplateService;
 
     @Cacheable(value = "features", key = "#featureId")
     @Override
@@ -59,10 +67,7 @@ public class FeatureServiceImpl implements FeatureService {
                 .map(featureMapper::toResponse);
     }
 
-    @Cacheable(
-            value = "featureSearch",
-            key = "#request + '_' + #pageable"
-    )
+    @Cacheable(value = "featureSearch", key = "#request + '_' + #pageable")
     @Override
     @Transactional(readOnly = true)
     public Page<FeatureResponse> searchFeatures(
@@ -75,5 +80,32 @@ public class FeatureServiceImpl implements FeatureService {
         return featureRepository
                 .findAll(specification, pageable)
                 .map(featureMapper::toResponse);
+    }
+
+    @Override
+    public ResponseEntity<byte[]> downloadFile(Integer featureId) {
+
+        Feature feature = featureRepository.findById(featureId)
+                .orElseThrow(()-> new ResourceNotFoundException(
+                        "Feature data is not present"));
+
+        Attachment attachment = attachmentRepository.findByFeatureFeatureId(featureId)
+                .orElseThrow(()-> new ResourceNotFoundException(
+                        "Attachment data is not present"));
+
+                return ResponseEntity.ok()
+                        .header(HttpHeaders.CONTENT_DISPOSITION,
+                "attachment; filename=\"" + attachment.getFileName()+ "\"")
+
+                .contentType(MediaType.parseMediaType(attachment.getFileType()))
+
+                .body(attachment.getFileBlob());
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] downloadTemplate(Integer projectId, Integer featureId) {
+
+        return excelTemplateService.generateTemplate(projectId, featureId);
     }
 }
