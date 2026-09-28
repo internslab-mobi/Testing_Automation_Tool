@@ -55,7 +55,7 @@ public class BugServiceImpl implements BugService {
     @Transactional(readOnly = true)
     public Page<BugResponse> getAllBugs(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
-        return bugRepository.findByActiveTrue(pageable)
+        return bugRepository.findByIsActiveTrue(pageable)
                 .map(bugMapper::toResponse);
     }
 
@@ -72,7 +72,10 @@ public class BugServiceImpl implements BugService {
             LocalDate resolvedFrom,
             LocalDate resolvedTo,
             String timeZone,
-            Pageable pageable
+            Pageable pageable,
+            String executedBy,
+            String assignedTo,
+            String updatedBy
     ) {
 
         if (resolvedFrom != null
@@ -127,7 +130,10 @@ public class BugServiceImpl implements BugService {
                         bugOccurrence,
                         isActive,
                         resolvedFromInstant,
-                        resolvedToInstant
+                        resolvedToInstant,
+                        executedBy,
+                        assignedTo,
+                        updatedBy
                 );
 
         Page<Bug> bugs =

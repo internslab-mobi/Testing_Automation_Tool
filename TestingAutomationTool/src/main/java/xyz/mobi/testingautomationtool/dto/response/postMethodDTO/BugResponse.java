@@ -34,6 +34,8 @@ public class BugResponse {
     private String reportedBy;
 
     private String assignedTo;
+    private String executedBy;
+    private String updatedBy;
 
     private Instant resolvedAt;
 

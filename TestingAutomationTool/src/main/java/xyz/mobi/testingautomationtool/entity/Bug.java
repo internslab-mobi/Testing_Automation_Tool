@@ -20,10 +20,6 @@ import java.util.Map;
                 @UniqueConstraint(
                         name = "testing_bugs_feature_id_bug_format_id_unique",
                         columnNames = {"feature_id", "bug_format_id"}
-                ),
-                @UniqueConstraint(
-                        name = "testing_bugs_unique",
-                        columnNames = "bug_format_id"
                 )
         }
 )
@@ -122,7 +118,7 @@ public class Bug extends Auditable {
     @Column(name = "bug_occurance")
     private Integer bugOccurrence;
 
-    @Column(name = "is_active")
+    @Column(name = "is_active", nullable = false)
     @Builder.Default
     private boolean isActive = true;
 
@@ -130,17 +126,22 @@ public class Bug extends Auditable {
     private String comments;
 
     @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
     private boolean isDeleted = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "updated_by",
-            nullable = false,
             foreignKey = @ForeignKey(
                     name = "fk_bugs_updated_by"
             )
     )
-    private User updatedBy;
+    private User updatedBy=null;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    @Builder.Default
+    private Long version = 0L;
 
     @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "dynamic_fields", columnDefinition = "JSON")

@@ -5,22 +5,31 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.FeatureRequest;
 import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.FeaturePutRequest;
 import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.FeatureDurationResponse;
 import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.FeatureStartTimeResponse;
+import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.FeatureResponse;
 import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.FeaturePutResponse;
+import xyz.mobi.testingautomationtool.entity.Attachment;
 import xyz.mobi.testingautomationtool.entity.Feature;
 import xyz.mobi.testingautomationtool.entity.Project;
 import xyz.mobi.testingautomationtool.entity.User;
+import xyz.mobi.testingautomationtool.enums.AttachmentType;
+import xyz.mobi.testingautomationtool.exception.FileProcessingException;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.mapper.featureMapper.FeatureMapper;
+import xyz.mobi.testingautomationtool.repository.AttachmentRepository;
 import xyz.mobi.testingautomationtool.repository.FeatureRepository;
 import xyz.mobi.testingautomationtool.repository.ProjectRepository;
 import xyz.mobi.testingautomationtool.repository.UserRepository;
 import xyz.mobi.testingautomationtool.service.FeatureService;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.io.File;
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -33,6 +42,7 @@ public class FeatureServiceImpl implements FeatureService {
     private final UserRepository userRepository;
     private final FeatureMapper featureMapper;
     private final FeatureRepository featureRepository;
+    private final AttachmentRepository attachmentRepository;
     @Override
     public FeatureResponse createFeature(FeatureRequest request)  {
 
@@ -44,6 +54,7 @@ public class FeatureServiceImpl implements FeatureService {
                 ()->new ResourceNotFoundException
                         ("User not found for this id"+request.getCreatedBy()));
 
+
         Feature feature = featureMapper.toEntity(request);
 
         feature.setStartTime(null);
@@ -52,10 +63,46 @@ public class FeatureServiceImpl implements FeatureService {
 
         feature.setCreatedBy(user);
 
-        featureRepository.save(feature);
-
-        return featureMapper.toResponse(feature);
+        return featureMapper.toResponse(featureRepository.save(feature));
     }
+
+    @Override
+    public AttachmentResponse uploadAttachment(MultipartFile file, Integer featureId) throws IOException {
+
+
+        Feature feature = featureRepository.findById(featureId)
+                .orElseThrow(()->new ResourceNotFoundException("Feature is not present for this id:"+featureId));
+        String filename = file.getOriginalFilename();
+
+        String fileType = file.getContentType();
+
+        Long fileSize = file.getSize();
+
+        byte[] bytes = file.getBytes();
+
+        User user = userRepository.findById(2).orElseThrow(()->new ResourceNotFoundException("User is not found"));
+
+        Attachment attachment = Attachment.builder()
+                .attachmentType(AttachmentType.FEATURE)
+                .feature(feature)
+                .fileName(filename)
+                .fileType(fileType)
+                .fileSize(fileSize)
+                .fileBlob(bytes)
+                .uploadedBy(user)
+                .build();
+
+        attachmentRepository.save(attachment);
+
+        return  AttachmentResponse.builder()
+                .contentType(fileType)
+                .fileSize(fileSize)
+                .fileName(filename)
+                .createdAt(attachment.getCreatedAt())
+                .featureId(featureId)
+                .build();
+    }
+
 
     @Override
     public ResponseEntity<byte[]> downloadFile(Integer featureId) {
@@ -174,7 +221,7 @@ public class FeatureServiceImpl implements FeatureService {
         feature.setDescription(request.getDescription());
         feature.setStatus(request.getStatus());
         feature.setSprint(request.getSprint());
-        feature.setVersion(request.getVersion());
+        feature.setFeatureVersion(request.getVersion());
 
         Feature savedFeature = featureRepository.save(feature);
 
@@ -185,12 +232,15 @@ public class FeatureServiceImpl implements FeatureService {
                 .description(savedFeature.getDescription())
                 .status(savedFeature.getStatus())
                 .sprint(savedFeature.getSprint())
-                .version(savedFeature.getVersion())
+                .version(savedFeature.getFeatureVersion())
                 .duration(savedFeature.getDuration())
                 .startTime(savedFeature.getStartTime())
                 .createdBy(savedFeature.getCreatedBy().getUserId())
                 .build();
     }
+
+
+
 }
 
 

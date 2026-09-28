@@ -218,6 +218,7 @@ public class TestCaseServiceImpl implements TestCaseService {
                 .testcaseId(savedTestCase.getTestcaseId())
                 .featureId(savedTestCase.getFeature().getFeatureId())
                 .testcaseFormatId(savedTestCase.getTestcaseFormatId())
+                .updatedAt(savedTestCase.getUpdatedAt())
                 .build();
         if (request.getTestType() != null) {
             response.setTestType(savedTestCase.getTestType());

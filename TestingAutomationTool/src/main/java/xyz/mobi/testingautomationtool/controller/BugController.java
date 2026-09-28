@@ -69,6 +69,15 @@ public class BugController {
             LocalDate resolvedFrom,
 
             @RequestParam(required = false)
+            String executedBy,
+
+            @RequestParam(required = false)
+            String assignedTo,
+
+            @RequestParam(required = false)
+            String updatedBy,
+
+            @RequestParam(required = false)
             LocalDate resolvedTo,
 
             @RequestParam(required = false)
@@ -95,7 +104,10 @@ public class BugController {
                         resolvedFrom,
                         resolvedTo,
                         timeZone,
-                        pageable
+                        pageable,
+                        executedBy,
+                        assignedTo,
+                        updatedBy
                 );
 
         return ResponseEntity.ok(response);

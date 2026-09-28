@@ -51,19 +51,29 @@ public class Project extends Auditable {
     private User createdBy;
 
     @Column(name = "is_active", nullable = false)
+    @Builder.Default
     private boolean isActive = true;
 
     @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
     private boolean isDeleted = false;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "updated_by",
-            nullable = false,
             foreignKey = @ForeignKey(
                     name = "fk_projects_updated_by"
             )
     )
-    private User updatedBy;
+    private User updatedBy=null;
+
+    @Column(name = "comments")
+    private String comments;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    @Builder.Default
+    private Long version = 0L;
+
 
 }

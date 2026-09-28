@@ -31,6 +31,11 @@ public interface BugService {
             LocalDate resolvedFrom,
             LocalDate resolvedTo,
             String timeZone,
-            Pageable pageable
+            Pageable pageable,
+            String executedBy,
+            String assignedTo,
+            String updatedBy
     );
+
+
 }

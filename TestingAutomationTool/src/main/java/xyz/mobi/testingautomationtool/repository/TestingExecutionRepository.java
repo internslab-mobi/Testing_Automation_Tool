@@ -1,6 +1,9 @@
 package xyz.mobi.testingautomationtool.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import xyz.mobi.testingautomationtool.entity.TestCase;
 import xyz.mobi.testingautomationtool.entity.TestingExecution;
 
@@ -14,4 +17,7 @@ public interface TestingExecutionRepository
 
     Optional<TestingExecution> findByTestCaseTestcaseId(Integer testcaseId);
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM TestingExecution te WHERE te.testCase.feature.project.projectId = :projectId")
+    void deleteByProjectId(@Param("projectId") Integer projectId);
 }

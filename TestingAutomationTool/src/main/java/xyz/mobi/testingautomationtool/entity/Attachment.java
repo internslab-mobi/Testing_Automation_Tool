@@ -74,10 +74,9 @@ public class Attachment extends Auditable {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "updated_by",
-            nullable = false,
             foreignKey = @ForeignKey(
                     name = "fk_attachments_updated_by"
             )
     )
-    private User updatedBy;
+    private User updatedBy = null;
 }

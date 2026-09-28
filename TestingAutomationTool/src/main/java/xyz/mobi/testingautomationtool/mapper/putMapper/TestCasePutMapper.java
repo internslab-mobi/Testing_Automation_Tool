@@ -23,10 +23,8 @@ public interface TestCasePutMapper {
     @Mapping(target = "title", source = "testCase.title")
     @Mapping(target = "testType", source = "testCase.testType")
     @Mapping(target = "testPriority", source = "testCase.testPriority")
-    @Mapping(target = "testcaseStatus", source = "testCase.testcaseStatus")
     @Mapping(target = "username", source = "testCase.updatedBy.username")
     @Mapping(target = "updatedAt", source = "testCase.updatedAt")
-    @Mapping(target = "testcaseFormatId", source = "testCase.testcaseFormatId")
     @Mapping(target = "validation", source = "execution")
     @Mapping(target = "dynamicFields", source = "testCase.dynamicFields")
     TestCasePutResponse toResponse(

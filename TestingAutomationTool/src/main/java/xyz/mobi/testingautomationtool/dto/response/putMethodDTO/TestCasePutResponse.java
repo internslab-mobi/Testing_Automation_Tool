@@ -26,13 +26,9 @@ public class TestCasePutResponse {
 
     private TestPriority testPriority;
 
-    private TestCaseStatus testcaseStatus;
-
     private String username;
 
     private Instant updatedAt;
-
-    private String testcaseFormatId;
 
     private TestCaseValidationResponse validation;
 
