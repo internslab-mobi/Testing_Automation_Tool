@@ -33,10 +33,12 @@ public class Project extends Auditable {
     @Column(name = "description", columnDefinition = "TEXT")
     private String description;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
+    @Builder.Default
     private ProjectStatus status = ProjectStatus.ACTIVE;
 
-    @Column(name = "region", nullable = false)
+    @Column(name = "region", nullable = false, length = 255)
     private String region;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -49,4 +51,20 @@ public class Project extends Auditable {
     )
     private User createdBy;
 
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private boolean isActive = true;
+
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private boolean isDeleted = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "updated_by",
+            foreignKey = @ForeignKey(
+                    name = "fk_projects_updated_by"
+            )
+    )
+    private User updatedBy;
 }

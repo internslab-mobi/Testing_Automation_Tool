@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "testing_audit_log")
@@ -36,5 +36,6 @@ public class TestingAuditLog {
     private Integer executedBy;
 
     @Column(name = "executed_at", nullable = false)
-    private LocalDateTime executedAt;
+    @Builder.Default
+    private Instant executedAt = Instant.now();
 }

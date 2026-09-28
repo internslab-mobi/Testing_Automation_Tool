@@ -41,4 +41,17 @@ public class TestcaseController {
             @RequestParam(defaultValue = "false") boolean includeInactive) {
         return ResponseEntity.ok(testCaseService.getById(id, includeInactive));
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<Page<TestCaseResponse>> searchTestCases(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) Integer featureId,
+            @RequestParam(required = false) TestCaseStatus status,
+            @RequestParam(required = false) TestType type,
+            @RequestParam(required = false) TestPriority priority,
+            @PageableDefault(page = 0, size = 10, sort = "testcaseId") Pageable pageable) {
+        return ResponseEntity.ok(
+                testCaseService.searchTestCases(keyword, featureId, status, type, priority, pageable)
+        );
+    }
 }

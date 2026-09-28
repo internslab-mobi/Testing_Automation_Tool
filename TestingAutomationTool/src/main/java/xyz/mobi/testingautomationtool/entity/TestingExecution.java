@@ -4,8 +4,9 @@ import jakarta.persistence.*;
 import jakarta.validation.constraints.Min;
 import lombok.*;
 import xyz.mobi.testingautomationtool.enums.AutomationFeasibility;
+import xyz.mobi.testingautomationtool.enums.ExecutionStatus;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(
@@ -37,9 +38,14 @@ public class TestingExecution {
     )
     private TestCase testCase;
 
-    @Min(value = 1, message = "Bugs count must be greater than 0")
+    @Min(value = 0, message = "Bugs count must be 0 or greater")
     @Column(name = "bugs_count", nullable = false)
-    private Integer bugsCount;
+    @Builder.Default
+    private Integer bugsCount = 0;
+
+    @Column(name = "execution_number", nullable = false)
+    @Builder.Default
+    private Integer executionNumber = 0;
 
     @Enumerated(EnumType.STRING)
     @Column(
@@ -48,6 +54,10 @@ public class TestingExecution {
             length = 20
     )
     private AutomationFeasibility automationFeasibility;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "execution_status", length = 20)
+    private ExecutionStatus executionStatus;
 
     @Lob
     @Column(name = "test_execution")
@@ -81,9 +91,9 @@ public class TestingExecution {
     @Column(name = "comments")
     private String comments;
 
-    @Column(name = "executed_by", nullable = false)
+    @Column(name = "executed_by")
     private Integer executedBy;
 
     @Column(name = "executed_at")
-    private LocalDateTime executedAt;
+    private Instant executedAt;
 }

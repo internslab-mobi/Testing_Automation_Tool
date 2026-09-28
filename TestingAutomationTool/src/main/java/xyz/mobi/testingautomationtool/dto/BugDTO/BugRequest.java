@@ -4,9 +4,12 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.*;
+import xyz.mobi.testingautomationtool.enums.BugCategory;
 import xyz.mobi.testingautomationtool.enums.BugPriority;
 import xyz.mobi.testingautomationtool.enums.BugSeverity;
 import xyz.mobi.testingautomationtool.enums.BugStatus;
+
+import java.util.Map;
 
 @Getter
 @Setter
@@ -15,32 +18,39 @@ import xyz.mobi.testingautomationtool.enums.BugStatus;
 @Builder
 public class BugRequest {
 
-    @NotBlank
-    @Size(max = 255)
+    @NotBlank(message = "bugFormatId is required")
+    @Size(max = 255, message = "bugFormatId must not exceed 255 characters")
     private String bugFormatId;
 
-    @NotNull
+    @NotNull(message = "testCaseId is required")
     private Integer testCaseId;
 
     private Integer featureId;
 
-    @NotBlank
-    @Size(max = 300)
+    @NotBlank(message = "title is required")
+    @Size(max = 300, message = "title must not exceed 300 characters")
     private String title;
 
     private String description;
 
-    @NotNull
     private BugSeverity severity;
 
-    @NotNull
     private BugPriority priority;
 
-    @NotNull
+    private BugCategory category;
+
+    @NotNull(message = "reportedBy is required")
     private Integer reportedBy;
 
     private BugStatus status;
+
     private Integer assignedTo;
+
     private Integer bugReoccurredId;
+
     private Integer bugOccurrence;
+
+    private String comments;
+
+    private Map<String, Object> dynamicFields;
 }

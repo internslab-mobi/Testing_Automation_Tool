@@ -1,9 +1,12 @@
 package xyz.mobi.testingautomationtool.dto.BugDTO;
 
 import lombok.*;
+import xyz.mobi.testingautomationtool.enums.BugCategory;
 import xyz.mobi.testingautomationtool.enums.BugPriority;
 import xyz.mobi.testingautomationtool.enums.BugSeverity;
 import xyz.mobi.testingautomationtool.enums.BugStatus;
+
+import java.time.Instant;
 
 @Getter
 @Setter
@@ -20,8 +23,12 @@ public class BugResponse {
     private String description;
     private BugSeverity severity;
     private BugPriority priority;
+    private BugCategory category;
     private BugStatus status;
     private Integer reportedBy;
     private Integer assignedTo;
     private Integer bugOccurrence;
+    private String comments;
+    private Instant createdAt;
+    private Instant updatedAt;
 }
