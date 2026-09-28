@@ -23,6 +23,8 @@ public class FeatureRequest {
 
     private String description;
 
+    private String comments;
+
     @NotNull(message = "Feature status cannot be null")
     private FeatureStatus status;
 
@@ -30,7 +32,7 @@ public class FeatureRequest {
     private Integer sprint;
 
     @NotBlank(message = "Version cannot be blank")
-    private String version;
+    private String featureVersion;
 
     @NotNull(message = "Created by cannot be null")
     private Integer createdBy;

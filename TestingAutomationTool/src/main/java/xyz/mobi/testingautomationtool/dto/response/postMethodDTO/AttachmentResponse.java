@@ -4,6 +4,7 @@ import lombok.*;
 
 import java.time.Instant;
 
+
 @Getter
 @Setter
 @Builder
@@ -19,7 +20,7 @@ public class AttachmentResponse {
 
     private Long fileSize;
 
-    private Integer projectId;
+    private Integer featureId;
 
     private Instant createdAt;
 }

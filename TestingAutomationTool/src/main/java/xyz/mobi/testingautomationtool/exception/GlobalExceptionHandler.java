@@ -2,6 +2,7 @@ package xyz.mobi.testingautomationtool.exception;
 
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -17,6 +18,7 @@ import xyz.mobi.testingautomationtool.entity.Error;
 import xyz.mobi.testingautomationtool.repository.ErrorDataRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -33,16 +35,19 @@ public class GlobalExceptionHandler {
                     .expireAfterWrite(8, TimeUnit.HOURS)
                     .build();
 
+    @PostConstruct
+    public void loadExceptionMappings() {
+        List<Error> list = errorDataRepository.findAll();
+        list.forEach(error -> exceptionCache.put(error.getExceptionName(),error));
+    }
+
     private Error getErrorMapping(String exceptionName) {
 
-        return exceptionCache.get(
-                exceptionName,
-                key -> errorDataRepository.findByExceptionName(key)
-                        .orElseThrow(() ->
-                                new IllegalStateException(
-                                        "Exception mapping not found: "
-                                                + key))
-        );
+        Error error  =  exceptionCache.getIfPresent(exceptionName);
+        if (error == null) {
+                return exceptionCache.getIfPresent("Exception");
+        }
+        return error;
     }
 
     private String getErrorCode(String exceptionName) {
@@ -50,6 +55,7 @@ public class GlobalExceptionHandler {
         return getErrorMapping(exceptionName)
                 .getErrorCode();
     }
+
 
 
     private ResponseEntity<ErrorResponse> buildErrorResponse(
@@ -65,6 +71,14 @@ public class GlobalExceptionHandler {
                 .build();
 
         return new ResponseEntity<>(errorResponse, status);
+    }
+
+    @ExceptionHandler(FileProcessingException.class)
+    public ResponseEntity<ErrorResponse> handleFileProcessingError(FileProcessingException exception){
+        String exceptionName = exception.getClass().getSimpleName();
+        String mapping = getErrorCode(exceptionName);
+
+        return buildErrorResponse(mapping,exception.getMessage(),HttpStatus.FORBIDDEN);
     }
 
 

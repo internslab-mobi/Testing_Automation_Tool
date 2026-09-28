@@ -1,32 +1,18 @@
 package xyz.mobi.testingautomationtool.repository;
 
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import xyz.mobi.testingautomationtool.entity.Feature;
 
-import java.util.Optional;
+public interface FeatureRepository extends JpaRepository<Feature, Integer> {
 
-public interface FeatureRepository extends JpaRepository<Feature, Integer>,
-        JpaSpecificationExecutor<Feature> {
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Feature f SET f.isActive = false WHERE f.project.projectId = :projectId")
+    int deactivateFeaturesByProjectId(@Param("projectId") Integer projectId);
 
-    Page<Feature> findByProject_ProjectId(
-            Integer projectId,
-            Pageable pageable
-    );
-
-    @Query("""
-    SELECT f
-    FROM Feature f
-    WHERE f.featureId = :featureId
-      AND f.project.projectId = :projectId
-      AND f.project.isActive = TRUE
-""")
-    Optional<Feature> findActiveFeatureByProject(
-            @Param("projectId") Integer projectId,
-            @Param("featureId") Integer featureId);
-
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM Feature f WHERE f.project.projectId = :projectId")
+    void deleteByProjectId(@Param("projectId") Integer projectId);
 }

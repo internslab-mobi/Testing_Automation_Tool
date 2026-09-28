@@ -20,7 +20,7 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
 
     Optional<List<Bug>> findByTestCase_TestcaseId(Integer id);
 
-    Page<Bug> findByActiveTrue(Pageable pageable);
+    Page<Bug> findByIsActiveTrue(Pageable pageable);
 
     List<Bug> findByActiveTrue();
 
@@ -45,5 +45,13 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
       AND b.isDeleted = false
 """)
     int activateNonDeletedBugs(@Param("testCaseId") Integer testCaseId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Bug b SET b.isActive = false WHERE b.feature.project.projectId = :projectId")
+    int deactivateBugsByProjectId(@Param("projectId") Integer projectId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("DELETE FROM Bug b WHERE b.feature.project.projectId = :projectId")
+    void deleteByProjectId(@Param("projectId") Integer projectId);
 
 }

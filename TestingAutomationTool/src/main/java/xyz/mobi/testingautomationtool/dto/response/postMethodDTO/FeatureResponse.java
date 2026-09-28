@@ -24,8 +24,6 @@ public class FeatureResponse {
 
     private FeatureStatus status;
 
-    private Long duration;
-
     private Integer sprint;
 
     private String version;
@@ -35,4 +33,6 @@ public class FeatureResponse {
     private Instant createdAt;
 
     private Instant updatedAt;
+
+    private String comments;
 }

@@ -3,114 +3,191 @@ package xyz.mobi.testingautomationtool.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
-import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.ProjectRequest;
-import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.AttachmentResponse;
-import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.ProjectResponse;
-import xyz.mobi.testingautomationtool.entity.Attachment;
+import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.ProjectPatchRequest;
+import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.ProjectPutRequest;
+import xyz.mobi.testingautomationtool.dto.response.DeleteMethodDto.PatchProjectDeleteResponse;
+import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.PatchProjectResponse;
+import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.ProjectPutResponse;
 import xyz.mobi.testingautomationtool.entity.Project;
 import xyz.mobi.testingautomationtool.entity.User;
-import xyz.mobi.testingautomationtool.enums.AttachmentType;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
-import xyz.mobi.testingautomationtool.exception.DuplicateResourceException;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
-import xyz.mobi.testingautomationtool.mapper.postMapper.ProjectMapper;
-import xyz.mobi.testingautomationtool.repository.AttachmentRepository;
-import xyz.mobi.testingautomationtool.repository.ProjectRepository;
-import xyz.mobi.testingautomationtool.repository.UserRepository;
+import xyz.mobi.testingautomationtool.mapper.putMapper.ProjectPutMapper;
+import xyz.mobi.testingautomationtool.repository.*;
 import xyz.mobi.testingautomationtool.service.ProjectService;
-
-import java.io.IOException;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class ProjectServiceImpl implements ProjectService {
 
     private final ProjectRepository projectRepository;
-    private final UserRepository userRepository;
-    private final ProjectMapper projectMapper;
+    private final FeatureRepository featureRepository;
+    private final TestCaseRepository testCaseRepository;
+    private final BugRepository bugRepository;
+    private final TestingExecutionRepository testingExecutionRepository;
+    private final CommentRepository commentRepository;
     private final AttachmentRepository attachmentRepository;
+    private final UserRepository userRepository;
+    private final ProjectPutMapper projectPutMapper;
 
     @Override
-    @Transactional
-    public ProjectResponse createProject(ProjectRequest request) {
+    public ProjectPutResponse updateProject(Integer id, ProjectPutRequest request) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + id));
 
-        String projectName = request.getProjectName().trim();
-
-        if (projectRepository.existsByProjectNameIgnoreCase(projectName)) {
-            throw new DuplicateResourceException(
-                    "Project already exists with name: " + projectName
-            );
+        if (project.isDeleted() || !project.isActive()) {
+            throw new IllegalStateException("Cannot update disabled/deleted project with ID: " + id);
         }
 
-        Integer currentUserId = 1;
+        projectPutMapper.putMethodMapper(request, project);
+        User dummyUser = userRepository.findById(2)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: 2"));
+        project.setUpdatedBy(dummyUser);
 
-        User createdBy = userRepository.findById(currentUserId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "User not found with ID: " + currentUserId
-                        )
-                );
+        Project savedProject = projectRepository.save(project);
+        return projectPutMapper.toResponse(savedProject);
+    }
 
-        Project project = projectMapper.toEntity(request);
+    @Override
+    public PatchProjectResponse patchProject(Integer id, ProjectPatchRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Patch request cannot be null");
+        }
 
-        project.setProjectName(projectName);
-        project.setCreatedBy(createdBy);
-        project.setStatus(ProjectStatus.ACTIVE);
-        project.setActive(true);
-        project.setDeleted(false);
-        project.setUpdatedBy(null);
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + id));
+
+        if (project.isDeleted()) {
+            throw new IllegalStateException("Project is permanently deleted and cannot be modified with ID: " + id);
+        }
+
+        boolean hasUpdate = request.getProjectName() != null
+                || request.getDescription() != null
+                || request.getRegion() != null
+                || request.getStatus() != null
+                || request.getIsActive() != null
+                || request.getIsDeleted() != null
+                || request.getComments() != null;
+
+        if (!hasUpdate) {
+            throw new IllegalArgumentException("At least one field must be provided for update");
+        }
+
+        if (request.getProjectName() != null) {
+            project.setProjectName(request.getProjectName());
+        }
+
+        if (request.getDescription() != null) {
+            project.setDescription(request.getDescription());
+        }
+
+        if (request.getRegion() != null) {
+            project.setRegion(request.getRegion());
+        }
+
+        if (request.getStatus() != null) {
+            project.setStatus(request.getStatus());
+        }
+
+        if (request.getComments() != null) {
+            project.setComments(request.getComments());
+        }
+
+        if (request.getIsActive() != null) {
+            project.setActive(request.getIsActive());
+            if (request.getIsActive()) {
+                project.setStatus(ProjectStatus.ACTIVE);
+            } else {
+                project.setStatus(ProjectStatus.INACTIVE);
+            }
+        }
+
+        if (request.getIsDeleted() != null && request.getIsDeleted()) {
+            project.setDeleted(true);
+            project.setActive(false);
+            project.setStatus(ProjectStatus.INACTIVE);
+        }
+
+        User dummyUser = userRepository.findById(2)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: 2"));
+        project.setUpdatedBy(dummyUser);
 
         Project savedProject = projectRepository.save(project);
 
-        return projectMapper.toResponse(savedProject);
-    }
+        PatchProjectResponse response = PatchProjectResponse.builder()
+                .projectId(savedProject.getProjectId())
+                .updatedAt(savedProject.getUpdatedAt())
+                .updatedBy(dummyUser.getFullName())
+                .build();
 
-    @Transactional
-    @Override
-    public AttachmentResponse uploadProjectDocument(
-            MultipartFile file,
-            Integer projectId) throws IOException {
-
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "Project is not present for this id: "
-                                        + projectId));
-
-        if (file == null || file.isEmpty()) {
-            throw new IllegalArgumentException(
-                    "Document file is required");
+        if (request.getProjectName() != null) {
+            response.setProjectName(savedProject.getProjectName());
         }
 
-        String fileName = file.getOriginalFilename();
-        String fileType = file.getContentType();
-        Long fileSize = file.getSize();
-        byte[] bytes = file.getBytes();
+        if (request.getComments() != null) {
+            response.setComments(savedProject.getComments());
+        }
 
-        User user = userRepository.findById(2)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException(
-                                "User is not found"));
+        if (request.getDescription() != null) {
+            response.setDescription(savedProject.getDescription());
+        }
 
-        Attachment attachment = Attachment.builder()
-                .attachmentType(AttachmentType.PROJECT)
-                .project(project)
-                .fileName(fileName)
-                .fileType(fileType)
-                .fileSize(fileSize)
-                .fileBlob(bytes)
-                .uploadedBy(user)
+        if (request.getRegion() != null) {
+            response.setRegion(savedProject.getRegion());
+        }
+
+        if (request.getStatus() != null) {
+            response.setStatus(savedProject.getStatus());
+        }
+
+        if (request.getIsActive() != null) {
+            response.setIsActive(savedProject.isActive());
+        }
+
+        if (request.getIsDeleted() != null) {
+            response.setIsDeleted(savedProject.isDeleted());
+        }
+
+        return response;
+    }
+
+    @Override
+    public PatchProjectDeleteResponse softDeleteProject(Integer id) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + id));
+
+        project.setDeleted(true);
+        project.setActive(false);
+        project.setStatus(ProjectStatus.INACTIVE);
+        projectRepository.save(project);
+        bugRepository.deactivateBugsByProjectId(id);
+        attachmentRepository.deactivateAttachmentsByProjectId(id);
+        testCaseRepository.deactivateTestCasesByProjectId(id);
+        featureRepository.deactivateFeaturesByProjectId(id);
+
+        return PatchProjectDeleteResponse.builder()
+                .projectId(id)
+                .message("Project and all associated features, test cases, and bugs deactivated successfully")
                 .build();
+    }
 
-        attachmentRepository.save(attachment);
+    @Override
+    public String hardDeleteProject(Integer id) {
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + id));
 
-        return AttachmentResponse.builder()
-                .contentType(fileType)
-                .fileSize(fileSize)
-                .fileName(fileName)
-                .createdAt(attachment.getCreatedAt())
-                .projectId(projectId)
-                .build();
+        String projectName = project.getProjectName();
+
+        // Delete in reverse dependency order to respect foreign key constraints
+        commentRepository.deleteByProjectId(id);
+        attachmentRepository.deleteByProjectId(id);
+        bugRepository.deleteByProjectId(id);
+        testingExecutionRepository.deleteByProjectId(id);
+        testCaseRepository.deleteByProjectId(id);
+        featureRepository.deleteByProjectId(id);
+        projectRepository.delete(project);
+
+        return "Project '" + projectName + "' and all associated features, test cases, executions, and bugs deleted successfully";
     }
 }

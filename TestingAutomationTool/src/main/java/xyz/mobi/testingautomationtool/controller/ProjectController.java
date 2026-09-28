@@ -2,48 +2,53 @@ package xyz.mobi.testingautomationtool.controller;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.ProjectRequest;
-import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.AttachmentResponse;
-import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.ProjectResponse;
+import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.ProjectPatchRequest;
+import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.ProjectPutRequest;
+import xyz.mobi.testingautomationtool.dto.response.DeleteMethodDto.PatchProjectDeleteResponse;
+import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.PatchProjectResponse;
+import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.ProjectPutResponse;
 import xyz.mobi.testingautomationtool.service.ProjectService;
 
-import java.io.IOException;
-
 @RestController
-@RequestMapping("/projects")
+@RequestMapping({"/project"})
 @RequiredArgsConstructor
 public class ProjectController {
 
     private final ProjectService projectService;
 
-    @PostMapping
-    public ResponseEntity<ProjectResponse> createProject(
-            @Valid @RequestBody ProjectRequest request) {
+    @PutMapping("/{id}")
+    public ResponseEntity<ProjectPutResponse> updateProject(
+            @PathVariable("id") Integer id,
+            @Valid @RequestBody ProjectPutRequest request) {
 
-        ProjectResponse response =
-                projectService.createProject(request);
-
-        return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(response);
+        ProjectPutResponse response = projectService.updateProject(id, request);
+        return ResponseEntity.ok(response);
     }
 
-    @PostMapping(
-            value = "/{projectId}/document",
-            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
-    )
-    public ResponseEntity<AttachmentResponse> uploadProjectDocument(
-            @PathVariable Integer projectId,
-            @RequestParam("file") MultipartFile file)
-            throws IOException {
+    @PatchMapping("/{id}")
+    public ResponseEntity<PatchProjectResponse> patchProject(
+            @PathVariable("id") Integer id,
+            @RequestBody ProjectPatchRequest request) {
 
-        return ResponseEntity.ok(
-                projectService.uploadProjectDocument(file, projectId)
-        );
+        PatchProjectResponse response = projectService.patchProject(id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/delete/{id}")
+    public ResponseEntity<PatchProjectDeleteResponse> softDeleteProject(
+            @PathVariable("id") Integer id) {
+
+        PatchProjectDeleteResponse response = projectService.softDeleteProject(id);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<String> hardDeleteProject(
+            @PathVariable("id") Integer id) {
+
+        String response = projectService.hardDeleteProject(id);
+        return ResponseEntity.ok(response);
     }
 }
