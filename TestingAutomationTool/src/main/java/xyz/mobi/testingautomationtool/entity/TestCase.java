@@ -9,8 +9,6 @@ import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 import xyz.mobi.testingautomationtool.enums.TestPriority;
 import xyz.mobi.testingautomationtool.enums.TestType;
 
-import java.time.LocalDateTime;
-
 import java.util.HashMap;
 import java.util.Map;
 

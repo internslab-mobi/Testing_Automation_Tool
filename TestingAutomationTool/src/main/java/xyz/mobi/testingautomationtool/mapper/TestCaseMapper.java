@@ -1,5 +1,7 @@
 package xyz.mobi.testingautomationtool.mapper;
 
+import org.springframework.stereotype.Component;
+import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.*;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionRequest;

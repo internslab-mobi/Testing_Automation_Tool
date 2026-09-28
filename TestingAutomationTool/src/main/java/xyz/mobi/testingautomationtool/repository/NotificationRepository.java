@@ -5,11 +5,10 @@ import org.springframework.stereotype.Repository;
 import xyz.mobi.testingautomationtool.entity.Notification;
 
 import java.util.List;
-import java.util.Optional;
 
+@Repository
 public interface NotificationRepository extends JpaRepository<Notification, Integer> {
-
-    List<Notification> findByEmployee_UserIdOrderByCreatedAtDesc(
-            Integer employeeId);
+    List<Notification> findByEmployee_UserIdOrderByCreatedAtDesc(Integer employeeId);
+    List<Notification> findByAssigned_UserIdOrderByCreatedAtDesc(Integer assignedToId);
 
 }

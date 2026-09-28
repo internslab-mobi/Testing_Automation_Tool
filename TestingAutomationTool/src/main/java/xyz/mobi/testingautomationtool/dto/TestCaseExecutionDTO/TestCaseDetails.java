@@ -1,36 +1,22 @@
-package xyz.mobi.testingautomationtool.dto.TestcaseDTO;
+package xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO;
 
 import lombok.*;
 import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 import xyz.mobi.testingautomationtool.enums.TestPriority;
 import xyz.mobi.testingautomationtool.enums.TestType;
-import xyz.mobi.testingautomationtool.enums.AutomationFeasibility;
-
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class TestCaseResponse {
+public class TestCaseDetails {
 
     private Integer testcaseId;
     private String testcaseFormatId;
     private Integer featureId;
-
     private String title;
-
     private TestType testType;
-
     private TestPriority testPriority;
-
     private TestCaseStatus testcaseStatus;
-
-    private String createdBy;
-
-    private Instant createdAt;
-
-    private Instant updatedAt;
-
-    private java.util.Map<String, Object> dynamicFields;
 }

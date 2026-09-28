@@ -35,6 +35,7 @@ public class Project extends Auditable {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
+    @Builder.Default
     private ProjectStatus status = ProjectStatus.ACTIVE;
 
     @Column(name = "region", nullable = false, length = 255)

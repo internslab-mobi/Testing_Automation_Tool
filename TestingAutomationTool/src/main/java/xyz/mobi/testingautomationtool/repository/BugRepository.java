@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 import xyz.mobi.testingautomationtool.entity.Bug;
 import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.BugPriority;
@@ -50,14 +51,8 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
     @Query("UPDATE Bug b SET b.isActive = false WHERE b.feature.project.projectId = :projectId")
     int deactivateBugsByProjectId(@Param("projectId") Integer projectId);
 
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("DELETE FROM Bug b WHERE b.feature.project.projectId = :projectId")
-    void deleteByProjectId(@Param("projectId") Integer projectId);
-
-    @Modifying(clearAutomatically = true, flushAutomatically = true)
-    @Query("UPDATE Bug b SET b.isActive = true WHERE b.feature.project.projectId = :projectId")
-    int activateBugsByProjectId(@Param("projectId") Integer projectId);
-
     boolean existsByBugFormatId(String bugFormatId);
 
+    Optional<Bug> findByBugIdAndIsDeletedFalse(Integer bugId);
+    Optional<Bug> findByBugFormatId(String bugFormatId);
 }

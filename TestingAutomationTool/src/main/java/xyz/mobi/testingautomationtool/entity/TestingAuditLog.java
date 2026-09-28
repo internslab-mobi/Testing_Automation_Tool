@@ -6,7 +6,6 @@ import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 
 import java.time.Instant;
 
-
 @Entity
 @Table(name = "testing_audit_log")
 @Getter
@@ -48,5 +47,6 @@ public class TestingAuditLog {
     private Integer executedBy;
 
     @Column(name = "executed_at", nullable = false)
-    private Instant executedAt;
+    @Builder.Default
+    private Instant executedAt = Instant.now();
 }

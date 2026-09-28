@@ -53,4 +53,12 @@ public interface TestCaseService {
     TestCaseResponse getById(Integer id, boolean includeInactive);
 
     TestCaseResponse getById(Integer id);
+
+    Page<TestCaseResponse> searchTestCases(
+            String keyword,
+            Integer featureId,
+            TestCaseStatus status,
+            TestType type,
+            TestPriority priority,
+            Pageable pageable);
 }

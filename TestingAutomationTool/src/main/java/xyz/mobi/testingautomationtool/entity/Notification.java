@@ -6,7 +6,6 @@ import xyz.mobi.testingautomationtool.enums.NotificationStatus;
 
 import java.time.Instant;
 
-
 @Entity
 @Table(name = "testing_notifications")
 @Getter
@@ -55,5 +54,6 @@ public class Notification {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "notification_status", nullable = false, length = 255)
-    private NotificationStatus notificationStatus;
+    @Builder.Default
+    private NotificationStatus notificationStatus = NotificationStatus.PENDING;
 }

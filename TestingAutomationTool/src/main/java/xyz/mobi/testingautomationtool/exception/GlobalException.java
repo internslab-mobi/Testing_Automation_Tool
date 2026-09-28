@@ -1,10 +1,12 @@
 package xyz.mobi.testingautomationtool.exception;
 
+import jakarta.persistence.OptimisticLockException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -25,12 +27,7 @@ public class GlobalException {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(
             MethodArgumentNotValidException exception, HttpServletRequest request) {
-        return buildResponse(ErrorCode.VALIDATION_ERROR);
-    }
-
-    @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ErrorResponse> handleConstraintViolation(
-            ConstraintViolationException exception, HttpServletRequest request) {
+        exception.printStackTrace();
         return buildResponse(ErrorCode.VALIDATION_ERROR);
     }
 
@@ -41,24 +38,35 @@ public class GlobalException {
     })
     public ResponseEntity<ErrorResponse> handleInvalidRequest(
             Exception exception, HttpServletRequest request) {
+        exception.printStackTrace();
         return buildResponse(ErrorCode.INVALID_REQUEST);
     }
 
     @ExceptionHandler(NoResourceFoundException.class)
     public ResponseEntity<ErrorResponse> handleNoResourceFound(
             NoResourceFoundException exception, HttpServletRequest request) {
+        exception.printStackTrace();
         return buildResponse(ErrorCode.RESOURCE_NOT_FOUND);
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolation(
             DataIntegrityViolationException exception, HttpServletRequest request) {
+        exception.printStackTrace();
+        return buildResponse(ErrorCode.DATA_INTEGRITY_VIOLATION);
+    }
+
+    @ExceptionHandler({ObjectOptimisticLockingFailureException.class, OptimisticLockException.class})
+    public ResponseEntity<ErrorResponse> handleOptimisticLocking(
+            Exception exception, HttpServletRequest request) {
+        exception.printStackTrace();
         return buildResponse(ErrorCode.DATA_INTEGRITY_VIOLATION);
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleUnexpectedException(
             Exception exception, HttpServletRequest request) {
+        exception.printStackTrace();
         return buildResponse(ErrorCode.INTERNAL_SERVER_ERROR);
     }
 
