@@ -178,8 +178,6 @@ public class ProjectServiceImpl implements ProjectService {
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + id));
 
         String projectName = project.getProjectName();
-
-        // Delete in reverse dependency order to respect foreign key constraints
         commentRepository.deleteByProjectId(id);
         attachmentRepository.deleteByProjectId(id);
         bugRepository.deleteByProjectId(id);

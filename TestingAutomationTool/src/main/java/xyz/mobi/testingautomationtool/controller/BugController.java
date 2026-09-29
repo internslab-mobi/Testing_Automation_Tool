@@ -19,9 +19,14 @@ import xyz.mobi.testingautomationtool.service.BugService;
 import java.time.LocalDate;
 import java.util.List;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springframework.security.access.prepost.PreAuthorize;
+
 @RestController
 @RequestMapping("/bugs")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
+@PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
 public class BugController {
 
     private final BugService bugService;

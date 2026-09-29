@@ -58,5 +58,6 @@ public class User extends Auditable {
     private Role role;
 
     @Column(name = "is_active", nullable = false)
+    @Builder.Default
     private boolean isActive = true;
 }

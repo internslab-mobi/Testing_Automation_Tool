@@ -42,18 +42,19 @@ public class GlobalExceptionHandler {
     }
 
     private Error getErrorMapping(String exceptionName) {
-
         Error error  =  exceptionCache.getIfPresent(exceptionName);
         if (error == null) {
-                return exceptionCache.getIfPresent("Exception");
+            return exceptionCache.getIfPresent("Exception");
         }
         return error;
     }
 
     private String getErrorCode(String exceptionName) {
-
-        return getErrorMapping(exceptionName)
-                .getErrorCode();
+        Error error = getErrorMapping(exceptionName);
+        if (error != null && error.getErrorCode() != null) {
+            return error.getErrorCode();
+        }
+        return "ERR_" + exceptionName.toUpperCase();
     }
 
 
@@ -266,6 +267,66 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST);
     }
 
+
+    @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
+    public ResponseEntity<ErrorResponse> handleBadCredentialsException(
+            org.springframework.security.authentication.BadCredentialsException ex) {
+
+        String exceptionName = ex.getClass().getSimpleName();
+        String mapping = getErrorCode(exceptionName);
+
+        log.warn("Bad credentials: {}", ex.getMessage());
+
+        return buildErrorResponse(
+                mapping,
+                ex.getMessage(),
+                HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(org.springframework.security.core.userdetails.UsernameNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleUsernameNotFoundException(
+            org.springframework.security.core.userdetails.UsernameNotFoundException ex) {
+
+        String exceptionName = ex.getClass().getSimpleName();
+        String mapping = getErrorCode(exceptionName);
+
+        log.warn("User not found: {}", ex.getMessage());
+
+        return buildErrorResponse(
+                mapping,
+                ex.getMessage(),
+                HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDeniedException(
+            org.springframework.security.access.AccessDeniedException ex) {
+
+        String exceptionName = ex.getClass().getSimpleName();
+        String mapping = getErrorCode(exceptionName);
+
+        log.warn("Access denied: {}", ex.getMessage());
+
+        return buildErrorResponse(
+                mapping,
+                "Access Denied: You do not have permission to access this resource. Only MANAGER and TESTER roles can access these methods.",
+                HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
+    public ResponseEntity<ErrorResponse> handleAuthenticationException(
+            org.springframework.security.core.AuthenticationException ex) {
+
+        String exceptionName = ex.getClass().getSimpleName();
+        String mapping = getErrorCode(exceptionName);
+
+        log.warn("Authentication error: {}", ex.getMessage());
+
+        return buildErrorResponse(
+                mapping,
+                ex.getMessage(),
+                HttpStatus.UNAUTHORIZED);
+    }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGenericException(
