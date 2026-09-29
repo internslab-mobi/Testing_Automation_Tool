@@ -34,6 +34,13 @@ public class ProjectController {
     public ResponseEntity<ProjectResponse> getProjectById(@PathVariable Integer projectId) {
         return ResponseEntity.ok(projectService.getProjectById(projectId));
     }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<ProjectResponse>> searchProjects(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) ProjectStatus status) {
+        return ResponseEntity.ok(projectService.searchProjects(keyword, status));
+    }
     @PutMapping("/{id}")
     public ResponseEntity<ProjectPutResponse> updateProject(
             @PathVariable("id") Integer id,

@@ -7,6 +7,7 @@ import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.PatchProjectRe
 import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.ProjectPutResponse;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 import xyz.mobi.testingautomationtool.dto.ProjectDTO.ProjectResponse;
+import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 
 import java.util.List;
 
@@ -25,4 +26,5 @@ public interface ProjectService {
 
     List<ProjectResponse> getAllProjects();
     ProjectResponse getProjectById(Integer projectId);
+    List<ProjectResponse> searchProjects(String keyword, ProjectStatus status);
 }

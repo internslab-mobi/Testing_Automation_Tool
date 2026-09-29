@@ -1,6 +1,7 @@
 package xyz.mobi.testingautomationtool.repository;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
 import xyz.mobi.testingautomationtool.entity.Project;
 
@@ -8,7 +9,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface ProjectRepository extends JpaRepository<Project, Integer> {
+public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaSpecificationExecutor<Project> {
     List<Project> findByIsDeletedFalse();
     Optional<Project> findByProjectIdAndIsDeletedFalse(Integer projectId);
     boolean existsByProjectName(String projectName);
