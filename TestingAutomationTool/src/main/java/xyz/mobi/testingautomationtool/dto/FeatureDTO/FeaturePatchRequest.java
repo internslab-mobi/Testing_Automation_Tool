@@ -20,6 +20,4 @@ public class FeaturePatchRequest {
     private Instant startTime;
     private Boolean isActive;
     private Integer updatedBy;
-
-    private Long lockVersion;
 }

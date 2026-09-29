@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import xyz.mobi.testingautomationtool.dto.FeatureDTO.FeaturePatchRequest;
+import xyz.mobi.testingautomationtool.dto.FeatureDTO.FeaturePatchResponse;
 import xyz.mobi.testingautomationtool.dto.FeatureDTO.FeatureResponse;
 import xyz.mobi.testingautomationtool.service.FeatureService;
 
@@ -27,7 +28,7 @@ public class FeatureController {
 //    }
 
     @PatchMapping("/{featureId}")
-    public ResponseEntity<FeatureResponse> patchFeature(
+    public ResponseEntity<FeaturePatchResponse> patchFeature(
             @PathVariable Integer featureId,
             @RequestBody FeaturePatchRequest request) {
         return ResponseEntity.ok(featureService.patchFeature(featureId, request));
