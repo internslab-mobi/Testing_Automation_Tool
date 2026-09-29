@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import xyz.mobi.testingautomationtool.dto.ProjectDTO.ProjectResponse;
+import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 import xyz.mobi.testingautomationtool.service.ProjectService;
 
 import java.util.List;
@@ -23,5 +24,12 @@ public class ProjectController {
     @GetMapping("/{projectId}")
     public ResponseEntity<ProjectResponse> getProjectById(@PathVariable Integer projectId) {
         return ResponseEntity.ok(projectService.getProjectById(projectId));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<ProjectResponse>> searchProjects(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) ProjectStatus status) {
+        return ResponseEntity.ok(projectService.searchProjects(keyword, status));
     }
 }
