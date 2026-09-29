@@ -21,7 +21,6 @@ public interface FeatureService {
     void deleteFeature(Integer featureId, Integer updatedBy);
     FeatureResponse getFeatureById(Integer featureId);
     List<FeatureResponse> getFeaturesByProjectId(Integer projectId);
-public interface FeatureService  {
     public FeatureResponse createFeature(FeatureRequest request);
 
     public AttachmentResponse uploadAttachment(MultipartFile file, Integer featureId) throws IOException;
@@ -35,4 +34,5 @@ public interface FeatureService  {
     public FeaturePutResponse updateFeature(
             Integer featureId,
             FeaturePutRequest request);
+
 }
