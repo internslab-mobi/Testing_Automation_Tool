@@ -1,6 +1,7 @@
 package xyz.mobi.testingautomationtool.service;
 
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.BugPatchRequest;
+import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.DeveloperBugStatusRequest;
 import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.BugPutRequest;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.BugResponse;
 
@@ -13,5 +14,7 @@ public interface BugService {
     void softDeleteBug(Integer bugId);
 
     void hardDeleteBug(Integer bugId);
+
+    BugResponse updateDeveloperStatus(Integer bugId, DeveloperBugStatusRequest request);
 
 }

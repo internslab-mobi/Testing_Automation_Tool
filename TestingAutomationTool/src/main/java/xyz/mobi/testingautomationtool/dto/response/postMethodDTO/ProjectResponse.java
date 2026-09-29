@@ -13,6 +13,7 @@ public class ProjectResponse {
     private String description;
     private ProjectStatus status;
     private String region;
+    private String comments;
     private Integer createdBy;
     private boolean isActive;
     private boolean isDeleted;

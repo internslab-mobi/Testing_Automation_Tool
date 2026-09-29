@@ -39,6 +39,13 @@ public class Attachment extends Auditable {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
+            name = "project_id",
+            foreignKey = @ForeignKey(name = "fk_attachment_project")
+    )
+    private Project project;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
             name = "testcase_id",
             foreignKey = @ForeignKey(name = "fk_attachment_testcase")
     )

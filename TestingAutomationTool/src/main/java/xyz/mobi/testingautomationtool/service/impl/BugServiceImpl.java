@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.BugPatchRequest;
+import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.DeveloperBugStatusRequest;
 import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.NotificationRequest;
 import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.BugPutRequest;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.BugResponse;
@@ -93,6 +94,10 @@ public class BugServiceImpl implements BugService {
         bug.setExecutedBy(executedBy);
         bug.setAssignedTo(assignedTo);
         bug.setUpdatedBy(updatedBy);
+
+        if(assignedTo != null) {
+            bug.setStatus(BugStatus.IN_PROGRESS);
+        }
 
 
         if (request.getStatus() == BugStatus.RESOLVED) {
@@ -367,5 +372,100 @@ public class BugServiceImpl implements BugService {
                         ));
 
         bugRepository.delete(bug);
+    }
+
+    @Override
+    public BugResponse updateDeveloperStatus(
+            Integer bugId,
+            DeveloperBugStatusRequest request) {
+
+        Bug bug = bugRepository.findById(bugId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Bug not found with ID: " + bugId
+                        ));
+
+        if (!bug.isActive()) {
+            throw new IllegalStateException(
+                    "Cannot update disabled bug with ID: " + bugId
+            );
+        }
+
+        if (bug.isDeleted()) {
+            throw new IllegalStateException(
+                    "Cannot update deleted bug with ID: " + bugId
+            );
+        }
+
+        if (request == null || request.getStatus() == null) {
+            throw new IllegalArgumentException(
+                    "Developer status is required"
+            );
+        }
+
+        if (bug.getAssignedTo() == null) {
+            throw new IllegalStateException(
+                    "Bug is not assigned to any developer"
+            );
+        }
+
+        User currentUser = userRepository.findById(1)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Current user not found"
+                        ));
+
+        if (!Objects.equals(
+                bug.getAssignedTo().getUserId(),
+                currentUser.getUserId())) {
+
+            throw new IllegalStateException(
+                    "You are not assigned to this bug"
+            );
+        }
+
+        BugStatus oldStatus = bug.getStatus();
+
+        BugStatus newStatus = switch (request.getStatus()) {
+
+            case OPEN ->
+                    BugStatus.IN_PROGRESS;
+
+            case FIXED ->
+                    BugStatus.FIXED;
+
+            case NOT_A_BUG ->
+                    BugStatus.NOT_A_BUG;
+        };
+
+        boolean statusChanged =
+                !Objects.equals(oldStatus, newStatus);
+
+        if (!statusChanged) {
+            return bugMapper.toResponse(bug);
+        }
+
+        bug.setStatus(newStatus);
+        bug.setExecutedBy(currentUser);
+        bug.setUpdatedBy(currentUser);
+
+        if (newStatus == BugStatus.RESOLVED) {
+
+            if (bug.getResolvedAt() == null) {
+                bug.setResolvedAt(Instant.now());
+            }
+
+        } else {
+            bug.setResolvedAt(null);
+        }
+
+        bug = bugRepository.save(bug);
+
+        utils.bugHistory(
+                bug,
+                currentUser
+        );
+
+        return bugMapper.toResponse(bug);
     }
 }

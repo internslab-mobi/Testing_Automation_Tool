@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.*;
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.BugAssignRequest;
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.BugPatchRequest;
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.BugStatusRequest;
+import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.DeveloperBugStatusRequest;
 import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.BugPutRequest;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.BugResponse;
 import xyz.mobi.testingautomationtool.service.BugService;
@@ -56,6 +57,18 @@ public class BugController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/{bugId}/developer-status")
+    public ResponseEntity<BugResponse> updateDeveloperStatus(
+            @PathVariable Integer bugId,
+            @RequestBody DeveloperBugStatusRequest request) {
 
+        BugResponse response =
+                bugService.updateDeveloperStatus(
+                        bugId,
+                        request
+                );
+
+        return ResponseEntity.ok(response);
+    }
 
 }
