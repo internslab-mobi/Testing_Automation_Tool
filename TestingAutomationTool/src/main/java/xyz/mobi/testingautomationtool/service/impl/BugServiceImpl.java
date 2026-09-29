@@ -21,6 +21,7 @@ import xyz.mobi.testingautomationtool.service.NotificationService;
 
 import java.time.Instant;
 import java.util.HashMap;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -40,9 +41,7 @@ public class BugServiceImpl implements BugService {
     public BugResponse createBug(BugRequest request) {
 
         // Step 1: Duplicate guard - verify bugFormatId is unique
-        if (bugRepository.existsByBugFormatId(request.getBugFormatId())) {
-            throw new CustomException(ErrorCode.DUPLICATE_RESOURCE);
-        }
+      // noneed  if (bugRepository.existsByBugFormatId(request.getBugFormatId())) {throw new CustomException(ErrorCode.DUPLICATE_RESOURCE);}
 
         // Step 2: Restrict bug creation status to OPEN only
         if (request.getStatus() != null && request.getStatus() != BugStatus.OPEN) {
@@ -66,8 +65,34 @@ public class BugServiceImpl implements BugService {
             throw new CustomException(ErrorCode.RESOURCE_NOT_FOUND);
         }
 
-        Feature feature = featureRepository.findById(featureId)
+        Feature feature = featureRepository.findByFeatureIdForUpdate(featureId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
+
+        String featureName = feature.getFeatureName()
+                .trim()
+                .toUpperCase()
+                .replaceAll("[^A-Z0-9]+", "_");
+
+        String prefix = "BUG-" + featureName + "-";
+
+        int nextNumber = 1;
+
+        Optional<Bug> latestBug =
+                bugRepository.findTopByFeature_FeatureIdAndBugFormatIdStartingWithOrderByBugFormatIdDesc(
+                        featureId,
+                        prefix
+                );
+
+        if (latestBug.isPresent()) {
+            String latestFormatId = latestBug.get().getBugFormatId();
+
+            String numberPart = latestFormatId.substring(prefix.length());
+
+            nextNumber = Integer.parseInt(numberPart) + 1;
+        }
+
+        String bugFormatId = prefix + String.format("%03d", nextNumber);
+
 
         // Step 4: Fetch reporter
         User reporter = userRepository.findById(request.getReportedBy())
@@ -102,7 +127,7 @@ public class BugServiceImpl implements BugService {
         BugCategory category = request.getCategory() != null ? request.getCategory() : BugCategory.PRE_PRODUCTION;
 
         Bug bug = Bug.builder()
-                .bugFormatId(request.getBugFormatId())
+                .bugFormatId(bugFormatId)
                 .testCase(testCase)
                 .feature(feature)
                 .title(request.getTitle())

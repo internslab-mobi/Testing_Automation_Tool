@@ -8,7 +8,15 @@ import java.util.Optional;
 
 @Repository
 public interface BugRepository extends JpaRepository<Bug, Integer> {
+
     boolean existsByBugFormatId(String bugFormatId);
+
     Optional<Bug> findByBugIdAndIsDeletedFalse(Integer bugId);
+
     Optional<Bug> findByBugFormatId(String bugFormatId);
+
+    Optional<Bug> findTopByFeature_FeatureIdAndBugFormatIdStartingWithOrderByBugFormatIdDesc(
+            Integer featureId,
+            String prefix
+    );
 }
