@@ -6,7 +6,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import xyz.mobi.testingautomationtool.entity.Attachment;
 
+import java.util.List;
+
+@Repository
 public interface AttachmentRepository extends JpaRepository<Attachment, Integer> {
+    List<Attachment> findByBug_BugIdAndIsDeletedFalse(Integer bugId);
+    List<Attachment> findByTestCase_TestcaseIdAndIsDeletedFalse(Integer testcaseId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Attachment a SET a.isActive = false WHERE a.feature.project.projectId = :projectId OR a.testCase.feature.project.projectId = :projectId OR a.bug.feature.project.projectId = :projectId")

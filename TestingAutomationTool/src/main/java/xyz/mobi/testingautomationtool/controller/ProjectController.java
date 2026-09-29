@@ -9,10 +9,12 @@ import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.ProjectPutRequest
 import xyz.mobi.testingautomationtool.dto.response.DeleteMethodDto.PatchProjectDeleteResponse;
 import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.PatchProjectResponse;
 import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.ProjectPutResponse;
+import xyz.mobi.testingautomationtool.dto.ProjectDTO.ProjectResponse;
 import xyz.mobi.testingautomationtool.service.ProjectService;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import org.springframework.security.access.prepost.PreAuthorize;
+import java.util.List;
 
 @RestController
 @RequestMapping({"/project"})
@@ -23,6 +25,15 @@ public class ProjectController {
 
     private final ProjectService projectService;
 
+    @GetMapping
+    public ResponseEntity<List<ProjectResponse>> getAllProjects() {
+        return ResponseEntity.ok(projectService.getAllProjects());
+    }
+
+    @GetMapping("/{projectId}")
+    public ResponseEntity<ProjectResponse> getProjectById(@PathVariable Integer projectId) {
+        return ResponseEntity.ok(projectService.getProjectById(projectId));
+    }
     @PutMapping("/{id}")
     public ResponseEntity<ProjectPutResponse> updateProject(
             @PathVariable("id") Integer id,

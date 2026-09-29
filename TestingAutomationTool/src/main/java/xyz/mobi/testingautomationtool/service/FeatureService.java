@@ -1,5 +1,7 @@
 package xyz.mobi.testingautomationtool.service;
 
+import xyz.mobi.testingautomationtool.dto.FeatureDTO.FeaturePatchRequest;
+import xyz.mobi.testingautomationtool.dto.FeatureDTO.FeatureResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.FeatureRequest;
@@ -10,9 +12,15 @@ import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.AttachmentRespo
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.FeatureResponse;
 import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.FeaturePutResponse;
 
+import java.util.List;
 import java.io.File;
 import java.io.IOException;
 
+public interface FeatureService {
+    FeatureResponse patchFeature(Integer featureId, FeaturePatchRequest request);
+    void deleteFeature(Integer featureId, Integer updatedBy);
+    FeatureResponse getFeatureById(Integer featureId);
+    List<FeatureResponse> getFeaturesByProjectId(Integer projectId);
 public interface FeatureService  {
     public FeatureResponse createFeature(FeatureRequest request);
 

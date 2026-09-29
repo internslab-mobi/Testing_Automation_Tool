@@ -5,6 +5,8 @@ import org.springframework.data.domain.Pageable;
 import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.CommentRequest;
 import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.CommentPutRequest;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.CommentResponse;
+import xyz.mobi.testingautomationtool.dto.CommentDTO.CommentRequest;
+import xyz.mobi.testingautomationtool.dto.CommentDTO.CommentResponse;
 
 import java.util.List;
 

@@ -1,28 +1,21 @@
 package xyz.mobi.testingautomationtool.service;
 
-import org.springframework.transaction.annotation.Transactional;
-import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.NotificationRequest;
-import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.NotificationResponse;
 import xyz.mobi.testingautomationtool.enums.NotificationStatus;
-
-import java.util.List;
 
 public interface NotificationService {
 
+    List<NotificationResponse> getMyNotifications(
+            Integer employeeId);
+
+    NotificationResponse getById(
+            Integer notificationId);
+
     NotificationResponse createNotification(
-            NotificationRequest request);
+            Integer employeeId,
+            Integer bugId,
+            String message);
 
-    void createReassignNotification(
-            Integer oldAssignedId,
-            Integer newAssignedId,
-            Integer bugId
-    );
-
-    List<NotificationResponse> getByAll();
-
-    List<NotificationResponse> getByAssignedId(
-            Integer assignedId
-    );
-
-   void deleteNotification(Integer notificationId);
+    void updateStatus(
+            Integer notificationId,
+            NotificationStatus status);
 }

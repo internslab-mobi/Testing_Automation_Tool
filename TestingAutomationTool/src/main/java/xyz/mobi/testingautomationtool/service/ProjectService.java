@@ -6,6 +6,9 @@ import xyz.mobi.testingautomationtool.dto.response.DeleteMethodDto.PatchProjectD
 import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.PatchProjectResponse;
 import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.ProjectPutResponse;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
+import xyz.mobi.testingautomationtool.dto.ProjectDTO.ProjectResponse;
+
+import java.util.List;
 
 public interface ProjectService {
 
@@ -20,4 +23,6 @@ public interface ProjectService {
     String hardDeleteProject(Integer id);
 
 
+    List<ProjectResponse> getAllProjects();
+    ProjectResponse getProjectById(Integer projectId);
 }

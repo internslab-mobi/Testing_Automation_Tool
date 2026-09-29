@@ -5,13 +5,13 @@ import lombok.*;
 import xyz.mobi.testingautomationtool.audit.Auditable;
 import xyz.mobi.testingautomationtool.enums.AttachmentType;
 
+@Entity
+@Table(name = "testing_attachments")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Entity
-@Table(name = "testing_attachments")
 public class Attachment extends Auditable {
 
     @Id

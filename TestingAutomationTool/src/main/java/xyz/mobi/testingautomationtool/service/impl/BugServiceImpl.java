@@ -79,8 +79,34 @@ public class BugServiceImpl implements BugService {
             throw new CustomException(ErrorCode.RESOURCE_NOT_FOUND);
         }
 
-        Feature feature = featureRepository.findById(featureId)
+        Feature feature = featureRepository.findByFeatureIdForUpdate(featureId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
+
+        String featureName = feature.getFeatureName()
+                .trim()
+                .toUpperCase()
+                .replaceAll("[^A-Z0-9]+", "_");
+
+        String prefix = "BUG-" + featureName + "-";
+
+        int nextNumber = 1;
+
+        Optional<Bug> latestBug =
+                bugRepository.findTopByFeature_FeatureIdAndBugFormatIdStartingWithOrderByBugFormatIdDesc(
+                        featureId,
+                        prefix
+                );
+
+        if (latestBug.isPresent()) {
+            String latestFormatId = latestBug.get().getBugFormatId();
+
+            String numberPart = latestFormatId.substring(prefix.length());
+
+            nextNumber = Integer.parseInt(numberPart) + 1;
+        }
+
+        String bugFormatId = prefix + String.format("%03d", nextNumber);
+
 
         // Step 4: Fetch reporter
         User reporter = userRepository.findById(request.getReportedBy())
@@ -115,7 +141,7 @@ public class BugServiceImpl implements BugService {
         BugCategory category = request.getCategory() != null ? request.getCategory() : BugCategory.PRE_PRODUCTION;
 
         Bug bug = Bug.builder()
-                .bugFormatId(request.getBugFormatId())
+                .bugFormatId(bugFormatId)
                 .testCase(testCase)
                 .feature(feature)
                 .title(request.getTitle())
@@ -172,10 +198,14 @@ public class BugServiceImpl implements BugService {
                 .description(savedBug.getDescription())
                 .severity(savedBug.getSeverity())
                 .priority(savedBug.getPriority())
+                .category(savedBug.getCategory())
                 .status(savedBug.getStatus())
                 .reportedBy(savedBug.getReportedBy().getUserId())
                 .assignedTo(savedBug.getAssignedTo() != null ? savedBug.getAssignedTo().getUserId() : null)
                 .bugOccurrence(savedBug.getBugOccurrence())
+                .comments(savedBug.getComments())
+                .createdAt(savedBug.getCreatedAt())
+                .updatedAt(savedBug.getUpdatedAt())
                 .build();
     }
 

@@ -18,8 +18,6 @@ import java.util.Map;
 @Builder
 public class BugRequest {
 
-    @NotBlank(message = "bugFormatId is required")
-    @Size(max = 255, message = "bugFormatId must not exceed 255 characters")
     private String bugFormatId;
 
     @NotNull(message = "testCaseId is required")

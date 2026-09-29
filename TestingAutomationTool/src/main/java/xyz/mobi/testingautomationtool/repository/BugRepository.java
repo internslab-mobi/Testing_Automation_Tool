@@ -54,5 +54,13 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
     boolean existsByBugFormatId(String bugFormatId);
 
     Optional<Bug> findByBugIdAndIsDeletedFalse(Integer bugId);
+
+    Optional<Bug> findTopByFeature_FeatureIdAndBugFormatIdStartingWithOrderByBugFormatIdDesc(
+            Integer featureId,
+            String prefix
+    );
+
     Optional<Bug> findByBugFormatId(String bugFormatId);
 }
+
+
