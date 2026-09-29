@@ -17,9 +17,14 @@ import xyz.mobi.testingautomationtool.service.FeatureService;
 
 import java.io.IOException;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springframework.security.access.prepost.PreAuthorize;
+
 @RestController
 @RequestMapping("/feature")
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
+@PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
 public class FeatureController {
 
     private final FeatureService featureService;

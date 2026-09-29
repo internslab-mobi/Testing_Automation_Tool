@@ -52,6 +52,7 @@ public class CommentServiceImpl implements CommentService {
                 .build();
 
         Comment savedComment = commentRepository.save(comment);
+        //inAppNotificationService.createNewCommentNotification(comment);
         return commentMapper.toResponse(savedComment);
     }
 

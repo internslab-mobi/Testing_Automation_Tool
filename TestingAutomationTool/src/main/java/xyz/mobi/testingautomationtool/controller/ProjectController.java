@@ -11,9 +11,14 @@ import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.PatchProjectRe
 import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.ProjectPutResponse;
 import xyz.mobi.testingautomationtool.service.ProjectService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springframework.security.access.prepost.PreAuthorize;
+
 @RestController
 @RequestMapping({"/project"})
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
+@PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
 public class ProjectController {
 
     private final ProjectService projectService;

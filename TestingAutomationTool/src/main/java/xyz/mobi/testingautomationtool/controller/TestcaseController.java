@@ -21,8 +21,13 @@ import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseRespons
 import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.TestCasePutResponse;
 import xyz.mobi.testingautomationtool.service.TestCaseService;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import org.springframework.security.access.prepost.PreAuthorize;
+
 @RestController
 @RequiredArgsConstructor
+@SecurityRequirement(name = "bearerAuth")
+@PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
 public class TestcaseController {
 
     private final TestCaseService testCaseService;
