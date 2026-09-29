@@ -14,6 +14,7 @@ import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.AttachmentRespo
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.FeatureResponse;
 import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.FeaturePutResponse;
 import xyz.mobi.testingautomationtool.dto.FeatureDTO.FeaturePatchRequest;
+import xyz.mobi.testingautomationtool.dto.FeatureDTO.FeaturePatchResponse;
 import xyz.mobi.testingautomationtool.dto.FeatureDTO.FeatureResponse;
 import xyz.mobi.testingautomationtool.service.FeatureService;
 
@@ -57,7 +58,7 @@ public class FeatureController {
     }
 
     @PatchMapping("/{featureId}")
-    public ResponseEntity<FeatureResponse> patchFeature(
+    public ResponseEntity<FeaturePatchResponse> patchFeature(
             @PathVariable Integer featureId,
             @RequestBody FeaturePatchRequest request) {
         return ResponseEntity.ok(featureService.patchFeature(featureId, request));
