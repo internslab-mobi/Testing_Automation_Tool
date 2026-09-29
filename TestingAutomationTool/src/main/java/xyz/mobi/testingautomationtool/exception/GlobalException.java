@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @RestControllerAdvice
 public class GlobalException {
@@ -60,7 +60,7 @@ public class GlobalException {
     public ResponseEntity<ErrorResponse> handleOptimisticLocking(
             Exception exception, HttpServletRequest request) {
         exception.printStackTrace();
-        return buildResponse(ErrorCode.DATA_INTEGRITY_VIOLATION);
+        return buildResponse(ErrorCode.OPTIMISTIC_LOCK_CONFLICT);
     }
 
     @ExceptionHandler(Exception.class)
@@ -75,7 +75,8 @@ public class GlobalException {
                 errorCode.getInternalErrorCode(),
                 errorCode.getResponseMessage(),
                 errorCode.getResponseCode().value(),
-                LocalDateTime.now());
+                Instant.now());
         return ResponseEntity.status(errorCode.getResponseCode()).body(response);
     }
+
 }

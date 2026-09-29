@@ -16,15 +16,15 @@ public class FeatureController {
 
     private final FeatureService featureService;
 
-    @GetMapping("/{featureId}")
-    public ResponseEntity<FeatureResponse> getFeatureById(@PathVariable Integer featureId) {
-        return ResponseEntity.ok(featureService.getFeatureById(featureId));
-    }
-
-    @GetMapping("/project/{projectId}")
-    public ResponseEntity<List<FeatureResponse>> getFeaturesByProjectId(@PathVariable Integer projectId) {
-        return ResponseEntity.ok(featureService.getFeaturesByProjectId(projectId));
-    }
+   @GetMapping("/{featureId}")
+   public ResponseEntity<FeatureResponse> getFeatureById(@PathVariable Integer featureId) {
+       return ResponseEntity.ok(featureService.getFeatureById(featureId));
+   }
+//
+//    @GetMapping("/project/{projectId}")
+//    public ResponseEntity<List<FeatureResponse>> getFeaturesByProjectId(@PathVariable Integer projectId) {
+//        return ResponseEntity.ok(featureService.getFeaturesByProjectId(projectId));
+//    }
 
     @PatchMapping("/{featureId}")
     public ResponseEntity<FeatureResponse> patchFeature(

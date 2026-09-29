@@ -28,8 +28,14 @@ public class FeatureServiceImpl implements FeatureService {
     @Transactional
     @CacheEvict(value = "features", key = "#featureId")
     public FeatureResponse patchFeature(Integer featureId, FeaturePatchRequest request) {
-        Feature feature = featureRepository.findByFeatureIdForUpdate(featureId)
+
+        Feature feature = featureRepository.findById(featureId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
+
+        if (request.getLockVersion() != null &&
+                !request.getLockVersion().equals(feature.getVersion())) {
+            throw new CustomException(ErrorCode.OPTIMISTIC_LOCK_CONFLICT);
+        }
 
         if (feature.isDeleted()) {
             throw new CustomException(ErrorCode.RESOURCE_NOT_FOUND);
@@ -106,14 +112,14 @@ public class FeatureServiceImpl implements FeatureService {
                 .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
         return toResponse(feature);
     }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<FeatureResponse> getFeaturesByProjectId(Integer projectId) {
-        return featureRepository.findByProject_ProjectIdAndIsDeletedFalse(projectId).stream()
-                .map(this::toResponse)
-                .toList();
-    }
+//
+//    @Override
+//    @Transactional(readOnly = true)
+//    public List<FeatureResponse> getFeaturesByProjectId(Integer projectId) {
+//        return featureRepository.findByProject_ProjectIdAndIsDeletedFalse(projectId).stream()
+//                .map(this::toResponse)
+//                .toList();
+//    }
 
     private FeatureResponse toResponse(Feature f) {
         return FeatureResponse.builder()
@@ -132,6 +138,7 @@ public class FeatureServiceImpl implements FeatureService {
                 .updatedBy(f.getUpdatedBy() != null ? f.getUpdatedBy().getUserId() : null)
                 .createdAt(f.getCreatedAt())
                 .updatedAt(f.getUpdatedAt())
+                .lockVersion(f.getVersion())
                 .build();
     }
 }

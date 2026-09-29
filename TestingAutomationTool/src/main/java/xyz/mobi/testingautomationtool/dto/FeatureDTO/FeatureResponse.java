@@ -26,4 +26,6 @@ public class FeatureResponse {
     private Integer updatedBy;
     private Instant createdAt;
     private Instant updatedAt;
+
+    private Long lockVersion;        // optimistic locking version
 }
