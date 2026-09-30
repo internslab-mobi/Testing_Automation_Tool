@@ -5,9 +5,7 @@ import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.BugAssignRequest;
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.BugPatchRequest;
-import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.BugStatusRequest;
 import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.DeveloperBugStatusRequest;
 import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.BugPutRequest;
 import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.BugResponse;

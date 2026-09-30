@@ -13,8 +13,6 @@ import org.springframework.web.bind.annotation.*;
 import xyz.mobi.testingautomationtool.dto.request.getmethoddto.FeatureSearchRequest;
 import xyz.mobi.testingautomationtool.dto.response.getMethodDTO.FeatureResponse;
 import xyz.mobi.testingautomationtool.service.FeatureService;
-import xyz.mobi.testingautomationtool.service.impl.ExcelTemplateService;
-import xyz.mobi.testingautomationtool.service.impl.TestCaseExcelService;
 
 @RestController
 @RequestMapping("/features")
@@ -94,12 +92,10 @@ public class FeatureController {
                 .body(excelFile);
     }
 
-        @GetMapping("/features/{featureId}/download")
+    @GetMapping("/features/{featureId}/download")
         public ResponseEntity<byte[]> downloadFile(
                 @PathVariable Integer featureId) {
 
             return featureService.downloadFile(featureId);
     }
-
-
 }

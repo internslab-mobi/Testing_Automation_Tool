@@ -10,8 +10,8 @@ import xyz.mobi.testingautomationtool.enums.ProjectStatus;
         name = "testing_projects",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "testing_projects_project_name_unique",
-                        columnNames = "project_name"
+                        name = "testing_projects_project_name_region_unique",
+                        columnNames = {"project_name", "region"}
                 )
         }
 )

@@ -16,4 +16,8 @@ public class ProjectRequest {
     @NotBlank(message = "Region is required")
     @Size(max = 255, message = "Region must not exceed 255 characters")
     private String region;
+
+    private String status;
+
+    private String comments;
 }
