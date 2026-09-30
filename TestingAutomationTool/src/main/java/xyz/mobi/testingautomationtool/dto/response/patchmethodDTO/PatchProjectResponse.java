@@ -19,8 +19,6 @@ public class PatchProjectResponse {
     private String description;
     private ProjectStatus status;
     private String region;
-    private Boolean isActive;
-    private Boolean isDeleted;
     private String updatedBy;
     private Instant updatedAt;
     private String comments;

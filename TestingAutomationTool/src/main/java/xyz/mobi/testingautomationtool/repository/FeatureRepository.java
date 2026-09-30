@@ -15,4 +15,8 @@ public interface FeatureRepository extends JpaRepository<Feature, Integer> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM Feature f WHERE f.project.projectId = :projectId")
     void deleteByProjectId(@Param("projectId") Integer projectId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Feature f SET f.isActive = true WHERE f.project.projectId = :projectId")
+    int activateFeaturesByProjectId(@Param("projectId") Integer projectId);
 }

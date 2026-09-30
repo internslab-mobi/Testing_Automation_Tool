@@ -34,7 +34,7 @@ public interface TestCaseService {
             TestCasePutRequest testCaseRequest,
             Integer id);
 
-    PatchTestCaseResponse patchTestCaseDetails(
+    String patchTestCaseDetails(
             TestCasePatchRequest testPatchMethodDto,
             Integer id);
 

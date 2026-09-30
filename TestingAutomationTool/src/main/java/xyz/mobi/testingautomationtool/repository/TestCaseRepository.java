@@ -24,4 +24,8 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Integer> {
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM TestCase t WHERE t.feature.project.projectId = :projectId")
     void deleteByProjectId(@Param("projectId") Integer projectId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE TestCase t SET t.isActive = true WHERE t.feature.project.projectId = :projectId")
+    int activateTestCasesByProjectId(@Param("projectId") Integer projectId);
 }

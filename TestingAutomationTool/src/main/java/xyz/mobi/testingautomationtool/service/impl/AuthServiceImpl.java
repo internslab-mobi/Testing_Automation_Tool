@@ -50,10 +50,6 @@ public class AuthServiceImpl implements AuthService {
             throw new IllegalArgumentException("Email '" + email + "' is already registered");
         }
 
-        Role role = roleRepository.findByRole("TESTER")
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("TESTER role not found")
-                );
         User user = User.builder()
                 .username(username)
                 .email(email)
@@ -61,27 +57,19 @@ public class AuthServiceImpl implements AuthService {
                 .fullName(request.getFullName().trim())
                 .designation(request.getDesignation())
                 .skills(request.getSkills())
-                .role(role)
-                .isActive(true)
+                .role(null)
+                .isActive(false)
                 .build();
 
         User savedUser = userRepository.save(user);
 
-        String token = jwtUtils.generateTokenFromUsername(
-                savedUser.getUsername(),
-                savedUser.getUserId(),
-                savedUser.getEmail(),
-                role.getRole(),
-                savedUser.getFullName()
-        );
 
         return AuthResponse.builder()
-                .token(token)
+                .token(null)
                 .type("Bearer")
                 .userId(savedUser.getUserId())
                 .username(savedUser.getUsername())
                 .email(savedUser.getEmail())
-                .role(role.getRole())
                 .fullName(savedUser.getFullName())
                 .designation(savedUser.getDesignation())
                 .message("User registered successfully")
@@ -161,16 +149,15 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    public Integer getCurrentUserId() {
+    public User getCurrentUser() {
 
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
-        assert authentication != null;
-        CustomUserDetails userDetails =
-                (CustomUserDetails) authentication.getPrincipal();
+        if (!(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
+            throw new IllegalStateException("User is not authenticated");
+        }
 
-        assert userDetails != null;
-        return userDetails.getUserId();
+        return userDetails.getUser();
     }
 }

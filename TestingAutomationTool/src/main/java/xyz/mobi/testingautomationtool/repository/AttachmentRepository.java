@@ -15,4 +15,8 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Integer>
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM Attachment a WHERE a.feature.project.projectId = :projectId OR a.testCase.feature.project.projectId = :projectId OR a.bug.feature.project.projectId = :projectId")
     void deleteByProjectId(@Param("projectId") Integer projectId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Attachment a SET a.isActive = true WHERE a.feature.project.projectId = :projectId OR a.testCase.feature.project.projectId = :projectId OR a.bug.feature.project.projectId = :projectId")
+    int activateAttachmentsByProjectId(@Param("projectId") Integer projectId);
 }

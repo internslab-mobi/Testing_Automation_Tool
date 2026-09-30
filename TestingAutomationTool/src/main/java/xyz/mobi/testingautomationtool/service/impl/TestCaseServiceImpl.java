@@ -20,7 +20,9 @@ import xyz.mobi.testingautomationtool.repository.*;
 import xyz.mobi.testingautomationtool.service.TestCaseService;
 import xyz.mobi.testingautomationtool.utils.Utils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 
 @Service
@@ -72,7 +74,7 @@ public class TestCaseServiceImpl implements TestCaseService {
 
     @Override
     @Transactional
-    public PatchTestCaseResponse patchTestCaseDetails(
+    public String patchTestCaseDetails(
             TestCasePatchRequest request,
             Integer id) {
         if (request == null) {
@@ -87,47 +89,29 @@ public class TestCaseServiceImpl implements TestCaseService {
         if (testCase.isDeleted() || !testCase.isActive()) {
             throw new ResourceNotFoundException("Test case is deleted id:" + id);
         }
-        boolean hasUpdate =
-                request.getTestType() != null ||
-                        request.getTestPriority() != null ||
-                        request.getIsActive() != null ||
-                        request.getComments() != null ||
-                        request.getDynamicFields() != null ||
-                        request.getExecutionStatus() != null ||
-                        request.getAutomationFeasibility() != null;
 
-        if (!hasUpdate) {
-            throw new IllegalArgumentException(
-                    "At least one field must be provided for update");
-        }
-
+        List<String> updatedFields = new ArrayList<>();
 
         if (request.getTestType() != null) {
             testCase.setTestType(request.getTestType());
+            updatedFields.add("testType");
         }
-
 
         if (request.getTestPriority() != null) {
             testCase.setTestPriority(request.getTestPriority());
+            updatedFields.add("testPriority");
         }
 
         if (request.getIsActive() != null) {
-
             boolean active = request.getIsActive();
-
             testCase.setActive(active);
             if (!active) {
                 bugRepository.deactivateBugs(id);
             } else {
                 bugRepository.activateNonDeletedBugs(id);
             }
+            updatedFields.add("isActive");
         }
-
-        // 6. Update soft-delete status
-
-
-        //After user creation the value is need to change by the login user
-
 
         User user = userRepository.findById(1)
                 .orElseThrow(() ->
@@ -137,133 +121,85 @@ public class TestCaseServiceImpl implements TestCaseService {
 
         testCase.setUpdatedBy(user);
 
-
         if (request.getDynamicFields() != null) {
-
             if (testCase.getDynamicFields() == null) {
                 testCase.setDynamicFields(new HashMap<>());
             }
 
             request.getDynamicFields().forEach((key, value) -> {
-
                 if (value == null) {
                     testCase.getDynamicFields().remove(key);
                 } else {
                     testCase.getDynamicFields().put(key, value);
                 }
             });
-        }
-
-        // 9. Find execution details
-        TestingExecution execution =
-                testingExecutionRepository
-                        .findByTestCase(testCase)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Execution details not found for test case ID: "
-                                                + id));
-
-        // 10. Update comments
-        if (request.getComments() != null) {
-            execution.setComments(request.getComments());
-        }
-
-        // 11. Update automation feasibility
-        if (request.getAutomationFeasibility() != null) {
-
-            execution.setAutomationFeasibility(
-                    request.getAutomationFeasibility());
-        }
-
-        // 12. Update execution status
-        if (request.getExecutionStatus() != null) {
-
-            ExecutionStatus executionStatus =
-                    request.getExecutionStatus();
-
-            execution.setExecutionStatus(executionStatus);
-
-            TestCaseStatus testCaseStatus =
-                    switch (executionStatus) {
-
-                        case PASS -> TestCaseStatus.PASSED;
-
-                        case FAIL -> TestCaseStatus.FAILED;
-
-                        case DESCOPE -> TestCaseStatus.DESCOPE;
-
-                        default -> throw new IllegalArgumentException(
-                                "Unsupported execution status: "
-                                        + executionStatus);
-                    };
-
-            testCase.setTestcaseStatus(testCaseStatus);
-
-            execution.setExecutionNumber(
-                    execution.getExecutionNumber() + 1);
-
-            if (executionStatus == ExecutionStatus.PASS) {
-                utils.trigger(
-                        testCase,
-                        testCase.getCreatedBy(),
-                        null);
-            }
-        }
-
-        testingExecutionRepository.save(execution);
-
-        TestCase savedTestCase =
-                testCaseRepository.save(testCase);
-        PatchTestCaseResponse response = PatchTestCaseResponse.builder()
-                .testcaseId(savedTestCase.getTestcaseId())
-                .featureId(savedTestCase.getFeature().getFeatureId())
-                .testcaseFormatId(savedTestCase.getTestcaseFormatId())
-                .updatedAt(savedTestCase.getUpdatedAt())
-                .build();
-        if (request.getTestType() != null) {
-            response.setTestType(savedTestCase.getTestType());
-        }
-
-        if (request.getTestPriority() != null) {
-            response.setTestPriority(savedTestCase.getTestPriority());
-        }
-
-        if (request.getIsActive() != null) {
-            response.setIsActive(savedTestCase.isActive());
-        }
-
-        if (request.getDynamicFields() != null) {
-            response.setDynamicFields(savedTestCase.getDynamicFields());
+            updatedFields.add("dynamicFields");
         }
 
         if (request.getComments() != null
-                || request.getExecutionStatus() != null
-                || request.getAutomationFeasibility() != null) {
+                || request.getAutomationFeasibility() != null
+                || request.getExecutionStatus() != null) {
 
-            PatchExecutionResponse patchExecutionResponse =
-                    PatchExecutionResponse.builder()
-                            .build();
+            TestingExecution execution =
+                    testingExecutionRepository
+                            .findByTestCase(testCase)
+                            .orElseThrow(() ->
+                                    new ResourceNotFoundException(
+                                            "Execution details not found for test case ID: "
+                                                    + id));
 
             if (request.getComments() != null) {
-                patchExecutionResponse.setComments(
-                        request.getComments());
-            }
-
-            if (request.getExecutionStatus() != null) {
-                patchExecutionResponse.setExecutionStatus(
-                        request.getExecutionStatus());
+                execution.setComments(request.getComments());
+                updatedFields.add("comments");
             }
 
             if (request.getAutomationFeasibility() != null) {
-                patchExecutionResponse.setAutomationFeasibility(
+                execution.setAutomationFeasibility(
                         request.getAutomationFeasibility());
+                updatedFields.add("automationFeasibility");
             }
 
-            response.setExecution(patchExecutionResponse);
+            if (request.getExecutionStatus() != null) {
+                ExecutionStatus executionStatus =
+                        request.getExecutionStatus();
 
+                execution.setExecutionStatus(executionStatus);
 
+                TestCaseStatus testCaseStatus =
+                        switch (executionStatus) {
+                            case PASS -> TestCaseStatus.PASSED;
+                            case FAIL -> TestCaseStatus.FAILED;
+                            case DESCOPE -> TestCaseStatus.DESCOPE;
+                            default -> throw new IllegalArgumentException(
+                                    "Unsupported execution status: "
+                                            + executionStatus);
+                        };
+
+                testCase.setTestcaseStatus(testCaseStatus);
+
+                execution.setExecutionNumber(
+                        execution.getExecutionNumber() + 1);
+
+                if (executionStatus == ExecutionStatus.PASS) {
+                    utils.trigger(
+                            testCase,
+                            testCase.getCreatedBy(),
+                            null);
+                }
+                updatedFields.add("executionStatus");
+            }
+
+            testingExecutionRepository.save(execution);
         }
-        return response;
+
+        if (updatedFields.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "At least one field must be provided for update");
+        }
+
+        testCaseRepository.save(testCase);
+
+        return "Test case with ID " + id + " updated successfully. Changed fields: " + String.join(", ", updatedFields);
     }
 
 

@@ -33,11 +33,11 @@ public class ProjectController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<PatchProjectResponse> patchProject(
+    public ResponseEntity<String> patchProject(
             @PathVariable("id") Integer id,
             @RequestBody ProjectPatchRequest request) {
 
-        PatchProjectResponse response = projectService.patchProject(id, request);
+        String response = projectService.patchProject(id, request);
         return ResponseEntity.ok(response);
     }
 
