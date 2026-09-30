@@ -17,7 +17,7 @@ import xyz.mobi.testingautomationtool.service.impl.ExcelTemplateService;
 import xyz.mobi.testingautomationtool.service.impl.TestCaseExcelService;
 
 @RestController
-@RequestMapping("/api/features")
+@RequestMapping("/features")
 @RequiredArgsConstructor
 public class FeatureController {
 

@@ -16,6 +16,7 @@ import xyz.mobi.testingautomationtool.mapper.postMapper.BugMapper;
 import xyz.mobi.testingautomationtool.repository.BugRepository;
 import xyz.mobi.testingautomationtool.repository.UserRepository;
 import xyz.mobi.testingautomationtool.service.BugService;
+import xyz.mobi.testingautomationtool.service.InAppNotificationService;
 import xyz.mobi.testingautomationtool.service.NotificationService;
 import xyz.mobi.testingautomationtool.utils.Utils;
 
@@ -31,6 +32,7 @@ public class BugServiceImpl implements BugService {
     private final UserRepository userRepository;
     private final BugMapper bugMapper;
     private final NotificationService notificationService;
+    private final InAppNotificationService inAppNotificationService;
     private final Utils utils;
 
 
@@ -449,17 +451,12 @@ public class BugServiceImpl implements BugService {
         bug.setExecutedBy(currentUser);
         bug.setUpdatedBy(currentUser);
 
-        if (newStatus == BugStatus.RESOLVED) {
-
-            if (bug.getResolvedAt() == null) {
-                bug.setResolvedAt(Instant.now());
-            }
-
-        } else {
-            bug.setResolvedAt(null);
-        }
 
         bug = bugRepository.save(bug);
+
+        if (newStatus == BugStatus.FIXED) {
+            inAppNotificationService.createBugFixedNotification(bug);
+        }
 
         utils.bugHistory(
                 bug,

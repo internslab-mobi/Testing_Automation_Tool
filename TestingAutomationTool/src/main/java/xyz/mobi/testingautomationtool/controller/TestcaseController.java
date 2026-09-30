@@ -13,6 +13,7 @@ import xyz.mobi.testingautomationtool.service.TestCaseService;
 
 
 @RestController
+@RequestMapping("/testcases")
 @RequiredArgsConstructor
 public class TestcaseController {
 
