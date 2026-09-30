@@ -1,6 +1,5 @@
 package xyz.mobi.testingautomationtool.controller;
 
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -33,29 +32,10 @@ public class FeatureController {
 
     private final FeatureService featureService;
 
-    @GetMapping("/{featureId}")
-    public ResponseEntity<FeatureResponse> getFeatureById(@PathVariable Integer featureId) {
-        return ResponseEntity.ok(featureService.getFeatureById(featureId));
-    @PostMapping( value = "/create")
-    public ResponseEntity<FeatureResponse> createFeatureDetails(
-            @Valid @RequestBody FeatureRequest featureRequest) {
-
-        FeatureResponse featureResponse = featureService.createFeature(featureRequest);
-
-        return ResponseEntity.ok(featureResponse);
-    }
-
-    @GetMapping("/project/{projectId}")
-    public ResponseEntity<List<FeatureResponse>> getFeaturesByProjectId(@PathVariable Integer projectId) {
-        return ResponseEntity.ok(featureService.getFeaturesByProjectId(projectId));
-    @PostMapping(value = "/attachment/{featureId}",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<AttachmentResponse> uploadAttachment(@RequestBody MultipartFile file,@PathVariable("featureId") Integer featureId
-    ) throws IOException {
-
-        AttachmentResponse featureResponse = featureService.uploadAttachment(file,featureId);
-
-        return ResponseEntity.ok(featureResponse);
-    }
+   @GetMapping("/{featureId}")
+   public ResponseEntity<FeatureResponse> getFeatureById(@PathVariable Integer featureId) {
+       return ResponseEntity.ok(featureService.getFeatureById(featureId));
+   }
 
     @PatchMapping("/{featureId}")
     public ResponseEntity<FeaturePatchResponse> patchFeature(
@@ -70,5 +50,28 @@ public class FeatureController {
             @RequestParam(required = false) Integer updatedBy) {
         featureService.deleteFeature(featureId, updatedBy);
         return ResponseEntity.noContent().build();
+    }
+
+    @PostMapping( value = "/create")
+    public ResponseEntity<FeatureResponse> createFeatureDetails(
+            @Valid @RequestBody FeatureRequest featureRequest) {
+
+        FeatureResponse featureResponse = featureService.createFeature(featureRequest);
+
+        return ResponseEntity.ok(featureResponse);
+    }
+
+    @GetMapping("/project/{projectId}")
+    public ResponseEntity<List<FeatureResponse>> getFeaturesByProjectId(@PathVariable Integer projectId) {
+        return ResponseEntity.ok(featureService.getFeaturesByProjectId(projectId));
+        }
+
+    @PostMapping(value = "/attachment/{featureId}",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<AttachmentResponse> uploadAttachment(@RequestBody MultipartFile file,@PathVariable("featureId") Integer featureId
+    ) throws IOException {
+
+        AttachmentResponse featureResponse = featureService.uploadAttachment(file,featureId);
+
+        return ResponseEntity.ok(featureResponse);
     }
 }
