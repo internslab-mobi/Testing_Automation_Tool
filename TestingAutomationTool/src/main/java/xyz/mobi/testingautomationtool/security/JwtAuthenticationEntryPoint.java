@@ -32,7 +32,7 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
-                .errorCode("UNAUTHORIZED")
+                .errorCode("ERR_020")
                 .errorMessage("Unauthorized access: Full authentication is required to access this resource")
                 .errorStatusCode(HttpServletResponse.SC_UNAUTHORIZED)
                 .time(LocalDateTime.now())

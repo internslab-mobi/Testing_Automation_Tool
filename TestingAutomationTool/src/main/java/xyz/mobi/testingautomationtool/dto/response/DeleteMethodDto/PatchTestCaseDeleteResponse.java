@@ -10,5 +10,4 @@ import lombok.*;
 public class PatchTestCaseDeleteResponse {
     private Integer testcaseId;
     private String message;
-
 }

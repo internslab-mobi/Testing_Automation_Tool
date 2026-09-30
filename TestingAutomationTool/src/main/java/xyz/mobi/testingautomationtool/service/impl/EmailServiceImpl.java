@@ -1,13 +1,13 @@
 package xyz.mobi.testingautomationtool.service.impl;
 
+import jakarta.mail.MessagingException;
+import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.MailException;
 import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
-import xyz.mobi.testingautomationtool.entity.Bug;
-import xyz.mobi.testingautomationtool.entity.TestCase;
-import xyz.mobi.testingautomationtool.entity.TestingExecution;
 import xyz.mobi.testingautomationtool.repository.TestingExecutionRepository;
 import xyz.mobi.testingautomationtool.service.EmailService;
 
@@ -23,282 +23,115 @@ public class EmailServiceImpl implements EmailService {
     private String fromEmail;
 
     @Override
-    public void sendBugAssignmentEmail(
-            String to,
-            Bug bug) {
+    public void confirmationEmail(
+            String recipientEmail,
+            String username) {
 
-        // Get testcase connected to the bug
-        TestCase testCase = bug.getTestCase();
+        try {
+            MimeMessage mail = mailSender.createMimeMessage();
 
-        // Get execution details connected to the testcase
-        TestingExecution testingExecution =
-                testingExecutionRepository
-                        .findByTestCase(testCase)
-                        .orElse(null);
+            MimeMessageHelper helper =
+                    new MimeMessageHelper(mail, false, "UTF-8");
 
-        StringBuilder message = new StringBuilder();
+            helper.setFrom(fromEmail);
+            helper.setTo(recipientEmail);
 
-        message.append("Hello,\n\n");
+            helper.setSubject("User Account Created Successfully");
 
-        message.append("A bug has been assigned to you.\n\n");
+            String content = """
+                    <html>
+                    <body>
+                        <p>Dear User,</p>
+                    
+                        <p>
+                            Your user account has been successfully created.
+                        </p>
+                    
+                        <p>
+                            <strong>Username:</strong> %s<br>
+                            <strong>Email:</strong> %s
+                        </p>
+                    
+                        <p>
+                            You can now access the Testing Automation Tool
+                            using your registered credentials.
+                        </p>
+                    
+                        <p>
+                            For security reasons, please do not share your
+                            password with anyone.
+                        </p>
+                    
+                        <p>
+                            Regards,<br>
+                            Testing Automation Tool Team
+                        </p>
+                    </body>
+                    </html>
+                    """.formatted(username, recipientEmail);
 
-        // =====================================================
-        // BUG DETAILS
-        // =====================================================
+            helper.setText(content, true);
 
-        message.append("====================================\n");
-        message.append("            BUG DETAILS\n");
-        message.append("====================================\n\n");
+            mailSender.send(mail);
 
-        message.append("Bug ID        : ")
-                .append(safeValue(bug.getBugFormatId()))
-                .append("\n");
-
-        message.append("Database ID   : ")
-                .append(safeValue(bug.getBugId()))
-                .append("\n");
-
-        message.append("Title         : ")
-                .append(safeValue(bug.getTitle()))
-                .append("\n");
-
-        message.append("Description   : ")
-                .append(safeValue(bug.getDescription()))
-                .append("\n");
-
-        message.append("Severity      : ")
-                .append(safeValue(bug.getSeverity()))
-                .append("\n");
-
-        message.append("Priority      : ")
-                .append(safeValue(bug.getPriority()))
-                .append("\n");
-
-        message.append("Status        : ")
-                .append(safeValue(bug.getStatus()))
-                .append("\n");
-
-        message.append("Occurrence    : ")
-                .append(safeValue(bug.getBugOccurrence()))
-                .append("\n");
-
-        message.append("Reported By   : ")
-                .append(
-                        bug.getReportedBy() != null
-                                ? safeValue(
-                                bug.getReportedBy().getUsername())
-                                : "N/A"
-                )
-                .append("\n");
-
-        message.append("Assigned To   : ")
-                .append(
-                        bug.getAssignedTo() != null
-                                ? safeValue(
-                                bug.getAssignedTo().getUsername())
-                                : "N/A"
-                )
-                .append("\n");
-
-        message.append("Resolved At   : ")
-                .append(safeValue(bug.getResolvedAt()))
-                .append("\n\n");
-
-        // =====================================================
-        // TEST CASE DETAILS
-        // =====================================================
-
-        message.append("====================================\n");
-        message.append("          TEST CASE DETAILS\n");
-        message.append("====================================\n\n");
-
-        if (testCase != null) {
-
-            message.append("Test Case ID  : ")
-                    .append(
-                            safeValue(
-                                    testCase.getTestcaseFormatId()))
-                    .append("\n");
-
-            message.append("Database ID   : ")
-                    .append(
-                            safeValue(
-                                    testCase.getTestcaseId()))
-                    .append("\n");
-
-            message.append("Title         : ")
-                    .append(
-                            safeValue(
-                                    testCase.getTitle()))
-                    .append("\n");
-
-            message.append("Test Type     : ")
-                    .append(
-                            safeValue(
-                                    testCase.getTestType()))
-                    .append("\n");
-
-            message.append("Priority      : ")
-                    .append(
-                            safeValue(
-                                    testCase.getTestPriority()))
-                    .append("\n");
-
-            message.append("Status        : ")
-                    .append(
-                            safeValue(
-                                    testCase.getTestcaseStatus()))
-                    .append("\n");
-
-            message.append("Active        : ")
-                    .append(
-                            safeValue(
-                                    testCase.isActive()))
-                    .append("\n\n");
-
-        } else {
-            message.append("Testcase details are unavailable.\n\n");
+        } catch (MessagingException | MailException ex) {
+            throw new RuntimeException("Failed to send email", ex);
         }
-
-        // =====================================================
-        // TESTING EXECUTION DETAILS
-        // =====================================================
-
-        message.append("====================================\n");
-        message.append("       TESTING EXECUTION DETAILS\n");
-        message.append("====================================\n\n");
-
-        if (testingExecution != null) {
-
-            message.append("Execution ID       : ")
-                    .append(
-                            safeValue(
-                                    testingExecution.getExecutionId()))
-                    .append("\n");
-
-            message.append("Execution Number   : ")
-                    .append(
-                            safeValue(
-                                    testingExecution.getExecutionNumber()))
-                    .append("\n");
-
-            message.append("Automation Status  : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getAutomationFeasibility()))
-                    .append("\n");
-
-            message.append("Execution Status   : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getExecutionStatus()))
-                    .append("\n");
-
-            message.append("Test Execution     : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getTestExecution()))
-                    .append("\n\n");
-
-            message.append("Test Validation    : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getTestValidation()))
-                    .append("\n\n");
-
-            message.append("Precondition       : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getPrecondition()))
-                    .append("\n\n");
-
-            message.append("Test Data          : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getTestData()))
-                    .append("\n\n");
-
-            message.append("Execution Steps    : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getExecutionSteps()))
-                    .append("\n\n");
-
-            message.append("UI Validations     : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getUiValidations()))
-                    .append("\n\n");
-
-            message.append("DB Validations     : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getDbValidations()))
-                    .append("\n\n");
-
-            message.append("Comments           : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getComments()))
-                    .append("\n\n");
-
-            message.append("Executed At        : ")
-                    .append(
-                            safeValue(
-                                    testingExecution
-                                            .getExecutedAt()))
-                    .append("\n");
-
-            message.append("Executed By        : ")
-                    .append(
-                            testingExecution.getExecutedBy() != null
-                                    ? safeValue(
-                                    testingExecution
-                                    .getExecutedBy()
-                                    .getUsername())
-                                    : "N/A"
-                    )
-                    .append("\n\n");
-
-        } else {
-            message.append(
-                    "Testing execution details are unavailable.\n\n");
-        }
-
-        message.append("====================================\n");
-        message.append("Please review the bug and take the necessary action.\n\n");
-
-        message.append("Regards,\n");
-        message.append("Testing Automation Tool");
-
-        // =====================================================
-        // SEND EMAIL
-        // =====================================================
-
-        SimpleMailMessage mail = new SimpleMailMessage();
-
-        mail.setFrom(fromEmail);
-        mail.setTo(to);
-        mail.setSubject(
-                "Bug Assigned - " + bug.getBugFormatId());
-        mail.setText(message.toString());
-
-        mailSender.send(mail);
     }
 
-    private String safeValue(Object value) {
-        return value != null
-                ? String.valueOf(value)
-                : "N/A";
+    @Override
+    public void rejectEmail(String recipientEmail, String username) {
+
+        try {
+            MimeMessage mail = mailSender.createMimeMessage();
+
+            MimeMessageHelper helper =
+                    new MimeMessageHelper(mail, false, "UTF-8");
+
+            helper.setFrom(fromEmail);
+            helper.setTo(recipientEmail);
+
+            helper.setSubject("User Account Registration Rejected");
+
+            String content = """
+            <html>
+            <body>
+                <p>Dear User,</p>
+    
+                <p>
+                    Your user account registration request has been rejected
+                    by the administrator.
+                </p>
+    
+                <p>
+                    <strong>Username:</strong> %s<br>
+                    <strong>Email:</strong> %s
+                </p>
+    
+                <p>
+                    You will not be able to access the Testing Automation Tool
+                    using this account.
+                </p>
+    
+                <p>
+                    If you believe this rejection was made in error or require
+                    further clarification, please contact the administrator.
+                </p>
+    
+                <p>
+                    Regards,<br>
+                    Testing Automation Tool Team
+                </p>
+            </body>
+            </html>
+            """.formatted(username, recipientEmail);
+
+            helper.setText(content, true);
+
+            mailSender.send(mail);
+
+        } catch (MessagingException | MailException ex) {
+            throw new RuntimeException("Failed to send email", ex);
+        }
     }
 }

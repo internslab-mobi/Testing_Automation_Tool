@@ -16,11 +16,5 @@ public class ProjectPatchRequest {
 
     private String region;
 
-    private ProjectStatus status;
-
     private String comments;
-
-    private Boolean isActive;
-
-    private Boolean isDeleted;
 }

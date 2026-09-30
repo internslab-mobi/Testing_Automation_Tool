@@ -32,7 +32,7 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
         response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 
         ErrorResponse errorResponse = ErrorResponse.builder()
-                .errorCode("FORBIDDEN")
+                .errorCode("ER_0021")
                 .errorMessage("Access denied: You do not have sufficient permissions to perform this action. Only MANAGER and TESTER roles can access these resources.")
                 .errorStatusCode(HttpServletResponse.SC_FORBIDDEN)
                 .time(LocalDateTime.now())

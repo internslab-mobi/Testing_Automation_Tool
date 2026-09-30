@@ -44,11 +44,11 @@ public class TestcaseController {
     }
 
     @PatchMapping("/{id}")
-    public ResponseEntity<PatchTestCaseResponse> patchTestCaseDetails(
+    public ResponseEntity<String> patchTestCaseDetails(
             @RequestBody TestCasePatchRequest testCasePatchRequest,
             @PathVariable("id") Integer id) {
 
-        PatchTestCaseResponse response = testCaseService
+        String response = testCaseService
                 .patchTestCaseDetails(testCasePatchRequest, id);
         return ResponseEntity.ok(response);
     }

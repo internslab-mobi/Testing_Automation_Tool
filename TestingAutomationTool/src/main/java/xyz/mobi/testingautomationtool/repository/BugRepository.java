@@ -54,4 +54,8 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
     @Query("DELETE FROM Bug b WHERE b.feature.project.projectId = :projectId")
     void deleteByProjectId(@Param("projectId") Integer projectId);
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Bug b SET b.isActive = true WHERE b.feature.project.projectId = :projectId")
+    int activateBugsByProjectId(@Param("projectId") Integer projectId);
+
 }

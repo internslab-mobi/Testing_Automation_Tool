@@ -14,7 +14,11 @@ import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.mapper.putMapper.ProjectPutMapper;
 import xyz.mobi.testingautomationtool.repository.*;
+import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.ProjectService;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -30,6 +34,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final AttachmentRepository attachmentRepository;
     private final UserRepository userRepository;
     private final ProjectPutMapper projectPutMapper;
+    private final AuthService authService;
 
     @Override
     public ProjectPutResponse updateProject(Integer id, ProjectPutRequest request) {
@@ -50,7 +55,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
-    public PatchProjectResponse patchProject(Integer id, ProjectPatchRequest request) {
+    public String patchProject(Integer id, ProjectPatchRequest request) {
         if (request == null) {
             throw new IllegalArgumentException("Patch request cannot be null");
         }
@@ -62,95 +67,79 @@ public class ProjectServiceImpl implements ProjectService {
             throw new IllegalStateException("Project is permanently deleted and cannot be modified with ID: " + id);
         }
 
-        boolean hasUpdate = request.getProjectName() != null
-                || request.getDescription() != null
-                || request.getRegion() != null
-                || request.getStatus() != null
-                || request.getIsActive() != null
-                || request.getIsDeleted() != null
-                || request.getComments() != null;
-
-        if (!hasUpdate) {
-            throw new IllegalArgumentException("At least one field must be provided for update");
-        }
+        List<String> updatedFields = new ArrayList<>();
 
         if (request.getProjectName() != null) {
             project.setProjectName(request.getProjectName());
+            updatedFields.add("projectName");
         }
 
         if (request.getDescription() != null) {
             project.setDescription(request.getDescription());
+            updatedFields.add("description");
         }
 
         if (request.getRegion() != null) {
             project.setRegion(request.getRegion());
-        }
-
-        if (request.getStatus() != null) {
-            project.setStatus(request.getStatus());
+            updatedFields.add("region");
         }
 
         if (request.getComments() != null) {
             project.setComments(request.getComments());
+            updatedFields.add("comments");
         }
 
-        if (request.getIsActive() != null) {
-            project.setActive(request.getIsActive());
-            if (request.getIsActive()) {
-                project.setStatus(ProjectStatus.ACTIVE);
-            } else {
-                project.setStatus(ProjectStatus.INACTIVE);
-            }
-        }
-
-        if (request.getIsDeleted() != null && request.getIsDeleted()) {
-            project.setDeleted(true);
-            project.setActive(false);
-            project.setStatus(ProjectStatus.INACTIVE);
+        if (updatedFields.isEmpty()) {
+            throw new IllegalArgumentException("At least one field must be provided for update");
         }
 
         User dummyUser = userRepository.findById(2)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: 2"));
         project.setUpdatedBy(dummyUser);
 
-        Project savedProject = projectRepository.save(project);
+        projectRepository.save(project);
 
-        PatchProjectResponse response = PatchProjectResponse.builder()
-                .projectId(savedProject.getProjectId())
-                .updatedAt(savedProject.getUpdatedAt())
-                .updatedBy(dummyUser.getFullName())
-                .build();
-
-        if (request.getProjectName() != null) {
-            response.setProjectName(savedProject.getProjectName());
-        }
-
-        if (request.getComments() != null) {
-            response.setComments(savedProject.getComments());
-        }
-
-        if (request.getDescription() != null) {
-            response.setDescription(savedProject.getDescription());
-        }
-
-        if (request.getRegion() != null) {
-            response.setRegion(savedProject.getRegion());
-        }
-
-        if (request.getStatus() != null) {
-            response.setStatus(savedProject.getStatus());
-        }
-
-        if (request.getIsActive() != null) {
-            response.setIsActive(savedProject.isActive());
-        }
-
-        if (request.getIsDeleted() != null) {
-            response.setIsDeleted(savedProject.isDeleted());
-        }
-
-        return response;
+        return "Project with ID " + id + " updated successfully. Changed fields: " + String.join(", ", updatedFields);
     }
+
+    @Override
+    public PatchProjectResponse getProjectStatus(ProjectStatus status,
+                                                 Integer projectId) {
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + projectId));
+
+        User user = authService.getCurrentUser();
+        if(status == ProjectStatus.ACTIVE){
+            project.setActive(true);
+            project.setStatus(ProjectStatus.ACTIVE);
+            projectRepository.save(project);
+            bugRepository.activateBugsByProjectId(projectId);
+            attachmentRepository.activateAttachmentsByProjectId(projectId);
+            testCaseRepository.activateTestCasesByProjectId(projectId);
+            featureRepository.activateFeaturesByProjectId(projectId);
+
+
+        } else if (status == ProjectStatus.INACTIVE) {
+            project.setActive(false);
+            project.setStatus(ProjectStatus.INACTIVE);
+            projectRepository.save(project);
+            bugRepository.deactivateBugsByProjectId(projectId);
+            attachmentRepository.deactivateAttachmentsByProjectId(projectId);
+            testCaseRepository.deactivateTestCasesByProjectId(projectId);
+            featureRepository.deactivateFeaturesByProjectId(projectId);
+        }
+
+
+        return PatchProjectResponse.builder()
+                .projectId(project.getProjectId())
+                .updatedAt(project.getUpdatedAt())
+                .status(project.getStatus())
+                .updatedBy(user.getFullName())
+                .build();
+    }
+
+
 
     @Override
     public PatchProjectDeleteResponse softDeleteProject(Integer id) {

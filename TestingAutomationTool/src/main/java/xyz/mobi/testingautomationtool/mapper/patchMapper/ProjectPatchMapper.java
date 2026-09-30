@@ -9,7 +9,7 @@ import xyz.mobi.testingautomationtool.entity.Project;
 public interface ProjectPatchMapper {
 
     @Mapping(source = "updatedBy.username", target = "updatedBy")
-    @Mapping(source = "active", target = "isActive")
-    @Mapping(source = "deleted", target = "isDeleted")
+//    @Mapping(source = "active", target = "isActive")
+//    @Mapping(source = "deleted", target = "isDeleted")
     PatchProjectResponse toResponse(Project project);
 }

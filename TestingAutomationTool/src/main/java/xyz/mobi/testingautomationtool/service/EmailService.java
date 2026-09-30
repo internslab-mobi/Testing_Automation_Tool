@@ -4,7 +4,7 @@ import xyz.mobi.testingautomationtool.entity.Bug;
 
 public interface EmailService {
 
-    void sendBugAssignmentEmail(
-            String to,
-            Bug bug);
+    void confirmationEmail(String recipientEmail,String username);
+
+    void rejectEmail(String recipientEmail,String username);
 }
