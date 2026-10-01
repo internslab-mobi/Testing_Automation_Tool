@@ -85,7 +85,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         // Check duplicate filename within the same project
         boolean exists = attachmentRepository
-                .existsByProject_ProjectIdAndFileNameAndIsDeletedFalse(
+                .existsByProject_ProjectIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(
                         projectId, filename
                 );
 
@@ -346,7 +346,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         List<Attachment> attachments =
                 attachmentRepository
-                        .findAllByProject_ProjectIdAndIsDeletedFalse(projectId);
+                        .findAllByProject_ProjectIdAndIsDeletedFalseAndIsActiveTrue(projectId);
 
         if (attachments.isEmpty()) {
             throw new ResourceNotFoundException(
