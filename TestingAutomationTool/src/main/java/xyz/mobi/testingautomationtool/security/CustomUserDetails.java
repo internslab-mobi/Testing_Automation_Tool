@@ -5,6 +5,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import xyz.mobi.testingautomationtool.entity.User;
+import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -32,9 +33,19 @@ public class CustomUserDetails implements UserDetails {
         this.fullName = user.getFullName();
         this.active = user.isActive();
 
-        String rawRole = (user.getRole() != null && user.getRole().getRole() != null)
-                ? user.getRole().getRole().toUpperCase().trim()
-                : "TESTER";
+        if (user.getRole() == null) {
+            throw new ResourceNotFoundException("User role is not assigned");
+        }
+
+
+        if (user.getRole().getRole() == null) {
+            throw new ResourceNotFoundException("User role is not assigned");
+        }
+
+        String rawRole = user.getRole().getRole().trim().toUpperCase();
+
+        System.out.println("Final Role: [" + rawRole + "]");
+
         this.roleName = rawRole;
 
         List<GrantedAuthority> auths = new ArrayList<>();

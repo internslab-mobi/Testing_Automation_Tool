@@ -52,7 +52,6 @@ public class User extends Auditable {
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(
             name = "user_role_id",
-            nullable = false,
             foreignKey = @ForeignKey(name = "fk_testing_users_role")
     )
     private Role role;

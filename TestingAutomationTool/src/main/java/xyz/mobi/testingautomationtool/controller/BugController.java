@@ -71,7 +71,7 @@ public class BugController {
         return ResponseEntity.ok(bugService.patchBug(bugId, request));
     }
 
-    @PatchMapping("/{bugId}")
+    @PatchMapping("/delete/{bugId}")
     public ResponseEntity<Void> deleteBug(@PathVariable Integer bugId) {
         bugService.deleteBug(bugId);
         return ResponseEntity.noContent().build();

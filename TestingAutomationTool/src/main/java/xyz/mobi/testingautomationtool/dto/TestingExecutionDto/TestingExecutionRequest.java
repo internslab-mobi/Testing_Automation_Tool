@@ -1,6 +1,5 @@
 package xyz.mobi.testingautomationtool.dto.TestingExecutionDto;
 
-import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
