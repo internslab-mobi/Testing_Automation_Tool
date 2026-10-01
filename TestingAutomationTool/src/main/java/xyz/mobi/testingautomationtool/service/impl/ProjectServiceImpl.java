@@ -227,8 +227,8 @@ public class ProjectServiceImpl implements ProjectService {
                     "Project is permanently deleted cannot be modified" + id
             );
         }
-        if(isActive==project.getStatus()){
-            throw new IllegalStateException("Project is already in same status:"+id);
+        if (isActive == project.getStatus()) {
+            throw new IllegalStateException("Project is already in same status:" + id);
         }
 
         User currentUser = authService.getCurrentUser();
