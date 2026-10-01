@@ -26,6 +26,7 @@ import xyz.mobi.testingautomationtool.repository.*;
 import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.InAppNotificationService;
 import xyz.mobi.testingautomationtool.service.TestCaseService;
+import xyz.mobi.testingautomationtool.utils.Utils;
 
 import java.lang.Exception;
 import java.time.Instant;
@@ -36,7 +37,7 @@ import java.util.stream.Collectors;
 @Transactional
 @RequiredArgsConstructor
 public class TestCaseServiceImpl implements TestCaseService {
-
+    private final Utils utils;
     private final TestCaseRepository testCaseRepository;
     private final TestingExecutionRepository testingExecutionRepository;
     private final FeatureRepository featureRepository;
@@ -359,7 +360,10 @@ public class TestCaseServiceImpl implements TestCaseService {
         updatedTestCase.setUpdatedBy(authService.getCurrentUser());
 
         if (testCasePutRequest.getDynamicFields() != null) {
-            updatedTestCase.setDynamicFields(new HashMap<>(testCasePutRequest.getDynamicFields()));
+            if (testCase.getDynamicFields() == null) {
+                testCase.setDynamicFields(new HashMap<>());
+            }
+            updatedTestCase.getDynamicFields().putAll(testCasePutRequest.getDynamicFields());
         }
 
         testCaseRepository.save(updatedTestCase);
@@ -485,19 +489,32 @@ public class TestCaseServiceImpl implements TestCaseService {
             }
 
             if (request.getExecutionStatus() != null) {
-                ExecutionStatus executionStatus = request.getExecutionStatus();
+                ExecutionStatus executionStatus =
+                        request.getExecutionStatus();
+
                 execution.setExecutionStatus(executionStatus);
 
-                TestCaseStatus testCaseStatus = switch (executionStatus) {
-                    case PASS -> TestCaseStatus.PASSED;
-                    case FAIL -> TestCaseStatus.FAILED;
-                    case DESCOPE -> TestCaseStatus.DESCOPE;
-                };
+                TestCaseStatus testCaseStatus =
+                        switch (executionStatus) {
+                            case PASS -> TestCaseStatus.PASSED;
+                            case FAIL -> TestCaseStatus.FAILED;
+                            case DESCOPE -> TestCaseStatus.DESCOPE;
+                            default -> throw new IllegalArgumentException(
+                                    "Unsupported execution status: "
+                                            + executionStatus);
+                        };
 
                 testCase.setTestcaseStatus(testCaseStatus);
-                execution.setExecutionNumber((execution.getExecutionNumber() != null ? execution.getExecutionNumber() : 0) + 1);
-                execution.setExecutedAt(Instant.now());
-                execution.setExecutedBy(authService.getCurrentUser());
+
+                execution.setExecutionNumber(
+                        execution.getExecutionNumber() + 1);
+
+                if (executionStatus == ExecutionStatus.PASS) {
+                    utils.trigger(
+                            testCase,
+                            testCase.getCreatedBy(),
+                            null);
+                }
                 updatedFields.add("executionStatus");
             }
 
@@ -505,7 +522,8 @@ public class TestCaseServiceImpl implements TestCaseService {
         }
 
         if (updatedFields.isEmpty()) {
-            throw new IllegalArgumentException("At least one field must be provided for update");
+            throw new IllegalArgumentException(
+                    "At least one field must be provided for update");
         }
 
         testCaseRepository.save(testCase);
