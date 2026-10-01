@@ -2,6 +2,8 @@ package xyz.mobi.testingautomationtool.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.transaction.annotation.Transactional;
+import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.BugDto.*;
 import xyz.mobi.testingautomationtool.enums.BugCategory;
 import xyz.mobi.testingautomationtool.enums.BugPriority;
@@ -41,4 +43,7 @@ public interface BugService {
             String assignedTo,
             String updatedBy
     );
+
+    @Transactional(readOnly = true)
+    AttachmentDownloadResponse downloadBugAttachments(Integer bugId);
 }

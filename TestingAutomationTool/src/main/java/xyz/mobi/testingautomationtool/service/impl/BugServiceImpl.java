@@ -6,14 +6,17 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.BugDto.*;
 import xyz.mobi.testingautomationtool.dto.NotificationDto.NotificationRequest;
 import xyz.mobi.testingautomationtool.entity.*;
 import xyz.mobi.testingautomationtool.enums.*;
+import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
 import xyz.mobi.testingautomationtool.exception.CustomException;
 import xyz.mobi.testingautomationtool.exception.ErrorCode;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
@@ -24,10 +27,13 @@ import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.BugService;
 import xyz.mobi.testingautomationtool.service.NotificationService;
 import xyz.mobi.testingautomationtool.specification.BugSpecification;
-
+import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.*;
 import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Slf4j
 @Service
@@ -548,7 +554,86 @@ public class BugServiceImpl implements BugService {
         Page<Bug> bugs = bugRepository.findAll(specification, pageable);
         return bugs.map(bugMapper::toResponse);
     }
+    @Transactional(readOnly = true)
+    @Override
+    public AttachmentDownloadResponse downloadBugAttachments(Integer bugId) {
 
+        List<Attachment> attachments =
+                attachmentRepository
+                        .findAllByBug_BugIdAndIsDeletedFalseAndIsActiveTrue(bugId);
+
+        if (attachments.isEmpty()) {
+            throw new ResourceNotFoundException(
+                    "No attachments found for bug ID: " + bugId
+            );
+        }
+
+        List<Attachment> validAttachments = attachments.stream()
+                .filter(attachment ->
+                        attachment.getFileName() != null &&
+                                !attachment.getFileName().isBlank() &&
+                                attachment.getFileBlob() != null
+                )
+                .toList();
+
+        if (validAttachments.isEmpty()) {
+            throw new ResourceNotFoundException(
+                    "No valid attachments found for bug ID: " + bugId
+            );
+        }
+
+        // One file → download original file
+        if (validAttachments.size() == 1) {
+
+            Attachment attachment = validAttachments.get(0);
+
+            String contentType = attachment.getFileType() != null
+                    ? attachment.getFileType()
+                    : MediaType.APPLICATION_OCTET_STREAM_VALUE;
+
+            return new AttachmentDownloadResponse(
+                    attachment.getFileBlob(),
+                    attachment.getFileName(),
+                    contentType
+            );
+        }
+
+        // Multiple files → ZIP
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ZipOutputStream zos = new ZipOutputStream(baos)) {
+
+            Set<String> fileNames = new HashSet<>();
+
+            for (Attachment attachment : validAttachments) {
+
+                String fileName = attachment.getFileName();
+
+                if (!fileNames.add(fileName)) {
+                    continue;
+                }
+
+                ZipEntry zipEntry = new ZipEntry(fileName);
+
+                zos.putNextEntry(zipEntry);
+                zos.write(attachment.getFileBlob());
+                zos.closeEntry();
+            }
+
+            zos.finish();
+
+            return new AttachmentDownloadResponse(
+                    baos.toByteArray(),
+                    "bug-" + bugId + "-attachments.zip",
+                    "application/zip"
+            );
+
+        } catch (IOException e) {
+
+            throw new AttachmentProcessingException(
+                    "Failed to create ZIP file for bug ID: " + bugId
+            );
+        }
+    }
     @Transactional
     public List<AttachmentResponse> uploadAttachments(
             List<MultipartFile> files,
@@ -636,4 +721,5 @@ public class BugServiceImpl implements BugService {
                         .build())
                 .toList();
     }
+
 }

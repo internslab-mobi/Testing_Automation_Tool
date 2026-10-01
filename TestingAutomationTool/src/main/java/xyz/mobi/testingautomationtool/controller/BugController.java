@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.BugDto.*;
 import xyz.mobi.testingautomationtool.entity.Attachment;
@@ -127,12 +128,12 @@ public class BugController {
 
     @GetMapping("/attachments/{attachmentId}/download")
     public ResponseEntity<byte[]> downloadAttachment(@PathVariable Integer attachmentId) {
-        Attachment attachment = attachmentService.getAttachmentFile(attachmentId);
-        String contentType = attachment.getFileType() != null ? attachment.getFileType() : MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        AttachmentDownloadResponse attachment = bugService.downloadBugAttachments(attachmentId);
+        String contentType = attachment.getContentType() != null ? attachment.getContentType(): MediaType.APPLICATION_OCTET_STREAM_VALUE;
 
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(contentType))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + attachment.getFileName() + "\"")
-                .body(attachment.getFileBlob());
+                .body(attachment.getFile());
     }
 }

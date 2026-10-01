@@ -30,6 +30,7 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Integer>
     List<Attachment> findAllByProject_ProjectIdAndIsDeletedFalseAndIsActiveTrue(
             Integer projectId
     );
+    List<Attachment> findAllByBug_BugIdAndIsDeletedFalseAndIsActiveTrue(Integer bugId);
 
     boolean existsByProject_ProjectIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(Integer projectId, String filename);
 
