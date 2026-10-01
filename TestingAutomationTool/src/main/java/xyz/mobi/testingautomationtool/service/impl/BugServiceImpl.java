@@ -9,6 +9,7 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.mobi.testingautomationtool.dto.BugDto.*;
+import xyz.mobi.testingautomationtool.dto.NotificationDto.NotificationRequest;
 import xyz.mobi.testingautomationtool.entity.*;
 import xyz.mobi.testingautomationtool.enums.*;
 import xyz.mobi.testingautomationtool.exception.CustomException;
@@ -18,15 +19,11 @@ import xyz.mobi.testingautomationtool.mapper.BugMapper;
 import xyz.mobi.testingautomationtool.repository.*;
 import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.BugService;
-import xyz.mobi.testingautomationtool.service.EmailService;
 import xyz.mobi.testingautomationtool.service.NotificationService;
 import xyz.mobi.testingautomationtool.specification.BugSpecification;
 
 import java.time.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @Service
@@ -40,7 +37,6 @@ public class BugServiceImpl implements BugService {
     private final UserRepository userRepository;
     private final BugHistoryRepository bugHistoryRepository;
     private final NotificationService notificationService;
-    private final EmailService emailService;
     private final BugMapper bugMapper;
     private final AuthService authService;
 
@@ -173,19 +169,13 @@ public class BugServiceImpl implements BugService {
 
         // Step 9: Notification and email dispatch if assigned
         if (assignedTo != null) {
-            Notification notification = notificationService.createNotification(reporter, assignedTo, savedBug);
-            try {
-                if (assignedTo.getEmail() != null && !assignedTo.getEmail().isBlank()) {
-                    emailService.sendBugAssignmentEmail(assignedTo.getEmail(), savedBug);
-                    notificationService.updateNotificationStatus(notification.getNotificationId(), NotificationStatus.SENT);
-                } else {
-                    log.warn("Assigned developer {} has no email configured", assignedTo.getUsername());
-                    notificationService.updateNotificationStatus(notification.getNotificationId(), NotificationStatus.FAILED);
-                }
-            } catch (Exception e) {
-                log.error("Failed to send assignment email for bug {}: {}", savedBug.getBugFormatId(), e.getMessage());
-                notificationService.updateNotificationStatus(notification.getNotificationId(), NotificationStatus.FAILED);
-            }
+            notificationService.createNotification(
+                    NotificationRequest.builder()
+                            .employeeId(reporter.getUserId())
+                            .assignedId(assignedTo.getUserId())
+                            .bugId(savedBug.getBugId())
+                            .build()
+            );
         }
 
         return bugMapper.toResponse(savedBug);
@@ -214,17 +204,132 @@ public class BugServiceImpl implements BugService {
 
     @Override
     public BugResponse updateBug(Integer bugId, BugPutRequest request) {
+
         Bug bug = bugRepository.findById(bugId)
-                .orElseThrow(() -> new ResourceNotFoundException("Bug not found with ID: " + bugId));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Bug not found with ID: " + bugId));
+
+        if (!bug.isActive()) {
+            throw new IllegalStateException(
+                    "Cannot update disabled bug with ID: " + bugId);
+        }
 
         if (bug.isDeleted()) {
-            throw new ResourceNotFoundException("Bug is deleted with ID: " + bugId);
+            throw new IllegalStateException(
+                    "Cannot update deleted bug with ID: " + bugId);
+        }
+
+        Integer oldAssignedUserId =
+                bug.getAssignedTo() != null
+                        ? bug.getAssignedTo().getUserId()
+                        : null;
+
+        BugStatus oldStatus = bug.getStatus();
+
+        User currentUser = authService.getCurrentUser();
+
+        User executedBy = bug.getExecutedBy();
+
+        if (!Objects.equals(oldStatus, request.getStatus())) {
+            executedBy = currentUser;
+        }
+
+        User assignedTo = bug.getAssignedTo();
+
+        if (request.getAssignedTo() != null) {
+            assignedTo = userRepository.findById(
+                    request.getAssignedTo()
+            ).orElseThrow(() ->
+                    new ResourceNotFoundException(
+                            "Assigned user not found with ID: "
+                                    + request.getAssignedTo()));
         }
 
         bugMapper.updateEntity(bug, request);
-        bug.setUpdatedBy(authService.getCurrentUser());
-        Bug saved = bugRepository.save(bug);
-        return bugMapper.toResponse(saved);
+
+        bug.setExecutedBy(executedBy);
+        bug.setAssignedTo(assignedTo);
+        bug.setUpdatedBy(currentUser);
+
+        if (assignedTo != null) {
+            bug.setStatus(BugStatus.IN_PROGRESS);
+        }
+
+        if (request.getStatus() == BugStatus.RESOLVED) {
+            if (bug.getResolvedAt() == null) {
+                bug.setResolvedAt(Instant.now());
+            }
+        } else {
+            bug.setResolvedAt(null);
+        }
+
+        boolean statusChanged =
+                !Objects.equals(oldStatus, bug.getStatus());
+
+        Integer newAssignedUserId =
+                bug.getAssignedTo() != null
+                        ? bug.getAssignedTo().getUserId()
+                        : null;
+
+        boolean assignmentChanged =
+                !Objects.equals(
+                        oldAssignedUserId,
+                        newAssignedUserId
+                );
+
+        // Save bug
+        bug = bugRepository.save(bug);
+
+        // =========================================================
+        // BUG HISTORY
+        // =========================================================
+
+        if (statusChanged || assignmentChanged) {
+
+            BugHistory history = BugHistory.builder()
+                    .bug(bug)
+                    .executedBy(currentUser.getUserId())
+                    .bugStatus(bug.getStatus())
+                    .assignedTo(assignedTo != null ? assignedTo.getUserId() : null)
+                    .createdAt(Instant.now())
+                    .build();
+            bugHistoryRepository.save(history);
+        }
+
+        // =========================================================
+        // NOTIFICATION
+        // =========================================================
+
+        if (assignmentChanged && newAssignedUserId != null) {
+
+            if (oldAssignedUserId == null) {
+
+                notificationService.createNotification(
+                        NotificationRequest.builder()
+                                .employeeId(
+                                        currentUser.getUserId()
+                                )
+                                .assignedId(
+                                        newAssignedUserId
+                                )
+                                .bugId(
+                                        bug.getBugId()
+                                )
+                                .build()
+                );
+
+            } else {
+
+                notificationService.createReassignNotification(
+                        oldAssignedUserId,
+                        newAssignedUserId,
+                        bug.getBugId()
+                );
+            }
+        }
+
+        return bugMapper.toResponse(bug);
     }
 
     @Override
@@ -314,13 +419,28 @@ public class BugServiceImpl implements BugService {
                     .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + effectiveAssignedTo));
 
             User previousAssignee = bug.getAssignedTo();
+            Integer oldAssignedUserId = previousAssignee != null ? previousAssignee.getUserId() : null;
+            Integer newAssignedUserId = newAssignee.getUserId();
+            boolean assignmentChanged = !Objects.equals(oldAssignedUserId, newAssignedUserId);
+
             bug.setAssignedTo(newAssignee);
 
-            if (previousAssignee != null && previousAssignee.getEmail() != null) {
-                emailService.sendBugReassignedEmail(previousAssignee.getEmail(), bug);
-            }
-            if (newAssignee.getEmail() != null) {
-                emailService.sendBugAssignedEmail(newAssignee.getEmail(), bug);
+            if (assignmentChanged) {
+                if (oldAssignedUserId == null) {
+                    notificationService.createNotification(
+                            NotificationRequest.builder()
+                                    .employeeId(authService.getCurrentUser().getUserId())
+                                    .assignedId(newAssignedUserId)
+                                    .bugId(bug.getBugId())
+                                    .build()
+                    );
+                } else {
+                    notificationService.createReassignNotification(
+                            oldAssignedUserId,
+                            newAssignedUserId,
+                            bug.getBugId()
+                    );
+                }
             }
 
             BugHistory history = BugHistory.builder()
@@ -354,6 +474,13 @@ public class BugServiceImpl implements BugService {
         bug.setActive(false);
         bug.setUpdatedBy(authService.getCurrentUser());
         bugRepository.save(bug);
+    }
+
+    @Override
+    public void hardDelete(Integer bugId) {
+        Bug bug = bugRepository.findById(bugId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bug not found with ID: " + bugId));
+        bugRepository.delete(bug);
     }
 
     @Override

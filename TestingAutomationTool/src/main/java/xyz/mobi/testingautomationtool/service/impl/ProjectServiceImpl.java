@@ -6,9 +6,13 @@ import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.dto.ProjectDto.*;
+import xyz.mobi.testingautomationtool.entity.Attachment;
+import xyz.mobi.testingautomationtool.entity.Feature;
 import xyz.mobi.testingautomationtool.entity.Project;
 import xyz.mobi.testingautomationtool.entity.User;
+import xyz.mobi.testingautomationtool.enums.AttachmentType;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 import xyz.mobi.testingautomationtool.exception.CustomException;
 import xyz.mobi.testingautomationtool.exception.ErrorCode;
@@ -18,6 +22,7 @@ import xyz.mobi.testingautomationtool.repository.*;
 import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.ProjectService;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -55,6 +60,49 @@ public class ProjectServiceImpl implements ProjectService {
 
         Project saved = projectRepository.save(project);
         return projectMapper.toResponse(saved);
+    }
+
+    @Override
+    public xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse uploadAttachment(MultipartFile file, Integer projectId) throws IOException {
+        Feature feature = featureRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException("Project is not present for this id: " + projectId));
+
+        String filename = file.getOriginalFilename();
+        if (filename == null || filename.isBlank()) {
+            filename = "Project_attachment_" + System.currentTimeMillis();
+        }
+
+        String fileType = file.getContentType();
+        Long fileSize = file.getSize();
+        byte[] bytes = file.getBytes();
+
+        User user = authService.getCurrentUser();
+
+        Attachment attachment = Attachment.builder()
+                .attachmentType(AttachmentType.PROJECT)
+                .feature(feature)
+                .project(feature.getProject())
+                .fileName(filename)
+                .fileType(fileType)
+                .fileSize(fileSize)
+                .fileBlob(bytes)
+                .uploadedBy(user)
+                .updatedBy(user)
+                .isActive(true)
+                .isDeleted(false)
+                .build();
+
+        attachmentRepository.save(attachment);
+
+        return xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse.builder()
+                .attachmentId(attachment.getAttachmentId())
+                .featureId(projectId)
+                .fileName(filename)
+                .fileType(fileType)
+                .fileSize(fileSize)
+                .uploadedBy(user != null ? user.getUserId() : null)
+                .createdAt(attachment.getCreatedAt())
+                .build();
     }
 
     @Override

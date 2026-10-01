@@ -1,5 +1,6 @@
 package xyz.mobi.testingautomationtool.service;
 
+import xyz.mobi.testingautomationtool.dto.NotificationDto.NotificationRequest;
 import xyz.mobi.testingautomationtool.dto.NotificationDto.NotificationResponse;
 import xyz.mobi.testingautomationtool.entity.Bug;
 import xyz.mobi.testingautomationtool.entity.Notification;
@@ -10,7 +11,9 @@ import java.util.List;
 
 public interface NotificationService {
 
-    Notification createNotification(User reporter, User assignedTo, Bug bug);
+    NotificationResponse createNotification(NotificationRequest request);
+
+    void createReassignNotification(Integer oldAssignedId, Integer newAssignedId, Integer bugId);
 
     void updateNotificationStatus(Integer notificationId, NotificationStatus status);
 
@@ -18,5 +21,7 @@ public interface NotificationService {
 
     NotificationResponse getById(Integer notificationId);
 
-    void updateStatus(Integer notificationId, NotificationStatus status);
+    List<NotificationResponse> getByAll();
+
+    void deleteNotification(Integer notificationId);
 }

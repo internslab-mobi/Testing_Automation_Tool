@@ -21,7 +21,4 @@ public class TestingExecutionRequest {
     private String uiValidations;
     private String dbValidations;
     private String comments;
-
-    @Positive(message = "Executed by must be greater than 0")
-    private Integer executedBy;
 }

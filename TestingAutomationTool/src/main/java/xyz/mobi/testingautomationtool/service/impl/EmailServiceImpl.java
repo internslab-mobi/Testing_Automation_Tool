@@ -616,11 +616,6 @@ public class EmailServiceImpl implements EmailService {
         }
     }
 
-    @Async
-    @Override
-    public void sendBugAssignmentEmail(String toEmail, Bug bug) {
-        sendBugAssignedEmail(toEmail, bug);
-    }
 
     @Async
     @Override

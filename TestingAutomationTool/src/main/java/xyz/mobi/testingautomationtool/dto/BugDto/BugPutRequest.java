@@ -24,4 +24,6 @@ public class BugPutRequest {
     private BugSeverity severity;
 
     private BugStatus status;
+
+    private Integer assignedTo;
 }

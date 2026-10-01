@@ -4,15 +4,18 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import xyz.mobi.testingautomationtool.dto.NotificationDto.NotificationRequest;
 import xyz.mobi.testingautomationtool.dto.NotificationDto.NotificationResponse;
 import xyz.mobi.testingautomationtool.entity.Bug;
 import xyz.mobi.testingautomationtool.entity.Notification;
 import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.NotificationStatus;
-import xyz.mobi.testingautomationtool.exception.CustomException;
-import xyz.mobi.testingautomationtool.exception.ErrorCode;
+import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.mapper.NotificationMapper;
+import xyz.mobi.testingautomationtool.repository.BugRepository;
 import xyz.mobi.testingautomationtool.repository.NotificationRepository;
+import xyz.mobi.testingautomationtool.repository.UserRepository;
+import xyz.mobi.testingautomationtool.service.EmailService;
 import xyz.mobi.testingautomationtool.service.NotificationService;
 
 import java.time.Instant;
@@ -24,38 +27,168 @@ import java.util.List;
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
+    private final UserRepository userRepository;
+    private final BugRepository bugRepository;
     private final NotificationMapper notificationMapper;
+    private final EmailService emailService;
 
-    @Override
     @Transactional
-    public Notification createNotification(User reporter, User assignedTo, Bug bug) {
+    @Override
+    public NotificationResponse createNotification(NotificationRequest request) {
+        User employee = userRepository.findById(request.getEmployeeId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Employee not found with ID: " + request.getEmployeeId()));
+
+        User assigned = userRepository.findById(request.getAssignedId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Assigned user not found with ID: " + request.getAssignedId()));
+
+        Bug bug = bugRepository.findById(request.getBugId())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Bug not found with ID: " + request.getBugId()));
+
         Notification notification = Notification.builder()
-                .employee(reporter)
-                .assigned(assignedTo)
+                .employee(employee)
+                .assigned(assigned)
                 .bug(bug)
                 .createdAt(Instant.now())
                 .notificationStatus(NotificationStatus.PENDING)
                 .build();
 
-        Notification saved = notificationRepository.save(notification);
-        log.info("Notification created with ID {} for bug {}", saved.getNotificationId(), bug.getBugFormatId());
-        return saved;
+        notification = notificationRepository.save(notification);
+
+        try {
+            emailService.sendBugAssignedEmail(assigned.getEmail(), bug);
+            notification.setNotificationStatus(NotificationStatus.SENT);
+        } catch (Exception ex) {
+            log.error("Failed to send assignment email to {}: {}", assigned.getEmail(), ex.getMessage());
+            notification.setNotificationStatus(NotificationStatus.FAILED);
+        }
+
+        notificationRepository.save(notification);
+
+        return notificationMapper.toResponse(notification);
     }
+
 
     @Override
     @Transactional
-    public void updateNotificationStatus(Integer notificationId, NotificationStatus status) {
-        Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
-        notification.setNotificationStatus(status);
-        notificationRepository.save(notification);
-        log.info("Updated notification {} status to {}", notificationId, status);
+    public void createReassignNotification(
+            Integer oldAssignedId,
+            Integer newAssignedId,
+            Integer bugId) {
+
+        Bug bug = bugRepository.findById(bugId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Bug not found with ID: " + bugId));
+
+        if (bug.getUpdatedBy() == null) {
+            throw new ResourceNotFoundException(
+                    "Updated-by user not found for bug ID: " + bugId);
+        }
+
+        User employee = bug.getUpdatedBy();
+
+        // OLD ASSIGNEE
+        if (oldAssignedId != null) {
+            User oldAssignee = userRepository.findById(oldAssignedId)
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException(
+                                    "Old assignee not found with ID: " + oldAssignedId));
+
+            NotificationRequest oldRequest = NotificationRequest.builder()
+                    .employeeId(employee.getUserId())
+                    .assignedId(oldAssignedId)
+                    .bugId(bugId)
+                    .build();
+
+            User oldEmployee = userRepository.findById(oldRequest.getEmployeeId())
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException(
+                                    "Employee not found with ID: " + oldRequest.getEmployeeId()));
+
+            Notification oldNotification = Notification.builder()
+                    .employee(oldEmployee)
+                    .assigned(oldAssignee)
+                    .bug(bug)
+                    .createdAt(Instant.now())
+                    .notificationStatus(NotificationStatus.PENDING)
+                    .build();
+
+            oldNotification = notificationRepository.save(oldNotification);
+
+            try {
+                emailService.sendBugReassignedEmail(oldAssignee.getEmail(), bug);
+                oldNotification.setNotificationStatus(NotificationStatus.REASSIGNED);
+            } catch (Exception ex) {
+                log.error("Failed to send reassigned email to {}: {}", oldAssignee.getEmail(), ex.getMessage());
+                oldNotification.setNotificationStatus(NotificationStatus.FAILED);
+            }
+
+            notificationRepository.save(oldNotification);
+        }
+
+        // NEW ASSIGNEE
+        if (newAssignedId != null) {
+            User newAssignee = userRepository.findById(newAssignedId)
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException(
+                                    "New assignee not found with ID: " + newAssignedId));
+
+            NotificationRequest newRequest = NotificationRequest.builder()
+                    .employeeId(employee.getUserId())
+                    .assignedId(newAssignedId)
+                    .bugId(bugId)
+                    .build();
+
+            User newEmployee = userRepository.findById(newRequest.getEmployeeId())
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException(
+                                    "Employee not found with ID: " + newRequest.getEmployeeId()));
+
+            Notification newNotification = Notification.builder()
+                    .employee(newEmployee)
+                    .assigned(newAssignee)
+                    .bug(bug)
+                    .createdAt(Instant.now())
+                    .notificationStatus(NotificationStatus.PENDING)
+                    .build();
+
+            newNotification = notificationRepository.save(newNotification);
+
+            try {
+                emailService.sendBugAssignedEmail(newAssignee.getEmail(), bug);
+                newNotification.setNotificationStatus(NotificationStatus.SENT);
+            } catch (Exception ex) {
+                log.error("Failed to send assigned email to {}: {}", newAssignee.getEmail(), ex.getMessage());
+                newNotification.setNotificationStatus(NotificationStatus.FAILED);
+            }
+
+            notificationRepository.save(newNotification);
+        }
+    }
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<NotificationResponse> getByAll() {
+        return notificationRepository
+                .findAll()
+                .stream()
+                .map(notificationMapper::toResponse)
+                .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
     public List<NotificationResponse> getMyNotifications(Integer employeeId) {
-        return notificationRepository.findByEmployee_UserIdOrderByCreatedAtDesc(employeeId).stream()
+        return notificationRepository
+                .findByEmployee_UserIdOrderByCreatedAtDesc(employeeId)
+                .stream()
                 .map(notificationMapper::toResponse)
                 .toList();
     }
@@ -64,13 +197,23 @@ public class NotificationServiceImpl implements NotificationService {
     @Transactional(readOnly = true)
     public NotificationResponse getById(Integer notificationId) {
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Notification not found with ID: " + notificationId));
         return notificationMapper.toResponse(notification);
     }
 
     @Override
     @Transactional
-    public void updateStatus(Integer notificationId, NotificationStatus status) {
-        updateNotificationStatus(notificationId, status);
+    public void updateNotificationStatus(Integer notificationId, NotificationStatus status) {
+        Notification notification = notificationRepository.findById(notificationId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Notification not found with ID: " + notificationId));
+        notification.setNotificationStatus(status);
+        notificationRepository.save(notification);
+    }
+
+    @Override
+    public void deleteNotification(Integer notificationId) {
+        notificationRepository.deleteById(notificationId);
     }
 }

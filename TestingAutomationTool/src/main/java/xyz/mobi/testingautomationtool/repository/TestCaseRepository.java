@@ -58,4 +58,6 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Integer>, Jp
             @Param("type") TestType type,
             @Param("priority") TestPriority priority,
             Pageable pageable);
+
+    boolean existsByFeatureFeatureIdAndTestcaseFormatId(Integer featureId, String testcaseFormatId);
 }

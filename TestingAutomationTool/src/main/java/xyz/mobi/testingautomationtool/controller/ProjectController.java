@@ -4,13 +4,16 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.dto.ProjectDto.*;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 import xyz.mobi.testingautomationtool.service.ProjectService;
 
+import java.io.IOException;
 import java.util.List;
 
 @RestController
@@ -26,6 +29,15 @@ public class ProjectController {
     public ResponseEntity<ProjectResponse> createProject(@Valid @RequestBody ProjectRequest request) {
         ProjectResponse response = projectService.createProject(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
+
+    @PostMapping(value = "/attachment/{projectId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse> uploadAttachment(
+            @RequestParam("file") MultipartFile file,
+            @PathVariable("projectId") Integer projectId
+    ) throws IOException {
+        xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse projectResponse = projectService.uploadAttachment(file, projectId);
+        return ResponseEntity.ok(projectResponse);
     }
 
     @GetMapping

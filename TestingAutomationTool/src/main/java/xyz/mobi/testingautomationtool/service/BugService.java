@@ -23,6 +23,8 @@ public interface BugService {
 
     void deleteBug(Integer bugId);
 
+    void hardDelete(Integer bugId);
+
     Page<BugResponse> globalSearch(
             String keyword,
             BugSeverity severity,

@@ -18,24 +18,16 @@ import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDto.TestCaseExecution
 import xyz.mobi.testingautomationtool.dto.TestingExecutionDto.TestingExecutionRequest;
 import xyz.mobi.testingautomationtool.dto.TestingExecutionDto.TestingExecutionResponse;
 import xyz.mobi.testingautomationtool.entity.*;
-import xyz.mobi.testingautomationtool.enums.AutomationFeasibility;
-import xyz.mobi.testingautomationtool.enums.ExecutionStatus;
-import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
-import xyz.mobi.testingautomationtool.enums.TestPriority;
-import xyz.mobi.testingautomationtool.enums.TestType;
-import xyz.mobi.testingautomationtool.exception.CustomException;
-import xyz.mobi.testingautomationtool.exception.ErrorCode;
-import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
+import xyz.mobi.testingautomationtool.enums.*;
+import xyz.mobi.testingautomationtool.exception.*;
 import xyz.mobi.testingautomationtool.mapper.TestCaseMapper;
 import xyz.mobi.testingautomationtool.mapper.TestingExecutionMapper;
-import xyz.mobi.testingautomationtool.repository.BugRepository;
-import xyz.mobi.testingautomationtool.repository.FeatureRepository;
-import xyz.mobi.testingautomationtool.repository.TestCaseRepository;
-import xyz.mobi.testingautomationtool.repository.TestingExecutionRepository;
+import xyz.mobi.testingautomationtool.repository.*;
 import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.InAppNotificationService;
 import xyz.mobi.testingautomationtool.service.TestCaseService;
 
+import java.lang.Exception;
 import java.time.Instant;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -52,9 +44,9 @@ public class TestCaseServiceImpl implements TestCaseService {
     private final TestCaseMapper testCaseMapper;
     private final TestingExecutionMapper testingExecutionMapper;
     private final AuthService authService;
-    private final InAppNotificationService inAppNotificationService;
     private final TestCaseExcelService testCaseExcelService;
     private final ExcelTemplateService excelTemplateService;
+    private final AttachmentRepository attachmentRepository;
 
     @Override
     public TestCaseExecutionResponse createTestCaseByManual(TestCaseExecutionRequest request) {
@@ -84,6 +76,12 @@ public class TestCaseServiceImpl implements TestCaseService {
             testCase.setTestcaseStatus(TestCaseStatus.NO_RUN);
         }
 
+        if (request.getTestCase().getDynamicFields() != null) {
+            testCase.setDynamicFields(request.getTestCase().getDynamicFields());
+        } else {
+            testCase.setDynamicFields(new HashMap<>());
+        }
+
         TestCase savedTestCase = testCaseRepository.save(testCase);
 
         TestingExecution execution = null;
@@ -91,10 +89,6 @@ public class TestCaseServiceImpl implements TestCaseService {
             TestingExecutionRequest execReq = request.getTestingExecutionRequest();
             execution = testingExecutionMapper.toEntity(execReq);
             execution.setTestCase(savedTestCase);
-            execution.setExecutedBy(currentUser);
-            if (execution.getExecutionNumber() == null) {
-                execution.setExecutionNumber(1);
-            }
             execution = testingExecutionRepository.save(execution);
         }
 
@@ -108,104 +102,242 @@ public class TestCaseServiceImpl implements TestCaseService {
     }
 
     @Override
-    public ExcelUploadResponse createTestCaseByUpload(MultipartFile file, Integer featureId) {
-        Feature feature = featureRepository.findByFeatureIdAndIsDeletedFalse(featureId)
-                .orElseThrow(() -> new ResourceNotFoundException("Feature not found with ID: " + featureId));
+    @Transactional
+    public ExcelUploadResponse createTestCaseByUpload(
+            MultipartFile file, Integer featureId) {
 
-        User currentUser = authService.getCurrentUser();
-        List<ExcelTestCaseRow> rows = testCaseExcelService.parseExcel(file);
+        try {
 
-        List<ExcelUploadErrorResponse> errors = new ArrayList<>();
-        int successCount = 0;
+            List<ExcelTestCaseRow> rows =
+                    testCaseExcelService.parseExcel(file);
 
-        for (ExcelTestCaseRow row : rows) {
-            try {
-                TestType testType = TestType.UI;
-                if (row.getTestType() != null && !row.getTestType().isBlank()) {
-                    try {
-                        testType = TestType.valueOf(row.getTestType().toUpperCase());
-                    } catch (IllegalArgumentException e) {
-                        testType = TestType.UI;
-                    }
+
+            Feature feature = featureRepository
+                    .findByFeatureIdAndIsDeletedFalse(featureId)
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException(
+                                    "Feature not found with ID: " + featureId
+                            )
+                    );
+
+
+            User currentUser = authService.getCurrentUser();
+
+
+            for (ExcelTestCaseRow row : rows) {
+
+                String testcaseFormatId =
+                        row.getTestcaseFormatId().trim();
+
+                boolean exists =
+                        testCaseRepository
+                                .existsByFeatureFeatureIdAndTestcaseFormatId(
+                                        featureId,
+                                        testcaseFormatId
+                                );
+
+                if (exists) {
+                    throw new DuplicateResourceException(
+                            "Testcase ID already exists for this feature: "
+                                    + testcaseFormatId
+                    );
                 }
+            }
 
-                TestPriority testPriority = TestPriority.MEDIUM;
-                if (row.getAutomationPriority() != null && !row.getAutomationPriority().isBlank()) {
-                    try {
-                        testPriority = TestPriority.valueOf(row.getAutomationPriority().toUpperCase());
-                    } catch (IllegalArgumentException e) {
-                        testPriority = TestPriority.MEDIUM;
-                    }
-                }
 
-                TestCaseStatus testCaseStatus = TestCaseStatus.NO_RUN;
-                if (row.getActualStatus() != null && !row.getActualStatus().isBlank()) {
-                    try {
-                        testCaseStatus = TestCaseStatus.valueOf(row.getActualStatus().toUpperCase());
-                    } catch (IllegalArgumentException e) {
-                        testCaseStatus = TestCaseStatus.NO_RUN;
-                    }
-                }
+            List<TestCase> testCases = new ArrayList<>();
 
-                AutomationFeasibility automationFeasibility = AutomationFeasibility.NO;
-                if (row.getAutomationStatus() != null && !row.getAutomationStatus().isBlank()) {
-                    try {
-                        automationFeasibility = AutomationFeasibility.valueOf(row.getAutomationStatus().toUpperCase());
-                    } catch (IllegalArgumentException e) {
-                        automationFeasibility = AutomationFeasibility.NO;
-                    }
-                }
+            for (ExcelTestCaseRow row : rows) {
 
                 TestCase testCase = TestCase.builder()
                         .feature(feature)
-                        .testcaseFormatId(row.getTestcaseFormatId())
-                        .title(row.getTitle())
-                        .testType(testType)
-                        .testPriority(testPriority)
-                        .testcaseStatus(testCaseStatus)
-                        .dynamicFields(row.getDynamicFields())
+
+                        .testcaseFormatId(
+                                row.getTestcaseFormatId().trim()
+                        )
+
+                        .title(
+                                isBlank(row.getTitle())
+                                        ? null
+                                        : row.getTitle().trim()
+                        )
+
+                        .testType(
+                                isBlank(row.getTestType())
+                                        ? null
+                                        : TestType.valueOf(
+                                        row.getTestType()
+                                        .trim()
+                                        .toUpperCase()
+                                )
+                        )
+
+                        .testPriority(
+                                isBlank(row.getAutomationPriority())
+                                        ? null
+                                        : TestPriority.valueOf(
+                                        row.getAutomationPriority()
+                                        .trim()
+                                        .toUpperCase()
+                                )
+                        )
+
+                        .testcaseStatus(
+                                isBlank(row.getActualStatus())
+                                        ? TestCaseStatus.NO_RUN
+                                        : TestCaseStatus.valueOf(
+                                        row.getActualStatus()
+                                        .trim()
+                                        .toUpperCase()
+                                )
+                        )
+
+                        // Additional Excel columns
+                        // are stored in JSON
+                        .dynamicFields(
+                                row.getDynamicFields()
+                        )
+
                         .createdBy(currentUser)
                         .updatedBy(currentUser)
+
                         .isActive(true)
                         .isDeleted(false)
+
                         .build();
 
-                TestCase savedTestCase = testCaseRepository.save(testCase);
-
-                TestingExecution execution = TestingExecution.builder()
-                        .testCase(savedTestCase)
-                        .testExecution(row.getTestExecution())
-                        .testValidation(row.getTestValidation())
-                        .precondition(row.getPreCondition())
-                        .testData(row.getTestData())
-                        .executionSteps(row.getExecutionSteps())
-                        .uiValidations(row.getUiValidations())
-                        .dbValidations(row.getDbValidations())
-                        .automationFeasibility(automationFeasibility)
-                        .executionNumber(1)
-                        .comments(row.getComments())
-                        .executedBy(currentUser)
-                        .build();
-
-                testingExecutionRepository.save(execution);
-                successCount++;
-            } catch (Exception ex) {
-                errors.add(ExcelUploadErrorResponse.builder()
-                        .row(row.getRowNumber())
-                        .column("General")
-                        .value(row.getTestcaseFormatId())
-                        .message("Failed to process row: " + ex.getMessage())
-                        .build());
+                testCases.add(testCase);
             }
-        }
 
-        return ExcelUploadResponse.builder()
-                .message("Excel processing completed")
-                .totalRows(rows.size())
-                .successRows(successCount)
-                .failedRows(errors.size())
-                .errors(errors)
-                .build();
+
+            // 6. Save all TestCases
+            List<TestCase> savedTestCases =
+                    testCaseRepository.saveAll(testCases);
+
+
+            // 7. Create TestingExecution for every TestCase
+            List<TestingExecution> executions =
+                    new ArrayList<>();
+
+            for (int i = 0; i < savedTestCases.size(); i++) {
+
+                TestCase savedTestCase =
+                        savedTestCases.get(i);
+
+                ExcelTestCaseRow row =
+                        rows.get(i);
+
+                TestingExecution execution =
+                        TestingExecution.builder()
+
+                                .testCase(savedTestCase)
+
+                                .bugsCount(0)
+
+                                .executionNumber(0)
+
+                                .automationFeasibility(
+                                        isBlank(
+                                                row.getAutomationStatus()
+                                        )
+                                                ? AutomationFeasibility.YES
+                                                : AutomationFeasibility.valueOf(
+                                                row.getAutomationStatus()
+                                                .trim()
+                                                .toUpperCase()
+                                        )
+                                )
+
+                                .executionStatus(null)
+
+                                .testExecution(
+                                        row.getTestExecution()
+                                )
+
+                                .testValidation(
+                                        row.getTestValidation()
+                                )
+
+                                .uiValidations(
+                                        row.getUiValidations()
+                                )
+
+                                .dbValidations(
+                                        row.getDbValidations()
+                                )
+
+                                .comments(
+                                        row.getComments()
+                                )
+
+                                .precondition(
+                                        row.getPreCondition()
+                                )
+
+                                .executionSteps(
+                                        row.getExecutionSteps()
+                                )
+
+                                .testData(
+                                        row.getTestData()
+                                )
+
+                                .executedAt(null)
+
+                                .executedBy(null)
+
+                                .build();
+
+                executions.add(execution);
+            }
+
+
+            // 8. Save all executions
+            testingExecutionRepository.saveAll(executions);
+
+
+            // 9. Save uploaded Excel in Attachment table
+            Attachment attachment = Attachment.builder()
+                    .attachmentType(AttachmentType.TESTCASE)
+                    .feature(feature)
+                    .fileBlob(file.getBytes())
+                    .fileName(file.getOriginalFilename())
+                    .fileSize(file.getSize())
+                    .fileType(file.getContentType())
+                    .uploadedBy(currentUser)
+                    .build();
+
+            attachmentRepository.save(attachment);
+
+
+            // 10. Return successful response
+            return ExcelUploadResponse.builder()
+                    .message("Excel upload successful")
+                    .totalRows(rows.size())
+                    .successRows(savedTestCases.size())
+                    .failedRows(0)
+                    .errors(Collections.emptyList())
+                    .build();
+
+
+        } catch (ExcelValidationException |
+                 AttachmentProcessingException |
+                 DuplicateResourceException |
+                 ExcelProcessingException ex) {
+
+            throw ex;
+
+        } catch (Exception ex) {
+
+            throw new ExcelProcessingException(
+                    "Failed to upload test cases from Excel"
+            );
+        }
+    }
+
+
+    private boolean isBlank(String value) {
+        return value == null || value.trim().isBlank();
     }
 
     @Override
