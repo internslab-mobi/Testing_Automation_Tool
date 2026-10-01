@@ -1,4 +1,4 @@
-package xyz.mobi.testingautomationtool.dto.BugDTO;
+package xyz.mobi.testingautomationtool.dto.BugDto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

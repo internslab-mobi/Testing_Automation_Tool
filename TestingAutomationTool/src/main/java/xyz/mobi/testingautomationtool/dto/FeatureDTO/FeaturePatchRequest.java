@@ -1,4 +1,4 @@
-package xyz.mobi.testingautomationtool.dto.FeatureDTO;
+package xyz.mobi.testingautomationtool.dto.FeatureDto;
 
 import lombok.*;
 import xyz.mobi.testingautomationtool.enums.FeatureStatus;
@@ -17,6 +17,7 @@ public class FeaturePatchRequest {
     private Long duration;
     private Integer sprint;
     private String version;
+    private String featureVersion;
     private Instant startTime;
     private Boolean isActive;
     private Integer updatedBy;

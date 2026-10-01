@@ -1,46 +1,62 @@
 package xyz.mobi.testingautomationtool.controller;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
-import org.springframework.http.HttpStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import xyz.mobi.testingautomationtool.dto.excelDTO.ExcelUploadResponse;
-import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.TestCasePatchRequest;
-import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.UpdateExecutionStatusRequest;
-import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.TestCaseExecutionRequest;
-import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.TestCasePutRequest;
-import xyz.mobi.testingautomationtool.dto.response.DeleteMethodDto.PatchTestCaseDeleteResponse;
-import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.ExecutionStatusResponse;
-import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.PatchTestCaseResponse;
-import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseExecutionResponse;
-import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.TestCaseResponse;
-import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.TestCasePutResponse;
-import org.springframework.web.bind.annotation.*;
-import xyz.mobi.testingautomationtool.dto.TestcaseDTO.TestCaseResponse;
+import xyz.mobi.testingautomationtool.dto.ExcelDto.ExcelUploadResponse;
+import xyz.mobi.testingautomationtool.dto.TestCaseDto.*;
+import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDto.TestCaseExecutionRequest;
+import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDto.TestCaseExecutionResponse;
+import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDto.UpdateExecutionStatusRequest;
 import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 import xyz.mobi.testingautomationtool.enums.TestPriority;
 import xyz.mobi.testingautomationtool.enums.TestType;
 import xyz.mobi.testingautomationtool.service.TestCaseService;
 
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import org.springframework.security.access.prepost.PreAuthorize;
-
 @RestController
+@RequestMapping({"/testcases", "/testcase"})
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
 public class TestcaseController {
 
     private final TestCaseService testCaseService;
+
+    @PostMapping({"", "/manual"})
+    public ResponseEntity<TestCaseExecutionResponse> createTestCaseManual(
+            @Valid @RequestBody TestCaseExecutionRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(testCaseService.createTestCaseByManual(request));
+    }
+
+    @PostMapping(value = "/upload", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ExcelUploadResponse> createTestCaseByUpload(
+            @RequestParam("file") MultipartFile file,
+            @RequestParam("featureId") Integer featureId) {
+        return ResponseEntity.ok(testCaseService.createTestCaseByUpload(file, featureId));
+    }
+
+    @GetMapping("/template/{projectId}/{featureId}")
+    public ResponseEntity<byte[]> downloadTemplate(
+            @PathVariable Integer projectId,
+            @PathVariable Integer featureId) {
+        byte[] excelBytes = testCaseService.downloadTemplate(projectId, featureId);
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=testcase_template_" + featureId + ".xlsx")
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .body(excelBytes);
+    }
 
     @GetMapping({"", "/feature/{featureId}"})
     public ResponseEntity<Page<TestCaseResponse>> getAllTestCases(
@@ -77,14 +93,11 @@ public class TestcaseController {
         );
     }
 
-    @PutMapping("/{id}/update")
+    @PutMapping({"/{id}", "/{id}/update"})
     public ResponseEntity<TestCasePutResponse> updateTestCaseDetails(
             @Valid @RequestBody TestCasePutRequest testCasePutRequest,
             @PathVariable("id") Integer id) {
-
-        TestCasePutResponse response = testCaseService
-                .updateTestcaseDetails(testCasePutRequest, id);
-
+        TestCasePutResponse response = testCaseService.updateTestcaseDetails(testCasePutRequest, id);
         return ResponseEntity.ok(response);
     }
 
@@ -92,25 +105,29 @@ public class TestcaseController {
     public ResponseEntity<String> patchTestCaseDetails(
             @RequestBody TestCasePatchRequest testCasePatchRequest,
             @PathVariable("id") Integer id) {
-
-        String response = testCaseService
-                .patchTestCaseDetails(testCasePatchRequest, id);
+        String response = testCaseService.patchTestCaseDetails(testCasePatchRequest, id);
         return ResponseEntity.ok(response);
     }
 
-    @DeleteMapping("/delete/{id}")
-    public ResponseEntity<PatchTestCaseDeleteResponse> softDelete(@PathVariable("id") Integer id){
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<String> updateExecutionStatus(
+            @PathVariable("id") Integer id,
+            @Valid @RequestBody UpdateExecutionStatusRequest request) {
+        String response = testCaseService.updateExecutionStatus(id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @DeleteMapping({"/delete/{id}", "/soft/{id}"})
+    public ResponseEntity<PatchTestCaseDeleteResponse> softDelete(
+            @PathVariable("id") Integer id) {
         PatchTestCaseDeleteResponse response = testCaseService.softDeleteTestCase(id);
         return ResponseEntity.ok(response);
     }
 
-
     @DeleteMapping("/{id}")
     public ResponseEntity<String> hardDeleteTestCase(
             @PathVariable("id") Integer id) {
-
         String response = testCaseService.hardDeleteTestCase(id);
-
         return ResponseEntity.ok(response);
     }
 }

@@ -7,7 +7,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -87,15 +86,21 @@ public class SecurityConfig {
                         .requestMatchers("/static/**", "/bug-chat.html", "/favicon.ico", "/error").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Role-based access: All methods/endpoints can be accessed by MANAGER and TESTER (and ADMIN)
+                        // Manager-only endpoints: Dashboard & Project status toggle
+                        .requestMatchers("/manager/**").hasRole("MANAGER")
+                        .requestMatchers(HttpMethod.PATCH, "/project/*/status", "/project/active", "/project/inactive").hasRole("MANAGER")
+
+                        // Authenticated application endpoints (MANAGER, TESTER, ADMIN)
                         .requestMatchers("/bugs/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
                         .requestMatchers("/feature/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
                         .requestMatchers("/project/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
+                        .requestMatchers("/testcases/**", "/testcase/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
                         .requestMatchers("/comments/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
-                        .requestMatchers("/delete/**", "/*/update", "/*").hasAnyRole("MANAGER", "TESTER", "ADMIN")
+                        .requestMatchers("/attachments/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
+                        .requestMatchers("/notifications/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
 
-                        // Any other request must be authenticated with role MANAGER, TESTER, or ADMIN
-                        .anyRequest().hasAnyRole("MANAGER", "TESTER", "ADMIN")
+                        // Any other request
+                        .anyRequest().authenticated()
                 )
                 .authenticationProvider(authenticationProvider())
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

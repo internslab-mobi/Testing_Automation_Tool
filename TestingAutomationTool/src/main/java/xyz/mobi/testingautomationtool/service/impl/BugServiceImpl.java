@@ -2,37 +2,31 @@ package xyz.mobi.testingautomationtool.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import xyz.mobi.testingautomationtool.dto.BugDTO.BugRequest;
-import xyz.mobi.testingautomationtool.dto.BugDTO.BugResponse;
+import xyz.mobi.testingautomationtool.dto.BugDto.*;
 import xyz.mobi.testingautomationtool.entity.*;
-import xyz.mobi.testingautomationtool.enums.BugCategory;
-import xyz.mobi.testingautomationtool.enums.BugPriority;
-import xyz.mobi.testingautomationtool.enums.BugSeverity;
-import xyz.mobi.testingautomationtool.enums.BugStatus;
-import xyz.mobi.testingautomationtool.enums.NotificationStatus;
+import xyz.mobi.testingautomationtool.enums.*;
 import xyz.mobi.testingautomationtool.exception.CustomException;
 import xyz.mobi.testingautomationtool.exception.ErrorCode;
-
-import xyz.mobi.testingautomationtool.entity.Bug;
-
-import xyz.mobi.testingautomationtool.enums.*;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
+import xyz.mobi.testingautomationtool.mapper.BugMapper;
 import xyz.mobi.testingautomationtool.repository.*;
-
-import xyz.mobi.testingautomationtool.repository.BugRepository;
-
+import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.BugService;
 import xyz.mobi.testingautomationtool.service.EmailService;
 import xyz.mobi.testingautomationtool.service.NotificationService;
 import xyz.mobi.testingautomationtool.specification.BugSpecification;
 
-import java.time.Instant;
-import java.util.HashMap;
 import java.time.*;
+import java.util.HashMap;
+import java.util.Optional;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -45,26 +39,24 @@ public class BugServiceImpl implements BugService {
     private final BugHistoryRepository bugHistoryRepository;
     private final NotificationService notificationService;
     private final EmailService emailService;
-    private final NotificationRepository notificationRepository;
-
+    private final BugMapper bugMapper;
+    private final AuthService authService;
 
     @Override
-    @Transactional
     public BugResponse createBug(BugRequest request) {
-
         // Step 1: Duplicate guard - verify bugFormatId is unique
-        if (bugRepository.existsByBugFormatId(request.getBugFormatId())) {
-            throw new RuntimeException("Bug with format ID '" + request.getBugFormatId() + "' already exists");
+        if (request.getBugFormatId() != null && bugRepository.existsByBugFormatId(request.getBugFormatId())) {
+            throw new IllegalArgumentException("Bug with format ID '" + request.getBugFormatId() + "' already exists");
         }
 
         // Step 2: Restrict bug creation status to OPEN only
         if (request.getStatus() != null && request.getStatus() != BugStatus.OPEN) {
-            throw new RuntimeException("New bug can only be created with OPEN status, received: " + request.getStatus());
+            throw new IllegalArgumentException("New bug can only be created with OPEN status, received: " + request.getStatus());
         }
 
         // Step 3: Fetch and validate test case
         TestCase testCase = testCaseRepository.findById(request.getTestCaseId())
-                .orElseThrow(() -> new RuntimeException("Test case not found with id: " + request.getTestCaseId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Test case not found with id: " + request.getTestCaseId()));
 
         if (testCase.isDeleted()) {
             throw new CustomException(ErrorCode.RESOURCE_NOT_FOUND);
@@ -82,35 +74,41 @@ public class BugServiceImpl implements BugService {
         Feature feature = featureRepository.findByFeatureIdForUpdate(featureId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
 
-        String featureName = feature.getFeatureName()
-                .trim()
-                .toUpperCase()
-                .replaceAll("[^A-Z0-9]+", "_");
+        String bugFormatId = request.getBugFormatId();
+        if (bugFormatId == null || bugFormatId.isBlank()) {
+            String featureName = feature.getFeatureName()
+                    .trim()
+                    .toUpperCase()
+                    .replaceAll("[^A-Z0-9]+", "_");
 
-        String prefix = "BUG-" + featureName + "-";
+            String prefix = "BUG-" + featureName + "-";
+            int nextNumber = 1;
 
-        int nextNumber = 1;
+            Optional<Bug> latestBug =
+                    bugRepository.findTopByFeature_FeatureIdAndBugFormatIdStartingWithOrderByBugFormatIdDesc(
+                            featureId,
+                            prefix
+                    );
 
-        Optional<Bug> latestBug =
-                bugRepository.findTopByFeature_FeatureIdAndBugFormatIdStartingWithOrderByBugFormatIdDesc(
-                        featureId,
-                        prefix
-                );
-
-        if (latestBug.isPresent()) {
-            String latestFormatId = latestBug.get().getBugFormatId();
-
-            String numberPart = latestFormatId.substring(prefix.length());
-
-            nextNumber = Integer.parseInt(numberPart) + 1;
+            if (latestBug.isPresent()) {
+                String latestFormatId = latestBug.get().getBugFormatId();
+                try {
+                    String numberPart = latestFormatId.substring(prefix.length());
+                    nextNumber = Integer.parseInt(numberPart) + 1;
+                } catch (Exception ignored) {
+                }
+            }
+            bugFormatId = prefix + String.format("%03d", nextNumber);
         }
 
-        String bugFormatId = prefix + String.format("%03d", nextNumber);
-
-
         // Step 4: Fetch reporter
-        User reporter = userRepository.findById(request.getReportedBy())
-                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
+        User reporter;
+        if (request.getReportedBy() != null) {
+            reporter = userRepository.findById(request.getReportedBy())
+                    .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
+        } else {
+            reporter = authService.getCurrentUser();
+        }
 
         // Step 5: Fetch optional assigned developer
         User assignedTo = null;
@@ -125,7 +123,6 @@ public class BugServiceImpl implements BugService {
             Bug previousBug = bugRepository.findById(request.getBugReoccurredId())
                     .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
 
-            // Ensure the previous bug belongs to the same test case
             if (previousBug.getTestCase() == null ||
                     !previousBug.getTestCase().getTestcaseId().equals(testCase.getTestcaseId())) {
                 throw new CustomException(ErrorCode.BUSINESS_RULE_VIOLATION);
@@ -181,61 +178,130 @@ public class BugServiceImpl implements BugService {
                     notificationService.updateNotificationStatus(notification.getNotificationId(), NotificationStatus.SENT);
                 } else {
                     log.warn("Assigned developer {} has no email configured", assignedTo.getUsername());
-                    notificationService.updateNotificationStatus(notification.getNotificationId(), NotificationStatus.FAIL);
+                    notificationService.updateNotificationStatus(notification.getNotificationId(), NotificationStatus.FAILED);
                 }
             } catch (Exception e) {
                 log.error("Failed to send assignment email for bug {}: {}", savedBug.getBugFormatId(), e.getMessage());
-                notificationService.updateNotificationStatus(notification.getNotificationId(), NotificationStatus.FAIL);
+                notificationService.updateNotificationStatus(notification.getNotificationId(), NotificationStatus.FAILED);
             }
         }
 
-        return BugResponse.builder()
-                .bugId(savedBug.getBugId())
-                .bugFormatId(savedBug.getBugFormatId())
-                .testCaseId(savedBug.getTestCase().getTestcaseId())
-                .featureId(savedBug.getFeature().getFeatureId())
-                .title(savedBug.getTitle())
-                .description(savedBug.getDescription())
-                .severity(savedBug.getSeverity())
-                .priority(savedBug.getPriority())
-                .category(savedBug.getCategory())
-                .status(savedBug.getStatus())
-                .reportedBy(savedBug.getReportedBy().getUserId())
-                .assignedTo(savedBug.getAssignedTo() != null ? savedBug.getAssignedTo().getUserId() : null)
-                .bugOccurrence(savedBug.getBugOccurrence())
-                .comments(savedBug.getComments())
-                .createdAt(savedBug.getCreatedAt())
-                .updatedAt(savedBug.getUpdatedAt())
-                .build();
+        return bugMapper.toResponse(savedBug);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public xyz.mobi.testingautomationtool.dto.response.postMethodDTO.BugResponse getById(Integer bugId) {
-
+    public BugResponse getById(Integer bugId) {
         Bug bug = bugRepository.findById(bugId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Bug not found with ID: " + bugId));
+                .orElseThrow(() -> new ResourceNotFoundException("Bug not found with ID: " + bugId));
 
-        if (!bug.isActive()) {
+        if (!bug.isActive() || bug.isDeleted()) {
             throw new ResourceNotFoundException("The bug has been removed with ID: " + bugId);
         }
 
         return bugMapper.toResponse(bug);
     }
 
-
     @Override
     @Transactional(readOnly = true)
-    public Page<xyz.mobi.testingautomationtool.dto.response.postMethodDTO.BugResponse> getAllBugs(int page, int size) {
+    public Page<BugResponse> getAllBugs(int page, int size) {
         Pageable pageable = PageRequest.of(page, size);
         return bugRepository.findByIsActiveTrue(pageable)
                 .map(bugMapper::toResponse);
     }
 
     @Override
+    public BugResponse updateBug(Integer bugId, BugPutRequest request) {
+        Bug bug = bugRepository.findById(bugId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bug not found with ID: " + bugId));
+
+        if (bug.isDeleted()) {
+            throw new ResourceNotFoundException("Bug is deleted with ID: " + bugId);
+        }
+
+        bugMapper.updateEntity(bug, request);
+        bug.setUpdatedBy(authService.getCurrentUser());
+        Bug saved = bugRepository.save(bug);
+        return bugMapper.toResponse(saved);
+    }
+
+    @Override
+    public BugResponse patchBug(Integer bugId, BugPatchRequest request) {
+        Bug bug = bugRepository.findById(bugId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bug not found with ID: " + bugId));
+
+        if (bug.isDeleted()) {
+            throw new ResourceNotFoundException("Bug is deleted with ID: " + bugId);
+        }
+
+        bugMapper.patchEntity(bug, request);
+        bug.setUpdatedBy(authService.getCurrentUser());
+        Bug saved = bugRepository.save(bug);
+        return bugMapper.toResponse(saved);
+    }
+
+    @Override
+    public BugResponse assignBug(Integer bugId, BugAssignRequest request) {
+        Bug bug = bugRepository.findById(bugId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bug not found with ID: " + bugId));
+
+        User newAssignee = userRepository.findById(request.getAssignedTo())
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + request.getAssignedTo()));
+
+        User previousAssignee = bug.getAssignedTo();
+        bug.setAssignedTo(newAssignee);
+        bug.setUpdatedBy(authService.getCurrentUser());
+        Bug saved = bugRepository.save(bug);
+
+        if (previousAssignee != null && previousAssignee.getEmail() != null) {
+            emailService.sendBugReassignedEmail(previousAssignee.getEmail(), saved);
+        }
+        if (newAssignee.getEmail() != null) {
+            emailService.sendBugAssignedEmail(newAssignee.getEmail(), saved);
+        }
+
+        return bugMapper.toResponse(saved);
+    }
+
+    @Override
+    public BugResponse updateStatus(Integer bugId, BugStatusRequest request) {
+        Bug bug = bugRepository.findById(bugId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bug not found with ID: " + bugId));
+
+        bugMapper.updateStatus(request, bug);
+        if (request.getStatus() == BugStatus.CLOSED || request.getStatus() == BugStatus.RESOLVED) {
+            bug.setResolvedAt(Instant.now());
+        }
+        bug.setUpdatedBy(authService.getCurrentUser());
+        Bug saved = bugRepository.save(bug);
+        return bugMapper.toResponse(saved);
+    }
+
+    @Override
+    public BugResponse updateDeveloperStatus(Integer bugId, DeveloperBugStatusRequest request) {
+        Bug bug = bugRepository.findById(bugId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bug not found with ID: " + bugId));
+
+        bugMapper.updateDeveloperStatus(request, bug);
+        bug.setUpdatedBy(authService.getCurrentUser());
+        Bug saved = bugRepository.save(bug);
+        return bugMapper.toResponse(saved);
+    }
+
+    @Override
+    public void deleteBug(Integer bugId) {
+        Bug bug = bugRepository.findById(bugId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bug not found with ID: " + bugId));
+
+        bug.setDeleted(true);
+        bug.setActive(false);
+        bug.setUpdatedBy(authService.getCurrentUser());
+        bugRepository.save(bug);
+    }
+
+    @Override
     @Transactional(readOnly = true)
-    public Page<xyz.mobi.testingautomationtool.dto.response.postMethodDTO.BugResponse> globalSearch(
+    public Page<BugResponse> globalSearch(
             String keyword,
             BugSeverity severity,
             BugPriority priority,
@@ -251,28 +317,16 @@ public class BugServiceImpl implements BugService {
             String assignedTo,
             String updatedBy
     ) {
-
-        if (resolvedFrom != null
-                && resolvedTo != null
-                && resolvedFrom.isAfter(resolvedTo)) {
-
-            throw new IllegalArgumentException(
-                    "Resolved from date cannot be after resolved to date"
-            );
+        if (resolvedFrom != null && resolvedTo != null && resolvedFrom.isAfter(resolvedTo)) {
+            throw new IllegalArgumentException("Resolved from date cannot be after resolved to date");
         }
 
         ZoneId zoneId = ZoneOffset.UTC;
-
         if (timeZone != null && !timeZone.isBlank()) {
-
             try {
                 zoneId = ZoneId.of(timeZone);
-
             } catch (DateTimeException exception) {
-
-                throw new IllegalArgumentException(
-                        "Invalid timezone: " + timeZone
-                );
+                throw new IllegalArgumentException("Invalid timezone: " + timeZone);
             }
         }
 
@@ -280,43 +334,29 @@ public class BugServiceImpl implements BugService {
         Instant resolvedToInstant = null;
 
         if (resolvedFrom != null) {
-
-            resolvedFromInstant = resolvedFrom
-                    .atStartOfDay(zoneId)
-                    .toInstant();
+            resolvedFromInstant = resolvedFrom.atStartOfDay(zoneId).toInstant();
         }
 
         if (resolvedTo != null) {
-
-            resolvedToInstant = resolvedTo
-                    .plusDays(1)
-                    .atStartOfDay(zoneId)
-                    .toInstant();
+            resolvedToInstant = resolvedTo.plusDays(1).atStartOfDay(zoneId).toInstant();
         }
 
-        Specification<Bug> specification =
-                BugSpecification.search(
-                        keyword,
-                        severity,
-                        priority,
-                        status,
-                        category,
-                        bugOccurrence,
-                        isActive,
-                        resolvedFromInstant,
-                        resolvedToInstant,
-                        executedBy,
-                        assignedTo,
-                        updatedBy
-                );
+        Specification<Bug> specification = BugSpecification.search(
+                keyword,
+                severity,
+                priority,
+                status,
+                category,
+                bugOccurrence,
+                isActive,
+                resolvedFromInstant,
+                resolvedToInstant,
+                executedBy,
+                assignedTo,
+                updatedBy
+        );
 
-        Page<Bug> bugs =
-                bugRepository.findAll(
-                        specification,
-                        pageable
-                );
-
+        Page<Bug> bugs = bugRepository.findAll(specification, pageable);
         return bugs.map(bugMapper::toResponse);
     }
-
 }

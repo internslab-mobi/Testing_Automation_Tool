@@ -1,9 +1,6 @@
-package xyz.mobi.testingautomationtool.dto.FeatureDTO;
+package xyz.mobi.testingautomationtool.dto.FeatureDto;
 
 import lombok.*;
-
-import java.time.Instant;
-import java.util.Map;
 
 @Getter
 @Setter

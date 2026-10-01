@@ -1,18 +1,26 @@
-package xyz.mobi.testingautomationtool.dto.AuthDTO;
+package xyz.mobi.testingautomationtool.dto.AuthDto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class AuthResponse {
+
     private String token;
-    private String tokenType;
+
+    @Builder.Default
+    private String type = "Bearer";
+
     private Integer userId;
     private String username;
     private String email;
-    private String fullName;
     private String role;
+    private String fullName;
+    private String designation;
+    private String message;
 }

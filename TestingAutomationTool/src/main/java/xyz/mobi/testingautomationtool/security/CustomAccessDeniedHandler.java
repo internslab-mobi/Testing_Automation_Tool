@@ -9,10 +9,10 @@ import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
-import xyz.mobi.testingautomationtool.dto.response.ErrorResponse;
+import xyz.mobi.testingautomationtool.exception.ErrorResponse;
 
 import java.io.IOException;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Slf4j
 @Component
@@ -33,9 +33,9 @@ public class CustomAccessDeniedHandler implements AccessDeniedHandler {
 
         ErrorResponse errorResponse = ErrorResponse.builder()
                 .errorCode("ER_0021")
-                .errorMessage("Access denied: You do not have sufficient permissions to perform this action. Only MANAGER and TESTER roles can access these resources.")
+                .errorMessage("Access denied: You do not have sufficient permissions to perform this action.")
                 .errorStatusCode(HttpServletResponse.SC_FORBIDDEN)
-                .time(LocalDateTime.now())
+                .time(Instant.now())
                 .build();
 
         objectMapper.writeValue(response.getOutputStream(), errorResponse);

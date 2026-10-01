@@ -1,27 +1,19 @@
 package xyz.mobi.testingautomationtool.controller;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.FeatureRequest;
-import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.FeaturePutRequest;
-import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.FeatureDurationResponse;
-import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.FeatureStartTimeResponse;
-import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.AttachmentResponse;
-import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.FeatureResponse;
-import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.FeaturePutResponse;
-import xyz.mobi.testingautomationtool.dto.FeatureDTO.FeaturePatchRequest;
-import xyz.mobi.testingautomationtool.dto.FeatureDTO.FeaturePatchResponse;
-import xyz.mobi.testingautomationtool.dto.FeatureDTO.FeatureResponse;
+import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
+import xyz.mobi.testingautomationtool.dto.FeatureDto.*;
 import xyz.mobi.testingautomationtool.service.FeatureService;
 
-import java.util.List;
 import java.io.IOException;
-
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import org.springframework.security.access.prepost.PreAuthorize;
+import java.util.List;
 
 @RestController
 @RequestMapping("/feature")
@@ -32,10 +24,10 @@ public class FeatureController {
 
     private final FeatureService featureService;
 
-   @GetMapping("/{featureId}")
-   public ResponseEntity<FeatureResponse> getFeatureById(@PathVariable Integer featureId) {
-       return ResponseEntity.ok(featureService.getFeatureById(featureId));
-   }
+    @GetMapping("/{featureId}")
+    public ResponseEntity<FeatureResponse> getFeatureById(@PathVariable Integer featureId) {
+        return ResponseEntity.ok(featureService.getFeatureById(featureId));
+    }
 
     @PatchMapping("/{featureId}")
     public ResponseEntity<FeaturePatchResponse> patchFeature(
@@ -52,26 +44,58 @@ public class FeatureController {
         return ResponseEntity.noContent().build();
     }
 
-    @PostMapping( value = "/create")
+    @PostMapping(value = "/create")
     public ResponseEntity<FeatureResponse> createFeatureDetails(
             @Valid @RequestBody FeatureRequest featureRequest) {
-
         FeatureResponse featureResponse = featureService.createFeature(featureRequest);
-
         return ResponseEntity.ok(featureResponse);
+    }
+
+    @PostMapping
+    public ResponseEntity<FeatureResponse> createFeature(
+            @Valid @RequestBody FeatureRequest featureRequest) {
+        FeatureResponse featureResponse = featureService.createFeature(featureRequest);
+        return ResponseEntity.ok(featureResponse);
+    }
+
+    @PutMapping("/{featureId}")
+    public ResponseEntity<FeaturePutResponse> updateFeature(
+            @PathVariable Integer featureId,
+            @Valid @RequestBody FeaturePutRequest request) {
+        return ResponseEntity.ok(featureService.updateFeature(featureId, request));
     }
 
     @GetMapping("/project/{projectId}")
     public ResponseEntity<List<FeatureResponse>> getFeaturesByProjectId(@PathVariable Integer projectId) {
         return ResponseEntity.ok(featureService.getFeaturesByProjectId(projectId));
-        }
+    }
 
-    @PostMapping(value = "/attachment/{featureId}",consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<AttachmentResponse> uploadAttachment(@RequestBody MultipartFile file,@PathVariable("featureId") Integer featureId
+    @GetMapping("/search")
+    public ResponseEntity<List<FeatureResponse>> searchFeatures(FeatureSearchRequest request) {
+        return ResponseEntity.ok(featureService.searchFeatures(request));
+    }
+
+    @PatchMapping("/{featureId}/start")
+    public ResponseEntity<FeatureStartTimeResponse> startFeature(@PathVariable Integer featureId) {
+        return ResponseEntity.ok(featureService.startFeature(featureId));
+    }
+
+    @PatchMapping("/{featureId}/end")
+    public ResponseEntity<FeatureDurationResponse> endFeature(@PathVariable Integer featureId) {
+        return ResponseEntity.ok(featureService.endFeature(featureId));
+    }
+
+    @PostMapping(value = "/attachment/{featureId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<AttachmentResponse> uploadAttachment(
+            @RequestParam("file") MultipartFile file,
+            @PathVariable("featureId") Integer featureId
     ) throws IOException {
-
-        AttachmentResponse featureResponse = featureService.uploadAttachment(file,featureId);
-
+        AttachmentResponse featureResponse = featureService.uploadAttachment(file, featureId);
         return ResponseEntity.ok(featureResponse);
+    }
+
+    @GetMapping("/attachment/{featureId}/download")
+    public ResponseEntity<byte[]> downloadAttachment(@PathVariable Integer featureId) {
+        return featureService.downloadFile(featureId);
     }
 }

@@ -3,14 +3,16 @@ package xyz.mobi.testingautomationtool.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import xyz.mobi.testingautomationtool.dto.response.getMethodDTO.InAppNotificationResponse;
+import xyz.mobi.testingautomationtool.dto.NotificationDto.InAppNotificationResponse;
 import xyz.mobi.testingautomationtool.entity.Bug;
 import xyz.mobi.testingautomationtool.entity.Comment;
 import xyz.mobi.testingautomationtool.entity.InAppNotification;
 import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.InAppNotificationStatus;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
+import xyz.mobi.testingautomationtool.mapper.NotificationMapper;
 import xyz.mobi.testingautomationtool.repository.InAppNotificationRepository;
+import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.InAppNotificationService;
 
 import java.time.Instant;
@@ -22,9 +24,15 @@ import java.util.Objects;
 public class InAppNotificationServiceImpl implements InAppNotificationService {
 
     private final InAppNotificationRepository inAppNotificationRepository;
+    private final NotificationMapper notificationMapper;
+    private final AuthService authService;
 
     @Transactional
+    @Override
     public void createBugFixedNotification(Bug bug) {
+        if (bug == null || bug.getReportedBy() == null) {
+            return;
+        }
 
         InAppNotification notification = InAppNotification.builder()
                 .employee(bug.getReportedBy())
@@ -40,80 +48,39 @@ public class InAppNotificationServiceImpl implements InAppNotificationService {
     @Override
     @Transactional(readOnly = true)
     public List<InAppNotificationResponse> getMyNotifications() {
-
-        Integer currentUserId = 1;
+        Integer currentUserId = authService.getCurrentUser().getUserId();
 
         return inAppNotificationRepository
-                .findByEmployeeUserIdOrderByCreatedAtDesc(currentUserId)
+                .findByEmployee_UserIdOrderByCreatedAtDesc(currentUserId)
                 .stream()
-                .map(notification ->
-                        InAppNotificationResponse.builder()
-                                .notificationId(notification.getNotificationId())
-                                .bugId(notification.getBugId())
-                                .bugFormatId(notification.getBugFormatId())
-                                .message(notification.getMessage())
-                                .notificationStatus(
-                                        notification.getNotificationStatus())
-                                .createdAt(notification.getCreatedAt())
-                                .build()
-                )
+                .map(notificationMapper::toInAppResponse)
                 .toList();
     }
 
     @Transactional
     @Override
     public void markAsRead(Integer notificationId) {
+        InAppNotification notification = inAppNotificationRepository.findById(notificationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Notification not found with ID: " + notificationId));
 
-        InAppNotification notification =
-                inAppNotificationRepository.findById(notificationId)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Notification not found with ID: "
-                                                + notificationId
-                                ));
-
-//        Integer currentUserId = currentUserService.getCurrentUserId();
-
-        Integer currentUserId = 1;
-        if (!Objects.equals(
-                notification.getEmployee().getUserId(),
-                currentUserId)) {
-
-            throw new IllegalStateException(
-                    "You are not allowed to update this notification"
-            );
+        Integer currentUserId = authService.getCurrentUser().getUserId();
+        if (!Objects.equals(notification.getEmployee().getUserId(), currentUserId)) {
+            throw new IllegalStateException("You are not allowed to update this notification");
         }
 
-        notification.setNotificationStatus(
-                InAppNotificationStatus.READ
-        );
-
+        notification.setNotificationStatus(InAppNotificationStatus.READ);
         inAppNotificationRepository.save(notification);
     }
 
     @Transactional
     @Override
     public void deleteNotification(Integer notificationId) {
+        InAppNotification notification = inAppNotificationRepository.findById(notificationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Notification not found with ID: " + notificationId));
 
-        InAppNotification notification =
-                inAppNotificationRepository.findById(notificationId)
-                        .orElseThrow(() ->
-                                new ResourceNotFoundException(
-                                        "Notification not found with ID: "
-                                                + notificationId
-                                ));
-
-        //        Integer currentUserId = currentUserService.getCurrentUserId();
-
-        Integer currentUserId = 1;
-
-        if (!Objects.equals(
-                notification.getEmployee().getUserId(),
-                currentUserId)) {
-
-            throw new IllegalStateException(
-                    "You are not allowed to delete this notification"
-            );
+        Integer currentUserId = authService.getCurrentUser().getUserId();
+        if (!Objects.equals(notification.getEmployee().getUserId(), currentUserId)) {
+            throw new IllegalStateException("You are not allowed to delete this notification");
         }
 
         inAppNotificationRepository.delete(notification);
@@ -122,41 +89,34 @@ public class InAppNotificationServiceImpl implements InAppNotificationService {
     @Transactional
     @Override
     public void createNewCommentNotification(Comment comment) {
+        if (comment == null || comment.getBug() == null) {
+            return;
+        }
 
         Bug bug = comment.getBug();
-
-        User recipient;
-
         if (bug.getAssignedTo() == null) {
             return;
         }
 
-        if (Objects.equals(
-                bug.getAssignedTo().getUserId(),
-                comment.getCreatedBy().getUserId())) {
-
+        User recipient;
+        if (comment.getCreatedBy() != null && Objects.equals(bug.getAssignedTo().getUserId(), comment.getCreatedBy().getUserId())) {
             recipient = bug.getReportedBy();
-
         } else {
-
             recipient = bug.getAssignedTo();
         }
 
-        InAppNotification notification =
-                InAppNotification.builder()
-                        .employee(recipient)
-                        .bug(bug)
-                        .message(
-                                "New comment added to Bug "
-                                        + bug.getBugFormatId()
-                        )
-                        .notificationStatus(
-                                InAppNotificationStatus.UNREAD
-                        )
-                        .createdAt(Instant.now())
-                        .build();
+        if (recipient == null) {
+            return;
+        }
+
+        InAppNotification notification = InAppNotification.builder()
+                .employee(recipient)
+                .bug(bug)
+                .message("New comment added to Bug " + bug.getBugFormatId())
+                .notificationStatus(InAppNotificationStatus.UNREAD)
+                .createdAt(Instant.now())
+                .build();
 
         inAppNotificationRepository.save(notification);
     }
 }
-

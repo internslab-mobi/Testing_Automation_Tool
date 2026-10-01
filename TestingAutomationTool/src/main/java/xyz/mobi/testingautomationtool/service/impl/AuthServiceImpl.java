@@ -10,13 +10,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.StringUtils;
-import xyz.mobi.testingautomationtool.dto.request.auth.ChangePasswordRequest;
-import xyz.mobi.testingautomationtool.dto.request.auth.LoginRequest;
-import xyz.mobi.testingautomationtool.dto.request.auth.RegisterRequest;
-import xyz.mobi.testingautomationtool.dto.response.auth.AuthResponse;
-import xyz.mobi.testingautomationtool.dto.response.auth.UserProfileResponse;
-import xyz.mobi.testingautomationtool.entity.Role;
+import xyz.mobi.testingautomationtool.dto.AuthDto.*;
 import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.repository.RoleRepository;
@@ -62,7 +56,6 @@ public class AuthServiceImpl implements AuthService {
                 .build();
 
         User savedUser = userRepository.save(user);
-
 
         return AuthResponse.builder()
                 .token(null)
@@ -150,11 +143,10 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public User getCurrentUser() {
-
         Authentication authentication =
                 SecurityContextHolder.getContext().getAuthentication();
 
-        if (!(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
+        if (authentication == null || !(authentication.getPrincipal() instanceof CustomUserDetails userDetails)) {
             throw new IllegalStateException("User is not authenticated");
         }
 

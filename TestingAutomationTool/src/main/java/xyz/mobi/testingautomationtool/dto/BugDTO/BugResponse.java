@@ -1,4 +1,4 @@
-package xyz.mobi.testingautomationtool.dto.BugDTO;
+package xyz.mobi.testingautomationtool.dto.BugDto;
 
 import lombok.*;
 import xyz.mobi.testingautomationtool.enums.BugCategory;
@@ -17,7 +17,7 @@ public class BugResponse {
 
     private Integer bugId;
     private String bugFormatId;
-    private Integer testCaseId;
+    private Integer testcaseId;
     private Integer featureId;
     private String title;
     private String description;
@@ -25,10 +25,15 @@ public class BugResponse {
     private BugPriority priority;
     private BugCategory category;
     private BugStatus status;
-    private Integer reportedBy;
-    private Integer assignedTo;
+    private String reportedBy;
+    private String assignedTo;
+    private String executedBy;
+    private String updatedBy;
+    private Instant resolvedAt;
+    private Integer bugReoccurredId;
     private Integer bugOccurrence;
     private String comments;
     private Instant createdAt;
     private Instant updatedAt;
+    private boolean active;
 }

@@ -1,38 +1,43 @@
-package xyz.mobi.testingautomationtool.dto.TestcaseDTO;
+package xyz.mobi.testingautomationtool.dto.TestCaseDto;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 import xyz.mobi.testingautomationtool.enums.TestPriority;
 import xyz.mobi.testingautomationtool.enums.TestType;
 
-@Getter
-@Setter
+import java.util.Map;
+
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class TestCaseRequest {
 
-    @NotNull
+    @NotNull(message = "Feature ID is required")
+    @Positive(message = "Feature ID must be greater than 0")
     private Integer featureId;
 
-    @NotBlank
-    @Size(max = 300)
+    @Size(max = 225, message = "Test case format ID cannot exceed 225 characters")
+    private String testcaseFormatId;
+
+    @NotBlank(message = "Title is required")
+    @Size(max = 500, message = "Title cannot exceed 500 characters")
     private String title;
 
-    @NotNull
     private TestType testType;
 
     private TestPriority testPriority;
 
     private TestCaseStatus testcaseStatus;
 
-    @NotNull
     private Integer createdBy;
 
-    @NotBlank
-    @Size(max = 20)
-    private String testcaseFormatId;
+    private Map<String, Object> dynamicFields;
 }

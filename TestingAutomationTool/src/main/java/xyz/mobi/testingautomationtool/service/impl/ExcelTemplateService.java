@@ -127,11 +127,10 @@ public class ExcelTemplateService {
 
 
             TestingExecution execution = testingExecutionRepository
-                    .findByTestCaseTestcaseId(
-                            testCase.getTestcaseId()
-                    );
+                    .findByTestCaseTestcaseId(testCase.getTestcaseId())
+                    .orElse(null);
 
-            if(execution == null) {
+            if (execution == null) {
                 execution = new TestingExecution();
             }
 

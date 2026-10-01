@@ -51,7 +51,7 @@ public class EmailServiceImpl implements EmailService {
 
             testingExecution =
                     testingExecutionRepository
-                            .findByTestCase_TestcaseId(
+                            .findByTestCaseTestcaseId(
                                     testCase.getTestcaseId()
                             )
                             .orElse(null);
@@ -614,6 +614,38 @@ public class EmailServiceImpl implements EmailService {
                     ex
             );
         }
+    }
+
+    @Async
+    @Override
+    public void sendBugAssignmentEmail(String toEmail, Bug bug) {
+        sendBugAssignedEmail(toEmail, bug);
+    }
+
+    @Async
+    @Override
+    public void confirmationEmail(String toEmail, String username) {
+        if (toEmail == null || toEmail.isBlank()) {
+            return;
+        }
+        String subject = "Account Approved - Testing Automation Tool";
+        String htmlContent = "<h3>Hello " + escapeHtml(username) + ",</h3>"
+                + "<p>Your account has been approved by the manager. You can now log in to the Testing Automation Tool.</p>"
+                + "<p>Best regards,<br>Testing Automation Team</p>";
+        sendHtmlEmail(toEmail, subject, htmlContent);
+    }
+
+    @Async
+    @Override
+    public void rejectEmail(String toEmail, String username) {
+        if (toEmail == null || toEmail.isBlank()) {
+            return;
+        }
+        String subject = "Account Request Rejected - Testing Automation Tool";
+        String htmlContent = "<h3>Hello " + escapeHtml(username) + ",</h3>"
+                + "<p>Your account registration request has been rejected by the manager. If you believe this is an error, please contact your administrator.</p>"
+                + "<p>Best regards,<br>Testing Automation Team</p>";
+        sendHtmlEmail(toEmail, subject, htmlContent);
     }
 
     private String safeValue(

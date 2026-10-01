@@ -1,7 +1,7 @@
-package xyz.mobi.testingautomationtool.dto.ExecutionHistoryDTO;
+package xyz.mobi.testingautomationtool.dto.ExecutionHistoryDto;
 
-import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 import lombok.*;
+import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 
 import java.time.LocalDateTime;
 

@@ -1,9 +1,8 @@
-package xyz.mobi.testingautomationtool.dto.ExecutionHistoryDTO;
+package xyz.mobi.testingautomationtool.dto.ExecutionHistoryDto;
 
-
-import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
+import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 
 @Getter
 @Setter

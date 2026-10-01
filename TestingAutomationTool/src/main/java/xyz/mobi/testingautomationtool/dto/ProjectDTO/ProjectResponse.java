@@ -1,12 +1,16 @@
-package xyz.mobi.testingautomationtool.dto.ProjectDTO;
+package xyz.mobi.testingautomationtool.dto.ProjectDto;
 
-import lombok.*;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 
 import java.time.Instant;
 
-@Getter
-@Setter
+@JsonInclude(JsonInclude.Include.NON_NULL)
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
@@ -16,10 +20,13 @@ public class ProjectResponse {
     private String description;
     private ProjectStatus status;
     private String region;
-    private boolean isActive;
+    private String comments;
     private Integer createdBy;
-    private String creatorName;
-    private Integer updatedBy;
+    private String createdByName;
+    private String updatedByName;
+    private Boolean isActive;
+    private Boolean isDeleted;
+    private Long version;
     private Instant createdAt;
     private Instant updatedAt;
 }

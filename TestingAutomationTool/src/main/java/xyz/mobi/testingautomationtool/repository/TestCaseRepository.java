@@ -12,10 +12,7 @@ import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 import xyz.mobi.testingautomationtool.enums.TestPriority;
 import xyz.mobi.testingautomationtool.enums.TestType;
 import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import xyz.mobi.testingautomationtool.entity.TestCase;
-
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -42,7 +39,13 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Integer>, Jp
     @Query("UPDATE TestCase t SET t.isActive = true WHERE t.feature.project.projectId = :projectId")
     int activateTestCasesByProjectId(@Param("projectId") Integer projectId);
 
-    Page<TestCase> findByFeatureId(Integer featureId, Pageable pageable);
+    List<TestCase> findByFeature_FeatureIdAndIsDeletedFalse(Integer featureId);
+
+    default List<TestCase> findByFeatureFeatureIdAndIsDeletedFalse(Integer featureId) {
+        return findByFeature_FeatureIdAndIsDeletedFalse(featureId);
+    }
+
+    Page<TestCase> findByFeature_FeatureId(Integer featureId, Pageable pageable);
 
     @Query("SELECT tc FROM TestCase tc WHERE tc.isDeleted = false " +
            "AND (:featureId IS NULL OR tc.feature.featureId = :featureId) " +

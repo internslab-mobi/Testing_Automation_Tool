@@ -1,4 +1,4 @@
-package xyz.mobi.testingautomationtool.dto.FeatureDTO;
+package xyz.mobi.testingautomationtool.dto.FeatureDto;
 
 import lombok.*;
 import xyz.mobi.testingautomationtool.enums.FeatureStatus;
@@ -20,12 +20,14 @@ public class FeatureResponse {
     private Long duration;
     private Integer sprint;
     private String version;
+    private String featureVersion;
     private Instant startTime;
     private boolean isActive;
     private Integer createdBy;
+    private String creatorName;
     private Integer updatedBy;
     private Instant createdAt;
     private Instant updatedAt;
-
-    private Long lockVersion;        // optimistic locking version
+    private String comments;
+    private Long lockVersion;
 }

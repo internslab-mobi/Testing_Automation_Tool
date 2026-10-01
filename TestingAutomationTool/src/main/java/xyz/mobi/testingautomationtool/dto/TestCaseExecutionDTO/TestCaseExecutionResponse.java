@@ -1,16 +1,17 @@
-package xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO;
+package xyz.mobi.testingautomationtool.dto.TestCaseExecutionDto;
 
-import lombok.*;
-import xyz.mobi.testingautomationtool.dto.TestcaseDTO.TestCaseResponse;
-import xyz.mobi.testingautomationtool.dto.TestingExecutionDTO.TestingExecutionResponse;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import xyz.mobi.testingautomationtool.dto.TestCaseDto.TestCaseResponse;
+import xyz.mobi.testingautomationtool.dto.TestingExecutionDto.TestingExecutionResponse;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class TestCaseExecutionResponse {
-
     private TestCaseResponse testCaseResponse;
     private TestingExecutionResponse testingExecutionResponse;
 }

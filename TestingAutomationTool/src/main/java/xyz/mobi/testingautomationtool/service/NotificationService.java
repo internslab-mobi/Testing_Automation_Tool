@@ -1,21 +1,22 @@
 package xyz.mobi.testingautomationtool.service;
 
+import xyz.mobi.testingautomationtool.dto.NotificationDto.NotificationResponse;
+import xyz.mobi.testingautomationtool.entity.Bug;
+import xyz.mobi.testingautomationtool.entity.Notification;
+import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.NotificationStatus;
+
+import java.util.List;
 
 public interface NotificationService {
 
-    List<NotificationResponse> getMyNotifications(
-            Integer employeeId);
+    Notification createNotification(User reporter, User assignedTo, Bug bug);
 
-    NotificationResponse getById(
-            Integer notificationId);
+    void updateNotificationStatus(Integer notificationId, NotificationStatus status);
 
-    NotificationResponse createNotification(
-            Integer employeeId,
-            Integer bugId,
-            String message);
+    List<NotificationResponse> getMyNotifications(Integer employeeId);
 
-    void updateStatus(
-            Integer notificationId,
-            NotificationStatus status);
+    NotificationResponse getById(Integer notificationId);
+
+    void updateStatus(Integer notificationId, NotificationStatus status);
 }

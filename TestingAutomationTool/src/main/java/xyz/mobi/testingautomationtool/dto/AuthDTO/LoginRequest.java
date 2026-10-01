@@ -1,13 +1,15 @@
-package xyz.mobi.testingautomationtool.dto.AuthDTO;
+package xyz.mobi.testingautomationtool.dto.AuthDto;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class LoginRequest {
 
     @NotBlank(message = "Username or email is required")

@@ -1,4 +1,4 @@
-package xyz.mobi.testingautomationtool.dto.CommentDTO;
+package xyz.mobi.testingautomationtool.dto.CommentDto;
 
 import lombok.*;
 
@@ -10,11 +10,14 @@ import java.time.Instant;
 @AllArgsConstructor
 @Builder
 public class CommentResponse {
+
     private Integer commentId;
     private Integer bugId;
     private String comment;
+    private Integer createdByUserId;
+    private String createdByUsername;
+    private String createdByFullName;
     private Integer createdBy;
     private String creatorName;
     private Instant createdAt;
-    //private Instant updatedAt;
 }

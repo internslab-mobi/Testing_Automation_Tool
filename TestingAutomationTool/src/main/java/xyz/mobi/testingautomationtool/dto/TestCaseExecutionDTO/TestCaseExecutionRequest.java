@@ -1,13 +1,15 @@
-package xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO;
+package xyz.mobi.testingautomationtool.dto.TestCaseExecutionDto;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import lombok.*;
-import xyz.mobi.testingautomationtool.dto.TestcaseDTO.TestCaseRequest;
-import xyz.mobi.testingautomationtool.dto.TestingExecutionDTO.TestingExecutionRequest;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import xyz.mobi.testingautomationtool.dto.TestCaseDto.TestCaseRequest;
+import xyz.mobi.testingautomationtool.dto.TestingExecutionDto.TestingExecutionRequest;
 
-@Getter
-@Setter
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder

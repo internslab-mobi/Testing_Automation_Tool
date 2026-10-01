@@ -13,11 +13,10 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import xyz.mobi.testingautomationtool.dto.response.ErrorResponse;
 import xyz.mobi.testingautomationtool.entity.Error;
 import xyz.mobi.testingautomationtool.repository.ErrorDataRepository;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -37,12 +36,16 @@ public class GlobalExceptionHandler {
 
     @PostConstruct
     public void loadExceptionMappings() {
-        List<Error> list = errorDataRepository.findAll();
-        list.forEach(error -> exceptionCache.put(error.getExceptionName(),error));
+        try {
+            List<Error> list = errorDataRepository.findAll();
+            list.forEach(error -> exceptionCache.put(error.getExceptionName(), error));
+        } catch (Exception e) {
+            log.warn("Could not preload exception cache: {}", e.getMessage());
+        }
     }
 
     private Error getErrorMapping(String exceptionName) {
-        Error error  =  exceptionCache.getIfPresent(exceptionName);
+        Error error = exceptionCache.getIfPresent(exceptionName);
         if (error == null) {
             return exceptionCache.getIfPresent("Exception");
         }
@@ -57,8 +60,6 @@ public class GlobalExceptionHandler {
         return "ERR_" + exceptionName.toUpperCase();
     }
 
-
-
     private ResponseEntity<ErrorResponse> buildErrorResponse(
             String errorCode,
             String errorMessage,
@@ -68,60 +69,59 @@ public class GlobalExceptionHandler {
                 .errorCode(errorCode)
                 .errorMessage(errorMessage)
                 .errorStatusCode(status.value())
-                .time(LocalDateTime.now())
+                .time(Instant.now())
                 .build();
 
         return new ResponseEntity<>(errorResponse, status);
     }
 
+    @ExceptionHandler(CustomException.class)
+    public ResponseEntity<ErrorResponse> handleCustomException(CustomException ex) {
+        ErrorCode errorCode = ex.getErrorCode();
+        ErrorResponse errorResponse = ErrorResponse.builder()
+                .errorCode(errorCode.getInternalErrorCode())
+                .errorMessage(errorCode.getResponseMessage())
+                .errorStatusCode(errorCode.getResponseCode().value())
+                .time(Instant.now())
+                .build();
+        return ResponseEntity.status(errorCode.getResponseCode()).body(errorResponse);
+    }
+
     @ExceptionHandler(FileProcessingException.class)
-    public ResponseEntity<ErrorResponse> handleFileProcessingError(FileProcessingException exception){
+    public ResponseEntity<ErrorResponse> handleFileProcessingError(FileProcessingException exception) {
         String exceptionName = exception.getClass().getSimpleName();
         String mapping = getErrorCode(exceptionName);
 
-        return buildErrorResponse(mapping,exception.getMessage(),HttpStatus.FORBIDDEN);
+        return buildErrorResponse(mapping, exception.getMessage(), HttpStatus.BAD_REQUEST);
     }
-
 
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<ErrorResponse> handleOptimisticLockingException(
             ObjectOptimisticLockingFailureException ex) {
 
-        String exceptionName =
-                ex.getClass().getSimpleName();
+        String exceptionName = ex.getClass().getSimpleName();
+        String mapping = getErrorCode(exceptionName);
 
-        String mapping =
-                getErrorCode(exceptionName);
-
-        log.warn(
-                "Optimistic locking conflict: {}",
-                ex.getMessage());
+        log.warn("Optimistic locking conflict: {}", ex.getMessage());
 
         return buildErrorResponse(
                 mapping,
-                "Test case was modified by another user. Please refresh and try again.",
+                "Resource was modified by another user. Please refresh and try again.",
                 HttpStatus.CONFLICT);
     }
-
 
     @ExceptionHandler(NullPointerException.class)
     public ResponseEntity<ErrorResponse> handleNullPointerException(
             NullPointerException ex) {
 
-        String exceptionName =
-                ex.getClass().getSimpleName();
+        String exceptionName = ex.getClass().getSimpleName();
+        String mapping = getErrorCode(exceptionName);
 
-        String mapping =
-                getErrorCode(exceptionName);
+        log.error("NullPointerException occurred: ", ex);
 
-        log.error(
-                "NullPointerException occurred: ",
-                ex);
-
-        String message =
-                ex.getMessage() != null
-                        ? ex.getMessage()
-                        : "Internal Server Error";
+        String message = ex.getMessage() != null
+                ? ex.getMessage()
+                : "Internal Server Error";
 
         return buildErrorResponse(
                 mapping,
@@ -129,20 +129,14 @@ public class GlobalExceptionHandler {
                 HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
-
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleResourceNotFoundException(
             ResourceNotFoundException ex) {
 
-        String exceptionName =
-                ex.getClass().getSimpleName();
+        String exceptionName = ex.getClass().getSimpleName();
+        String mapping = getErrorCode(exceptionName);
 
-        String mapping =
-                getErrorCode(exceptionName);
-
-        log.warn(
-                "ResourceNotFoundException: {}",
-                ex.getMessage());
+        log.warn("ResourceNotFoundException: {}", ex.getMessage());
 
         return buildErrorResponse(
                 mapping,
@@ -150,41 +144,29 @@ public class GlobalExceptionHandler {
                 HttpStatus.NOT_FOUND);
     }
 
-
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
             IllegalArgumentException ex) {
 
-        String exceptionName =
-                ex.getClass().getSimpleName();
+        String exceptionName = ex.getClass().getSimpleName();
+        String mapping = getErrorCode(exceptionName);
 
-        String mapping =
-                getErrorCode(exceptionName);
-
-        log.warn(
-                "IllegalArgumentException: {}",
-                ex.getMessage());
+        log.warn("IllegalArgumentException: {}", ex.getMessage());
 
         return buildErrorResponse(
                 mapping,
                 ex.getMessage(),
                 HttpStatus.BAD_REQUEST);
     }
-
 
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleIllegalStateException(
             IllegalStateException ex) {
 
-        String exceptionName =
-                ex.getClass().getSimpleName();
+        String exceptionName = ex.getClass().getSimpleName();
+        String mapping = getErrorCode(exceptionName);
 
-        String mapping =
-                getErrorCode(exceptionName);
-
-        log.warn(
-                "IllegalStateException: {}",
-                ex.getMessage());
+        log.warn("IllegalStateException: {}", ex.getMessage());
 
         return buildErrorResponse(
                 mapping,
@@ -192,27 +174,20 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST);
     }
 
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationException(
             MethodArgumentNotValidException ex) {
 
-        String errorMessage =
-                ex.getBindingResult()
-                        .getFieldErrors()
-                        .stream()
-                        .map(FieldError::getDefaultMessage)
-                        .collect(Collectors.joining(", "));
+        String errorMessage = ex.getBindingResult()
+                .getFieldErrors()
+                .stream()
+                .map(FieldError::getDefaultMessage)
+                .collect(Collectors.joining(", "));
 
-        String exceptionName =
-                ex.getClass().getSimpleName();
+        String exceptionName = ex.getClass().getSimpleName();
+        String mapping = getErrorCode(exceptionName);
 
-        String mapping =
-                getErrorCode(exceptionName);
-
-        log.warn(
-                "Validation failed: {}",
-                errorMessage);
+        log.warn("Validation failed: {}", errorMessage);
 
         return buildErrorResponse(
                 mapping,
@@ -220,53 +195,24 @@ public class GlobalExceptionHandler {
                 HttpStatus.BAD_REQUEST);
     }
 
-
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(
             DataIntegrityViolationException ex) {
 
-        log.error(
-                "DataIntegrityViolationException: ",
-                ex);
+        log.error("DataIntegrityViolationException: ", ex);
 
-        String exceptionName =
-                ex.getClass().getSimpleName();
+        String exceptionName = ex.getClass().getSimpleName();
+        String mapping = getErrorCode(exceptionName);
 
-        String mapping =
-                getErrorCode(exceptionName);
-
-        String message =
-                ex.getRootCause() != null
-                        ? ex.getRootCause().getMessage()
-                        : ex.getMessage();
+        String message = ex.getRootCause() != null
+                ? ex.getRootCause().getMessage()
+                : ex.getMessage();
 
         return buildErrorResponse(
                 mapping,
                 message,
                 HttpStatus.CONFLICT);
     }
-
-
-    @ExceptionHandler(GlobalException.class)
-    public ResponseEntity<ErrorResponse> handleGlobalException(
-            GlobalException ex) {
-
-        String exceptionName =
-                ex.getClass().getSimpleName();
-
-        String mapping =
-                getErrorCode(exceptionName);
-
-        log.warn(
-                "GlobalException: {}",
-                ex.getMessage());
-
-        return buildErrorResponse(
-                mapping,
-                ex.getMessage(),
-                HttpStatus.BAD_REQUEST);
-    }
-
 
     @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentialsException(
@@ -309,7 +255,7 @@ public class GlobalExceptionHandler {
 
         return buildErrorResponse(
                 mapping,
-                "Access Denied: You do not have permission to access this resource. Only MANAGER and TESTER roles can access these methods.",
+                "Access Denied: You do not have permission to access this resource.",
                 HttpStatus.FORBIDDEN);
     }
 
@@ -332,20 +278,14 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex) {
 
-        String exceptionName =
-                ex.getClass().getSimpleName();
+        String exceptionName = ex.getClass().getSimpleName();
+        String mapping = getErrorCode(exceptionName);
 
-        String mapping =
-                getErrorCode(exceptionName);
+        log.error("Unhandled exception occurred: ", ex);
 
-        log.error(
-                "Unhandled exception occurred: ",
-                ex);
-
-        String message =
-                ex.getMessage() != null
-                        ? ex.getMessage()
-                        : "Internal Server Error";
+        String message = ex.getMessage() != null
+                ? ex.getMessage()
+                : "Internal Server Error";
 
         return buildErrorResponse(
                 mapping,

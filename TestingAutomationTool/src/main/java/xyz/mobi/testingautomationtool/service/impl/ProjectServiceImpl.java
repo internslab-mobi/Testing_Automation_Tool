@@ -1,32 +1,23 @@
 package xyz.mobi.testingautomationtool.service.impl;
 
+import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.ProjectPatchRequest;
-import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.ProjectPutRequest;
-import xyz.mobi.testingautomationtool.dto.response.DeleteMethodDto.PatchProjectDeleteResponse;
-import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.PatchProjectResponse;
-import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.ProjectPutResponse;
-import xyz.mobi.testingautomationtool.dto.ProjectDTO.ProjectResponse;
+import xyz.mobi.testingautomationtool.dto.ProjectDto.*;
 import xyz.mobi.testingautomationtool.entity.Project;
 import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
-import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
-import xyz.mobi.testingautomationtool.mapper.putMapper.ProjectPutMapper;
-import xyz.mobi.testingautomationtool.repository.*;
-import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.exception.CustomException;
 import xyz.mobi.testingautomationtool.exception.ErrorCode;
-import xyz.mobi.testingautomationtool.repository.ProjectRepository;
+import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
+import xyz.mobi.testingautomationtool.mapper.ProjectMapper;
+import xyz.mobi.testingautomationtool.repository.*;
+import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.ProjectService;
 
-import jakarta.persistence.criteria.Predicate;
-import org.springframework.data.jpa.domain.Specification;
-import xyz.mobi.testingautomationtool.enums.ProjectStatus;
-
-import java.util.ArrayList;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -43,8 +34,28 @@ public class ProjectServiceImpl implements ProjectService {
     private final CommentRepository commentRepository;
     private final AttachmentRepository attachmentRepository;
     private final UserRepository userRepository;
-    private final ProjectPutMapper projectPutMapper;
+    private final ProjectMapper projectMapper;
     private final AuthService authService;
+
+    @Override
+    public ProjectResponse createProject(ProjectRequest request) {
+        if (projectRepository.existsByProjectName(request.getProjectName())) {
+            throw new CustomException(ErrorCode.DUPLICATE_RESOURCE);
+        }
+
+        User user = authService.getCurrentUser();
+        Project project = projectMapper.toEntity(request);
+        project.setCreatedBy(user);
+        project.setUpdatedBy(user);
+        project.setActive(true);
+        project.setDeleted(false);
+        if (project.getStatus() == null) {
+            project.setStatus(ProjectStatus.ACTIVE);
+        }
+
+        Project saved = projectRepository.save(project);
+        return projectMapper.toResponse(saved);
+    }
 
     @Override
     public ProjectPutResponse updateProject(Integer id, ProjectPutRequest request) {
@@ -55,13 +66,11 @@ public class ProjectServiceImpl implements ProjectService {
             throw new IllegalStateException("Cannot update disabled/deleted project with ID: " + id);
         }
 
-        projectPutMapper.putMethodMapper(request, project);
-        User dummyUser = userRepository.findById(2)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: 2"));
-        project.setUpdatedBy(dummyUser);
+        projectMapper.putMethodMapper(request, project);
+        project.setUpdatedBy(authService.getCurrentUser());
 
         Project savedProject = projectRepository.save(project);
-        return projectPutMapper.toResponse(savedProject);
+        return projectMapper.toPutResponse(savedProject);
     }
 
     @Override
@@ -99,14 +108,21 @@ public class ProjectServiceImpl implements ProjectService {
             updatedFields.add("comments");
         }
 
+        if (request.getStatus() != null) {
+            project.setStatus(request.getStatus());
+            updatedFields.add("status");
+        }
+
+        if (request.getIsActive() != null) {
+            project.setActive(request.getIsActive());
+            updatedFields.add("isActive");
+        }
+
         if (updatedFields.isEmpty()) {
             throw new IllegalArgumentException("At least one field must be provided for update");
         }
 
-        User dummyUser = userRepository.findById(2)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: 2"));
-        project.setUpdatedBy(dummyUser);
-
+        project.setUpdatedBy(authService.getCurrentUser());
         projectRepository.save(project);
 
         return "Project with ID " + id + " updated successfully. Changed fields: " + String.join(", ", updatedFields);
@@ -116,7 +132,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Transactional(readOnly = true)
     public List<ProjectResponse> getAllProjects() {
         return projectRepository.findByIsDeletedFalse().stream()
-                .map(this::toResponse)
+                .map(projectMapper::toResponse)
                 .toList();
     }
 
@@ -126,7 +142,7 @@ public class ProjectServiceImpl implements ProjectService {
     public ProjectResponse getProjectById(Integer projectId) {
         Project project = projectRepository.findByProjectIdAndIsDeletedFalse(projectId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
-        return toResponse(project);
+        return projectMapper.toResponse(project);
     }
 
     @Override
@@ -150,7 +166,6 @@ public class ProjectServiceImpl implements ProjectService {
                 orPredicates.add(cb.like(cb.lower(root.get("description")), pattern));
                 orPredicates.add(cb.like(cb.lower(root.get("region")), pattern));
 
-                // Enum search for ProjectStatus
                 List<ProjectStatus> matchingStatuses = new ArrayList<>();
                 for (ProjectStatus ps : ProjectStatus.values()) {
                     String statusName = ps.name().toLowerCase();
@@ -163,12 +178,10 @@ public class ProjectServiceImpl implements ProjectService {
                     orPredicates.add(root.get("status").in(matchingStatuses));
                 }
 
-                // Numeric search for projectId
                 try {
                     Integer id = Integer.valueOf(trimmed);
                     orPredicates.add(cb.equal(root.get("projectId"), id));
                 } catch (NumberFormatException ignored) {
-                    // Keyword is not an integer; skip numeric match
                 }
 
                 predicates.add(cb.or(orPredicates.toArray(new Predicate[0])));
@@ -178,24 +191,8 @@ public class ProjectServiceImpl implements ProjectService {
         };
 
         return projectRepository.findAll(spec).stream()
-                .map(this::toResponse)
+                .map(projectMapper::toResponse)
                 .toList();
-    }
-
-    private ProjectResponse toResponse(Project p) {
-        return ProjectResponse.builder()
-                .projectId(p.getProjectId())
-                .projectName(p.getProjectName())
-                .description(p.getDescription())
-                .status(p.getStatus())
-                .region(p.getRegion())
-                .isActive(p.isActive())
-                .createdBy(p.getCreatedBy() != null ? p.getCreatedBy().getUserId() : null)
-                .creatorName(p.getCreatedBy() != null ? (p.getCreatedBy().getFullName() != null ? p.getCreatedBy().getFullName() : p.getCreatedBy().getUsername()) : null)
-                .updatedBy(p.getUpdatedBy() != null ? p.getUpdatedBy().getUserId() : null)
-                .createdAt(p.getCreatedAt())
-                .updatedAt(p.getUpdatedAt())
-                .build();
     }
 
     @Override
@@ -214,15 +211,16 @@ public class ProjectServiceImpl implements ProjectService {
 
         return "Project '" + projectName + "' and all associated features, test cases, executions, and bugs deleted successfully";
     }
-    @Override
-    public PatchProjectResponse getProjectStatus(ProjectStatus status,
-                                                 Integer projectId) {
 
+    @Override
+    public PatchProjectResponse updateProjectStatus(Integer projectId, ProjectStatus status) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + projectId));
 
         User user = authService.getCurrentUser();
-        if(status == ProjectStatus.ACTIVE){
+        project.setUpdatedBy(user);
+
+        if (status == ProjectStatus.ACTIVE) {
             project.setActive(true);
             project.setStatus(ProjectStatus.ACTIVE);
             projectRepository.save(project);
@@ -230,8 +228,6 @@ public class ProjectServiceImpl implements ProjectService {
             attachmentRepository.activateAttachmentsByProjectId(projectId);
             testCaseRepository.activateTestCasesByProjectId(projectId);
             featureRepository.activateFeaturesByProjectId(projectId);
-
-
         } else if (status == ProjectStatus.INACTIVE) {
             project.setActive(false);
             project.setStatus(ProjectStatus.INACTIVE);
@@ -242,16 +238,17 @@ public class ProjectServiceImpl implements ProjectService {
             featureRepository.deactivateFeaturesByProjectId(projectId);
         }
 
-
         return PatchProjectResponse.builder()
                 .projectId(project.getProjectId())
+                .projectName(project.getProjectName())
+                .description(project.getDescription())
+                .region(project.getRegion())
+                .comments(project.getComments())
                 .updatedAt(project.getUpdatedAt())
                 .status(project.getStatus())
-                .updatedBy(user.getFullName())
+                .updatedBy(user.getFullName() != null ? user.getFullName() : user.getUsername())
                 .build();
     }
-
-
 
     @Override
     public PatchProjectDeleteResponse softDeleteProject(Integer id) {
@@ -261,6 +258,7 @@ public class ProjectServiceImpl implements ProjectService {
         project.setDeleted(true);
         project.setActive(false);
         project.setStatus(ProjectStatus.INACTIVE);
+        project.setUpdatedBy(authService.getCurrentUser());
         projectRepository.save(project);
         bugRepository.deactivateBugsByProjectId(id);
         attachmentRepository.deactivateAttachmentsByProjectId(id);
@@ -272,5 +270,4 @@ public class ProjectServiceImpl implements ProjectService {
                 .message("Project and all associated features, test cases, and bugs deactivated successfully")
                 .build();
     }
-
 }

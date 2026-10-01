@@ -1,7 +1,7 @@
 package xyz.mobi.testingautomationtool.service;
 
 import org.springframework.web.multipart.MultipartFile;
-import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
+import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
 import xyz.mobi.testingautomationtool.entity.Attachment;
 import xyz.mobi.testingautomationtool.enums.AttachmentType;
 

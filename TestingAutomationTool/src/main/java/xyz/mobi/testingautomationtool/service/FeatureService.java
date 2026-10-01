@@ -1,37 +1,33 @@
 package xyz.mobi.testingautomationtool.service;
 
-import xyz.mobi.testingautomationtool.dto.FeatureDTO.FeaturePatchRequest;
-import xyz.mobi.testingautomationtool.dto.FeatureDTO.FeaturePatchResponse;
-import xyz.mobi.testingautomationtool.dto.FeatureDTO.FeatureResponse;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.multipart.MultipartFile;
-import xyz.mobi.testingautomationtool.dto.request.postMethodDTO.FeatureRequest;
-import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.FeaturePutRequest;
-import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.FeatureDurationResponse;
-import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.FeatureStartTimeResponse;
-import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.AttachmentResponse;
-import xyz.mobi.testingautomationtool.dto.response.postMethodDTO.FeatureResponse;
-import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.FeaturePutResponse;
+import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
+import xyz.mobi.testingautomationtool.dto.FeatureDto.*;
 
+import java.io.IOException;
 import java.util.List;
 
 public interface FeatureService {
-    FeaturePatchResponse patchFeature(Integer featureId, FeaturePatchRequest request);
-    void deleteFeature(Integer featureId, Integer updatedBy);
+    FeatureResponse createFeature(FeatureRequest request);
+
     FeatureResponse getFeatureById(Integer featureId);
+
     List<FeatureResponse> getFeaturesByProjectId(Integer projectId);
-    public FeatureResponse createFeature(FeatureRequest request);
 
-    public AttachmentResponse uploadAttachment(MultipartFile file, Integer featureId) throws IOException;
+    List<FeatureResponse> searchFeatures(FeatureSearchRequest request);
 
-    public ResponseEntity<byte[]> downloadFile(Integer featureId);
+    FeaturePutResponse updateFeature(Integer featureId, FeaturePutRequest request);
 
-    public FeatureStartTimeResponse startFeature(Integer featureId);
+    FeaturePatchResponse patchFeature(Integer featureId, FeaturePatchRequest request);
 
-    public FeatureDurationResponse endFeature(Integer featureId);
+    void deleteFeature(Integer featureId, Integer updatedBy);
 
-    public FeaturePutResponse updateFeature(
-            Integer featureId,
-            FeaturePutRequest request);
+    AttachmentResponse uploadAttachment(MultipartFile file, Integer featureId) throws IOException;
 
+    ResponseEntity<byte[]> downloadFile(Integer featureId);
+
+    FeatureStartTimeResponse startFeature(Integer featureId);
+
+    FeatureDurationResponse endFeature(Integer featureId);
 }

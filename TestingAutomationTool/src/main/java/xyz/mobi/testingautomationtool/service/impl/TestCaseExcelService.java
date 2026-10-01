@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import xyz.mobi.testingautomationtool.dto.excelDTO.ExcelTestCaseRow;
+import xyz.mobi.testingautomationtool.dto.ExcelDto.ExcelTestCaseRow;
 import xyz.mobi.testingautomationtool.enums.AutomationFeasibility;
 import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 import xyz.mobi.testingautomationtool.enums.TestPriority;

@@ -5,7 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
+import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
 import xyz.mobi.testingautomationtool.entity.Attachment;
 import xyz.mobi.testingautomationtool.entity.Bug;
 import xyz.mobi.testingautomationtool.entity.User;
@@ -69,7 +69,7 @@ public class AttachmentServiceImpl implements AttachmentService {
                 .fileName(fileName)
                 .fileType(file.getContentType())
                 .fileSize(file.getSize())
-                .fileData(bytes)
+                .fileBlob(bytes)
                 .attachmentType(attachmentType != null ? attachmentType : AttachmentType.BUG)
                 .uploadedBy(user)
                 .updatedBy(user)
@@ -114,14 +114,10 @@ public class AttachmentServiceImpl implements AttachmentService {
         return AttachmentResponse.builder()
                 .attachmentId(a.getAttachmentId())
                 .bugId(a.getBug() != null ? a.getBug().getBugId() : null)
-                .testcaseId(a.getTestCase() != null ? a.getTestCase().getTestcaseId() : null)
-                .featureId(a.getFeature() != null ? a.getFeature().getFeatureId() : null)
                 .fileName(a.getFileName())
                 .fileType(a.getFileType())
                 .fileSize(a.getFileSize())
-                .attachmentType(a.getAttachmentType())
                 .uploadedBy(a.getUploadedBy() != null ? a.getUploadedBy().getUserId() : null)
-                .uploaderName(a.getUploadedBy() != null ? a.getUploadedBy().getFullName() : null)
                 .createdAt(a.getCreatedAt())
                 .build();
     }

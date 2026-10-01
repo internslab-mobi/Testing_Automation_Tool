@@ -1,29 +1,32 @@
 package xyz.mobi.testingautomationtool.controller;
 
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import xyz.mobi.testingautomationtool.dto.request.patchmethodDTO.ProjectPatchRequest;
-import xyz.mobi.testingautomationtool.dto.request.putMethodDTO.ProjectPutRequest;
-import xyz.mobi.testingautomationtool.dto.response.DeleteMethodDto.PatchProjectDeleteResponse;
-import xyz.mobi.testingautomationtool.dto.response.patchmethodDTO.PatchProjectResponse;
-import xyz.mobi.testingautomationtool.dto.response.putMethodDTO.ProjectPutResponse;
-import xyz.mobi.testingautomationtool.dto.ProjectDTO.ProjectResponse;
+import xyz.mobi.testingautomationtool.dto.ProjectDto.*;
+import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 import xyz.mobi.testingautomationtool.service.ProjectService;
 
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import org.springframework.security.access.prepost.PreAuthorize;
 import java.util.List;
 
 @RestController
-@RequestMapping({"/project"})
+@RequestMapping("/project")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
 public class ProjectController {
 
     private final ProjectService projectService;
+
+    @PostMapping
+    public ResponseEntity<ProjectResponse> createProject(@Valid @RequestBody ProjectRequest request) {
+        ProjectResponse response = projectService.createProject(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+    }
 
     @GetMapping
     public ResponseEntity<List<ProjectResponse>> getAllProjects() {
@@ -41,11 +44,11 @@ public class ProjectController {
             @RequestParam(required = false) ProjectStatus status) {
         return ResponseEntity.ok(projectService.searchProjects(keyword, status));
     }
+
     @PutMapping("/{id}")
     public ResponseEntity<ProjectPutResponse> updateProject(
             @PathVariable("id") Integer id,
             @Valid @RequestBody ProjectPutRequest request) {
-
         ProjectPutResponse response = projectService.updateProject(id, request);
         return ResponseEntity.ok(response);
     }
@@ -54,15 +57,22 @@ public class ProjectController {
     public ResponseEntity<String> patchProject(
             @PathVariable("id") Integer id,
             @RequestBody ProjectPatchRequest request) {
-
         String response = projectService.patchProject(id, request);
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/{id}/status")
+    @PreAuthorize("hasRole('MANAGER')")
+    public ResponseEntity<PatchProjectResponse> updateProjectStatus(
+            @PathVariable("id") Integer id,
+            @RequestParam ProjectStatus status) {
+        PatchProjectResponse response = projectService.updateProjectStatus(id, status);
         return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<PatchProjectDeleteResponse> softDeleteProject(
             @PathVariable("id") Integer id) {
-
         PatchProjectDeleteResponse response = projectService.softDeleteProject(id);
         return ResponseEntity.ok(response);
     }
@@ -70,7 +80,6 @@ public class ProjectController {
     @DeleteMapping("/{id}")
     public ResponseEntity<String> hardDeleteProject(
             @PathVariable("id") Integer id) {
-
         String response = projectService.hardDeleteProject(id);
         return ResponseEntity.ok(response);
     }

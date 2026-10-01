@@ -9,14 +9,11 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import xyz.mobi.testingautomationtool.entity.Bug;
-import xyz.mobi.testingautomationtool.entity.User;
-import xyz.mobi.testingautomationtool.enums.BugPriority;
-import xyz.mobi.testingautomationtool.enums.BugSeverity;
-import xyz.mobi.testingautomationtool.enums.BugStatus;
 
 import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecificationExecutor<Bug> {
 
     Optional<List<Bug>> findByTestCase_TestcaseId(Integer id);
@@ -26,7 +23,7 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
     List<Bug> findByActiveTrue();
 
     @Modifying
-    @Query("UPDATE Bug b SET b.isDeleted=true,b.isActive=false WHERE b.testCase.testcaseId =:id")
+    @Query("UPDATE Bug b SET b.isDeleted=true, b.isActive=false WHERE b.testCase.testcaseId =:id")
     void softDeleteBugsByTestCaseId(@Param("id") Integer id);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
@@ -36,7 +33,6 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
                 WHERE b.testCase.testcaseId = :testCaseId
             """)
     int deactivateBugs(@Param("testCaseId") Integer testCaseId);
-
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
@@ -51,6 +47,14 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
     @Query("UPDATE Bug b SET b.isActive = false WHERE b.feature.project.projectId = :projectId")
     int deactivateBugsByProjectId(@Param("projectId") Integer projectId);
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Bug b SET b.isActive = true WHERE b.feature.project.projectId = :projectId AND b.isDeleted = false")
+    int activateBugsByProjectId(@Param("projectId") Integer projectId);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Query("UPDATE Bug b SET b.isDeleted = true, b.isActive = false WHERE b.feature.project.projectId = :projectId")
+    int deleteByProjectId(@Param("projectId") Integer projectId);
+
     boolean existsByBugFormatId(String bugFormatId);
 
     Optional<Bug> findByBugIdAndIsDeletedFalse(Integer bugId);
@@ -61,6 +65,10 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
     );
 
     Optional<Bug> findByBugFormatId(String bugFormatId);
+
+    List<Bug> findByFeature_FeatureIdAndIsDeletedFalse(Integer featureId);
+
+    default List<Bug> findByFeatureFeatureIdAndIsDeletedFalse(Integer featureId) {
+        return findByFeature_FeatureIdAndIsDeletedFalse(featureId);
+    }
 }
-
-

@@ -1,4 +1,4 @@
-package xyz.mobi.testingautomationtool.dto.excelDTO;
+package xyz.mobi.testingautomationtool.dto.ExcelDto;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
