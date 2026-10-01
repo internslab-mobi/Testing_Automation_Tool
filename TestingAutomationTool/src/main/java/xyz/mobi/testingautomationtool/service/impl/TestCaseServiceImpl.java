@@ -15,7 +15,6 @@ import xyz.mobi.testingautomationtool.dto.ExcelDto.ExcelUploadResponse;
 import xyz.mobi.testingautomationtool.dto.TestCaseDto.*;
 import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDto.TestCaseExecutionRequest;
 import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDto.TestCaseExecutionResponse;
-import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDto.UpdateExecutionStatusRequest;
 import xyz.mobi.testingautomationtool.dto.TestingExecutionDto.TestingExecutionRequest;
 import xyz.mobi.testingautomationtool.dto.TestingExecutionDto.TestingExecutionResponse;
 import xyz.mobi.testingautomationtool.entity.*;
@@ -63,7 +62,7 @@ public class TestCaseServiceImpl implements TestCaseService {
             throw new CustomException(ErrorCode.INVALID_REQUEST, "Test case request cannot be null");
         }
 
-        TestCaseRequest tcReq = request.getTestCase();
+        xyz.mobi.testingautomationtool.dto.TestCaseDto.TestCaseRequest tcReq = request.getTestCase();
         Feature feature = featureRepository.findByFeatureIdAndIsDeletedFalse(tcReq.getFeatureId())
                 .orElseThrow(() -> new ResourceNotFoundException("Feature not found with ID: " + tcReq.getFeatureId()));
 
