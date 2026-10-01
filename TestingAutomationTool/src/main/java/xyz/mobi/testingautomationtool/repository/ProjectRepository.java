@@ -12,5 +12,5 @@ import java.util.Optional;
 public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaSpecificationExecutor<Project> {
     List<Project> findByIsDeletedFalse();
     Optional<Project> findByProjectIdAndIsDeletedFalse(Integer projectId);
-    boolean existsByProjectName(String projectName);
+    boolean existsByProjectNameAndRegion(String projectName, String region);
 }

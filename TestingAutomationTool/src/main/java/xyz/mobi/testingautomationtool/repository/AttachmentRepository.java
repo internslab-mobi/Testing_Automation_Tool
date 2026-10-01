@@ -13,7 +13,6 @@ import java.util.Optional;
 @Repository
 public interface AttachmentRepository extends JpaRepository<Attachment, Integer> {
     List<Attachment> findByBug_BugIdAndIsDeletedFalse(Integer bugId);
-    List<Attachment> findByTestCase_TestcaseIdAndIsDeletedFalse(Integer testcaseId);
     Optional<Attachment> findTopByFeature_FeatureIdAndIsDeletedFalseOrderByCreatedAtDesc(Integer featureId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
@@ -27,4 +26,10 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Integer>
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Attachment a SET a.isActive = true WHERE (a.feature.project.projectId = :projectId OR a.testCase.feature.project.projectId = :projectId OR a.bug.feature.project.projectId = :projectId) AND a.isDeleted = false")
     int activateAttachmentsByProjectId(@Param("projectId") Integer projectId);
+
+    List<Attachment> findAllByProject_ProjectIdAndIsDeletedFalse(
+            Integer projectId
+    );
+
+    boolean existsByProject_ProjectIdAndFileNameAndIsDeletedFalse(Integer projectId, String filename);
 }

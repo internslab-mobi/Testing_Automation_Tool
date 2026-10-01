@@ -4,16 +4,18 @@ import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.ProjectDto.*;
 import xyz.mobi.testingautomationtool.entity.Attachment;
-import xyz.mobi.testingautomationtool.entity.Feature;
 import xyz.mobi.testingautomationtool.entity.Project;
 import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.AttachmentType;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
+import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
 import xyz.mobi.testingautomationtool.exception.CustomException;
 import xyz.mobi.testingautomationtool.exception.ErrorCode;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
@@ -22,9 +24,14 @@ import xyz.mobi.testingautomationtool.repository.*;
 import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.ProjectService;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -44,7 +51,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     public ProjectResponse createProject(ProjectRequest request) {
-        if (projectRepository.existsByProjectName(request.getProjectName())) {
+        if (projectRepository.existsByProjectNameAndRegion(request.getProjectName(), request.getRegion())) {
             throw new CustomException(ErrorCode.DUPLICATE_RESOURCE);
         }
 
@@ -54,22 +61,38 @@ public class ProjectServiceImpl implements ProjectService {
         project.setUpdatedBy(user);
         project.setActive(true);
         project.setDeleted(false);
-        if (project.getStatus() == null) {
-            project.setStatus(ProjectStatus.ACTIVE);
-        }
+        project.setStatus(ProjectStatus.ACTIVE);
 
         Project saved = projectRepository.save(project);
         return projectMapper.toResponse(saved);
     }
 
     @Override
-    public xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse uploadAttachment(MultipartFile file, Integer projectId) throws IOException {
-        Feature feature = featureRepository.findById(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Project is not present for this id: " + projectId));
+    public AttachmentResponse uploadAttachment(
+            MultipartFile file,
+            Integer projectId) throws IOException {
+
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Project is not present for this id: " + projectId
+                ));
 
         String filename = file.getOriginalFilename();
+
         if (filename == null || filename.isBlank()) {
             filename = "Project_attachment_" + System.currentTimeMillis();
+        }
+
+        // Check duplicate filename within the same project
+        boolean exists = attachmentRepository
+                .existsByProject_ProjectIdAndFileNameAndIsDeletedFalse(
+                        projectId, filename
+                );
+
+        if (exists) {
+            throw new ResourceNotFoundException(
+                    "File already exists in this project: " + filename
+            );
         }
 
         String fileType = file.getContentType();
@@ -80,8 +103,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         Attachment attachment = Attachment.builder()
                 .attachmentType(AttachmentType.PROJECT)
-                .feature(feature)
-                .project(feature.getProject())
+                .project(project)
                 .fileName(filename)
                 .fileType(fileType)
                 .fileSize(fileSize)
@@ -94,9 +116,10 @@ public class ProjectServiceImpl implements ProjectService {
 
         attachmentRepository.save(attachment);
 
-        return xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse.builder()
+        return AttachmentResponse.builder()
                 .attachmentId(attachment.getAttachmentId())
-                .featureId(projectId)
+                .attachmentType(AttachmentType.PROJECT)
+                .projectId(projectId)
                 .fileName(filename)
                 .fileType(fileType)
                 .fileSize(fileSize)
@@ -104,7 +127,6 @@ public class ProjectServiceImpl implements ProjectService {
                 .createdAt(attachment.getCreatedAt())
                 .build();
     }
-
     @Override
     public ProjectPutResponse updateProject(Integer id, ProjectPutRequest request) {
         Project project = projectRepository.findById(id)
@@ -316,5 +338,60 @@ public class ProjectServiceImpl implements ProjectService {
                 .projectId(id)
                 .message("Project and all associated features, test cases, and bugs deactivated successfully")
                 .build();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] downloadFiles(Integer projectId) {
+
+        List<Attachment> attachments =
+                attachmentRepository
+                        .findAllByProject_ProjectIdAndIsDeletedFalse(projectId);
+
+        if (attachments.isEmpty()) {
+            throw new ResourceNotFoundException(
+                    "No attachments found for project ID: " + projectId
+            );
+        }
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ZipOutputStream zos = new ZipOutputStream(baos)) {
+
+            Set<String> fileNames = new HashSet<>();
+
+            for (Attachment attachment : attachments) {
+
+                String fileName = attachment.getFileName();
+                byte[] fileBlob = attachment.getFileBlob();
+
+                if (fileName == null || fileName.isBlank()) {
+                    continue;
+                }
+
+                // Skip duplicate filenames
+                if (!fileNames.add(fileName)) {
+                    continue;
+                }
+
+                if (fileBlob == null) {
+                    continue;
+                }
+
+                ZipEntry zipEntry = new ZipEntry(fileName);
+                zos.putNextEntry(zipEntry);
+                zos.write(fileBlob);
+                zos.closeEntry();
+            }
+
+            zos.finish();
+            return baos.toByteArray();
+
+        } catch (IOException e) {
+
+            throw new AttachmentProcessingException(
+                    "Failed to create ZIP file for project ID: " + projectId
+
+            );
+        }
     }
 }

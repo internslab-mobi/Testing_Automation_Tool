@@ -2,6 +2,7 @@ package xyz.mobi.testingautomationtool.service;
 
 import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.dto.ProjectDto.*;
+import xyz.mobi.testingautomationtool.entity.Attachment;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
 
@@ -27,4 +28,6 @@ public interface ProjectService {
     ProjectResponse getProjectById(Integer projectId);
 
     List<ProjectResponse> searchProjects(String keyword, ProjectStatus status);
+
+    byte[] downloadFiles(Integer projectId);
 }

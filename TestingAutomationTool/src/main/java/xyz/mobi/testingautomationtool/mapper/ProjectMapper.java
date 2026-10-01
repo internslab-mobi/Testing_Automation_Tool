@@ -13,13 +13,17 @@ public interface ProjectMapper {
     @Mapping(target = "isActive", ignore = true)
     @Mapping(target = "isDeleted", ignore = true)
     @Mapping(target = "version", ignore = true)
+    @Mapping(target = "status", ignore = true)
     Project toEntity(ProjectRequest request);
 
     @Mapping(target = "createdBy", source = "createdBy.userId")
     @Mapping(target = "createdByName", source = "createdBy.username")
-    @Mapping(target = "updatedByName", source = "updatedBy.username")
-    @Mapping(target = "isActive", source = "active")
-    @Mapping(target = "isDeleted", source = "deleted")
+    @Mapping(target = "updatedByName", ignore = true)
+    @Mapping(target = "isActive", ignore = true)
+    @Mapping(target = "isDeleted", ignore = true)
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "version", ignore = true)
+    @Mapping(target = "updatedAt", ignore = true)
     ProjectResponse toResponse(Project project);
 
     @Mapping(target = "projectId", ignore = true)

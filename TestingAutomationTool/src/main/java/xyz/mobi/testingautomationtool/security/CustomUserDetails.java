@@ -37,14 +37,11 @@ public class CustomUserDetails implements UserDetails {
             throw new ResourceNotFoundException("User role is not assigned");
         }
 
-
         if (user.getRole().getRole() == null) {
             throw new ResourceNotFoundException("User role is not assigned");
         }
 
         String rawRole = user.getRole().getRole().trim().toUpperCase();
-
-        System.out.println("Final Role: [" + rawRole + "]");
 
         this.roleName = rawRole;
 

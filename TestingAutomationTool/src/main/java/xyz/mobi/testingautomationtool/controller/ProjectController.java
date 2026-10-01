@@ -3,6 +3,7 @@ package xyz.mobi.testingautomationtool.controller;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -10,7 +11,9 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.dto.ProjectDto.*;
+import xyz.mobi.testingautomationtool.entity.Attachment;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
+import xyz.mobi.testingautomationtool.service.AttachmentService;
 import xyz.mobi.testingautomationtool.service.ProjectService;
 
 import java.io.IOException;
@@ -85,5 +88,21 @@ public class ProjectController {
             @PathVariable("id") Integer id) {
         String response = projectService.hardDeleteProject(id);
         return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/projects/{projectId}/attachments/download")
+    public ResponseEntity<byte[]> downloadProjectAttachments(
+            @PathVariable Integer projectId) {
+
+        byte[] zipFile = projectService.downloadFiles(projectId);
+
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"project_" + projectId + "_attachments.zip\""
+                )
+                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .contentLength(zipFile.length)
+                .body(zipFile);
     }
 }

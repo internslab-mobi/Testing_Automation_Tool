@@ -1,5 +1,6 @@
 package xyz.mobi.testingautomationtool.dto.AttachmentDto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import xyz.mobi.testingautomationtool.enums.AttachmentType;
 
@@ -10,6 +11,7 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class AttachmentResponse {
     private Integer attachmentId;
     private Integer bugId;
