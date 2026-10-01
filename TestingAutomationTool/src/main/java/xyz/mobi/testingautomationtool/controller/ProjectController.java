@@ -76,6 +76,13 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
+    @PatchMapping("/access/{id}")
+    public ResponseEntity<String> patchProjectForManger(@PathVariable("id") Integer id,
+                                                        @RequestParam ProjectStatus status                                          ){
+        String response = projectService.patchProjectActiveStatus(id,status);
+        return ResponseEntity.ok(response);
+    }
+
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<PatchProjectDeleteResponse> softDeleteProject(
             @PathVariable("id") Integer id) {

@@ -1,5 +1,6 @@
 package xyz.mobi.testingautomationtool.service;
 
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.dto.ProjectDto.*;
 import xyz.mobi.testingautomationtool.entity.Attachment;
@@ -22,6 +23,9 @@ public interface ProjectService {
     PatchProjectDeleteResponse softDeleteProject(Integer id);
 
     String hardDeleteProject(Integer id);
+
+    @Transactional
+    String patchProjectActiveStatus(Integer id, ProjectStatus isActive);
 
     List<ProjectResponse> getAllProjects();
 

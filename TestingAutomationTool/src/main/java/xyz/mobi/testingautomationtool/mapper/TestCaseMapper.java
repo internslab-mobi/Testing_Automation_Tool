@@ -85,10 +85,6 @@ public interface TestCaseMapper {
     @Mapping(target = "comments", source = "comments")
     TestCaseValidationResponse toValidationResponse(TestingExecution execution);
 
-    @Mapping(source = "feature.featureId", target = "featureId")
-    @Mapping(source = "updatedBy.username", target = "username")
-    @Mapping(source = "active", target = "isActive")
-    PatchTestCaseResponse toPatchResponse(TestCase testCase);
 
     @Mapping(target = "testcaseId", ignore = true)
     @Mapping(target = "feature", ignore = true)

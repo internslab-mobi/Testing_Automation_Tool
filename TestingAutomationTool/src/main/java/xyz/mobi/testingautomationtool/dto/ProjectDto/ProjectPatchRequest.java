@@ -14,7 +14,5 @@ public class ProjectPatchRequest {
     private String projectName;
     private String description;
     private String region;
-    private ProjectStatus status;
     private String comments;
-    private Boolean isActive;
 }

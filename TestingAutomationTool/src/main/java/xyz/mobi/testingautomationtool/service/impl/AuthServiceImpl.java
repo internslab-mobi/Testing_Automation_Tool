@@ -58,8 +58,6 @@ public class AuthServiceImpl implements AuthService {
         User savedUser = userRepository.save(user);
 
         return AuthResponse.builder()
-                .token(null)
-                .type("Bearer")
                 .userId(savedUser.getUserId())
                 .username(savedUser.getUsername())
                 .email(savedUser.getEmail())

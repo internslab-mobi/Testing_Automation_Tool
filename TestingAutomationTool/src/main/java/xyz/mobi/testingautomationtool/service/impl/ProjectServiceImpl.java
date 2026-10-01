@@ -4,10 +4,12 @@ import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.ProjectDto.*;
 import xyz.mobi.testingautomationtool.entity.Attachment;
@@ -142,21 +144,29 @@ public class ProjectServiceImpl implements ProjectService {
         Project savedProject = projectRepository.save(project);
         return projectMapper.toPutResponse(savedProject);
     }
-
     @Override
+    @Transactional
     public String patchProject(Integer id, ProjectPatchRequest request) {
+
         if (request == null) {
             throw new IllegalArgumentException("Patch request cannot be null");
         }
 
         Project project = projectRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + id));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Project not found with ID: " + id
+                        )
+                );
 
-        if (project.isDeleted()) {
-            throw new IllegalStateException("Project is permanently deleted and cannot be modified with ID: " + id);
+        if (project.isDeleted() || !project.isActive()) {
+            throw new IllegalStateException(
+                    "Project is permanently deleted and cannot be modified with ID or contact to manager: " + id
+            );
         }
 
         User currentUser = authService.getCurrentUser();
+
         List<String> updatedFields = new ArrayList<>();
 
         if (request.getProjectName() != null) {
@@ -179,61 +189,85 @@ public class ProjectServiceImpl implements ProjectService {
             updatedFields.add("comments");
         }
 
-        if (request.getStatus() != null || request.getIsActive() != null) {
-            String roleName = (currentUser != null && currentUser.getRole() != null && currentUser.getRole().getRole() != null)
-                    ? currentUser.getRole().getRole().toUpperCase() : "";
-            boolean isManager = roleName.contains("MANAGER") || roleName.contains("ADMIN");
-            if (!isManager) {
-                throw new org.springframework.security.access.AccessDeniedException("Only MANAGER role can change project status or active state");
-            }
-
-            if (request.getStatus() != null) {
-                ProjectStatus status = request.getStatus();
-                project.setStatus(status);
-                if (status == ProjectStatus.ACTIVE) {
-                    project.setActive(true);
-                    bugRepository.activateBugsByProjectId(id);
-                    attachmentRepository.activateAttachmentsByProjectId(id);
-                    testCaseRepository.activateTestCasesByProjectId(id);
-                    featureRepository.activateFeaturesByProjectId(id);
-                } else if (status == ProjectStatus.INACTIVE) {
-                    project.setActive(false);
-                    bugRepository.deactivateBugsByProjectId(id);
-                    attachmentRepository.deactivateAttachmentsByProjectId(id);
-                    testCaseRepository.deactivateTestCasesByProjectId(id);
-                    featureRepository.deactivateFeaturesByProjectId(id);
-                }
-                updatedFields.add("status");
-            }
-
-            if (request.getIsActive() != null) {
-                boolean active = request.getIsActive();
-                project.setActive(active);
-                project.setStatus(active ? ProjectStatus.ACTIVE : ProjectStatus.INACTIVE);
-                if (active) {
-                    bugRepository.activateBugsByProjectId(id);
-                    attachmentRepository.activateAttachmentsByProjectId(id);
-                    testCaseRepository.activateTestCasesByProjectId(id);
-                    featureRepository.activateFeaturesByProjectId(id);
-                } else {
-                    bugRepository.deactivateBugsByProjectId(id);
-                    attachmentRepository.deactivateAttachmentsByProjectId(id);
-                    testCaseRepository.deactivateTestCasesByProjectId(id);
-                    featureRepository.deactivateFeaturesByProjectId(id);
-                }
-                updatedFields.add("isActive");
-            }
-        }
-
         if (updatedFields.isEmpty()) {
-            throw new IllegalArgumentException("At least one field must be provided for update");
+            throw new IllegalArgumentException(
+                    "At least one field must be provided for update"
+            );
         }
 
         project.setUpdatedBy(currentUser);
+
         projectRepository.save(project);
 
-        return "Project with ID " + id + " updated successfully. Changed fields: " + String.join(", ", updatedFields);
+        return "Project with ID " + id +
+                " updated successfully. Changed fields: " +
+                String.join(", ", updatedFields);
     }
+
+
+    @Transactional
+    @Override
+    public String patchProjectActiveStatus(Integer id, ProjectStatus isActive) {
+
+        if (isActive == null) {
+            throw new IllegalArgumentException(
+                    "isActive cannot be null"
+            );
+        }
+        Project project = projectRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Project not found with ID: " + id
+                        )
+                );
+
+
+        if (project.isDeleted()) {
+            throw new IllegalStateException(
+                    "Project is permanently deleted cannot be modified" + id
+            );
+        }
+        if(isActive==project.getStatus()){
+            throw new IllegalStateException("Project is already in same status:"+id);
+        }
+
+        User currentUser = authService.getCurrentUser();
+
+        if (currentUser == null ||
+                currentUser.getRole() == null ||
+                currentUser.getRole().getRole() == null ||
+                !currentUser.getRole().getRole()
+                        .equalsIgnoreCase("MANAGER")) {
+
+            throw new AccessDeniedException(
+                    "Only MANAGER can change project active status"
+            );
+        }
+        boolean condition = isActive == ProjectStatus.ACTIVE;
+        project.setActive(condition);
+
+        project.setStatus(
+                isActive
+        );
+
+        if (condition) {
+
+            bugRepository.activateBugsByProjectId(id);
+            attachmentRepository.activateAttachmentsByProjectId(id);
+            testCaseRepository.activateTestCasesByProjectId(id);
+            featureRepository.activateFeaturesByProjectId(id);
+
+        } else {
+            bugRepository.deactivateBugsByProjectId(id);
+            attachmentRepository.deactivateAttachmentsByProjectId(id);
+            testCaseRepository.deactivateTestCasesByProjectId(id);
+            featureRepository.deactivateFeaturesByProjectId(id);
+        }
+
+        return "Project with ID " + id +
+                " active status changed to " + isActive +
+                " successfully";
+        }
 
     @Override
     @Transactional(readOnly = true)

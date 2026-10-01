@@ -40,13 +40,4 @@ public interface ProjectMapper {
     @Mapping(source = "deleted", target = "isDeleted")
     ProjectPutResponse toPutResponse(Project project);
 
-    @Mapping(source = "updatedBy.username", target = "updatedBy")
-    PatchProjectResponse toPatchResponse(Project project);
-
-    @Mapping(target = "projectId", ignore = true)
-    @Mapping(target = "createdBy", ignore = true)
-    @Mapping(target = "updatedBy", ignore = true)
-    @Mapping(target = "deleted", ignore = true)
-    @Mapping(target = "version", ignore = true)
-    void patchEntity(@MappingTarget Project project, ProjectPatchRequest request);
 }

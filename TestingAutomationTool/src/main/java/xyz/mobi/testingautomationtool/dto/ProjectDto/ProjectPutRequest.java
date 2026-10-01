@@ -23,7 +23,6 @@ public class ProjectPutRequest {
     @Size(max = 255, message = "Region cannot exceed 255 characters")
     private String region;
 
-    private ProjectStatus status;
 
     private String comments;
 }

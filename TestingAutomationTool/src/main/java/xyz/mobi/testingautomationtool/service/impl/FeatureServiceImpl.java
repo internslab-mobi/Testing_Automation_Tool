@@ -94,7 +94,6 @@ public class FeatureServiceImpl implements FeatureService {
         Attachment attachment = Attachment.builder()
                 .attachmentType(AttachmentType.FEATURE)
                 .feature(feature)
-                .project(feature.getProject())
                 .fileName(filename)
                 .fileType(fileType)
                 .fileSize(fileSize)
@@ -114,6 +113,7 @@ public class FeatureServiceImpl implements FeatureService {
                 .fileType(fileType)
                 .fileSize(fileSize)
                 .uploadedBy(user != null ? user.getUserId() : null)
+                .attachmentType(AttachmentType.FEATURE)
                 .createdAt(attachment.getCreatedAt())
                 .build();
     }
