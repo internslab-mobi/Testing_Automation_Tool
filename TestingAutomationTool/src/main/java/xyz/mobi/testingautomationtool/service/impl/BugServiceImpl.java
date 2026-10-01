@@ -23,7 +23,9 @@ import xyz.mobi.testingautomationtool.service.NotificationService;
 import xyz.mobi.testingautomationtool.specification.BugSpecification;
 
 import java.time.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 
 @Slf4j
@@ -226,7 +228,11 @@ public class BugServiceImpl implements BugService {
     }
 
     @Override
-    public BugResponse patchBug(Integer bugId, BugPatchRequest request) {
+    public String patchBug(Integer bugId, BugPatchRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException("Bug patch request cannot be null");
+        }
+
         Bug bug = bugRepository.findById(bugId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bug not found with ID: " + bugId));
 
@@ -234,58 +240,109 @@ public class BugServiceImpl implements BugService {
             throw new ResourceNotFoundException("Bug is deleted with ID: " + bugId);
         }
 
-        bugMapper.patchEntity(bug, request);
-        bug.setUpdatedBy(authService.getCurrentUser());
-        Bug saved = bugRepository.save(bug);
-        return bugMapper.toResponse(saved);
-    }
+        List<String> updatedFields = new ArrayList<>();
 
-    @Override
-    public BugResponse assignBug(Integer bugId, BugAssignRequest request) {
-        Bug bug = bugRepository.findById(bugId)
-                .orElseThrow(() -> new ResourceNotFoundException("Bug not found with ID: " + bugId));
-
-        User newAssignee = userRepository.findById(request.getAssignedTo())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + request.getAssignedTo()));
-
-        User previousAssignee = bug.getAssignedTo();
-        bug.setAssignedTo(newAssignee);
-        bug.setUpdatedBy(authService.getCurrentUser());
-        Bug saved = bugRepository.save(bug);
-
-        if (previousAssignee != null && previousAssignee.getEmail() != null) {
-            emailService.sendBugReassignedEmail(previousAssignee.getEmail(), saved);
-        }
-        if (newAssignee.getEmail() != null) {
-            emailService.sendBugAssignedEmail(newAssignee.getEmail(), saved);
+        if (request.getTitle() != null && !request.getTitle().isBlank()) {
+            bug.setTitle(request.getTitle());
+            updatedFields.add("title");
         }
 
-        return bugMapper.toResponse(saved);
-    }
-
-    @Override
-    public BugResponse updateStatus(Integer bugId, BugStatusRequest request) {
-        Bug bug = bugRepository.findById(bugId)
-                .orElseThrow(() -> new ResourceNotFoundException("Bug not found with ID: " + bugId));
-
-        bugMapper.updateStatus(request, bug);
-        if (request.getStatus() == BugStatus.CLOSED || request.getStatus() == BugStatus.RESOLVED) {
-            bug.setResolvedAt(Instant.now());
+        if (request.getDescription() != null) {
+            bug.setDescription(request.getDescription());
+            updatedFields.add("description");
         }
-        bug.setUpdatedBy(authService.getCurrentUser());
-        Bug saved = bugRepository.save(bug);
-        return bugMapper.toResponse(saved);
-    }
 
-    @Override
-    public BugResponse updateDeveloperStatus(Integer bugId, DeveloperBugStatusRequest request) {
-        Bug bug = bugRepository.findById(bugId)
-                .orElseThrow(() -> new ResourceNotFoundException("Bug not found with ID: " + bugId));
+        if (request.getSeverity() != null) {
+            bug.setSeverity(request.getSeverity());
+            updatedFields.add("severity");
+        }
 
-        bugMapper.updateDeveloperStatus(request, bug);
+        if (request.getPriority() != null) {
+            bug.setPriority(request.getPriority());
+            updatedFields.add("priority");
+        }
+
+        if (request.getCategory() != null) {
+            bug.setCategory(request.getCategory());
+            updatedFields.add("category");
+        }
+
+        if (request.getComments() != null) {
+            bug.setComments(request.getComments());
+            updatedFields.add("comments");
+        }
+
+        if (request.getBugOccurrence() != null) {
+            bug.setBugOccurrence(request.getBugOccurrence());
+            updatedFields.add("bugOccurrence");
+        }
+
+        if (request.getIsActive() != null) {
+            bug.setActive(request.getIsActive());
+            updatedFields.add("isActive");
+        }
+
+        if (request.getDynamicFields() != null) {
+            if (bug.getDynamicFields() == null) {
+                bug.setDynamicFields(new HashMap<>());
+            }
+            request.getDynamicFields().forEach((key, value) -> {
+                if (value == null) {
+                    bug.getDynamicFields().remove(key);
+                } else {
+                    bug.getDynamicFields().put(key, value);
+                }
+            });
+            updatedFields.add("dynamicFields");
+        }
+
+        BugStatus effectiveStatus = request.getEffectiveStatus();
+        if (effectiveStatus != null) {
+            bug.setStatus(effectiveStatus);
+            if (effectiveStatus == BugStatus.CLOSED || effectiveStatus == BugStatus.RESOLVED) {
+                bug.setResolvedAt(Instant.now());
+            }
+            updatedFields.add("status");
+        } else if (request.getDeveloperStatus() != null) {
+            bug.setStatus(BugStatus.valueOf(request.getDeveloperStatus().name()));
+            updatedFields.add("developerStatus");
+        }
+
+        Integer effectiveAssignedTo = request.getEffectiveAssignedTo();
+        if (effectiveAssignedTo != null) {
+            User newAssignee = userRepository.findById(effectiveAssignedTo)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + effectiveAssignedTo));
+
+            User previousAssignee = bug.getAssignedTo();
+            bug.setAssignedTo(newAssignee);
+
+            if (previousAssignee != null && previousAssignee.getEmail() != null) {
+                emailService.sendBugReassignedEmail(previousAssignee.getEmail(), bug);
+            }
+            if (newAssignee.getEmail() != null) {
+                emailService.sendBugAssignedEmail(newAssignee.getEmail(), bug);
+            }
+
+            BugHistory history = BugHistory.builder()
+                    .bug(bug)
+                    .executedBy(authService.getCurrentUser().getUserId())
+                    .bugStatus(bug.getStatus())
+                    .assignedTo(newAssignee.getUserId())
+                    .createdAt(Instant.now())
+                    .build();
+            bugHistoryRepository.save(history);
+
+            updatedFields.add("assignedTo");
+        }
+
+        if (updatedFields.isEmpty()) {
+            throw new IllegalArgumentException("At least one field must be provided for update");
+        }
+
         bug.setUpdatedBy(authService.getCurrentUser());
-        Bug saved = bugRepository.save(bug);
-        return bugMapper.toResponse(saved);
+        bugRepository.save(bug);
+
+        return "Bug with ID " + bugId + " updated successfully. Changed fields: " + String.join(", ", updatedFields);
     }
 
     @Override

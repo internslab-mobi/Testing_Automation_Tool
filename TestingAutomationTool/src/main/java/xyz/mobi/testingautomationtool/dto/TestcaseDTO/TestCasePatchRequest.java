@@ -19,6 +19,13 @@ public class TestCasePatchRequest {
     private String title;
     private TestType testType;
     private TestPriority testPriority;
+    private String testExecution;
+    private String testValidation;
+    private String precondition;
+    private String testData;
+    private String executionSteps;
+    private String uiValidations;
+    private String dbValidations;
     private Boolean isActive;
     private String comments;
     private Map<String, Object> dynamicFields;

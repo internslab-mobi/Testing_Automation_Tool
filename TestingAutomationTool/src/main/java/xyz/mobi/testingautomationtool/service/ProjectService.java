@@ -13,8 +13,6 @@ public interface ProjectService {
 
     String patchProject(Integer id, ProjectPatchRequest request);
 
-    PatchProjectResponse updateProjectStatus(Integer id, ProjectStatus status);
-
     PatchProjectDeleteResponse softDeleteProject(Integer id);
 
     String hardDeleteProject(Integer id);

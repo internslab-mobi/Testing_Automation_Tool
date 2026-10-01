@@ -25,7 +25,7 @@ import xyz.mobi.testingautomationtool.enums.TestType;
 import xyz.mobi.testingautomationtool.service.TestCaseService;
 
 @RestController
-@RequestMapping({"/testcases", "/testcase"})
+@RequestMapping("/testcases")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
@@ -33,8 +33,8 @@ public class TestcaseController {
 
     private final TestCaseService testCaseService;
 
-    @PostMapping({"", "/manual"})
-    public ResponseEntity<TestCaseExecutionResponse> createTestCaseManual(
+    @PostMapping
+    public ResponseEntity<TestCaseExecutionResponse> createTestCase(
             @Valid @RequestBody TestCaseExecutionRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(testCaseService.createTestCaseByManual(request));
@@ -58,9 +58,9 @@ public class TestcaseController {
                 .body(excelBytes);
     }
 
-    @GetMapping({"", "/feature/{featureId}"})
+    @GetMapping
     public ResponseEntity<Page<TestCaseResponse>> getAllTestCases(
-            @PathVariable(name = "featureId", required = false) Integer featureId,
+            @RequestParam(required = false) Integer featureId,
             @RequestParam(required = false) TestCaseStatus status,
             @RequestParam(required = false) TestType type,
             @RequestParam(required = false) TestPriority priority,
@@ -93,7 +93,7 @@ public class TestcaseController {
         );
     }
 
-    @PutMapping({"/{id}", "/{id}/update"})
+    @PutMapping("/{id}")
     public ResponseEntity<TestCasePutResponse> updateTestCaseDetails(
             @Valid @RequestBody TestCasePutRequest testCasePutRequest,
             @PathVariable("id") Integer id) {
@@ -109,15 +109,7 @@ public class TestcaseController {
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/{id}/status")
-    public ResponseEntity<String> updateExecutionStatus(
-            @PathVariable("id") Integer id,
-            @Valid @RequestBody UpdateExecutionStatusRequest request) {
-        String response = testCaseService.updateExecutionStatus(id, request);
-        return ResponseEntity.ok(response);
-    }
-
-    @DeleteMapping({"/delete/{id}", "/soft/{id}"})
+    @DeleteMapping("/soft/{id}")
     public ResponseEntity<PatchTestCaseDeleteResponse> softDelete(
             @PathVariable("id") Integer id) {
         PatchTestCaseDeleteResponse response = testCaseService.softDeleteTestCase(id);

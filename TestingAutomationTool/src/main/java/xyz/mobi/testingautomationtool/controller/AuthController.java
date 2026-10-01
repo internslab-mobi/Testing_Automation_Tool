@@ -44,13 +44,6 @@ public class AuthController {
         return ResponseEntity.ok(profile);
     }
 
-    @Operation(summary = "Get current authenticated user profile alias", security = @SecurityRequirement(name = "bearerAuth"))
-    @GetMapping("/me")
-    public ResponseEntity<UserProfileResponse> getCurrentUser(@AuthenticationPrincipal UserDetails userDetails) {
-        UserProfileResponse profile = authService.getCurrentUserProfile(userDetails.getUsername());
-        return ResponseEntity.ok(profile);
-    }
-
     @Operation(summary = "Change password for logged in user", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping("/change-password")
     public ResponseEntity<Map<String, String>> changePassword(

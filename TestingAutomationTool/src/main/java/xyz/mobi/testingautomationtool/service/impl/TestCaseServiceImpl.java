@@ -259,6 +259,11 @@ public class TestCaseServiceImpl implements TestCaseService {
 
         List<String> updatedFields = new ArrayList<>();
 
+        if (request.getTitle() != null && !request.getTitle().isBlank()) {
+            testCase.setTitle(request.getTitle());
+            updatedFields.add("title");
+        }
+
         if (request.getTestType() != null) {
             testCase.setTestType(request.getTestType());
             updatedFields.add("testType");
@@ -296,15 +301,53 @@ public class TestCaseServiceImpl implements TestCaseService {
             updatedFields.add("dynamicFields");
         }
 
-        if (request.getComments() != null || request.getAutomationFeasibility() != null || request.getExecutionStatus() != null) {
+        boolean hasExecutionUpdates = request.getComments() != null
+                || request.getAutomationFeasibility() != null
+                || request.getExecutionStatus() != null
+                || request.getTestExecution() != null
+                || request.getTestValidation() != null
+                || request.getPrecondition() != null
+                || request.getTestData() != null
+                || request.getExecutionSteps() != null
+                || request.getUiValidations() != null
+                || request.getDbValidations() != null;
+
+        if (hasExecutionUpdates) {
             TestingExecution execution = testingExecutionRepository.findByTestCase(testCase)
                     .orElseGet(() -> TestingExecution.builder().testCase(testCase).build());
 
+            if (request.getTestExecution() != null) {
+                execution.setTestExecution(request.getTestExecution());
+                updatedFields.add("testExecution");
+            }
+            if (request.getTestValidation() != null) {
+                execution.setTestValidation(request.getTestValidation());
+                updatedFields.add("testValidation");
+            }
+            if (request.getPrecondition() != null) {
+                execution.setPrecondition(request.getPrecondition());
+                updatedFields.add("precondition");
+            }
+            if (request.getTestData() != null) {
+                execution.setTestData(request.getTestData());
+                updatedFields.add("testData");
+            }
+            if (request.getExecutionSteps() != null) {
+                execution.setExecutionSteps(request.getExecutionSteps());
+                updatedFields.add("executionSteps");
+            }
+            if (request.getUiValidations() != null) {
+                execution.setUiValidations(request.getUiValidations());
+                updatedFields.add("uiValidations");
+            }
+            if (request.getDbValidations() != null) {
+                execution.setDbValidations(request.getDbValidations());
+                updatedFields.add("dbValidations");
+            }
             if (request.getComments() != null) {
                 execution.setComments(request.getComments());
                 updatedFields.add("comments");
             }
-
             if (request.getAutomationFeasibility() != null) {
                 execution.setAutomationFeasibility(request.getAutomationFeasibility());
                 updatedFields.add("automationFeasibility");
@@ -336,49 +379,6 @@ public class TestCaseServiceImpl implements TestCaseService {
 
         testCaseRepository.save(testCase);
         return "Test case with ID " + id + " updated successfully. Changed fields: " + String.join(", ", updatedFields);
-    }
-
-    @Override
-    public String updateExecutionStatus(Integer testCaseId, UpdateExecutionStatusRequest request) {
-        TestCase testCase = testCaseRepository.findById(testCaseId)
-                .orElseThrow(() -> new ResourceNotFoundException("Test case not found with ID: " + testCaseId));
-
-        if (testCase.isDeleted()) {
-            throw new ResourceNotFoundException("Test case is deleted with ID: " + testCaseId);
-        }
-
-        TestingExecution execution = testingExecutionRepository.findByTestCase(testCase)
-                .orElseGet(() -> TestingExecution.builder().testCase(testCase).build());
-
-        ExecutionStatus executionStatus = request.getExecutionStatus();
-        if (executionStatus != null) {
-            execution.setExecutionStatus(executionStatus);
-
-            TestCaseStatus testCaseStatus = switch (executionStatus) {
-                case PASS -> TestCaseStatus.PASSED;
-                case FAIL -> TestCaseStatus.FAILED;
-                case DESCOPE -> TestCaseStatus.DESCOPE;
-            };
-            testCase.setTestcaseStatus(testCaseStatus);
-        }
-
-        if (request.getAutomationFeasibility() != null) {
-            execution.setAutomationFeasibility(request.getAutomationFeasibility());
-        }
-
-        if (request.getComments() != null) {
-            execution.setComments(request.getComments());
-        }
-
-        testCase.setUpdatedBy(authService.getCurrentUser());
-        execution.setExecutedBy(authService.getCurrentUser());
-        execution.setExecutedAt(Instant.now());
-        execution.setExecutionNumber((execution.getExecutionNumber() != null ? execution.getExecutionNumber() : 0) + 1);
-
-        testingExecutionRepository.save(execution);
-        testCaseRepository.save(testCase);
-
-        return "Execution status updated successfully for test case ID: " + testCaseId;
     }
 
     @Override

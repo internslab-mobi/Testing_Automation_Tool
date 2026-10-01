@@ -3,6 +3,7 @@ package xyz.mobi.testingautomationtool.controller;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,45 +25,16 @@ public class FeatureController {
 
     private final FeatureService featureService;
 
-    @GetMapping("/{featureId}")
-    public ResponseEntity<FeatureResponse> getFeatureById(@PathVariable Integer featureId) {
-        return ResponseEntity.ok(featureService.getFeatureById(featureId));
-    }
-
-    @PatchMapping("/{featureId}")
-    public ResponseEntity<FeaturePatchResponse> patchFeature(
-            @PathVariable Integer featureId,
-            @RequestBody FeaturePatchRequest request) {
-        return ResponseEntity.ok(featureService.patchFeature(featureId, request));
-    }
-
-    @DeleteMapping("/{featureId}")
-    public ResponseEntity<Void> deleteFeature(
-            @PathVariable Integer featureId,
-            @RequestParam(required = false) Integer updatedBy) {
-        featureService.deleteFeature(featureId, updatedBy);
-        return ResponseEntity.noContent().build();
-    }
-
-    @PostMapping(value = "/create")
-    public ResponseEntity<FeatureResponse> createFeatureDetails(
-            @Valid @RequestBody FeatureRequest featureRequest) {
-        FeatureResponse featureResponse = featureService.createFeature(featureRequest);
-        return ResponseEntity.ok(featureResponse);
-    }
-
     @PostMapping
     public ResponseEntity<FeatureResponse> createFeature(
             @Valid @RequestBody FeatureRequest featureRequest) {
         FeatureResponse featureResponse = featureService.createFeature(featureRequest);
-        return ResponseEntity.ok(featureResponse);
+        return ResponseEntity.status(HttpStatus.CREATED).body(featureResponse);
     }
 
-    @PutMapping("/{featureId}")
-    public ResponseEntity<FeaturePutResponse> updateFeature(
-            @PathVariable Integer featureId,
-            @Valid @RequestBody FeaturePutRequest request) {
-        return ResponseEntity.ok(featureService.updateFeature(featureId, request));
+    @GetMapping("/{featureId}")
+    public ResponseEntity<FeatureResponse> getFeatureById(@PathVariable Integer featureId) {
+        return ResponseEntity.ok(featureService.getFeatureById(featureId));
     }
 
     @GetMapping("/project/{projectId}")
@@ -75,14 +47,26 @@ public class FeatureController {
         return ResponseEntity.ok(featureService.searchFeatures(request));
     }
 
-    @PatchMapping("/{featureId}/start")
-    public ResponseEntity<FeatureStartTimeResponse> startFeature(@PathVariable Integer featureId) {
-        return ResponseEntity.ok(featureService.startFeature(featureId));
+    @PutMapping("/{featureId}")
+    public ResponseEntity<FeaturePutResponse> updateFeature(
+            @PathVariable Integer featureId,
+            @Valid @RequestBody FeaturePutRequest request) {
+        return ResponseEntity.ok(featureService.updateFeature(featureId, request));
     }
 
-    @PatchMapping("/{featureId}/end")
-    public ResponseEntity<FeatureDurationResponse> endFeature(@PathVariable Integer featureId) {
-        return ResponseEntity.ok(featureService.endFeature(featureId));
+    @PatchMapping("/{featureId}")
+    public ResponseEntity<String> patchFeature(
+            @PathVariable Integer featureId,
+            @RequestBody FeaturePatchRequest request) {
+        return ResponseEntity.ok(featureService.patchFeature(featureId, request));
+    }
+
+    @DeleteMapping("/{featureId}")
+    public ResponseEntity<Void> deleteFeature(
+            @PathVariable Integer featureId,
+            @RequestParam(required = false) Integer updatedBy) {
+        featureService.deleteFeature(featureId, updatedBy);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping(value = "/attachment/{featureId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

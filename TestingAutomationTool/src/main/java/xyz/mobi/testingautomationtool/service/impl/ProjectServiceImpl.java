@@ -86,6 +86,7 @@ public class ProjectServiceImpl implements ProjectService {
             throw new IllegalStateException("Project is permanently deleted and cannot be modified with ID: " + id);
         }
 
+        User currentUser = authService.getCurrentUser();
         List<String> updatedFields = new ArrayList<>();
 
         if (request.getProjectName() != null) {
@@ -108,21 +109,57 @@ public class ProjectServiceImpl implements ProjectService {
             updatedFields.add("comments");
         }
 
-        if (request.getStatus() != null) {
-            project.setStatus(request.getStatus());
-            updatedFields.add("status");
-        }
+        if (request.getStatus() != null || request.getIsActive() != null) {
+            String roleName = (currentUser != null && currentUser.getRole() != null && currentUser.getRole().getRole() != null)
+                    ? currentUser.getRole().getRole().toUpperCase() : "";
+            boolean isManager = roleName.contains("MANAGER") || roleName.contains("ADMIN");
+            if (!isManager) {
+                throw new org.springframework.security.access.AccessDeniedException("Only MANAGER role can change project status or active state");
+            }
 
-        if (request.getIsActive() != null) {
-            project.setActive(request.getIsActive());
-            updatedFields.add("isActive");
+            if (request.getStatus() != null) {
+                ProjectStatus status = request.getStatus();
+                project.setStatus(status);
+                if (status == ProjectStatus.ACTIVE) {
+                    project.setActive(true);
+                    bugRepository.activateBugsByProjectId(id);
+                    attachmentRepository.activateAttachmentsByProjectId(id);
+                    testCaseRepository.activateTestCasesByProjectId(id);
+                    featureRepository.activateFeaturesByProjectId(id);
+                } else if (status == ProjectStatus.INACTIVE) {
+                    project.setActive(false);
+                    bugRepository.deactivateBugsByProjectId(id);
+                    attachmentRepository.deactivateAttachmentsByProjectId(id);
+                    testCaseRepository.deactivateTestCasesByProjectId(id);
+                    featureRepository.deactivateFeaturesByProjectId(id);
+                }
+                updatedFields.add("status");
+            }
+
+            if (request.getIsActive() != null) {
+                boolean active = request.getIsActive();
+                project.setActive(active);
+                project.setStatus(active ? ProjectStatus.ACTIVE : ProjectStatus.INACTIVE);
+                if (active) {
+                    bugRepository.activateBugsByProjectId(id);
+                    attachmentRepository.activateAttachmentsByProjectId(id);
+                    testCaseRepository.activateTestCasesByProjectId(id);
+                    featureRepository.activateFeaturesByProjectId(id);
+                } else {
+                    bugRepository.deactivateBugsByProjectId(id);
+                    attachmentRepository.deactivateAttachmentsByProjectId(id);
+                    testCaseRepository.deactivateTestCasesByProjectId(id);
+                    featureRepository.deactivateFeaturesByProjectId(id);
+                }
+                updatedFields.add("isActive");
+            }
         }
 
         if (updatedFields.isEmpty()) {
             throw new IllegalArgumentException("At least one field must be provided for update");
         }
 
-        project.setUpdatedBy(authService.getCurrentUser());
+        project.setUpdatedBy(currentUser);
         projectRepository.save(project);
 
         return "Project with ID " + id + " updated successfully. Changed fields: " + String.join(", ", updatedFields);
@@ -210,44 +247,6 @@ public class ProjectServiceImpl implements ProjectService {
         projectRepository.delete(project);
 
         return "Project '" + projectName + "' and all associated features, test cases, executions, and bugs deleted successfully";
-    }
-
-    @Override
-    public PatchProjectResponse updateProjectStatus(Integer projectId, ProjectStatus status) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + projectId));
-
-        User user = authService.getCurrentUser();
-        project.setUpdatedBy(user);
-
-        if (status == ProjectStatus.ACTIVE) {
-            project.setActive(true);
-            project.setStatus(ProjectStatus.ACTIVE);
-            projectRepository.save(project);
-            bugRepository.activateBugsByProjectId(projectId);
-            attachmentRepository.activateAttachmentsByProjectId(projectId);
-            testCaseRepository.activateTestCasesByProjectId(projectId);
-            featureRepository.activateFeaturesByProjectId(projectId);
-        } else if (status == ProjectStatus.INACTIVE) {
-            project.setActive(false);
-            project.setStatus(ProjectStatus.INACTIVE);
-            projectRepository.save(project);
-            bugRepository.deactivateBugsByProjectId(projectId);
-            attachmentRepository.deactivateAttachmentsByProjectId(projectId);
-            testCaseRepository.deactivateTestCasesByProjectId(projectId);
-            featureRepository.deactivateFeaturesByProjectId(projectId);
-        }
-
-        return PatchProjectResponse.builder()
-                .projectId(project.getProjectId())
-                .projectName(project.getProjectName())
-                .description(project.getDescription())
-                .region(project.getRegion())
-                .comments(project.getComments())
-                .updatedAt(project.getUpdatedAt())
-                .status(project.getStatus())
-                .updatedBy(user.getFullName() != null ? user.getFullName() : user.getUsername())
-                .build();
     }
 
     @Override

@@ -12,10 +12,7 @@ import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import xyz.mobi.testingautomationtool.dto.request.auth.LoginRequest;
-import xyz.mobi.testingautomationtool.dto.request.auth.RegisterRequest;
-import xyz.mobi.testingautomationtool.dto.response.auth.AuthResponse;
-import xyz.mobi.testingautomationtool.dto.response.auth.UserProfileResponse;
+import xyz.mobi.testingautomationtool.dto.AuthDto.*;
 import xyz.mobi.testingautomationtool.service.AuthService;
 
 import java.util.Collections;
@@ -52,7 +49,7 @@ class AuthControllerTest {
                 .email("manager@example.com")
                 .password("password123")
                 .fullName("Manager User")
-                .role("MANAGER")
+                .designation("QA Lead")
                 .build();
 
         AuthResponse authResponse = AuthResponse.builder()

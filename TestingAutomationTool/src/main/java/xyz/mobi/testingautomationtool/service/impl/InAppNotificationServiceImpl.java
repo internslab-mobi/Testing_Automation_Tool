@@ -3,7 +3,7 @@ package xyz.mobi.testingautomationtool.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import xyz.mobi.testingautomationtool.dto.NotificationDto.InAppNotificationResponse;
+import xyz.mobi.testingautomationtool.dto.NotificationDto.*;
 import xyz.mobi.testingautomationtool.entity.Bug;
 import xyz.mobi.testingautomationtool.entity.Comment;
 import xyz.mobi.testingautomationtool.entity.InAppNotification;
@@ -70,6 +70,27 @@ public class InAppNotificationServiceImpl implements InAppNotificationService {
 
         notification.setNotificationStatus(InAppNotificationStatus.READ);
         inAppNotificationRepository.save(notification);
+    }
+
+    @Transactional
+    @Override
+    public String patchNotification(Integer notificationId, xyz.mobi.testingautomationtool.dto.NotificationDto.NotificationPatchRequest request) {
+        InAppNotification notification = inAppNotificationRepository.findById(notificationId)
+                .orElseThrow(() -> new ResourceNotFoundException("Notification not found with ID: " + notificationId));
+
+        Integer currentUserId = authService.getCurrentUser().getUserId();
+        if (!Objects.equals(notification.getEmployee().getUserId(), currentUserId)) {
+            throw new IllegalStateException("You are not allowed to update this notification");
+        }
+
+        InAppNotificationStatus newStatus = (request != null && request.getStatus() != null)
+                ? request.getStatus()
+                : InAppNotificationStatus.READ;
+
+        notification.setNotificationStatus(newStatus);
+        inAppNotificationRepository.save(notification);
+
+        return "Notification with ID " + notificationId + " updated successfully to status " + newStatus;
     }
 
     @Transactional

@@ -13,6 +13,8 @@ public interface InAppNotificationService {
 
     void markAsRead(Integer notificationId);
 
+    String patchNotification(Integer notificationId, xyz.mobi.testingautomationtool.dto.NotificationDto.NotificationPatchRequest request);
+
     void deleteNotification(Integer notificationId);
 
     void createNewCommentNotification(Comment comment);

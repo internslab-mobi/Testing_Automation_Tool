@@ -19,13 +19,7 @@ public interface BugService {
 
     BugResponse updateBug(Integer bugId, BugPutRequest request);
 
-    BugResponse patchBug(Integer bugId, BugPatchRequest request);
-
-    BugResponse assignBug(Integer bugId, BugAssignRequest request);
-
-    BugResponse updateStatus(Integer bugId, BugStatusRequest request);
-
-    BugResponse updateDeveloperStatus(Integer bugId, DeveloperBugStatusRequest request);
+    String patchBug(Integer bugId, BugPatchRequest request);
 
     void deleteBug(Integer bugId);
 

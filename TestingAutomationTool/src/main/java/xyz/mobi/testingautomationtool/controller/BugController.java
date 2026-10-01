@@ -65,31 +65,10 @@ public class BugController {
     }
 
     @PatchMapping("/{bugId}")
-    public ResponseEntity<BugResponse> patchBug(
+    public ResponseEntity<String> patchBug(
             @PathVariable Integer bugId,
             @Valid @RequestBody BugPatchRequest request) {
         return ResponseEntity.ok(bugService.patchBug(bugId, request));
-    }
-
-    @PatchMapping("/{bugId}/assign")
-    public ResponseEntity<BugResponse> assignBug(
-            @PathVariable Integer bugId,
-            @Valid @RequestBody BugAssignRequest request) {
-        return ResponseEntity.ok(bugService.assignBug(bugId, request));
-    }
-
-    @PatchMapping("/{bugId}/status")
-    public ResponseEntity<BugResponse> updateStatus(
-            @PathVariable Integer bugId,
-            @Valid @RequestBody BugStatusRequest request) {
-        return ResponseEntity.ok(bugService.updateStatus(bugId, request));
-    }
-
-    @PatchMapping("/{bugId}/developer-status")
-    public ResponseEntity<BugResponse> updateDeveloperStatus(
-            @PathVariable Integer bugId,
-            @Valid @RequestBody DeveloperBugStatusRequest request) {
-        return ResponseEntity.ok(bugService.updateDeveloperStatus(bugId, request));
     }
 
     @DeleteMapping("/{bugId}")

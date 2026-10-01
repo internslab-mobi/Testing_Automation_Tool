@@ -19,15 +19,11 @@ public interface FeatureService {
 
     FeaturePutResponse updateFeature(Integer featureId, FeaturePutRequest request);
 
-    FeaturePatchResponse patchFeature(Integer featureId, FeaturePatchRequest request);
+    String patchFeature(Integer featureId, FeaturePatchRequest request);
 
     void deleteFeature(Integer featureId, Integer updatedBy);
 
     AttachmentResponse uploadAttachment(MultipartFile file, Integer featureId) throws IOException;
 
     ResponseEntity<byte[]> downloadFile(Integer featureId);
-
-    FeatureStartTimeResponse startFeature(Integer featureId);
-
-    FeatureDurationResponse endFeature(Integer featureId);
 }

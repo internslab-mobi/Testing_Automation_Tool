@@ -121,7 +121,7 @@ public class FeatureServiceImpl implements FeatureService {
     @Override
     @Transactional
     @CacheEvict(value = "features", key = "#featureId")
-    public FeaturePatchResponse patchFeature(Integer featureId, FeaturePatchRequest request) {
+    public String patchFeature(Integer featureId, FeaturePatchRequest request) {
         Feature feature = featureRepository.findById(featureId)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
 
@@ -141,42 +141,62 @@ public class FeatureServiceImpl implements FeatureService {
             }
 
             feature.setFeatureName(request.getFeatureName().trim());
-            updatedFields.add("Feature name");
+            updatedFields.add("featureName");
         }
 
         if (request.getDescription() != null && !request.getDescription().equals(feature.getDescription())) {
             feature.setDescription(request.getDescription());
-            updatedFields.add("Description");
+            updatedFields.add("description");
         }
 
         if (request.getStatus() != null && !request.getStatus().equals(feature.getStatus())) {
             feature.setStatus(request.getStatus());
-            updatedFields.add("Status");
-        }
-
-        if (request.getDuration() != null && !request.getDuration().equals(feature.getDuration())) {
-            feature.setDuration(request.getDuration());
-            updatedFields.add("Duration");
+            updatedFields.add("status");
         }
 
         if (request.getSprint() != null && !request.getSprint().equals(feature.getSprint())) {
             feature.setSprint(request.getSprint());
-            updatedFields.add("Sprint");
+            updatedFields.add("sprint");
         }
 
-        if (request.getVersion() != null && !request.getVersion().equals(feature.getFeatureVersion())) {
+        if (request.getFeatureVersion() != null && !request.getFeatureVersion().equals(feature.getFeatureVersion())) {
+            feature.setFeatureVersion(request.getFeatureVersion());
+            updatedFields.add("featureVersion");
+        } else if (request.getVersion() != null && !request.getVersion().equals(feature.getFeatureVersion())) {
             feature.setFeatureVersion(request.getVersion());
-            updatedFields.add("Version");
+            updatedFields.add("version");
+        }
+
+        if (request.getDuration() != null && !request.getDuration().equals(feature.getDuration())) {
+            feature.setDuration(request.getDuration());
+            updatedFields.add("duration");
         }
 
         if (request.getStartTime() != null && !request.getStartTime().equals(feature.getStartTime())) {
             feature.setStartTime(request.getStartTime());
-            updatedFields.add("Start time");
+            updatedFields.add("startTime");
+        }
+
+        if (Boolean.TRUE.equals(request.getStartTimer())) {
+            feature.setStartTime(Instant.now());
+            updatedFields.add("startTimer");
+        }
+
+        if (Boolean.TRUE.equals(request.getEndTimer())) {
+            if (feature.getStartTime() != null) {
+                Instant endTime = Instant.now();
+                long elapsedSeconds = Duration.between(feature.getStartTime(), endTime).getSeconds();
+                long currentDuration = feature.getDuration() != null ? feature.getDuration() : 0L;
+                long totalDuration = currentDuration + elapsedSeconds;
+                feature.setDuration(totalDuration);
+                feature.setStartTime(null);
+            }
+            updatedFields.add("endTimer");
         }
 
         if (request.getIsActive() != null && !request.getIsActive().equals(feature.isActive())) {
             feature.setActive(request.getIsActive());
-            updatedFields.add("Active status");
+            updatedFields.add("isActive");
         }
 
         if (request.getUpdatedBy() != null) {
@@ -190,20 +210,13 @@ public class FeatureServiceImpl implements FeatureService {
             }
         }
 
-        featureRepository.save(feature);
-
-        String message;
         if (updatedFields.isEmpty()) {
-            message = "No fields were updated";
-        } else if (updatedFields.size() == 1) {
-            message = updatedFields.get(0) + " updated successfully";
-        } else {
-            message = String.join(", ", updatedFields) + " updated successfully";
+            throw new IllegalArgumentException("At least one field must be provided for update");
         }
 
-        return FeaturePatchResponse.builder()
-                .message(message)
-                .build();
+        featureRepository.save(feature);
+
+        return "Feature with ID " + featureId + " updated successfully. Changed fields: " + String.join(", ", updatedFields);
     }
 
     @Override
@@ -269,46 +282,6 @@ public class FeatureServiceImpl implements FeatureService {
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + attachment.getFileName() + "\"")
                 .contentType(MediaType.parseMediaType(contentType))
                 .body(attachment.getFileBlob());
-    }
-
-    @Override
-    public FeatureStartTimeResponse startFeature(Integer featureId) {
-        Feature feature = featureRepository.findById(featureId)
-                .orElseThrow(() -> new ResourceNotFoundException("Feature not found: " + featureId));
-
-        Instant startTime = Instant.now();
-        feature.setStartTime(startTime);
-        featureRepository.save(feature);
-
-        return FeatureStartTimeResponse.builder()
-                .startTime(startTime)
-                .build();
-    }
-
-    @Override
-    public FeatureDurationResponse endFeature(Integer featureId) {
-        Feature feature = featureRepository.findById(featureId)
-                .orElseThrow(() -> new ResourceNotFoundException("Feature not found: " + featureId));
-
-        if (feature.getStartTime() == null) {
-            long currentDuration = feature.getDuration() != null ? feature.getDuration() : 0L;
-            return FeatureDurationResponse.builder()
-                    .duration(formatDuration(currentDuration))
-                    .build();
-        }
-
-        Instant endTime = Instant.now();
-        long elapsedSeconds = Duration.between(feature.getStartTime(), endTime).getSeconds();
-        long currentDuration = feature.getDuration() != null ? feature.getDuration() : 0L;
-        long totalDuration = currentDuration + elapsedSeconds;
-
-        feature.setDuration(totalDuration);
-        feature.setStartTime(null);
-        featureRepository.save(feature);
-
-        return FeatureDurationResponse.builder()
-                .duration(formatDuration(totalDuration))
-                .build();
     }
 
     private String formatDuration(long totalSeconds) {

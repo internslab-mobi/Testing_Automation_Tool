@@ -61,15 +61,6 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
-    @PatchMapping("/{id}/status")
-    @PreAuthorize("hasRole('MANAGER')")
-    public ResponseEntity<PatchProjectResponse> updateProjectStatus(
-            @PathVariable("id") Integer id,
-            @RequestParam ProjectStatus status) {
-        PatchProjectResponse response = projectService.updateProjectStatus(id, status);
-        return ResponseEntity.ok(response);
-    }
-
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<PatchProjectDeleteResponse> softDeleteProject(
             @PathVariable("id") Integer id) {

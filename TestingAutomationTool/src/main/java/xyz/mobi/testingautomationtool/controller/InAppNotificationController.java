@@ -5,7 +5,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import xyz.mobi.testingautomationtool.dto.NotificationDto.InAppNotificationResponse;
+import xyz.mobi.testingautomationtool.dto.NotificationDto.*;
 import xyz.mobi.testingautomationtool.service.InAppNotificationService;
 
 import java.util.List;
@@ -24,10 +24,12 @@ public class InAppNotificationController {
         return ResponseEntity.ok(inAppNotificationService.getMyNotifications());
     }
 
-    @PatchMapping("/{notificationId}/read")
-    public ResponseEntity<Void> markAsRead(@PathVariable Integer notificationId) {
-        inAppNotificationService.markAsRead(notificationId);
-        return ResponseEntity.noContent().build();
+    @PatchMapping("/{notificationId}")
+    public ResponseEntity<String> patchNotification(
+            @PathVariable Integer notificationId,
+            @RequestBody(required = false) NotificationPatchRequest request) {
+        String response = inAppNotificationService.patchNotification(notificationId, request);
+        return ResponseEntity.ok(response);
     }
 
     @DeleteMapping("/{notificationId}")

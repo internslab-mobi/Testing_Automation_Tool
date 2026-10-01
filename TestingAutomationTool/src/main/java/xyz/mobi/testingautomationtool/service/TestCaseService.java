@@ -49,10 +49,6 @@ public interface TestCaseService {
             TestCasePatchRequest testPatchMethodDto,
             Integer id);
 
-    String updateExecutionStatus(
-            Integer testCaseId,
-            UpdateExecutionStatusRequest request);
-
     String hardDeleteTestCase(Integer id);
 
     PatchTestCaseDeleteResponse softDeleteTestCase(Integer id);

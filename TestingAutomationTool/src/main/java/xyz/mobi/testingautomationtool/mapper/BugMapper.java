@@ -48,8 +48,8 @@ public interface BugMapper {
 
     default void patchEntity(@MappingTarget Bug bug, BugPatchRequest request) {
         if (request == null) return;
-        if (request.getStatus() != null && request.getStatus().getStatus() != null) {
-            bug.setStatus(request.getStatus().getStatus());
+        if (request.getEffectiveStatus() != null) {
+            bug.setStatus(request.getEffectiveStatus());
         }
     }
 

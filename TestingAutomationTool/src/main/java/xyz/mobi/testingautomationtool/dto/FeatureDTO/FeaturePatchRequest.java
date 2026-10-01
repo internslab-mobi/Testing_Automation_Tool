@@ -19,6 +19,9 @@ public class FeaturePatchRequest {
     private String version;
     private String featureVersion;
     private Instant startTime;
+    private Boolean startTimer;
+    private Boolean endTimer;
+    private String comments;
     private Boolean isActive;
     private Integer updatedBy;
 }
