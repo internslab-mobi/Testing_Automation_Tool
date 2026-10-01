@@ -32,4 +32,6 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Integer>
     );
 
     boolean existsByProject_ProjectIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(Integer projectId, String filename);
+
+    boolean existsByBug_BugIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(Integer bugId, String filename);
 }

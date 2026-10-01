@@ -10,5 +10,4 @@ import java.util.List;
 public interface AttachmentService {
     AttachmentResponse uploadBugAttachment(Integer bugId, MultipartFile file, AttachmentType attachmentType, Integer uploadedBy);
     List<AttachmentResponse> getAttachmentsByBugId(Integer bugId);
-    Attachment getAttachmentFile(Integer attachmentId);
 }

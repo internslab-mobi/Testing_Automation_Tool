@@ -8,6 +8,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
+import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.BugDto.*;
 import xyz.mobi.testingautomationtool.dto.NotificationDto.NotificationRequest;
 import xyz.mobi.testingautomationtool.entity.*;
@@ -17,11 +19,13 @@ import xyz.mobi.testingautomationtool.exception.ErrorCode;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.mapper.BugMapper;
 import xyz.mobi.testingautomationtool.repository.*;
+import xyz.mobi.testingautomationtool.service.AttachmentService;
 import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.BugService;
 import xyz.mobi.testingautomationtool.service.NotificationService;
 import xyz.mobi.testingautomationtool.specification.BugSpecification;
 
+import java.io.IOException;
 import java.time.*;
 import java.util.*;
 
@@ -39,6 +43,7 @@ public class BugServiceImpl implements BugService {
     private final NotificationService notificationService;
     private final BugMapper bugMapper;
     private final AuthService authService;
+    private final AttachmentRepository attachmentRepository;
 
     @Override
     public BugResponse createBug(BugRequest request) {
@@ -542,5 +547,93 @@ public class BugServiceImpl implements BugService {
 
         Page<Bug> bugs = bugRepository.findAll(specification, pageable);
         return bugs.map(bugMapper::toResponse);
+    }
+
+    @Transactional
+    public List<AttachmentResponse> uploadAttachments(
+            List<MultipartFile> files,
+            Integer bugId) throws IOException {
+
+        Bug bug = bugRepository.findById(bugId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Bug is not present for this id: " + bugId
+                ));
+
+        if (files == null || files.isEmpty()) {
+            throw new IllegalArgumentException("No files provided");
+        }
+
+        User user = authService.getCurrentUser();
+
+        List<Attachment> attachments = new ArrayList<>();
+        Set<String> uploadedFileNames = new HashSet<>();
+
+        // Validate all files before saving
+        for (MultipartFile file : files) {
+
+            if (file == null || file.isEmpty()) {
+                throw new IllegalArgumentException(
+                        "Uploaded file cannot be empty"
+                );
+            }
+
+            String filename = file.getOriginalFilename();
+
+            if (filename == null || filename.isBlank()) {
+                filename = "Bug_attachment_" + UUID.randomUUID();
+            }
+
+            // Check duplicates within this upload
+            if (!uploadedFileNames.add(filename)) {
+                throw new IllegalArgumentException(
+                        "Duplicate filename in upload: " + filename
+                );
+            }
+
+            // Check duplicates in the database
+            boolean exists = attachmentRepository
+                    .existsByBug_BugIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(
+                            bugId, filename
+                    );
+
+            if (exists) {
+                throw new IllegalArgumentException(
+                        "File already exists in this bug: " + filename
+                );
+            }
+
+            Attachment attachment = Attachment.builder()
+                    .attachmentType(AttachmentType.PROJECT)
+                    .bug(bug)
+                    .fileName(filename)
+                    .fileType(file.getContentType())
+                    .fileSize(file.getSize())
+                    .fileBlob(file.getBytes())
+                    .uploadedBy(user)
+                    .updatedBy(user)
+                    .isActive(true)
+                    .isDeleted(false)
+                    .build();
+
+            attachments.add(attachment);
+        }
+
+        // Save all attachments
+        List<Attachment> savedAttachments =
+                attachmentRepository.saveAll(attachments);
+
+        // Build response
+        return savedAttachments.stream()
+                .map(attachment -> AttachmentResponse.builder()
+                        .attachmentId(attachment.getAttachmentId())
+                        .attachmentType(AttachmentType.BUG)
+                        .bugId(bugId)
+                        .fileName(attachment.getFileName())
+                        .fileType(attachment.getFileType())
+                        .fileSize(attachment.getFileSize())
+                        .uploadedBy(user != null ? user.getUserId() : null)
+                        .createdAt(attachment.getCreatedAt())
+                        .build())
+                .toList();
     }
 }

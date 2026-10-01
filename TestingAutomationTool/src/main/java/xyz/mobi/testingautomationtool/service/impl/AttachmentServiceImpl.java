@@ -97,18 +97,6 @@ public class AttachmentServiceImpl implements AttachmentService {
                 .toList();
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public Attachment getAttachmentFile(Integer attachmentId) {
-        Attachment attachment = attachmentRepository.findById(attachmentId)
-                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
-
-        if (attachment.isDeleted()) {
-            throw new CustomException(ErrorCode.RESOURCE_NOT_FOUND);
-        }
-
-        return attachment;
-    }
 
     private AttachmentResponse toResponse(Attachment a) {
         return AttachmentResponse.builder()

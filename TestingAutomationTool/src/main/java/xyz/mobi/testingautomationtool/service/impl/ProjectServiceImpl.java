@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.ProjectDto.*;
@@ -52,6 +53,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final AuthService authService;
 
     @Override
+    @Transactional
     public ProjectResponse createProject(ProjectRequest request) {
         if (projectRepository.existsByProjectNameAndRegion(request.getProjectName(), request.getRegion())) {
             throw new CustomException(ErrorCode.DUPLICATE_RESOURCE);
@@ -70,6 +72,7 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     @Override
+    @Transactional
     public AttachmentResponse uploadAttachment(
             MultipartFile file,
             Integer projectId) throws IOException {
@@ -129,6 +132,8 @@ public class ProjectServiceImpl implements ProjectService {
                 .createdAt(attachment.getCreatedAt())
                 .build();
     }
+
+    @Transactional
     @Override
     public ProjectPutResponse updateProject(Integer id, ProjectPutRequest request) {
         Project project = projectRepository.findById(id)
@@ -144,6 +149,8 @@ public class ProjectServiceImpl implements ProjectService {
         Project savedProject = projectRepository.save(project);
         return projectMapper.toPutResponse(savedProject);
     }
+
+
     @Override
     @Transactional
     public String patchProject(Integer id, ProjectPatchRequest request) {
@@ -336,6 +343,7 @@ public class ProjectServiceImpl implements ProjectService {
                 .toList();
     }
 
+    @Transactional
     @Override
     public String hardDeleteProject(Integer id) {
         Project project = projectRepository.findById(id)
@@ -353,6 +361,7 @@ public class ProjectServiceImpl implements ProjectService {
         return "Project '" + projectName + "' and all associated features, test cases, executions, and bugs deleted successfully";
     }
 
+    @Transactional
     @Override
     public PatchProjectDeleteResponse softDeleteProject(Integer id) {
         Project project = projectRepository.findById(id)
@@ -376,7 +385,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
-    public byte[] downloadFiles(Integer projectId) {
+    public AttachmentDownloadResponse downloadFiles(Integer projectId) {
 
         List<Attachment> attachments =
                 attachmentRepository
@@ -386,6 +395,22 @@ public class ProjectServiceImpl implements ProjectService {
             throw new ResourceNotFoundException(
                     "No attachments found for project ID: " + projectId
             );
+        }
+
+        if (attachments.size() == 1) {
+            Attachment attachment = attachments.get(0);
+
+            if (attachment.getFileBlob() == null) {
+                throw new AttachmentProcessingException(
+                        "File content is missing"
+                );
+            }
+
+            return AttachmentDownloadResponse.builder()
+                    .file(attachment.getFileBlob())
+                    .fileName(attachment.getFileName())
+                    .contentType(attachment.getFileType())
+                    .build();
         }
 
         try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -418,7 +443,11 @@ public class ProjectServiceImpl implements ProjectService {
             }
 
             zos.finish();
-            return baos.toByteArray();
+            return AttachmentDownloadResponse.builder()
+                    .file(baos.toByteArray())
+                    .fileName("project_" + projectId + "_attachments.zip")
+                    .contentType("application/zip")
+                    .build();
 
         } catch (IOException e) {
 
