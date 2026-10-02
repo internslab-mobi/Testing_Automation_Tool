@@ -24,15 +24,10 @@ public class FeatureRequest {
 
     private String comments;
 
-    @NotNull(message = "Feature status cannot be null")
-    private FeatureStatus status;
-
     @NotNull(message = "Sprint cannot be null")
     private Integer sprint;
 
     @NotBlank(message = "Version cannot be blank")
     private String featureVersion;
 
-    @NotNull(message = "Created by cannot be null")
-    private Integer createdBy;
 }

@@ -3,12 +3,11 @@ package xyz.mobi.testingautomationtool.controller;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.FeatureDto.*;
 import xyz.mobi.testingautomationtool.service.FeatureService;
@@ -78,8 +77,25 @@ public class FeatureController {
         return ResponseEntity.ok(featureResponse);
     }
 
-    @GetMapping("/attachment/{featureId}/download")
-    public ResponseEntity<byte[]> downloadAttachment(@PathVariable Integer featureId) {
-        return featureService.downloadFile(featureId);
+    @GetMapping("/features/{featureId}/attachments/download")
+    public ResponseEntity<byte[]> downloadProjectAttachments(
+            @PathVariable Integer featureId) {
+
+        AttachmentDownloadResponse response =
+                featureService.downloadFiles(featureId);
+
+        return ResponseEntity.ok()
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        ContentDisposition.attachment()
+                                .filename(response.getFileName())
+                                .build()
+                                .toString()
+                )
+                .contentType(
+                        MediaType.parseMediaType(response.getContentType())
+                )
+                .contentLength(response.getFile().length)
+                .body(response.getFile());
     }
 }

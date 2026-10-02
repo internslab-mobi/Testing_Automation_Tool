@@ -16,8 +16,6 @@ public class FeaturePutRequest {
 
     private String description;
 
-    private FeatureStatus status;
-
     private Integer sprint;
 
     private String version;

@@ -29,6 +29,7 @@ import xyz.mobi.testingautomationtool.service.ProjectService;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -48,7 +49,6 @@ public class ProjectServiceImpl implements ProjectService {
     private final TestingExecutionRepository testingExecutionRepository;
     private final CommentRepository commentRepository;
     private final AttachmentRepository attachmentRepository;
-    private final UserRepository userRepository;
     private final ProjectMapper projectMapper;
     private final AuthService authService;
 
@@ -85,7 +85,7 @@ public class ProjectServiceImpl implements ProjectService {
         String filename = file.getOriginalFilename();
 
         if (filename == null || filename.isBlank()) {
-            filename = "Project_attachment_" + System.currentTimeMillis();
+            filename = "Project_attachment_" + Instant.now().toEpochMilli();
         }
 
         // Check duplicate filename within the same project
@@ -398,7 +398,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         if (attachments.size() == 1) {
-            Attachment attachment = attachments.get(0);
+            Attachment attachment = attachments.getFirst();
 
             if (attachment.getFileBlob() == null) {
                 throw new AttachmentProcessingException(

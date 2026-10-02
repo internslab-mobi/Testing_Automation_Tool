@@ -86,7 +86,7 @@ public class Feature extends Auditable {
                     name = "fk_features_updated_by"
             )
     )
-    private User updatedBy=null;
+    private User updatedBy;
 
     @Column(name = "comments")
     private String comments;

@@ -3,12 +3,10 @@ package xyz.mobi.testingautomationtool.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.FeatureDto.*;
 import xyz.mobi.testingautomationtool.entity.Attachment;
@@ -16,6 +14,7 @@ import xyz.mobi.testingautomationtool.entity.Feature;
 import xyz.mobi.testingautomationtool.entity.Project;
 import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.AttachmentType;
+import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
 import xyz.mobi.testingautomationtool.exception.CustomException;
 import xyz.mobi.testingautomationtool.exception.ErrorCode;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
@@ -28,11 +27,16 @@ import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.FeatureService;
 import xyz.mobi.testingautomationtool.specification.FeatureSpecification;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -51,13 +55,8 @@ public class FeatureServiceImpl implements FeatureService {
         Project project = projectRepository.findById(request.getProjectId())
                 .orElseThrow(() -> new ResourceNotFoundException("Project not available for id: " + request.getProjectId()));
 
-        User user;
-        if (request.getCreatedBy() != null) {
-            user = userRepository.findById(request.getCreatedBy())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found for id: " + request.getCreatedBy()));
-        } else {
-            user = authService.getCurrentUser();
-        }
+
+        User user = authService.getCurrentUser();
 
         if (featureRepository.existsByProject_ProjectIdAndFeatureName(project.getProjectId(), request.getFeatureName())) {
             throw new CustomException(ErrorCode.DUPLICATE_RESOURCE);
@@ -76,13 +75,28 @@ public class FeatureServiceImpl implements FeatureService {
     }
 
     @Override
-    public AttachmentResponse uploadAttachment(MultipartFile file, Integer featureId) throws IOException {
+    public AttachmentResponse uploadAttachment(
+            MultipartFile file,
+            Integer featureId) throws IOException {
+
         Feature feature = featureRepository.findById(featureId)
-                .orElseThrow(() -> new ResourceNotFoundException("Feature is not present for this id: " + featureId));
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Feature is not present for this id: " + featureId));
 
         String filename = file.getOriginalFilename();
         if (filename == null || filename.isBlank()) {
-            filename = "feature_attachment_" + System.currentTimeMillis();
+            filename = "feature_attachment_" + Instant.now().toEpochMilli();
+        }
+
+        boolean exists = attachmentRepository
+                .existsByFeature_FeatureIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(
+                        featureId, filename
+                );
+
+        if (exists) {
+            throw new ResourceNotFoundException(
+                    "File already exists in this feature: " + filename
+            );
         }
 
         String fileType = file.getContentType();
@@ -108,12 +122,12 @@ public class FeatureServiceImpl implements FeatureService {
 
         return AttachmentResponse.builder()
                 .attachmentId(attachment.getAttachmentId())
+                .attachmentType(AttachmentType.FEATURE)
                 .featureId(featureId)
                 .fileName(filename)
                 .fileType(fileType)
                 .fileSize(fileSize)
                 .uploadedBy(user != null ? user.getUserId() : null)
-                .attachmentType(AttachmentType.FEATURE)
                 .createdAt(attachment.getCreatedAt())
                 .build();
     }
@@ -272,17 +286,6 @@ public class FeatureServiceImpl implements FeatureService {
                 .toList();
     }
 
-    @Override
-    public ResponseEntity<byte[]> downloadFile(Integer featureId) {
-        Attachment attachment = attachmentRepository.findTopByFeature_FeatureIdAndIsDeletedFalseOrderByCreatedAtDesc(featureId)
-                .orElseThrow(() -> new ResourceNotFoundException("No attachment found for feature ID: " + featureId));
-
-        String contentType = attachment.getFileType() != null ? attachment.getFileType() : MediaType.APPLICATION_OCTET_STREAM_VALUE;
-        return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + attachment.getFileName() + "\"")
-                .contentType(MediaType.parseMediaType(contentType))
-                .body(attachment.getFileBlob());
-    }
 
     private String formatDuration(long totalSeconds) {
         long days = totalSeconds / 86400;
@@ -322,5 +325,81 @@ public class FeatureServiceImpl implements FeatureService {
 
         Feature savedFeature = featureRepository.save(feature);
         return featureMapper.toPutResponse(savedFeature);
+    }
+
+
+    @Transactional(readOnly = true)
+    @Override
+    public AttachmentDownloadResponse downloadFiles(Integer featureId) {
+
+        List<Attachment> attachments =
+                attachmentRepository
+                        .findAllByFeature_FeatureIdAndIsDeletedFalseAndIsActiveTrue(featureId);
+
+        if (attachments.isEmpty()) {
+            throw new ResourceNotFoundException(
+                    "No attachments found for feature ID: " + featureId
+            );
+        }
+
+        if (attachments.size() == 1) {
+            Attachment attachment = attachments.getFirst();
+
+            if (attachment.getFileBlob() == null) {
+                throw new AttachmentProcessingException(
+                        "File content is missing"
+                );
+            }
+
+            return AttachmentDownloadResponse.builder()
+                    .file(attachment.getFileBlob())
+                    .fileName(attachment.getFileName())
+                    .contentType(attachment.getFileType())
+                    .build();
+        }
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ZipOutputStream zos = new ZipOutputStream(baos)) {
+
+            Set<String> fileNames = new HashSet<>();
+
+            for (Attachment attachment : attachments) {
+
+                String fileName = attachment.getFileName();
+                byte[] fileBlob = attachment.getFileBlob();
+
+                if (fileName == null || fileName.isBlank()) {
+                    continue;
+                }
+
+                // Skip duplicate filenames
+                if (!fileNames.add(fileName)) {
+                    continue;
+                }
+
+                if (fileBlob == null) {
+                    continue;
+                }
+
+                ZipEntry zipEntry = new ZipEntry(fileName);
+                zos.putNextEntry(zipEntry);
+                zos.write(fileBlob);
+                zos.closeEntry();
+            }
+
+            zos.finish();
+            return AttachmentDownloadResponse.builder()
+                    .file(baos.toByteArray())
+                    .fileName("feature_" + featureId + "_attachments.zip")
+                    .contentType("application/zip")
+                    .build();
+
+        } catch (IOException e) {
+
+            throw new AttachmentProcessingException(
+                    "Failed to create ZIP file for feature ID: " + featureId
+
+            );
+        }
     }
 }

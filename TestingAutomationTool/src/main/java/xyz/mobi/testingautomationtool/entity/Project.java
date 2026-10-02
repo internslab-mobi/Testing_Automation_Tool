@@ -66,7 +66,7 @@ public class Project extends Auditable {
                     name = "fk_projects_updated_by"
             )
     )
-    private User updatedBy=null;
+    private User updatedBy;
 
     @Column(name = "comments")
     private String comments;

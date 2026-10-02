@@ -1,7 +1,9 @@
 package xyz.mobi.testingautomationtool.service;
 
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.FeatureDto.*;
 
@@ -9,6 +11,7 @@ import java.io.IOException;
 import java.util.List;
 
 public interface FeatureService {
+
     FeatureResponse createFeature(FeatureRequest request);
 
     FeatureResponse getFeatureById(Integer featureId);
@@ -25,5 +28,6 @@ public interface FeatureService {
 
     AttachmentResponse uploadAttachment(MultipartFile file, Integer featureId) throws IOException;
 
-    ResponseEntity<byte[]> downloadFile(Integer featureId);
+    @Transactional(readOnly = true)
+    AttachmentDownloadResponse downloadFiles(Integer featureId);
 }

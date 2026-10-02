@@ -14,6 +14,7 @@ public interface ProjectMapper {
     @Mapping(target = "isDeleted", ignore = true)
     @Mapping(target = "version", ignore = true)
     @Mapping(target = "status", ignore = true)
+    @Mapping(target = "duration",ignore = true)
     Project toEntity(ProjectRequest request);
 
     @Mapping(target = "createdBy", source = "createdBy.userId")
