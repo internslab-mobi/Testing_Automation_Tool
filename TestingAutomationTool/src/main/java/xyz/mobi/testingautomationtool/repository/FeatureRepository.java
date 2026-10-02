@@ -24,6 +24,8 @@ public interface FeatureRepository extends JpaRepository<Feature, Integer>, JpaS
 
     List<Feature> findByProject_ProjectIdAndIsDeletedFalse(Integer projectId);
 
+    List<Feature> findByIsDeletedFalse();
+
     boolean existsByProject_ProjectIdAndFeatureName(Integer projectId, String featureName);
 
     @Query("SELECT f FROM Feature f WHERE f.featureId = :featureId AND f.project.projectId = :projectId AND f.isDeleted = false AND f.project.isActive = true")

@@ -2,7 +2,12 @@ package xyz.mobi.testingautomationtool.mapper;
 
 import org.mapstruct.*;
 import xyz.mobi.testingautomationtool.dto.BugDto.*;
+import xyz.mobi.testingautomationtool.dto.BugDto.GetBugResponse.BugResponse;
+import xyz.mobi.testingautomationtool.dto.BugDto.GetBugResponse.FeatureInfo;
+import xyz.mobi.testingautomationtool.dto.BugDto.GetBugResponse.TestCaseInfo;
 import xyz.mobi.testingautomationtool.entity.Bug;
+import xyz.mobi.testingautomationtool.entity.Feature;
+import xyz.mobi.testingautomationtool.entity.TestCase;
 import xyz.mobi.testingautomationtool.enums.BugStatus;
 
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
@@ -22,14 +27,48 @@ public interface BugMapper {
     @Mapping(target = "version", ignore = true)
     Bug toEntity(BugRequest request);
 
-    @Mapping(target = "testcaseId", source = "testCase.testcaseId")
-    @Mapping(target = "featureId", source = "feature.featureId")
+    @Mapping(target = "testCase", source = "testCase")
+    @Mapping(target = "feature", source = "feature")
+    @Mapping(target = "classification", source = ".")
+    @Mapping(target = "users", source = ".")
+    @Mapping(target = "resolution", source = ".")
+    @Mapping(target = "audit", source = ".")
+    BugResponse toResponse(Bug bug);
+
+
+    @Mapping(target = "testcaseId", source = "testcaseId")
+    @Mapping(target = "testcaseFormatId", source = "testcaseFormatId")
+    TestCaseInfo toTestCaseInfo(TestCase testCase);
+
+
+    @Mapping(target = "featureId", source = "featureId")
+    @Mapping(target = "featureName", source = "featureName")
+    FeatureInfo toFeatureInfo(Feature feature);
+
+
+    @Mapping(target = "severity", source = "severity")
+    @Mapping(target = "priority", source = "priority")
+    @Mapping(target = "category", source = "category")
+    @Mapping(target = "status", source = "status")
+    ClassificationInfo toClassificationInfo(Bug bug);
+
+
     @Mapping(target = "reportedBy", source = "reportedBy.username")
     @Mapping(target = "assignedTo", source = "assignedTo.username")
     @Mapping(target = "executedBy", source = "executedBy.username")
     @Mapping(target = "updatedBy", source = "updatedBy.username")
-    @Mapping(target = "active", source = "active")
-    BugResponse toResponse(Bug bug);
+    UserInfo toUserInfo(Bug bug);
+
+
+    @Mapping(target = "resolvedAt", source = "resolvedAt")
+    @Mapping(target = "bugReoccurredId", ignore = true)
+    @Mapping(target = "bugOccurrence", source = "bugOccurrence")
+    ResolutionInfo toResolutionInfo(Bug bug);
+
+
+    @Mapping(target = "createdAt", source = "createdAt")
+    @Mapping(target = "updatedAt", source = "updatedAt")
+    AuditInfo toAuditInfo(Bug bug);
 
     @Mapping(target = "bugId", ignore = true)
     @Mapping(target = "bugFormatId", ignore = true)

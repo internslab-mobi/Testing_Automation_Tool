@@ -18,7 +18,7 @@ import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.BugDto.*;
-import xyz.mobi.testingautomationtool.entity.Attachment;
+import xyz.mobi.testingautomationtool.dto.BugDto.GetBugResponse.BugResponse;
 import xyz.mobi.testingautomationtool.enums.AttachmentType;
 import xyz.mobi.testingautomationtool.enums.BugCategory;
 import xyz.mobi.testingautomationtool.enums.BugPriority;

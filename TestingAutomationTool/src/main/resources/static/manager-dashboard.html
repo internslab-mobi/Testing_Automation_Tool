@@ -1,0 +1,1835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Dashboard | Testing Automation Tool</title>
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Chart.js for interactive analytics -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <style>
+        :root {
+            --bg-base: #0b0f19;
+            --bg-gradient: radial-gradient(circle at 10% 10%, #151a30 0%, #080c14 100%);
+            --glass-bg: rgba(18, 24, 43, 0.75);
+            --glass-card: rgba(23, 31, 56, 0.65);
+            --glass-card-hover: rgba(30, 41, 74, 0.85);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-border-subtle: rgba(255, 255, 255, 0.04);
+            --glass-highlight: rgba(255, 255, 255, 0.03);
+
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.35);
+            --primary-light: #818cf8;
+            --accent-cyan: #06b6d4;
+            --accent-emerald: #10b981;
+            --accent-emerald-glow: rgba(16, 185, 129, 0.3);
+            --accent-rose: #f43f5e;
+            --accent-rose-glow: rgba(244, 63, 94, 0.3);
+            --accent-amber: #f59e0b;
+            --accent-purple: #a855f7;
+
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-subtle: #64748b;
+
+            --radius-xl: 24px;
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+
+            --shadow-card: 0 16px 36px -10px rgba(0, 0, 0, 0.5), 0 0 25px rgba(99, 102, 241, 0.08);
+            --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.25);
+
+            --font-sans: 'Outfit', -apple-system, BlinkMacSystemFont, sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        /* Light mode theme */
+        [data-theme="light"] {
+            --bg-base: #f1f5f9;
+            --bg-gradient: radial-gradient(circle at 10% 10%, #ffffff 0%, #e2e8f0 100%);
+            --glass-bg: rgba(255, 255, 255, 0.85);
+            --glass-card: rgba(255, 255, 255, 0.7);
+            --glass-card-hover: rgba(255, 255, 255, 0.95);
+            --glass-border: rgba(0, 0, 0, 0.08);
+            --glass-border-subtle: rgba(0, 0, 0, 0.04);
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --text-subtle: #94a3b8;
+            --shadow-card: 0 16px 36px -10px rgba(0, 0, 0, 0.08), 0 0 20px rgba(99, 102, 241, 0.05);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-sans);
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            background-color: var(--bg-base);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        /* Ambient Glow Orbs */
+        .ambient-orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.35;
+        }
+        .orb-1 { width: 500px; height: 500px; background: #4f46e5; top: -150px; left: -100px; }
+        .orb-2 { width: 400px; height: 400px; background: #06b6d4; bottom: 5%; right: -100px; opacity: 0.25; }
+        .orb-3 { width: 350px; height: 350px; background: #f43f5e; top: 40%; left: 30%; opacity: 0.15; }
+
+        /* Container & Layout */
+        .app-layout {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1600px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 24px;
+            gap: 24px;
+        }
+
+        /* Top Header */
+        header.dashboard-header {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 18px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-card);
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .brand-section {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .brand-badge {
+            width: 46px;
+            height: 46px;
+            border-radius: var(--radius-md);
+            background: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 20px var(--primary-glow);
+            color: #fff;
+            font-size: 22px;
+            font-weight: 700;
+        }
+
+        .brand-text h1 {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            background: linear-gradient(90deg, #ffffff, #c7d2fe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        [data-theme="light"] .brand-text h1 {
+            background: linear-gradient(90deg, #1e1b4b, #4338ca);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .brand-text p {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 400;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .custom-select-wrapper {
+            position: relative;
+            min-width: 260px;
+        }
+
+        .custom-select {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 10px 16px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            font-weight: 500;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px;
+        }
+        [data-theme="light"] .custom-select {
+            background-color: #ffffff;
+        }
+        .custom-select:hover, .custom-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 12px var(--primary-glow);
+        }
+
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 16px;
+            border-radius: var(--radius-md);
+            font-size: 13.5px;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            text-decoration: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            color: #fff;
+            box-shadow: 0 4px 14px rgba(99, 102, 241, 0.35);
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+        }
+
+        .btn-glass {
+            background: var(--glass-card);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+        }
+        .btn-glass:hover {
+            background: var(--glass-card-hover);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .btn-accent {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            color: #fff;
+        }
+        .btn-accent:hover {
+            box-shadow: 0 4px 16px var(--accent-emerald-glow);
+        }
+
+        .theme-toggle-btn {
+            width: 38px;
+            height: 38px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        /* Status & Banner Bar */
+        .overview-banner {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 24px 28px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--shadow-card);
+            flex-wrap: wrap;
+            gap: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .overview-banner::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background: linear-gradient(180deg, var(--primary), var(--accent-cyan));
+        }
+
+        .banner-left {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-width: 65%;
+        }
+
+        .banner-title-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .banner-title {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        .pill-badge {
+            font-size: 11.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 4px 10px;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .pill-active { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .pill-inactive { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.3); }
+        .pill-region { background: rgba(99, 102, 241, 0.15); color: #a5b4fc; border: 1px solid rgba(99, 102, 241, 0.3); }
+        .pill-sprint { background: rgba(6, 182, 212, 0.15); color: #67e8f9; border: 1px solid rgba(6, 182, 212, 0.3); }
+        .pill-critical { background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.35); }
+        .pill-warning { background: rgba(245, 158, 11, 0.15); color: #fcd34d; border: 1px solid rgba(245, 158, 11, 0.3); }
+
+        .banner-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .banner-meta {
+            display: flex;
+            gap: 18px;
+            font-size: 12.5px;
+            color: var(--text-subtle);
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+
+        .banner-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .banner-meta-item strong {
+            color: var(--text-muted);
+        }
+
+        .health-radar-box {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(15, 23, 42, 0.4);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            padding: 14px 20px;
+        }
+
+        .health-score-dial {
+            position: relative;
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .health-score-dial svg {
+            width: 100%;
+            height: 100%;
+            transform: rotate(-90deg);
+        }
+
+        .health-dial-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.08);
+            stroke-width: 6;
+        }
+
+        .health-dial-fill {
+            fill: none;
+            stroke-width: 6;
+            stroke-linecap: round;
+            stroke-dasharray: 176;
+            stroke-dashoffset: 35;
+            transition: stroke-dashoffset 1s cubic-bezier(0.16, 1, 0.3, 1), stroke 0.3s;
+        }
+
+        .health-score-val {
+            position: absolute;
+            font-size: 16px;
+            font-weight: 700;
+            font-family: var(--font-mono);
+        }
+
+        .health-text-box {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+
+        .health-label {
+            font-size: 11px;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            color: var(--text-subtle);
+        }
+
+        .health-status-name {
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .health-summary-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            max-width: 220px;
+        }
+
+        /* KPI Cards Grid */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+            gap: 18px;
+        }
+
+        .kpi-card {
+            background: var(--glass-card);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 20px 22px;
+            box-shadow: var(--shadow-card);
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-3px);
+            background: var(--glass-card-hover);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.6);
+        }
+
+        .kpi-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .kpi-title {
+            font-size: 13px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+        }
+
+        .kpi-icon-pill {
+            width: 34px;
+            height: 34px;
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        .icon-blue { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+        .icon-green { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+        .icon-red { background: rgba(244, 63, 94, 0.15); color: #fb7185; }
+        .icon-amber { background: rgba(245, 158, 11, 0.15); color: #fbbf24; }
+        .icon-cyan { background: rgba(6, 182, 212, 0.15); color: #22d3ee; }
+        .icon-purple { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+
+        .kpi-value-row {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+        }
+
+        .kpi-value {
+            font-size: 32px;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            letter-spacing: -0.03em;
+        }
+
+        .kpi-sub-badge {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 12px;
+        }
+
+        .kpi-meta-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-subtle);
+            border-top: 1px solid var(--glass-border-subtle);
+            padding-top: 10px;
+            margin-top: auto;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            transition: width 0.8s ease;
+        }
+        .fill-pass { background: #10b981; }
+        .fill-fail { background: #f43f5e; }
+        .fill-norun { background: #64748b; }
+        .fill-descope { background: #a855f7; }
+
+        /* Main Grid: Charts & Analytics */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: repeat(12, 1fr);
+            gap: 20px;
+        }
+
+        .grid-col-4 { grid-column: span 4; }
+        .grid-col-6 { grid-column: span 6; }
+        .grid-col-8 { grid-column: span 8; }
+        .grid-col-12 { grid-column: span 12; }
+
+        @media (max-width: 1200px) {
+            .grid-col-4, .grid-col-6, .grid-col-8 { grid-column: span 12; }
+            .banner-left { max-width: 100%; }
+        }
+
+        .dashboard-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            padding: 22px 24px;
+            box-shadow: var(--shadow-card);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border-subtle);
+            padding-bottom: 12px;
+        }
+
+        .card-header h3 {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card-header-badge {
+            font-size: 11.5px;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 3px 8px;
+            border-radius: var(--radius-sm);
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 260px;
+        }
+
+        /* Feature Matrix Table */
+        .table-responsive {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        table.manager-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13.5px;
+        }
+
+        table.manager-table th {
+            padding: 12px 14px;
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid var(--glass-border);
+            background: rgba(15, 23, 42, 0.3);
+        }
+
+        table.manager-table td {
+            padding: 14px;
+            border-bottom: 1px solid var(--glass-border-subtle);
+            vertical-align: middle;
+            color: var(--text-main);
+        }
+
+        table.manager-table tbody tr {
+            transition: background 0.15s ease;
+        }
+
+        table.manager-table tbody tr:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .feature-title-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .feature-name {
+            font-weight: 600;
+            color: #fff;
+        }
+        [data-theme="light"] .feature-name {
+            color: #0f172a;
+        }
+
+        .feature-sub {
+            font-size: 11.5px;
+            color: var(--text-subtle);
+        }
+
+        .count-pill {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px 8px;
+            border-radius: 6px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .count-pass { background: rgba(16, 185, 129, 0.15); color: #34d399; }
+        .count-fail { background: rgba(244, 63, 94, 0.15); color: #fb7185; }
+        .count-norun { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
+        .count-descope { background: rgba(168, 85, 247, 0.15); color: #c084fc; }
+
+        .rate-progress-cell {
+            min-width: 140px;
+        }
+
+        .rate-label-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            font-family: var(--font-mono);
+        }
+
+        /* Defects Stream */
+        .defect-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            text-transform: uppercase;
+        }
+        .severity-critical { background: rgba(244, 63, 94, 0.2); color: #f43f5e; border: 1px solid rgba(244, 63, 94, 0.4); }
+        .severity-high { background: rgba(245, 158, 11, 0.2); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.4); }
+        .severity-medium { background: rgba(99, 102, 241, 0.2); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.4); }
+        .severity-low { background: rgba(148, 163, 184, 0.2); color: #94a3b8; border: 1px solid rgba(148, 163, 184, 0.4); }
+
+        .bug-format-id {
+            font-family: var(--font-mono);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--accent-cyan);
+        }
+
+        /* Modal Styles */
+        .modal-backdrop {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-box {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            width: 100%;
+            max-width: 540px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            animation: modalPop 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes modalPop {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        .form-input {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid var(--glass-border);
+            color: var(--text-main);
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            font-size: 14px;
+            outline: none;
+        }
+        [data-theme="light"] .form-input { background: #fff; }
+        .form-input:focus { border-color: var(--primary); }
+
+        /* Notification Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            padding: 12px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #fff;
+            box-shadow: var(--shadow-card);
+            z-index: 1100;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Pulse Dot */
+        .pulse-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+            display: inline-block;
+        }
+        .pulse-dot.pulse-red {
+            background: #f43f5e;
+            box-shadow: 0 0 10px #f43f5e;
+        }
+
+        /* Print formatting */
+        @media print {
+            body { background: #fff; color: #000; }
+            .header-actions, .ambient-orb, .btn { display: none !important; }
+            .dashboard-card, .overview-banner { box-shadow: none; border: 1px solid #ccc; background: #fff; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Ambient Glowing Orbs -->
+    <div class="ambient-orb orb-1"></div>
+    <div class="ambient-orb orb-2"></div>
+    <div class="ambient-orb orb-3"></div>
+
+    <div class="app-layout">
+
+        <!-- Top Header Navigation -->
+        <header class="dashboard-header">
+            <div class="brand-section">
+                <div class="brand-badge">⚡</div>
+                <div class="brand-text">
+                    <h1>Testing Automation Suite</h1>
+                    <p>Executive Manager Operations & Quality Cockpit</p>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <!-- Project Selector -->
+                <div class="custom-select-wrapper">
+                    <select id="projectSelector" class="custom-select" onchange="handleProjectChange()">
+                        <option value="ALL">🌐 All Projects (Global Executive Overview)</option>
+                        <!-- Dynamic Project List -->
+                    </select>
+                </div>
+
+                <!-- Live / Demo Mode Toggle -->
+                <button id="modeToggleBtn" class="btn btn-glass" onclick="toggleDataSourceMode()" title="Toggle between connected live API and realistic demo data">
+                    <span id="modeDot" class="pulse-dot"></span>
+                    <span id="modeText">Live API Mode</span>
+                </button>
+
+                <!-- Refresh Button -->
+                <button class="btn btn-glass" onclick="refreshDashboardData()" title="Reload data">
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                    Refresh
+                </button>
+
+                <!-- Export Report -->
+                <button class="btn btn-glass" onclick="exportManagerReport()" title="Export executive report as JSON">
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    Export
+                </button>
+
+                <!-- Chat Link -->
+                <a href="/bug-chat.html" class="btn btn-glass" title="Go to Defect Discussion Hub">
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>
+                    Bug Chat
+                </a>
+
+                <!-- Auth Settings -->
+                <button class="btn btn-primary" onclick="openAuthModal()" title="Configure JWT Auth Token">
+                    <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>
+                    Auth
+                </button>
+
+                <!-- Theme Toggle -->
+                <button class="btn btn-glass theme-toggle-btn" onclick="toggleTheme()" title="Switch Theme">
+                    <span id="themeIcon">🌙</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Project / Executive Banner -->
+        <section class="overview-banner" id="overviewBanner">
+            <div class="banner-left">
+                <div class="banner-title-row">
+                    <span class="banner-title" id="bannerTitle">Global Executive Overview</span>
+                    <span class="pill-badge pill-active" id="bannerStatus">ALL ACTIVE PROJECTS</span>
+                    <span class="pill-badge pill-region" id="bannerRegion">GLOBAL REGIONS</span>
+                </div>
+                <p class="banner-desc" id="bannerDesc">
+                    Aggregated executive testing automation metrics across all projects, feature modules, test runs, and defect tracks.
+                </p>
+                <div class="banner-meta" id="bannerMeta">
+                    <span class="banner-meta-item"><span>Manager:</span> <strong id="metaManager">Automated Suite</strong></span>
+                    <span class="banner-meta-item"><span>Features Tracked:</span> <strong id="metaFeatures">0</strong></span>
+                    <span class="banner-meta-item"><span>Last Synced:</span> <strong id="metaSync">Just now</strong></span>
+                </div>
+            </div>
+
+            <!-- Health Score Gauge -->
+            <div class="health-radar-box">
+                <div class="health-score-dial">
+                    <svg viewBox="0 0 64 64">
+                        <circle class="health-dial-bg" cx="32" cy="32" r="28"></circle>
+                        <circle id="healthDialFill" class="health-dial-fill" cx="32" cy="32" r="28" stroke="#10b981"></circle>
+                    </svg>
+                    <span class="health-score-val" id="healthScoreText">92%</span>
+                </div>
+                <div class="health-text-box">
+                    <span class="health-label">Release Health</span>
+                    <span class="health-status-name" id="healthStatusName" style="color: #10b981;">EXCELLENT</span>
+                    <span class="health-summary-text" id="healthSummaryText">Quality metrics on track - ready for deployment</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Executive KPI Cards -->
+        <section class="kpi-grid">
+            <!-- Projects Card -->
+            <div class="kpi-card">
+                <div class="kpi-card-top">
+                    <span class="kpi-title">Projects</span>
+                    <div class="kpi-icon-pill icon-blue">📁</div>
+                </div>
+                <div class="kpi-value-row">
+                    <span class="kpi-value" id="kpiProjectsTotal">0</span>
+                    <span class="kpi-sub-badge count-pass" id="kpiProjectsActive">0 Active</span>
+                </div>
+                <div class="kpi-meta-row">
+                    <span>Inactive: <strong id="kpiProjectsInactive">0</strong></span>
+                    <span>Regions: <strong id="kpiRegionsCount">Global</strong></span>
+                </div>
+            </div>
+
+            <!-- Features Card -->
+            <div class="kpi-card">
+                <div class="kpi-card-top">
+                    <span class="kpi-title">Features / Modules</span>
+                    <div class="kpi-icon-pill icon-cyan">🧩</div>
+                </div>
+                <div class="kpi-value-row">
+                    <span class="kpi-value" id="kpiFeaturesTotal">0</span>
+                    <span class="kpi-sub-badge count-pass" id="kpiFeaturesActive">0 Active</span>
+                </div>
+                <div class="kpi-meta-row">
+                    <span>In Progress: <strong id="kpiFeaturesInProgress">0</strong></span>
+                    <span>Completed: <strong id="kpiFeaturesCompleted">0</strong></span>
+                </div>
+            </div>
+
+            <!-- Total Test Cases -->
+            <div class="kpi-card">
+                <div class="kpi-card-top">
+                    <span class="kpi-title">Total Testcases</span>
+                    <div class="kpi-icon-pill icon-purple">🧪</div>
+                </div>
+                <div class="kpi-value-row">
+                    <span class="kpi-value" id="kpiTestcasesTotal">0</span>
+                    <span class="kpi-sub-badge count-descope" id="kpiExecRate">0% Executed</span>
+                </div>
+                <div class="progress-bar-container" id="kpiTestProgressBar">
+                    <div class="progress-bar-fill fill-pass" style="width: 70%"></div>
+                    <div class="progress-bar-fill fill-fail" style="width: 15%"></div>
+                    <div class="progress-bar-fill fill-norun" style="width: 15%"></div>
+                </div>
+                <div class="kpi-meta-row">
+                    <span>Executed: <strong id="kpiTestExecuted">0</strong></span>
+                    <span>No Run: <strong id="kpiTestNoRun">0</strong></span>
+                </div>
+            </div>
+
+            <!-- Pass Rate & Failures -->
+            <div class="kpi-card">
+                <div class="kpi-card-top">
+                    <span class="kpi-title">Pass Rate</span>
+                    <div class="kpi-icon-pill icon-green">🎯</div>
+                </div>
+                <div class="kpi-value-row">
+                    <span class="kpi-value" id="kpiPassRate" style="color: #34d399;">0.0%</span>
+                    <span class="kpi-sub-badge count-fail" id="kpiFailBadge">0 Failed</span>
+                </div>
+                <div class="kpi-meta-row">
+                    <span>Passed: <strong id="kpiPassedCount" style="color: #34d399;">0</strong></span>
+                    <span>Failed: <strong id="kpiFailedCount" style="color: #fb7185;">0</strong></span>
+                </div>
+            </div>
+
+            <!-- Bugs & Critical Blockers -->
+            <div class="kpi-card">
+                <div class="kpi-card-top">
+                    <span class="kpi-title">Defects & Blockers</span>
+                    <div class="kpi-icon-pill icon-red">🐞</div>
+                </div>
+                <div class="kpi-value-row">
+                    <span class="kpi-value" id="kpiBugsTotal">0</span>
+                    <span class="kpi-sub-badge count-fail" id="kpiCriticalBugs">0 Critical</span>
+                </div>
+                <div class="kpi-meta-row">
+                    <span>Open: <strong id="kpiOpenBugs" style="color: #fb7185;">0</strong></span>
+                    <span>Resolved: <strong id="kpiResolvedBugs" style="color: #34d399;">0</strong></span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Charts & Analytics Section -->
+        <section class="analytics-grid">
+            <!-- Test Execution Status Chart -->
+            <div class="dashboard-card grid-col-4">
+                <div class="card-header">
+                    <h3><span>📊</span> Test Case Execution Status</h3>
+                    <span class="card-header-badge" id="chartTotalTcBadge">Total: 0</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="testExecutionChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Bug Severity & Status Breakdown -->
+            <div class="dashboard-card grid-col-4">
+                <div class="card-header">
+                    <h3><span>🚨</span> Defect Severity Distribution</h3>
+                    <span class="card-header-badge" id="chartTotalBugsBadge">Bugs: 0</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="bugSeverityChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Feature Quality Comparison -->
+            <div class="dashboard-card grid-col-4">
+                <div class="card-header">
+                    <h3><span>📈</span> Feature Quality & Defect Matrix</h3>
+                    <span class="card-header-badge">Top Modules</span>
+                </div>
+                <div class="chart-container">
+                    <canvas id="featureMatrixChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- Feature Breakdown Matrix Table -->
+        <section class="dashboard-card">
+            <div class="card-header">
+                <h3><span>🧩</span> Feature-by-Feature Quality & Test Execution Breakdown</h3>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="text" id="featureTableSearch" class="form-input" style="padding: 6px 12px; font-size: 13px; width: 220px;" placeholder="Search features..." oninput="filterFeaturesTable()">
+                    <span class="card-header-badge" id="featuresCountBadge">0 Features</span>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="manager-table" id="featuresTable">
+                    <thead>
+                        <tr>
+                            <th>Feature Name & ID</th>
+                            <th>Sprint / Version</th>
+                            <th>Status</th>
+                            <th>Total Tests</th>
+                            <th>Pass / Fail / No Run</th>
+                            <th style="min-width: 170px;">Pass Rate %</th>
+                            <th>Execution %</th>
+                            <th>Defects</th>
+                            <th>Health</th>
+                        </tr>
+                    </thead>
+                    <tbody id="featuresTableBody">
+                        <tr>
+                            <td colspan="9" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                                Loading feature metrics...
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- Defect Stream & Top Blockers -->
+        <section class="analytics-grid">
+            <!-- Recent Defects Table -->
+            <div class="dashboard-card grid-col-8">
+                <div class="card-header">
+                    <h3><span>🐞</span> Recent Defects & Quality Blockers</h3>
+                    <span class="card-header-badge">Latest Defect Stream</span>
+                </div>
+                <div class="table-responsive">
+                    <table class="manager-table" id="recentBugsTable">
+                        <thead>
+                            <tr>
+                                <th>Bug ID</th>
+                                <th>Summary / Title</th>
+                                <th>Severity</th>
+                                <th>Status</th>
+                                <th>Feature / Project</th>
+                                <th>Reported By</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="recentBugsTableBody">
+                            <tr>
+                                <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                                    No defect data available.
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Top Failing Features / Quality Risks -->
+            <div class="dashboard-card grid-col-4">
+                <div class="card-header">
+                    <h3><span>⚠️</span> Quality Risks & Top Failing Modules</h3>
+                    <span class="card-header-badge">Action Needed</span>
+                </div>
+                <div id="topFailingList" style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- Auth Configuration Modal -->
+    <div class="modal-backdrop" id="authModal">
+        <div class="modal-box">
+            <h3 style="font-size: 18px; font-weight: 700;">Manager JWT Authentication</h3>
+            <p style="font-size: 13.5px; color: var(--text-muted);">
+                Provide your Bearer token or login credentials to query live manager endpoints from the Spring Boot backend.
+            </p>
+
+            <div class="form-group">
+                <label class="form-label">JWT Token (Bearer)</label>
+                <textarea id="jwtTokenInput" class="form-input" rows="4" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..."></textarea>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px;">
+                <button class="btn btn-glass" onclick="closeAuthModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="saveAuthToken()">Save & Connect</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div class="toast" id="toastMessage">
+        <span id="toastText">Notification message</span>
+    </div>
+
+    <!-- Application Script -->
+    <script>
+        // Global State
+        const STATE = {
+            isDemoMode: false,
+            currentProject: 'ALL',
+            token: localStorage.getItem('tat_manager_jwt_token') || '',
+            theme: localStorage.getItem('tat_theme') || 'dark',
+            overviewData: null,
+            projectData: null,
+            projectsList: [],
+            featuresList: [],
+            charts: {}
+        };
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+            loadProjectsDropdown();
+            fetchDashboardData();
+        });
+
+        // Theme management
+        function initTheme() {
+            document.documentElement.setAttribute('data-theme', STATE.theme);
+            document.getElementById('themeIcon').textContent = STATE.theme === 'dark' ? '🌙' : '☀️';
+        }
+
+        function toggleTheme() {
+            STATE.theme = STATE.theme === 'dark' ? 'light' : 'dark';
+            localStorage.setItem('tat_theme', STATE.theme);
+            initTheme();
+            renderCharts();
+        }
+
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toastMessage');
+            const toastText = document.getElementById('toastText');
+            toastText.textContent = msg;
+            toast.style.borderColor = isError ? 'rgba(244, 63, 94, 0.4)' : 'rgba(16, 185, 129, 0.4)';
+            toast.style.display = 'flex';
+            setTimeout(() => { toast.style.display = 'none'; }, 3500);
+        }
+
+        // Toggle Live vs Demo Mode
+        function toggleDataSourceMode() {
+            STATE.isDemoMode = !STATE.isDemoMode;
+            const dot = document.getElementById('modeDot');
+            const text = document.getElementById('modeText');
+            if (STATE.isDemoMode) {
+                dot.className = 'pulse-dot pulse-red';
+                text.textContent = 'Demo Mode (Offline)';
+                showToast('Switched to Realistic Demo Data');
+            } else {
+                dot.className = 'pulse-dot';
+                text.textContent = 'Live API Mode';
+                showToast('Switched to Live Backend APIs');
+            }
+            fetchDashboardData();
+        }
+
+        // Fetch Projects for Dropdown
+        async function loadProjectsDropdown() {
+            const selector = document.getElementById('projectSelector');
+            if (STATE.isDemoMode || !STATE.token) {
+                // Populate default mock projects
+                const demoProjects = [
+                    { projectId: 1, projectName: "Core Banking Engine", region: "US-East" },
+                    { projectId: 2, projectName: "Payment Gateway Integration", region: "EU-Central" },
+                    { projectId: 3, projectName: "Customer Mobile Portal", region: "APAC" }
+                ];
+                populateProjectsDropdown(demoProjects);
+                return;
+            }
+
+            try {
+                const response = await fetch('/project', {
+                    headers: { 'Authorization': `Bearer ${STATE.token}` }
+                });
+                if (response.ok) {
+                    const projects = await response.json();
+                    STATE.projectsList = projects;
+                    populateProjectsDropdown(projects);
+                } else {
+                    console.warn("Could not fetch project list, using fallback.");
+                }
+            } catch (err) {
+                console.warn("Project fetch error:", err);
+            }
+        }
+
+        function populateProjectsDropdown(projects) {
+            const selector = document.getElementById('projectSelector');
+            selector.innerHTML = '<option value="ALL">🌐 All Projects (Global Executive Overview)</option>';
+            projects.forEach(p => {
+                const opt = document.createElement('option');
+                opt.value = p.projectId;
+                opt.textContent = `📁 ${p.projectName} (${p.region || 'Default'})`;
+                selector.appendChild(opt);
+            });
+        }
+
+        function handleProjectChange() {
+            const selector = document.getElementById('projectSelector');
+            STATE.currentProject = selector.value;
+            fetchDashboardData();
+        }
+
+        function refreshDashboardData() {
+            showToast('Refreshing dashboard data...');
+            fetchDashboardData();
+        }
+
+        // Main Data Fetcher
+        async function fetchDashboardData() {
+            if (STATE.isDemoMode) {
+                renderMockData();
+                return;
+            }
+
+            try {
+                if (STATE.currentProject === 'ALL') {
+                    const res = await fetch('/manager/dashboard/overview', {
+                        headers: STATE.token ? { 'Authorization': `Bearer ${STATE.token}` } : {}
+                    });
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        STATE.overviewData = data;
+                        renderOverviewData(data);
+                        if (data.projects && data.projects.length > 0) {
+                            populateProjectsDropdown(data.projects);
+                        }
+                    } else if (res.status === 401 || res.status === 403) {
+                        showToast('Auth token required. Falling back to Demo Preview.', true);
+                        renderMockData();
+                    } else {
+                        renderMockData();
+                    }
+                } else {
+                    const res = await fetch(`/manager/dashboard/project/${STATE.currentProject}`, {
+                        headers: STATE.token ? { 'Authorization': `Bearer ${STATE.token}` } : {}
+                    });
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        STATE.projectData = data;
+                        renderProjectSpecificData(data);
+                    } else {
+                        renderMockProjectData(STATE.currentProject);
+                    }
+                }
+            } catch (err) {
+                console.warn("API Error, falling back to Demo Mock:", err);
+                renderMockData();
+            }
+        }
+
+        // Render Global Overview Data
+        function renderOverviewData(data) {
+            // Banner
+            document.getElementById('bannerTitle').textContent = "Global Executive Overview";
+            document.getElementById('bannerStatus').textContent = `${data.projectStats?.totalProjects || 0} TOTAL PROJECTS`;
+            document.getElementById('bannerStatus').className = "pill-badge pill-active";
+            document.getElementById('bannerRegion').textContent = "GLOBAL REGIONS";
+            document.getElementById('bannerDesc').textContent = "Aggregated testing automation metrics across all projects, feature modules, test runs, and defect tracks.";
+            document.getElementById('metaManager').textContent = "Executive Portal";
+            document.getElementById('metaFeatures').textContent = data.featureStats?.totalFeatures || 0;
+            document.getElementById('metaSync').textContent = new Date().toLocaleTimeString();
+
+            // Health Dial
+            const health = data.qualityHealth || { score: 90, status: "EXCELLENT", summary: "Quality standards met" };
+            updateHealthGauge(health.score, health.status, health.summary);
+
+            // KPI Cards
+            document.getElementById('kpiProjectsTotal').textContent = data.projectStats?.totalProjects || 0;
+            document.getElementById('kpiProjectsActive').textContent = `${data.projectStats?.activeProjects || 0} Active`;
+            document.getElementById('kpiProjectsInactive').textContent = data.projectStats?.inactiveProjects || 0;
+
+            document.getElementById('kpiFeaturesTotal').textContent = data.featureStats?.totalFeatures || 0;
+            document.getElementById('kpiFeaturesActive').textContent = `${data.featureStats?.activeFeatures || 0} Active`;
+            document.getElementById('kpiFeaturesInProgress').textContent = data.featureStats?.inProgressFeatures || 0;
+            document.getElementById('kpiFeaturesCompleted').textContent = data.featureStats?.completedFeatures || 0;
+
+            const tc = data.testCaseStats || {};
+            document.getElementById('kpiTestcasesTotal').textContent = tc.totalTestCases || 0;
+            document.getElementById('kpiExecRate').textContent = `${tc.executionRatePercentage || 0}% Executed`;
+            document.getElementById('kpiTestExecuted').textContent = (tc.passedCount || 0) + (tc.failedCount || 0);
+            document.getElementById('kpiTestNoRun').textContent = tc.noRunCount || 0;
+
+            const passRate = tc.passRatePercentage || 0;
+            document.getElementById('kpiPassRate').textContent = `${passRate}%`;
+            document.getElementById('kpiPassedCount').textContent = tc.passedCount || 0;
+            document.getElementById('kpiFailedCount').textContent = tc.failedCount || 0;
+            document.getElementById('kpiFailBadge').textContent = `${tc.failedCount || 0} Failed`;
+
+            const bugs = data.bugStats || {};
+            document.getElementById('kpiBugsTotal').textContent = bugs.totalBugs || 0;
+            document.getElementById('kpiCriticalBugs').textContent = `${bugs.criticalBugs || 0} Critical`;
+            document.getElementById('kpiOpenBugs').textContent = bugs.openBugs || 0;
+            document.getElementById('kpiResolvedBugs').textContent = bugs.resolvedBugs || 0;
+
+            // Features table from projects
+            let allFeatures = [];
+            if (data.projects) {
+                // Synthesize feature list from project summaries or failing features
+                allFeatures = data.topFailingFeatures || [];
+            }
+            STATE.featuresList = allFeatures;
+            renderFeaturesTable(allFeatures);
+
+            // Recent Defects
+            renderRecentBugsTable(data.recentBugs || []);
+
+            // Top Failing
+            renderTopFailingList(data.topFailingFeatures || []);
+
+            // Charts
+            renderCharts(tc, bugs, allFeatures);
+        }
+
+        // Render Project Specific Data
+        function renderProjectSpecificData(data) {
+            const proj = data.projectDetails || {};
+            document.getElementById('bannerTitle').textContent = proj.projectName || "Project Overview";
+            document.getElementById('bannerStatus').textContent = proj.status || "ACTIVE";
+            document.getElementById('bannerStatus').className = proj.status === 'ACTIVE' ? "pill-badge pill-active" : "pill-badge pill-inactive";
+            document.getElementById('bannerRegion').textContent = proj.region || "REGION: N/A";
+            document.getElementById('bannerDesc').textContent = proj.description || proj.comments || "Dedicated project quality cockpit.";
+            document.getElementById('metaManager').textContent = proj.createdByName || "System";
+            document.getElementById('metaFeatures').textContent = data.features ? data.features.length : 0;
+            document.getElementById('metaSync').textContent = new Date().toLocaleTimeString();
+
+            // Health Dial
+            const health = data.qualityHealth || { score: 85, status: "GOOD", summary: "Quality on track" };
+            updateHealthGauge(health.score, health.status, health.summary);
+
+            // KPI Cards
+            document.getElementById('kpiProjectsTotal').textContent = 1;
+            document.getElementById('kpiProjectsActive').textContent = `Version ${proj.version || '1.0'}`;
+            document.getElementById('kpiProjectsInactive').textContent = proj.region || "Standard";
+
+            const features = data.features || [];
+            document.getElementById('kpiFeaturesTotal').textContent = features.length;
+            const activeF = features.filter(f => f.status === 'ACTIVE').length;
+            document.getElementById('kpiFeaturesActive').textContent = `${activeF} Active`;
+            document.getElementById('kpiFeaturesInProgress').textContent = features.filter(f => f.status === 'IN_PROGRESS').length;
+            document.getElementById('kpiFeaturesCompleted').textContent = features.filter(f => f.status === 'COMPLETED').length;
+
+            const tc = data.testCaseStats || {};
+            document.getElementById('kpiTestcasesTotal').textContent = tc.totalTestCases || 0;
+            document.getElementById('kpiExecRate').textContent = `${tc.executionRatePercentage || 0}% Executed`;
+            document.getElementById('kpiTestExecuted').textContent = (tc.passedCount || 0) + (tc.failedCount || 0);
+            document.getElementById('kpiTestNoRun').textContent = tc.noRunCount || 0;
+
+            const passRate = tc.passRatePercentage || 0;
+            document.getElementById('kpiPassRate').textContent = `${passRate}%`;
+            document.getElementById('kpiPassedCount').textContent = tc.passedCount || 0;
+            document.getElementById('kpiFailedCount').textContent = tc.failedCount || 0;
+            document.getElementById('kpiFailBadge').textContent = `${tc.failedCount || 0} Failed`;
+
+            const bugs = data.bugStats || {};
+            document.getElementById('kpiBugsTotal').textContent = bugs.totalBugs || 0;
+            document.getElementById('kpiCriticalBugs').textContent = `${bugs.criticalBugs || 0} Critical`;
+            document.getElementById('kpiOpenBugs').textContent = bugs.openBugs || 0;
+            document.getElementById('kpiResolvedBugs').textContent = bugs.resolvedBugs || 0;
+
+            STATE.featuresList = features;
+            renderFeaturesTable(features);
+            renderRecentBugsTable(data.recentBugs || []);
+            renderTopFailingList(features.filter(f => f.failedCount > 0 || f.openBugs > 0));
+            renderCharts(tc, bugs, features);
+        }
+
+        // Update Circular Health Gauge
+        function updateHealthGauge(score, status, summary) {
+            const dial = document.getElementById('healthDialFill');
+            const scoreText = document.getElementById('healthScoreText');
+            const statusName = document.getElementById('healthStatusName');
+            const summaryText = document.getElementById('healthSummaryText');
+
+            scoreText.textContent = `${Math.round(score)}%`;
+            statusName.textContent = status || "STABLE";
+            summaryText.textContent = summary || "Quality health verified";
+
+            // Circle radius 28 -> Circumference = 2 * PI * 28 = 175.9
+            const circumference = 176;
+            const offset = circumference - (score / 100) * circumference;
+            dial.style.strokeDashoffset = offset;
+
+            if (score >= 85) {
+                dial.style.stroke = "#10b981";
+                statusName.style.color = "#10b981";
+            } else if (score >= 70) {
+                dial.style.stroke = "#06b6d4";
+                statusName.style.color = "#06b6d4";
+            } else if (score >= 50) {
+                dial.style.stroke = "#f59e0b";
+                statusName.style.color = "#f59e0b";
+            } else {
+                dial.style.stroke = "#f43f5e";
+                statusName.style.color = "#f43f5e";
+            }
+        }
+
+        // Render Features Table
+        function renderFeaturesTable(features) {
+            const tbody = document.getElementById('featuresTableBody');
+            document.getElementById('featuresCountBadge').textContent = `${features.length} Features`;
+
+            if (!features || features.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" style="text-align: center; color: var(--text-muted); padding: 24px;">No features found for this view.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = features.map(f => {
+                const passRate = f.passRatePercentage || 0;
+                const execRate = f.executionRatePercentage || 0;
+                let healthBadge = '<span class="pill-badge pill-active">🟢 HEALTHY</span>';
+                if (f.healthStatus === 'CRITICAL' || f.criticalBugs > 0 || (f.totalTestCases > 0 && passRate < 60)) {
+                    healthBadge = '<span class="pill-badge pill-critical">🔴 CRITICAL</span>';
+                } else if (f.healthStatus === 'WARNING' || passRate < 85) {
+                    healthBadge = '<span class="pill-badge pill-warning">🟡 WARNING</span>';
+                }
+
+                let statusPill = `<span class="pill-badge pill-active">${f.status || 'ACTIVE'}</span>`;
+                if (f.status === 'IN_PROGRESS') statusPill = `<span class="pill-badge pill-sprint">IN PROGRESS</span>`;
+                if (f.status === 'ON_HOLD') statusPill = `<span class="pill-badge pill-warning">ON HOLD</span>`;
+
+                return `
+                    <tr>
+                        <td>
+                            <div class="feature-title-cell">
+                                <span class="feature-name">${escapeHtml(f.featureName)}</span>
+                                <span class="feature-sub">ID: #${f.featureId} ${f.projectName ? '• ' + escapeHtml(f.projectName) : ''}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="pill-badge pill-sprint">Sprint ${f.sprint || 1}</span>
+                            <span style="font-size: 11px; color: var(--text-subtle); margin-left: 4px;">v${f.featureVersion || '1.0'}</span>
+                        </td>
+                        <td>${statusPill}</td>
+                        <td><strong style="font-family: var(--font-mono);">${f.totalTestCases || 0}</strong></td>
+                        <td>
+                            <div style="display: flex; gap: 4px;">
+                                <span class="count-pill count-pass" title="Passed">${f.passedCount || 0}P</span>
+                                <span class="count-pill count-fail" title="Failed">${f.failedCount || 0}F</span>
+                                <span class="count-pill count-norun" title="No Run">${f.noRunCount || 0}NR</span>
+                            </div>
+                        </td>
+                        <td class="rate-progress-cell">
+                            <div class="rate-label-row">
+                                <span style="color: ${passRate >= 80 ? '#34d399' : (passRate >= 50 ? '#fbbf24' : '#fb7185')}">${passRate}%</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar-fill fill-pass" style="width: ${passRate}%"></div>
+                                <div class="progress-bar-fill fill-fail" style="width: ${100 - passRate}%"></div>
+                            </div>
+                        </td>
+                        <td>
+                            <span style="font-family: var(--font-mono); font-size: 12.5px; font-weight: 600;">${execRate}%</span>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 4px; align-items: center;">
+                                <span class="count-pill ${f.totalBugs > 0 ? 'count-fail' : 'count-norun'}">${f.totalBugs || 0}</span>
+                                ${f.criticalBugs > 0 ? `<span class="pill-badge pill-critical" style="padding: 1px 6px; font-size: 10px;">${f.criticalBugs} Crit</span>` : ''}
+                            </div>
+                        </td>
+                        <td>${healthBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function filterFeaturesTable() {
+            const query = document.getElementById('featureTableSearch').value.toLowerCase();
+            const filtered = STATE.featuresList.filter(f => 
+                (f.featureName && f.featureName.toLowerCase().includes(query)) ||
+                (f.description && f.description.toLowerCase().includes(query)) ||
+                (f.projectName && f.projectName.toLowerCase().includes(query))
+            );
+            renderFeaturesTable(filtered);
+        }
+
+        // Render Recent Bugs Table
+        function renderRecentBugsTable(bugs) {
+            const tbody = document.getElementById('recentBugsTableBody');
+            if (!bugs || bugs.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: var(--text-muted); padding: 24px;">No recent defects reported. System quality is clean.</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = bugs.map(b => {
+                const sev = (b.severity || 'MEDIUM').toUpperCase();
+                let sevClass = 'severity-medium';
+                if (sev === 'CRITICAL') sevClass = 'severity-critical';
+                if (sev === 'HIGH') sevClass = 'severity-high';
+                if (sev === 'LOW') sevClass = 'severity-low';
+
+                return `
+                    <tr>
+                        <td><span class="bug-format-id">${escapeHtml(b.bugFormatId || 'BUG-' + b.bugId)}</span></td>
+                        <td>
+                            <span style="font-weight: 600; color: var(--text-main);">${escapeHtml(b.title)}</span>
+                        </td>
+                        <td><span class="defect-badge ${sevClass}">${sev}</span></td>
+                        <td><span class="pill-badge ${b.status === 'OPEN' ? 'pill-critical' : 'pill-active'}">${b.status || 'OPEN'}</span></td>
+                        <td><span style="font-size: 12px; color: var(--text-muted);">${escapeHtml(b.featureName || 'General')}</span></td>
+                        <td><span style="font-size: 12px; color: var(--text-subtle);">${escapeHtml(b.reportedBy || 'QA Team')}</span></td>
+                        <td>
+                            <a href="/bug-chat.html?bugId=${b.bugId}" class="btn btn-glass" style="padding: 4px 8px; font-size: 11px;">Discuss</a>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Render Top Failing Features List
+        function renderTopFailingList(failingFeatures) {
+            const container = document.getElementById('topFailingList');
+            if (!failingFeatures || failingFeatures.length === 0) {
+                container.innerHTML = `
+                    <div style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: var(--radius-md); padding: 16px; text-align: center; color: #34d399;">
+                        ✨ All modules passing quality standards. No critical blocker modules detected!
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = failingFeatures.slice(0, 5).map(f => `
+                <div style="background: rgba(15, 23, 42, 0.5); border: 1px solid var(--glass-border); border-radius: var(--radius-md); padding: 12px 14px; display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <div style="font-weight: 600; font-size: 13.5px; color: #fff;">${escapeHtml(f.featureName)}</div>
+                        <div style="font-size: 11.5px; color: var(--text-subtle);">Pass Rate: <strong style="color: #fb7185;">${f.passRatePercentage || 0}%</strong> • Failed: <strong>${f.failedCount || 0}</strong></div>
+                    </div>
+                    <div>
+                        <span class="pill-badge pill-critical">${f.openBugs || 0} Bugs</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Render Charts using Chart.js
+        function renderCharts(tc = {}, bugs = {}, features = []) {
+            const isDark = STATE.theme === 'dark';
+            const textColor = isDark ? '#94a3b8' : '#475569';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
+
+            // 1. Test Execution Donut
+            const ctx1 = document.getElementById('testExecutionChart');
+            if (STATE.charts.testExec) STATE.charts.testExec.destroy();
+
+            const pCount = tc.passedCount || 0;
+            const fCount = tc.failedCount || 0;
+            const nrCount = tc.noRunCount || 0;
+            const dCount = tc.descopeCount || 0;
+            document.getElementById('chartTotalTcBadge').textContent = `Total: ${pCount + fCount + nrCount + dCount}`;
+
+            STATE.charts.testExec = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Passed', 'Failed', 'No Run', 'Descope'],
+                    datasets: [{
+                        data: [pCount, fCount, nrCount, dCount],
+                        backgroundColor: ['#10b981', '#f43f5e', '#64748b', '#a855f7'],
+                        borderWidth: 0,
+                        hoverOffset: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Outfit', size: 12 } } }
+                    },
+                    cutout: '72%'
+                }
+            });
+
+            // 2. Bug Severity & Priority Bar
+            const ctx2 = document.getElementById('bugSeverityChart');
+            if (STATE.charts.bugSev) STATE.charts.bugSev.destroy();
+
+            const crit = bugs.criticalBugs || 0;
+            const high = bugs.highBugs || 0;
+            const med = bugs.mediumBugs || 0;
+            const low = bugs.lowBugs || 0;
+            document.getElementById('chartTotalBugsBadge').textContent = `Bugs: ${crit + high + med + low}`;
+
+            STATE.charts.bugSev = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: ['Critical', 'High', 'Medium', 'Low'],
+                    datasets: [{
+                        label: 'Active Defects',
+                        data: [crit, high, med, low],
+                        backgroundColor: ['#f43f5e', '#f59e0b', '#6366f1', '#94a3b8'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        x: { ticks: { color: textColor }, grid: { display: false } },
+                        y: { ticks: { color: textColor, stepSize: 1 }, grid: { color: gridColor } }
+                    }
+                }
+            });
+
+            // 3. Feature Comparison Bar
+            const ctx3 = document.getElementById('featureMatrixChart');
+            if (STATE.charts.featMatrix) STATE.charts.featMatrix.destroy();
+
+            const topF = features.slice(0, 5);
+            const fNames = topF.map(f => f.featureName ? (f.featureName.length > 12 ? f.featureName.substring(0, 12) + '...' : f.featureName) : 'Mod');
+            const fPass = topF.map(f => f.passRatePercentage || 0);
+            const fBugs = topF.map(f => f.totalBugs || 0);
+
+            STATE.charts.featMatrix = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: fNames.length > 0 ? fNames : ['Auth', 'Payments', 'Dashboard', 'Reports', 'API'],
+                    datasets: [
+                        {
+                            label: 'Pass Rate %',
+                            data: fPass.length > 0 ? fPass : [95, 82, 88, 75, 90],
+                            backgroundColor: '#10b981',
+                            borderRadius: 4
+                        },
+                        {
+                            label: 'Defects',
+                            data: fBugs.length > 0 ? fBugs : [1, 4, 2, 6, 1],
+                            backgroundColor: '#f43f5e',
+                            borderRadius: 4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { position: 'bottom', labels: { color: textColor, font: { family: 'Outfit', size: 11 } } }
+                    },
+                    scales: {
+                        x: { ticks: { color: textColor }, grid: { display: false } },
+                        y: { ticks: { color: textColor }, grid: { color: gridColor } }
+                    }
+                }
+            });
+        }
+
+        // Mock Data for Offline & Demo Exploration
+        function renderMockData() {
+            const mockOverview = {
+                projectStats: { totalProjects: 3, activeProjects: 3, inactiveProjects: 0 },
+                featureStats: { totalFeatures: 8, activeFeatures: 6, inProgressFeatures: 2, completedFeatures: 4, onHoldFeatures: 0 },
+                testCaseStats: {
+                    totalTestCases: 142,
+                    passedCount: 118,
+                    failedCount: 14,
+                    noRunCount: 8,
+                    descopeCount: 2,
+                    passRatePercentage: 89.4,
+                    executionRatePercentage: 94.4
+                },
+                bugStats: {
+                    totalBugs: 19,
+                    openBugs: 7,
+                    inProgressBugs: 5,
+                    resolvedBugs: 7,
+                    closedBugs: 5,
+                    criticalBugs: 1,
+                    highBugs: 3,
+                    mediumBugs: 8,
+                    lowBugs: 7
+                },
+                qualityHealth: {
+                    score: 88.5,
+                    status: "EXCELLENT",
+                    summary: "High test automation reliability across 3 core banking clusters"
+                },
+                projects: [
+                    { projectId: 1, projectName: "Core Banking Engine", region: "US-East", status: "ACTIVE", featureCount: 4, testCaseCount: 65, passedCount: 58, failedCount: 5, bugCount: 8, openBugCount: 3, criticalBugCount: 1, passRatePercentage: 92.1 },
+                    { projectId: 2, projectName: "Payment Gateway Integration", region: "EU-Central", status: "ACTIVE", featureCount: 2, testCaseCount: 45, passedCount: 38, failedCount: 6, bugCount: 6, openBugCount: 2, criticalBugCount: 0, passRatePercentage: 86.4 },
+                    { projectId: 3, projectName: "Customer Mobile Portal", region: "APAC", status: "ACTIVE", featureCount: 2, testCaseCount: 32, passedCount: 22, failedCount: 3, bugCount: 5, openBugCount: 2, criticalBugCount: 0, passRatePercentage: 88.0 }
+                ],
+                recentBugs: [
+                    { bugId: 101, bugFormatId: "BUG-101", title: "OAuth2 Refresh Token Expiration Race Condition", severity: "CRITICAL", priority: "HIGH", status: "OPEN", featureName: "Authentication & RBAC", projectName: "Core Banking Engine", reportedBy: "tester_alex", createdAt: new Date() },
+                    { bugId: 102, bugFormatId: "BUG-102", title: "Webhook Retry Exponential Backoff Miscalculation", severity: "HIGH", priority: "MEDIUM", status: "IN_PROGRESS", featureName: "Payment Webhooks", projectName: "Payment Gateway Integration", reportedBy: "tester_sam", createdAt: new Date() },
+                    { bugId: 103, bugFormatId: "BUG-103", title: "Statement PDF Export Pagination Alignment", severity: "LOW", priority: "LOW", status: "RESOLVED", featureName: "Reports Engine", projectName: "Core Banking Engine", reportedBy: "tester_alex", createdAt: new Date() }
+                ],
+                topFailingFeatures: [
+                    { featureId: 1, featureName: "Payment Webhooks & Idempotency", sprint: 4, featureVersion: "2.1", status: "ACTIVE", totalTestCases: 28, passedCount: 20, failedCount: 6, noRunCount: 2, descopeCount: 0, passRatePercentage: 76.9, executionRatePercentage: 92.8, totalBugs: 5, openBugs: 3, criticalBugs: 1, healthStatus: "CRITICAL" },
+                    { featureId: 2, featureName: "Authentication & Multi-Factor Login", sprint: 5, featureVersion: "1.4", status: "ACTIVE", totalTestCases: 36, passedCount: 31, failedCount: 4, noRunCount: 1, descopeCount: 0, passRatePercentage: 88.6, executionRatePercentage: 97.2, totalBugs: 3, openBugs: 2, criticalBugs: 0, healthStatus: "WARNING" }
+                ]
+            };
+
+            renderOverviewData(mockOverview);
+        }
+
+        function renderMockProjectData(projectId) {
+            const mockProj = {
+                projectDetails: {
+                    projectId: projectId,
+                    projectName: projectId == 1 ? "Core Banking Engine" : (projectId == 2 ? "Payment Gateway Integration" : "Customer Mobile Portal"),
+                    description: "High-throughput financial transaction processing engine with automated end-to-end regression validation.",
+                    status: "ACTIVE",
+                    region: projectId == 1 ? "US-East (N. Virginia)" : "EU-Central (Frankfurt)",
+                    version: 2,
+                    createdByName: "Lead Quality Manager"
+                },
+                testCaseStats: {
+                    totalTestCases: 65,
+                    passedCount: 58,
+                    failedCount: 5,
+                    noRunCount: 2,
+                    descopeCount: 0,
+                    passRatePercentage: 92.1,
+                    executionRatePercentage: 96.9
+                },
+                bugStats: {
+                    totalBugs: 8,
+                    openBugs: 3,
+                    inProgressBugs: 2,
+                    resolvedBugs: 3,
+                    closedBugs: 2,
+                    criticalBugs: 1,
+                    highBugs: 2,
+                    mediumBugs: 3,
+                    lowBugs: 2
+                },
+                qualityHealth: {
+                    score: 89.2,
+                    status: "EXCELLENT",
+                    summary: "Pass rate exceeds target SLA threshold (90%)"
+                },
+                features: [
+                    { featureId: 101, featureName: "Transaction Processing Core", sprint: 3, featureVersion: "3.2", status: "ACTIVE", totalTestCases: 35, passedCount: 32, failedCount: 2, noRunCount: 1, descopeCount: 0, passRatePercentage: 94.1, executionRatePercentage: 97.1, totalBugs: 4, openBugs: 1, criticalBugs: 0, healthStatus: "HEALTHY" },
+                    { featureId: 102, featureName: "Ledger Double-Entry Audit", sprint: 4, featureVersion: "1.1", status: "IN_PROGRESS", totalTestCases: 30, passedCount: 26, failedCount: 3, noRunCount: 1, descopeCount: 0, passRatePercentage: 89.6, executionRatePercentage: 96.6, totalBugs: 4, openBugs: 2, criticalBugs: 1, healthStatus: "WARNING" }
+                ],
+                recentBugs: [
+                    { bugId: 101, bugFormatId: "BUG-101", title: "Double-Entry Rounding Delta on Fractional Cents", severity: "CRITICAL", priority: "HIGH", status: "OPEN", featureName: "Ledger Double-Entry Audit", reportedBy: "tester_alex", createdAt: new Date() },
+                    { bugId: 102, bugFormatId: "BUG-102", title: "Audit Trail DB Replication Delay", severity: "HIGH", priority: "MEDIUM", status: "IN_PROGRESS", featureName: "Ledger Double-Entry Audit", reportedBy: "tester_alex", createdAt: new Date() }
+                ]
+            };
+
+            renderProjectSpecificData(mockProj);
+        }
+
+        // Export Report Functionality
+        function exportManagerReport() {
+            const reportData = STATE.currentProject === 'ALL' ? STATE.overviewData : STATE.projectData;
+            if (!reportData) {
+                showToast("No data to export", true);
+                return;
+            }
+            const blob = new Blob([JSON.stringify(reportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `manager_quality_report_${STATE.currentProject}_${new Date().toISOString().slice(0,10)}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Manager quality report exported successfully!');
+        }
+
+        // Auth Modal Handlers
+        function openAuthModal() {
+            document.getElementById('jwtTokenInput').value = STATE.token;
+            document.getElementById('authModal').style.display = 'flex';
+        }
+
+        function closeAuthModal() {
+            document.getElementById('authModal').style.display = 'none';
+        }
+
+        function saveAuthToken() {
+            const token = document.getElementById('jwtTokenInput').value.trim();
+            STATE.token = token;
+            localStorage.setItem('tat_manager_jwt_token', token);
+            closeAuthModal();
+            showToast('JWT Token updated. Fetching live data...');
+            fetchDashboardData();
+        }
+
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+    </script>
+</body>
+</html>

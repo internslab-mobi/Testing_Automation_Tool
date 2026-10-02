@@ -71,4 +71,12 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
     default List<Bug> findByFeatureFeatureIdAndIsDeletedFalse(Integer featureId) {
         return findByFeature_FeatureIdAndIsDeletedFalse(featureId);
     }
+
+    List<Bug> findByFeature_Project_ProjectIdAndIsDeletedFalse(Integer projectId);
+
+    List<Bug> findByIsDeletedFalse();
+
+    List<Bug> findTop10ByIsDeletedFalseOrderByCreatedAtDesc();
+
+    List<Bug> findTop10ByFeature_Project_ProjectIdAndIsDeletedFalseOrderByCreatedAtDesc(Integer projectId);
 }

@@ -83,12 +83,12 @@ public class SecurityConfig {
                         // Public endpoints
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/swagger-resources/**", "/webjars/**").permitAll()
-                        .requestMatchers("/static/**", "/bug-chat.html", "/favicon.ico", "/error").permitAll()
+                        .requestMatchers("/static/**", "/bug-chat.html", "/manager-dashboard.html", "/favicon.ico", "/error").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
-                        // Manager-only endpoints: Dashboard & Project status toggle
-                        .requestMatchers("/manager/**").hasRole("MANAGER")
-                        .requestMatchers(HttpMethod.PATCH, "/project/*/status", "/project/active", "/project/inactive").hasRole("MANAGER")
+                        // Manager & Admin endpoints: Dashboard & Project status toggle
+                        .requestMatchers("/manager/**").hasAnyRole("MANAGER", "ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/project/*/status", "/project/active", "/project/inactive").hasAnyRole("MANAGER", "ADMIN")
 
                         // Authenticated application endpoints (MANAGER, TESTER, ADMIN)
                         .requestMatchers("/bugs/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")

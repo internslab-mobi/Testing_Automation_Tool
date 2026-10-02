@@ -1,13 +1,11 @@
 package xyz.mobi.testingautomationtool.service;
 
 import org.springframework.security.access.prepost.PreAuthorize;
-import xyz.mobi.testingautomationtool.dto.DashboardDto.MangerGetResponseOfUserEntity;
-import xyz.mobi.testingautomationtool.dto.DashboardDto.PatchRequestOfManager;
-import xyz.mobi.testingautomationtool.dto.DashboardDto.PatchResponseForManager;
+import xyz.mobi.testingautomationtool.dto.DashboardDto.*;
 
 import java.util.List;
 
-@PreAuthorize("hasRole('MANAGER')")
+@PreAuthorize("hasAnyRole('MANAGER', 'ADMIN')")
 public interface DashboardService {
     PatchResponseForManager userConfirmation(PatchRequestOfManager request);
 
@@ -16,4 +14,10 @@ public interface DashboardService {
     List<MangerGetResponseOfUserEntity> getAllUsers();
 
     List<MangerGetResponseOfUserEntity> getUsers();
+
+    ManagerDashboardOverviewResponse getManagerOverview();
+
+    ManagerProjectDashboardResponse getProjectDashboard(Integer projectId);
+
+    ManagerFeatureDetailMetrics getFeatureDashboard(Integer featureId);
 }

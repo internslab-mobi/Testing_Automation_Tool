@@ -60,4 +60,8 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Integer>, Jp
             Pageable pageable);
 
     boolean existsByFeatureFeatureIdAndTestcaseFormatId(Integer featureId, String testcaseFormatId);
+
+    List<TestCase> findByFeature_Project_ProjectIdAndIsDeletedFalse(Integer projectId);
+
+    List<TestCase> findByIsDeletedFalse();
 }

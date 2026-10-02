@@ -21,17 +21,19 @@ import java.util.List;
 @RequestMapping("/project")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+
 public class ProjectController {
 
     private final ProjectService projectService;
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
     @PostMapping
     public ResponseEntity<ProjectResponse> createProject(@Valid @RequestBody ProjectRequest request) {
         ProjectResponse response = projectService.createProject(request);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
     @PostMapping(value = "/attachment/{projectId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse> uploadAttachment(
             @RequestParam("file") MultipartFile file,
@@ -41,16 +43,19 @@ public class ProjectController {
         return ResponseEntity.ok(projectResponse);
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
     @GetMapping
     public ResponseEntity<List<ProjectResponse>> getAllProjects() {
         return ResponseEntity.ok(projectService.getAllProjects());
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
     @GetMapping("/{projectId}")
     public ResponseEntity<ProjectResponse> getProjectById(@PathVariable Integer projectId) {
         return ResponseEntity.ok(projectService.getProjectById(projectId));
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
     @GetMapping("/search")
     public ResponseEntity<List<ProjectResponse>> searchProjects(
             @RequestParam(required = false) String keyword,
@@ -58,6 +63,7 @@ public class ProjectController {
         return ResponseEntity.ok(projectService.searchProjects(keyword, status));
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
     @PutMapping("/{id}")
     public ResponseEntity<ProjectPutResponse> updateProject(
             @PathVariable("id") Integer id,
@@ -66,6 +72,7 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
     @PatchMapping("/{id}")
     public ResponseEntity<String> patchProject(
             @PathVariable("id") Integer id,
@@ -74,6 +81,7 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER')")
     @PatchMapping("/access/{id}")
     public ResponseEntity<String> patchProjectForManger(@PathVariable("id") Integer id,
                                                         @RequestParam ProjectStatus status                                          ){
@@ -81,6 +89,7 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER')")
     @DeleteMapping("/delete/{id}")
     public ResponseEntity<PatchProjectDeleteResponse> softDeleteProject(
             @PathVariable("id") Integer id) {
@@ -88,6 +97,7 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER')")
     @DeleteMapping("/{id}")
     public ResponseEntity<String> hardDeleteProject(
             @PathVariable("id") Integer id) {
@@ -95,6 +105,7 @@ public class ProjectController {
         return ResponseEntity.ok(response);
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
     @GetMapping("/projects/{projectId}/attachments/download")
     public ResponseEntity<byte[]> downloadProjectAttachments(
             @PathVariable Integer projectId) {

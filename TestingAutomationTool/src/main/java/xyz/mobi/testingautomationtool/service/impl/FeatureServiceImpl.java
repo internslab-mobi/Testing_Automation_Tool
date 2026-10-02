@@ -14,10 +14,7 @@ import xyz.mobi.testingautomationtool.entity.Feature;
 import xyz.mobi.testingautomationtool.entity.Project;
 import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.AttachmentType;
-import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
-import xyz.mobi.testingautomationtool.exception.CustomException;
-import xyz.mobi.testingautomationtool.exception.ErrorCode;
-import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
+import xyz.mobi.testingautomationtool.exception.*;
 import xyz.mobi.testingautomationtool.mapper.FeatureMapper;
 import xyz.mobi.testingautomationtool.repository.AttachmentRepository;
 import xyz.mobi.testingautomationtool.repository.FeatureRepository;
@@ -29,6 +26,7 @@ import xyz.mobi.testingautomationtool.specification.FeatureSpecification;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.lang.Exception;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
@@ -59,7 +57,7 @@ public class FeatureServiceImpl implements FeatureService {
         User user = authService.getCurrentUser();
 
         if (featureRepository.existsByProject_ProjectIdAndFeatureName(project.getProjectId(), request.getFeatureName())) {
-            throw new CustomException(ErrorCode.DUPLICATE_RESOURCE);
+            throw new DuplicateResourceException("Project is already existed");
         }
 
         Feature feature = featureMapper.toEntity(request);
@@ -197,14 +195,24 @@ public class FeatureServiceImpl implements FeatureService {
         }
 
         if (Boolean.TRUE.equals(request.getEndTimer())) {
-            if (feature.getStartTime() != null) {
-                Instant endTime = Instant.now();
-                long elapsedSeconds = Duration.between(feature.getStartTime(), endTime).getSeconds();
-                long currentDuration = feature.getDuration() != null ? feature.getDuration() : 0L;
-                long totalDuration = currentDuration + elapsedSeconds;
-                feature.setDuration(totalDuration);
-                feature.setStartTime(null);
+
+            if (feature.getStartTime() == null) {
+                throw new IllegalStateException("Start time is null");
             }
+
+            Instant endTime = Instant.now();
+
+            long elapsedSeconds =
+                    Duration.between(feature.getStartTime(), endTime).getSeconds();
+
+            long currentDuration =
+                    feature.getDuration() != null
+                            ? feature.getDuration()
+                            : 0L;
+
+            feature.setDuration(currentDuration + elapsedSeconds);
+            feature.setStartTime(null);
+
             updatedFields.add("endTimer");
         }
 
@@ -225,7 +233,7 @@ public class FeatureServiceImpl implements FeatureService {
         }
 
         if (updatedFields.isEmpty()) {
-            throw new IllegalArgumentException("At least one field must be provided for update");
+            throw new IllegalArgumentException("At l    east one field must be provided for update");
         }
 
         featureRepository.save(feature);

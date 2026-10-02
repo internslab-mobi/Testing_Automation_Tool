@@ -1,6 +1,9 @@
-package xyz.mobi.testingautomationtool.dto.BugDto;
+package xyz.mobi.testingautomationtool.dto.DashboardDto;
 
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import xyz.mobi.testingautomationtool.enums.BugCategory;
 import xyz.mobi.testingautomationtool.enums.BugPriority;
 import xyz.mobi.testingautomationtool.enums.BugSeverity;
@@ -8,32 +11,23 @@ import xyz.mobi.testingautomationtool.enums.BugStatus;
 
 import java.time.Instant;
 
-@Getter
-@Setter
+@Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-public class BugResponse {
-
+public class ManagerRecentBugDto {
     private Integer bugId;
     private String bugFormatId;
-    private Integer testcaseId;
-    private Integer featureId;
     private String title;
-    private String description;
     private BugSeverity severity;
     private BugPriority priority;
-    private BugCategory category;
     private BugStatus status;
+    private BugCategory category;
+    private Integer featureId;
+    private String featureName;
+    private Integer projectId;
+    private String projectName;
     private String reportedBy;
     private String assignedTo;
-    private String executedBy;
-    private String updatedBy;
-    private Instant resolvedAt;
-    private Integer bugReoccurredId;
-    private Integer bugOccurrence;
-    private String comments;
     private Instant createdAt;
-    private Instant updatedAt;
-    private boolean active;
 }
