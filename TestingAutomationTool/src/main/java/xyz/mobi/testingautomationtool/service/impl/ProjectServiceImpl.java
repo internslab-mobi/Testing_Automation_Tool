@@ -279,7 +279,8 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional(readOnly = true)
     public List<ProjectResponse> getAllProjects() {
-        return projectRepository.findByIsDeletedFalse().stream()
+        return projectRepository.findByIsDeletedFalse()
+                .stream()
                 .map(projectMapper::toResponse)
                 .toList();
     }

@@ -42,10 +42,10 @@ public interface FeatureMapper {
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "duration", ignore = true)
     @Mapping(target = "startTime", ignore = true)
-    @Mapping(target = "active", ignore = true)
-    @Mapping(target = "deleted", ignore = true)
+    @Mapping(target = "isActive", ignore = true)
+    @Mapping(target = "isDeleted", ignore = true)
     @Mapping(target = "version", ignore = true)
-    void updateEntityFromPut(@MappingTarget Feature feature, FeaturePutRequest request);
+    Feature updateEntityFromPut(FeaturePutRequest request);
 
     @Mapping(target = "featureId", ignore = true)
     @Mapping(target = "project", ignore = true)

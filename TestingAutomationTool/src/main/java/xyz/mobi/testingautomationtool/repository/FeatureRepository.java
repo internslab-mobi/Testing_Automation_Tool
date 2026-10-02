@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import xyz.mobi.testingautomationtool.entity.Feature;
+import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,7 +34,7 @@ public interface FeatureRepository extends JpaRepository<Feature, Integer>, JpaS
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Feature f SET f.isActive = false WHERE f.project.projectId = :projectId")
-    int deactivateFeaturesByProjectId(@Param("projectId") Integer projectId);
+    void deactivateFeaturesByProjectId(@Param("projectId") Integer projectId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Feature f SET f.isDeleted = true, f.isActive = false WHERE f.project.projectId = :projectId")
@@ -41,5 +42,13 @@ public interface FeatureRepository extends JpaRepository<Feature, Integer>, JpaS
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Feature f SET f.isActive = true WHERE f.project.projectId = :projectId AND f.isDeleted = false")
-    int activateFeaturesByProjectId(@Param("projectId") Integer projectId);
+    void activateFeaturesByProjectId(@Param("projectId") Integer projectId);
+
+    Optional<Feature> findByFeatureIdAndIsDeletedFalseAndProjectStatus(
+            Integer featureId,
+            ProjectStatus status
+    );
+
+    List<Feature> findByProject_ProjectIdAndIsDeletedFalseAndIsActiveTrueAndProject_Status(Integer projectId, ProjectStatus projectStatus);
+
 }

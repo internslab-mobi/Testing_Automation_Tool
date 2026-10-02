@@ -3,6 +3,11 @@ package xyz.mobi.testingautomationtool.controller;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -32,18 +37,31 @@ public class FeatureController {
     }
 
     @GetMapping("/{featureId}")
-    public ResponseEntity<FeatureResponse> getFeatureById(@PathVariable Integer featureId) {
+    public ResponseEntity<FeatureResponse> getFeatureById(
+            @PathVariable Integer featureId) {
         return ResponseEntity.ok(featureService.getFeatureById(featureId));
     }
 
     @GetMapping("/project/{projectId}")
-    public ResponseEntity<List<FeatureResponse>> getFeaturesByProjectId(@PathVariable Integer projectId) {
+    public ResponseEntity<List<FeatureResponse>> getFeaturesByProjectId(
+            @PathVariable Integer projectId) {
         return ResponseEntity.ok(featureService.getFeaturesByProjectId(projectId));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<FeatureResponse>> searchFeatures(FeatureSearchRequest request) {
-        return ResponseEntity.ok(featureService.searchFeatures(request));
+    public ResponseEntity<Page<FeatureResponse>> searchFeatures(
+            @ModelAttribute FeatureSearchRequest request,
+
+            @PageableDefault(
+                    size = 10,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            )
+            @ParameterObject Pageable pageable) {
+
+        return ResponseEntity.ok(
+                featureService.searchFeatures(request, pageable)
+        );
     }
 
     @PutMapping("/{featureId}")
@@ -78,7 +96,7 @@ public class FeatureController {
     }
 
     @GetMapping("/features/{featureId}/attachments/download")
-    public ResponseEntity<byte[]> downloadProjectAttachments(
+    public ResponseEntity<byte[]> downloadfeatureAttachments(
             @PathVariable Integer featureId) {
 
         AttachmentDownloadResponse response =

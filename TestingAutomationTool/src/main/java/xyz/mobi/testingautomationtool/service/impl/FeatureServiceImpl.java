@@ -3,6 +3,8 @@ package xyz.mobi.testingautomationtool.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -14,6 +16,11 @@ import xyz.mobi.testingautomationtool.entity.Feature;
 import xyz.mobi.testingautomationtool.entity.Project;
 import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.AttachmentType;
+import xyz.mobi.testingautomationtool.enums.ProjectStatus;
+import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
+import xyz.mobi.testingautomationtool.exception.CustomException;
+import xyz.mobi.testingautomationtool.exception.ErrorCode;
+import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.exception.*;
 import xyz.mobi.testingautomationtool.mapper.FeatureMapper;
 import xyz.mobi.testingautomationtool.repository.AttachmentRepository;
@@ -50,7 +57,8 @@ public class FeatureServiceImpl implements FeatureService {
 
     @Override
     public FeatureResponse createFeature(FeatureRequest request) {
-        Project project = projectRepository.findById(request.getProjectId())
+        Project project = projectRepository.findByIdAndIsActiveTrueAndIsDeletedFalse(request.getProjectId(),
+                        ProjectStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not available for id: " + request.getProjectId()));
 
 
@@ -233,7 +241,7 @@ public class FeatureServiceImpl implements FeatureService {
         }
 
         if (updatedFields.isEmpty()) {
-            throw new IllegalArgumentException("At l    east one field must be provided for update");
+            throw new IllegalArgumentException("At least one field must be provided for update");
         }
 
         featureRepository.save(feature);
@@ -272,7 +280,9 @@ public class FeatureServiceImpl implements FeatureService {
     @Transactional(readOnly = true)
     @Cacheable(value = "features", key = "#featureId")
     public FeatureResponse getFeatureById(Integer featureId) {
-        Feature feature = featureRepository.findByFeatureIdAndIsDeletedFalse(featureId)
+        Feature feature = featureRepository.findByFeatureIdAndIsDeletedFalseAndProjectStatus(
+                        featureId,
+                        ProjectStatus.ACTIVE)
                 .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
 
         return featureMapper.toResponse(feature);
@@ -281,17 +291,23 @@ public class FeatureServiceImpl implements FeatureService {
     @Override
     @Transactional(readOnly = true)
     public List<FeatureResponse> getFeaturesByProjectId(Integer projectId) {
-        return featureRepository.findByProject_ProjectIdAndIsDeletedFalse(projectId).stream()
+        return featureRepository.findByProject_ProjectIdAndIsDeletedFalseAndIsActiveTrueAndProject_Status(
+                        projectId,
+                        ProjectStatus.ACTIVE)
+                .stream()
                 .map(featureMapper::toResponse)
                 .toList();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<FeatureResponse> searchFeatures(FeatureSearchRequest request) {
-        return featureRepository.findAll(FeatureSpecification.search(request)).stream()
-                .map(featureMapper::toResponse)
-                .toList();
+    public Page<FeatureResponse> searchFeatures(
+            FeatureSearchRequest request,
+            Pageable pageable) {
+
+        return featureRepository
+                .findAll(FeatureSpecification.search(request), pageable)
+                .map(featureMapper::toResponse);
     }
 
 
@@ -322,14 +338,17 @@ public class FeatureServiceImpl implements FeatureService {
 
     @Override
     public FeaturePutResponse updateFeature(Integer featureId, FeaturePutRequest request) {
-        Feature feature = featureRepository.findById(featureId)
+        Feature feature = featureRepository.findByFeatureIdAndIsDeletedFalseAndProjectStatus(
+                featureId,
+                        ProjectStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Feature not found with id: " + featureId));
 
-        featureMapper.updateEntityFromPut(feature, request);
-        try {
-            feature.setUpdatedBy(authService.getCurrentUser());
-        } catch (Exception ignored) {
+        if(feature.isDeleted() || !feature.isActive()){
+            throw new IllegalArgumentException("Cannot update disabled/deleted feature with ID: " + featureId);
         }
+        featureMapper.updateEntityFromPut(request);
+
+        feature.setUpdatedBy(authService.getCurrentUser());
 
         Feature savedFeature = featureRepository.save(feature);
         return featureMapper.toPutResponse(savedFeature);

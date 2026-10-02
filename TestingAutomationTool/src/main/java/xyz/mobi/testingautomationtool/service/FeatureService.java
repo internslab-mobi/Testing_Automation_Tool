@@ -1,5 +1,7 @@
 package xyz.mobi.testingautomationtool.service;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,7 +20,10 @@ public interface FeatureService {
 
     List<FeatureResponse> getFeaturesByProjectId(Integer projectId);
 
-    List<FeatureResponse> searchFeatures(FeatureSearchRequest request);
+    Page<FeatureResponse> searchFeatures(
+            FeatureSearchRequest request,
+            Pageable pageable
+    );
 
     FeaturePutResponse updateFeature(Integer featureId, FeaturePutRequest request);
 

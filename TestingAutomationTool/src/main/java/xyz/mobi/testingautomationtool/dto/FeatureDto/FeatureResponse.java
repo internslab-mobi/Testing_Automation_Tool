@@ -1,5 +1,6 @@
 package xyz.mobi.testingautomationtool.dto.FeatureDto;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.*;
 import xyz.mobi.testingautomationtool.enums.FeatureStatus;
 
@@ -10,7 +11,9 @@ import java.time.Instant;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class FeatureResponse {
+
     private Integer featureId;
     private Integer projectId;
     private String projectName;
@@ -19,15 +22,11 @@ public class FeatureResponse {
     private FeatureStatus status;
     private Long duration;
     private Integer sprint;
-    private String version;
     private String featureVersion;
     private Instant startTime;
     private boolean isActive;
     private Integer createdBy;
     private String creatorName;
-    private Integer updatedBy;
     private Instant createdAt;
-    private Instant updatedAt;
     private String comments;
-    private Long lockVersion;
 }
