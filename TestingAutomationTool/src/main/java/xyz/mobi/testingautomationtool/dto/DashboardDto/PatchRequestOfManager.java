@@ -4,7 +4,6 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import xyz.mobi.testingautomationtool.enums.UserRole;
 
 @Data
 @Builder
@@ -12,7 +11,7 @@ import xyz.mobi.testingautomationtool.enums.UserRole;
 @NoArgsConstructor
 public class PatchRequestOfManager {
 
-    private UserRole role;
+    private String role;
 
     private Integer userId;
 }

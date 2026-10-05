@@ -12,7 +12,6 @@ import xyz.mobi.testingautomationtool.entity.Project;
 import xyz.mobi.testingautomationtool.entity.Role;
 import xyz.mobi.testingautomationtool.entity.TestCase;
 import xyz.mobi.testingautomationtool.entity.User;
-import xyz.mobi.testingautomationtool.enums.UserRole;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.repository.BugRepository;
 import xyz.mobi.testingautomationtool.repository.FeatureRepository;
@@ -60,7 +59,7 @@ public class AdminServiceImpl implements AdminService {
         }
 
         Role managerRole = roleRepository
-                .findByRoleName(UserRole.MANAGER)
+                .findByRole("MANAGER")
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "MANAGER role not found"
@@ -102,7 +101,7 @@ public class AdminServiceImpl implements AdminService {
         User currentAdmin = authService.getCurrentUser();
 
         User user = userRepository
-                .findByUserIdAndIsDeletedFalse(userId)
+                .findByUserIdAndIsActiveFalse(userId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
                                 "User not found with ID: " + userId
