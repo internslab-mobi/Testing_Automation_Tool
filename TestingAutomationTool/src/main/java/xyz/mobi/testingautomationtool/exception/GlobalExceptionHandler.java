@@ -95,6 +95,13 @@ public class GlobalExceptionHandler {
         return buildErrorResponse(mapping, exception.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(DuplicateResourceException.class)
+    public ResponseEntity<ErrorResponse> handleDuplicateError(DuplicateResourceException e){
+        String exceptionName = e.getClass().getSimpleName();
+        String mapping = getErrorCode(exceptionName);
+        return buildErrorResponse(mapping, e.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     public ResponseEntity<ErrorResponse> handleOptimisticLockingException(
             ObjectOptimisticLockingFailureException ex) {

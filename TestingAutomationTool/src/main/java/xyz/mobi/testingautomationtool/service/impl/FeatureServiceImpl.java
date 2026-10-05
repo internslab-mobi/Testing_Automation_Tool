@@ -16,6 +16,7 @@ import xyz.mobi.testingautomationtool.entity.Feature;
 import xyz.mobi.testingautomationtool.entity.Project;
 import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.AttachmentType;
+import xyz.mobi.testingautomationtool.enums.FeatureStatus;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
 import xyz.mobi.testingautomationtool.exception.CustomException;
@@ -65,10 +66,11 @@ public class FeatureServiceImpl implements FeatureService {
         User user = authService.getCurrentUser();
 
         if (featureRepository.existsByProject_ProjectIdAndFeatureName(project.getProjectId(), request.getFeatureName())) {
-            throw new DuplicateResourceException("Project is already existed");
+            throw new DuplicateResourceException("Feature is already existed");
         }
 
         Feature feature = featureMapper.toEntity(request);
+        feature.setStatus(FeatureStatus.ACTIVE);
         feature.setStartTime(null);
         feature.setProject(project);
         feature.setCreatedBy(user);
@@ -346,7 +348,7 @@ public class FeatureServiceImpl implements FeatureService {
         if(feature.isDeleted() || !feature.isActive()){
             throw new IllegalArgumentException("Cannot update disabled/deleted feature with ID: " + featureId);
         }
-        featureMapper.updateEntityFromPut(feature, request);
+        featureMapper.updateEntityFromPut(feature,request);
 
         feature.setUpdatedBy(authService.getCurrentUser());
 
