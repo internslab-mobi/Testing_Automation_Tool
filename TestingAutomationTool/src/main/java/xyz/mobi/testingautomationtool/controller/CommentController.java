@@ -61,6 +61,6 @@ public class CommentController {
     public ResponseEntity<String> deleteComment(
             @PathVariable("commentId") Integer commentId) {
         String response = commentService.deleteComment(commentId);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
     }
 }

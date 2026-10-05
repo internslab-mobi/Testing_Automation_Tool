@@ -36,7 +36,7 @@ public class AdminController {
 
         adminService.softDeleteUser(userId);
 
-        return ResponseEntity.ok(
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
                 "User deleted successfully"
         );
     }
@@ -48,7 +48,7 @@ public class AdminController {
 
         adminService.hardDeleteUser(userId);
 
-        return ResponseEntity.ok(
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
                 "User permanently deleted successfully"
         );
     }
@@ -60,7 +60,7 @@ public class AdminController {
 
         adminService.hardDeleteProject(projectId);
 
-        return ResponseEntity.ok(
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
                 "Project permanently deleted successfully"
         );
     }
@@ -72,7 +72,7 @@ public class AdminController {
 
         adminService.hardDeleteFeature(featureId);
 
-        return ResponseEntity.ok(
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
                 "Feature permanently deleted successfully"
         );
     }
@@ -84,7 +84,7 @@ public class AdminController {
 
         adminService.hardDeleteTestCase(testCaseId);
 
-        return ResponseEntity.ok(
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
                 "Test case permanently deleted successfully"
         );
     }
@@ -96,7 +96,7 @@ public class AdminController {
 
         adminService.hardDeleteBug(bugId);
 
-        return ResponseEntity.ok(
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(
                 "Bug permanently deleted successfully"
         );
     }

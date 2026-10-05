@@ -79,11 +79,12 @@ public class FeatureController {
     }
 
     @DeleteMapping("/{featureId}")
-    public ResponseEntity<Void> deleteFeature(
+    public ResponseEntity<String> deleteFeature(
             @PathVariable Integer featureId,
             @RequestParam(required = false) Integer updatedBy) {
         featureService.deleteFeature(featureId, updatedBy);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .body("The feature has been deleted");
     }
 
     @PostMapping(value = "/attachment/{featureId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

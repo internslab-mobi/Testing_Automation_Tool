@@ -73,15 +73,17 @@ public class BugController {
     }
 
     @DeleteMapping("/delete/{bugId}")
-    public ResponseEntity<Void> deleteBug(@PathVariable Integer bugId) {
+    public ResponseEntity<String> deleteBug(@PathVariable Integer bugId) {
         bugService.deleteBug(bugId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .body("Bug permanently deleted successfully");
     }
 
     @DeleteMapping("/{bugId}")
-    public ResponseEntity<Void> hardDeleteBug(@PathVariable Integer bugId) {
+    public ResponseEntity<String> hardDeleteBug(@PathVariable Integer bugId) {
         bugService.hardDelete(bugId);
-        return ResponseEntity.noContent().build();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT)
+                .body("Bug permanently deleted successfully");
     }
 
     @GetMapping("/search")

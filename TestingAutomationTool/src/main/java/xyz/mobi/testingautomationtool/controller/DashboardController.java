@@ -5,6 +5,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -50,7 +51,7 @@ public class DashboardController {
     @Operation(summary = "Reject pending user", description = "Rejects and removes a pending user registration.")
     @DeleteMapping("/userRejection/{userId}")
     public ResponseEntity<String> userRejection(@PathVariable("userId") Integer userId) {
-        return ResponseEntity.ok(dashboardService.userRejection(userId));
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(dashboardService.userRejection(userId));
     }
 
     @Operation(summary = "Get active users", description = "Returns list of all active users.")

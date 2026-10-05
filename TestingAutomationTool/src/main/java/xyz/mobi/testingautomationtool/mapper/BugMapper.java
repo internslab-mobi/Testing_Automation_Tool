@@ -8,9 +8,9 @@ import xyz.mobi.testingautomationtool.dto.BugDto.GetBugResponse.TestCaseInfo;
 import xyz.mobi.testingautomationtool.entity.Bug;
 import xyz.mobi.testingautomationtool.entity.Feature;
 import xyz.mobi.testingautomationtool.entity.TestCase;
-import xyz.mobi.testingautomationtool.enums.BugStatus;
 
-@Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
+@Mapper(componentModel = "spring",
+        nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
 public interface BugMapper {
 
     @Mapping(target = "bugId", ignore = true)
@@ -86,16 +86,4 @@ public interface BugMapper {
             BugPutRequest request
     );
 
-
-
-    @Mapping(target = "assignedTo", ignore = true)
-    void updateAssignment(BugAssignRequest request, @MappingTarget Bug bug);
-
-    void updateStatus(BugStatusRequest request, @MappingTarget Bug bug);
-
-    default void updateDeveloperStatus(DeveloperBugStatusRequest request, @MappingTarget Bug bug) {
-        if (request != null && request.getStatus() != null) {
-            bug.setStatus(BugStatus.valueOf(request.getStatus().name()));
-        }
-    }
 }

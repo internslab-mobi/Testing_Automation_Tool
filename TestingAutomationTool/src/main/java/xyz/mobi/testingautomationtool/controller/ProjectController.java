@@ -94,7 +94,7 @@ public class ProjectController {
     public ResponseEntity<PatchProjectDeleteResponse> softDeleteProject(
             @PathVariable("id") Integer id) {
         PatchProjectDeleteResponse response = projectService.softDeleteProject(id);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
     }
 
     @PreAuthorize("hasAnyRole('MANAGER')")
@@ -102,7 +102,7 @@ public class ProjectController {
     public ResponseEntity<String> hardDeleteProject(
             @PathVariable("id") Integer id) {
         String response = projectService.hardDeleteProject(id);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
     }
 
     @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")

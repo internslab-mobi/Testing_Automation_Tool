@@ -20,7 +20,7 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
 
     Page<Bug> findByIsActiveTrue(Pageable pageable);
 
-    List<Bug> findByActiveTrue();
+//    List<Bug> findByActiveTrue();
 
     @Modifying
     @Query("UPDATE Bug b SET b.isDeleted=true, b.isActive=false WHERE b.testCase.testcaseId =:id")

@@ -113,13 +113,13 @@ public class TestcaseController {
     public ResponseEntity<PatchTestCaseDeleteResponse> softDelete(
             @PathVariable("id") Integer id) {
         PatchTestCaseDeleteResponse response = testCaseService.softDeleteTestCase(id);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<String> hardDeleteTestCase(
             @PathVariable("id") Integer id) {
         String response = testCaseService.hardDeleteTestCase(id);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
     }
 }
