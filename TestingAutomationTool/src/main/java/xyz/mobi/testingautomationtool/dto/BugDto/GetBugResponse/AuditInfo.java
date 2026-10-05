@@ -1,4 +1,4 @@
-package xyz.mobi.testingautomationtool.dto.BugDto;
+package xyz.mobi.testingautomationtool.dto.BugDto.GetBugResponse;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -11,7 +11,7 @@ import java.time.Instant;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ResolutionInfo {
-    private Instant resolvedAt;
-    private Integer bugOccurrence;
+public class AuditInfo {
+    private Instant createdAt;
+    private Instant updatedAt;
 }

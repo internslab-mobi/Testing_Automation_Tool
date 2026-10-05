@@ -1,10 +1,6 @@
 package xyz.mobi.testingautomationtool.dto.BugDto.GetBugResponse;
 
 import lombok.*;
-import xyz.mobi.testingautomationtool.dto.BugDto.AuditInfo;
-import xyz.mobi.testingautomationtool.dto.BugDto.ClassificationInfo;
-import xyz.mobi.testingautomationtool.dto.BugDto.ResolutionInfo;
-import xyz.mobi.testingautomationtool.dto.BugDto.UserInfo;
 
 @Getter
 @Setter
@@ -18,6 +14,7 @@ public class BugResponse {
     private String description;
 
     private TestCaseInfo testCase;
+
     private FeatureInfo feature;
 
     private ClassificationInfo classification;

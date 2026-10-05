@@ -1,4 +1,4 @@
-package xyz.mobi.testingautomationtool.dto.BugDto;
+package xyz.mobi.testingautomationtool.dto.BugDto.GetBugResponse;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

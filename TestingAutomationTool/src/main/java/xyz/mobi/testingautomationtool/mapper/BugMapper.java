@@ -2,7 +2,7 @@ package xyz.mobi.testingautomationtool.mapper;
 
 import org.mapstruct.*;
 import xyz.mobi.testingautomationtool.dto.BugDto.*;
-import xyz.mobi.testingautomationtool.dto.BugDto.GetBugResponse.BugResponse;
+import xyz.mobi.testingautomationtool.dto.BugDto.GetBugResponse.*;
 import xyz.mobi.testingautomationtool.dto.BugDto.GetBugResponse.FeatureInfo;
 import xyz.mobi.testingautomationtool.dto.BugDto.GetBugResponse.TestCaseInfo;
 import xyz.mobi.testingautomationtool.entity.Bug;
