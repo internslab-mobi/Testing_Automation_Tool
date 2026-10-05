@@ -13,6 +13,5 @@ import java.time.Instant;
 @AllArgsConstructor
 public class ResolutionInfo {
     private Instant resolvedAt;
-    private Integer bugReoccurredId;
     private Integer bugOccurrence;
 }

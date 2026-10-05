@@ -57,7 +57,7 @@ public class FeatureServiceImpl implements FeatureService {
 
     @Override
     public FeatureResponse createFeature(FeatureRequest request) {
-        Project project = projectRepository.findByIdAndIsActiveTrueAndIsDeletedFalse(request.getProjectId(),
+        Project project = projectRepository.findByProjectIdAndStatusAndIsActiveTrueAndIsDeletedFalse(request.getProjectId(),
                         ProjectStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not available for id: " + request.getProjectId()));
 
@@ -346,7 +346,7 @@ public class FeatureServiceImpl implements FeatureService {
         if(feature.isDeleted() || !feature.isActive()){
             throw new IllegalArgumentException("Cannot update disabled/deleted feature with ID: " + featureId);
         }
-        featureMapper.updateEntityFromPut(request);
+        featureMapper.updateEntityFromPut(feature, request);
 
         feature.setUpdatedBy(authService.getCurrentUser());
 

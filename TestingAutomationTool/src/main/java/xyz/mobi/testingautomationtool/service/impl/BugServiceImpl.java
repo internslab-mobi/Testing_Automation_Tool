@@ -214,6 +214,7 @@ public class BugServiceImpl implements BugService {
     }
 
     @Override
+    @Transactional
     public BugResponse updateBug(Integer bugId, BugPutRequest request) {
 
         Bug bug = bugRepository.findById(bugId)
@@ -231,6 +232,8 @@ public class BugServiceImpl implements BugService {
                     "Cannot update deleted bug with ID: " + bugId);
         }
 
+        User currentUser = authService.getCurrentUser();
+
         Integer oldAssignedUserId =
                 bug.getAssignedTo() != null
                         ? bug.getAssignedTo().getUserId()
@@ -238,45 +241,49 @@ public class BugServiceImpl implements BugService {
 
         BugStatus oldStatus = bug.getStatus();
 
-        User currentUser = authService.getCurrentUser();
+        bugMapper.updateEntity(bug, request);
 
-        User executedBy = bug.getExecutedBy();
-
-        if (!Objects.equals(oldStatus, request.getStatus())) {
-            executedBy = currentUser;
+        if (request.getStatus() != null) {
+            bug.setStatus(request.getStatus());
         }
 
-        User assignedTo = bug.getAssignedTo();
-
         if (request.getAssignedTo() != null) {
-            assignedTo = userRepository.findById(
+
+            User assignedTo = userRepository.findById(
                     request.getAssignedTo()
             ).orElseThrow(() ->
                     new ResourceNotFoundException(
                             "Assigned user not found with ID: "
                                     + request.getAssignedTo()));
+
+            bug.setAssignedTo(assignedTo);
+
+            if (request.getStatus() == null) {
+                bug.setStatus(BugStatus.IN_PROGRESS);
+            }
         }
 
-        bugMapper.updateEntity(bug, request);
+        if (!Objects.equals(oldStatus, bug.getStatus())) {
+            bug.setExecutedBy(currentUser);
+        }
 
-        bug.setExecutedBy(executedBy);
-        bug.setAssignedTo(assignedTo);
         bug.setUpdatedBy(currentUser);
 
-        if (assignedTo != null) {
-            bug.setStatus(BugStatus.IN_PROGRESS);
-        }
+        if (bug.getStatus() == BugStatus.RESOLVED) {
 
-        if (request.getStatus() == BugStatus.RESOLVED) {
             if (bug.getResolvedAt() == null) {
                 bug.setResolvedAt(Instant.now());
             }
+
         } else {
             bug.setResolvedAt(null);
         }
 
         boolean statusChanged =
-                !Objects.equals(oldStatus, bug.getStatus());
+                !Objects.equals(
+                        oldStatus,
+                        bug.getStatus()
+                );
 
         Integer newAssignedUserId =
                 bug.getAssignedTo() != null
@@ -289,12 +296,7 @@ public class BugServiceImpl implements BugService {
                         newAssignedUserId
                 );
 
-        // Save bug
         bug = bugRepository.save(bug);
-
-        // =========================================================
-        // BUG HISTORY
-        // =========================================================
 
         if (statusChanged || assignmentChanged) {
 
@@ -302,17 +304,221 @@ public class BugServiceImpl implements BugService {
                     .bug(bug)
                     .executedBy(currentUser.getUserId())
                     .bugStatus(bug.getStatus())
-                    .assignedTo(assignedTo != null ? assignedTo.getUserId() : null)
+                    .assignedTo(newAssignedUserId)
                     .createdAt(Instant.now())
                     .build();
+
             bugHistoryRepository.save(history);
         }
 
-        // =========================================================
-        // NOTIFICATION
-        // =========================================================
-
         if (assignmentChanged && newAssignedUserId != null) {
+
+            if (oldAssignedUserId == null) {
+
+                notificationService.createNotification(
+                        NotificationRequest.builder()
+                                .employeeId(currentUser.getUserId())
+                                .assignedId(newAssignedUserId)
+                                .bugId(bug.getBugId())
+                                .build()
+                );
+
+            } else {
+
+                notificationService.createReassignNotification(
+                        oldAssignedUserId,
+                        newAssignedUserId,
+                        bug.getBugId()
+                );
+            }
+        }
+
+        return bugMapper.toResponse(bug);
+    }
+
+    @Override
+    @Transactional
+    public String patchBug(Integer bugId, BugPatchRequest request) {
+
+        if (request == null) {
+            throw new IllegalArgumentException(
+                    "Bug patch request cannot be null");
+        }
+
+        Bug bug = bugRepository.findById(bugId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Bug not found with ID: " + bugId));
+
+        if (!bug.isActive()) {
+            throw new IllegalStateException(
+                    "Cannot update disabled bug with ID: " + bugId);
+        }
+
+        if (bug.isDeleted()) {
+            throw new ResourceNotFoundException(
+                    "Bug is deleted with ID: " + bugId);
+        }
+
+        User currentUser = authService.getCurrentUser();
+
+        List<String> updatedFields = new ArrayList<>();
+
+        BugStatus oldStatus = bug.getStatus();
+
+        Integer oldAssignedUserId =
+                bug.getAssignedTo() != null
+                        ? bug.getAssignedTo().getUserId()
+                        : null;
+
+        if (request.getTitle() != null
+                && !request.getTitle().isBlank()) {
+
+            bug.setTitle(request.getTitle());
+            updatedFields.add("title");
+        }
+
+        if (request.getDescription() != null
+                && !request.getDescription().isBlank()) {
+
+            bug.setDescription(request.getDescription());
+            updatedFields.add("description");
+        }
+
+        if (request.getSeverity() != null) {
+            bug.setSeverity(request.getSeverity());
+            updatedFields.add("severity");
+        }
+
+        if (request.getPriority() != null) {
+            bug.setPriority(request.getPriority());
+            updatedFields.add("priority");
+        }
+
+        if (request.getCategory() != null) {
+            bug.setCategory(request.getCategory());
+            updatedFields.add("category");
+        }
+
+        if (request.getComments() != null) {
+            bug.setComments(request.getComments());
+            updatedFields.add("comments");
+        }
+
+        if (request.getDynamicFields() != null) {
+
+            if (bug.getDynamicFields() == null) {
+                bug.setDynamicFields(new HashMap<>());
+            }
+
+            Bug finalBug = bug;
+            request.getDynamicFields().forEach((key, value) -> {
+
+                if (value == null) {
+                    finalBug.getDynamicFields().remove(key);
+                } else {
+                    finalBug.getDynamicFields().put(key, value);
+                }
+            });
+
+            updatedFields.add("dynamicFields");
+        }
+
+        if (request.getStatus() != null) {
+
+            bug.setStatus(request.getStatus());
+            updatedFields.add("status");
+        }
+
+        if (request.getAssignedTo() != null) {
+
+            User newAssignee = userRepository.findById(
+                    request.getAssignedTo()
+            ).orElseThrow(() ->
+                    new ResourceNotFoundException(
+                            "User not found with ID: "
+                                    + request.getAssignedTo()));
+
+            bug.setAssignedTo(newAssignee);
+
+            updatedFields.add("assignedTo");
+        }
+
+        boolean statusChanged =
+                !Objects.equals(
+                        oldStatus,
+                        bug.getStatus()
+                );
+
+        Integer newAssignedUserId =
+                bug.getAssignedTo() != null
+                        ? bug.getAssignedTo().getUserId()
+                        : null;
+
+        boolean assignmentChanged =
+                !Objects.equals(
+                        oldAssignedUserId,
+                        newAssignedUserId
+                );
+
+
+        if (assignmentChanged
+                && request.getStatus() == null) {
+
+            bug.setStatus(BugStatus.IN_PROGRESS);
+
+            if (!statusChanged) {
+                updatedFields.add("status");
+            }
+        }
+
+        // Recalculate status change after assignment logic
+        statusChanged =
+                !Objects.equals(
+                        oldStatus,
+                        bug.getStatus()
+                );
+
+        if (statusChanged) {
+            bug.setExecutedBy(currentUser);
+        }
+
+        if (bug.getStatus() == BugStatus.RESOLVED) {
+
+            if (bug.getResolvedAt() == null) {
+                bug.setResolvedAt(Instant.now());
+            }
+
+        } else {
+            bug.setResolvedAt(null);
+        }
+
+        if (updatedFields.isEmpty()) {
+            throw new IllegalArgumentException(
+                    "At least one field must be provided for update");
+        }
+
+        bug.setUpdatedBy(currentUser);
+
+
+        bug = bugRepository.save(bug);
+
+        if (statusChanged || assignmentChanged) {
+
+            BugHistory history = BugHistory.builder()
+                    .bug(bug)
+                    .executedBy(currentUser.getUserId())
+                    .bugStatus(bug.getStatus())
+                    .assignedTo(newAssignedUserId)
+                    .createdAt(Instant.now())
+                    .build();
+
+            bugHistoryRepository.save(history);
+        }
+
+
+        if (assignmentChanged
+                && newAssignedUserId != null) {
 
             if (oldAssignedUserId == null) {
 
@@ -340,140 +546,9 @@ public class BugServiceImpl implements BugService {
             }
         }
 
-        return bugMapper.toResponse(bug);
-    }
-
-    @Override
-    public String patchBug(Integer bugId, BugPatchRequest request) {
-        if (request == null) {
-            throw new IllegalArgumentException("Bug patch request cannot be null");
-        }
-
-        Bug bug = bugRepository.findById(bugId)
-                .orElseThrow(() -> new ResourceNotFoundException("Bug not found with ID: " + bugId));
-
-        if (bug.isDeleted()) {
-            throw new ResourceNotFoundException("Bug is deleted with ID: " + bugId);
-        }
-
-        List<String> updatedFields = new ArrayList<>();
-
-        if (request.getTitle() != null && !request.getTitle().isBlank()) {
-            bug.setTitle(request.getTitle());
-            updatedFields.add("title");
-        }
-
-        if (request.getDescription() != null) {
-            bug.setDescription(request.getDescription());
-            updatedFields.add("description");
-        }
-
-        if (request.getSeverity() != null) {
-            bug.setSeverity(request.getSeverity());
-            updatedFields.add("severity");
-        }
-
-        if (request.getPriority() != null) {
-            bug.setPriority(request.getPriority());
-            updatedFields.add("priority");
-        }
-
-        if (request.getCategory() != null) {
-            bug.setCategory(request.getCategory());
-            updatedFields.add("category");
-        }
-
-        if (request.getComments() != null) {
-            bug.setComments(request.getComments());
-            updatedFields.add("comments");
-        }
-
-        if (request.getBugOccurrence() != null) {
-            bug.setBugOccurrence(request.getBugOccurrence());
-            updatedFields.add("bugOccurrence");
-        }
-
-        if (request.getIsActive() != null) {
-            bug.setActive(request.getIsActive());
-            updatedFields.add("isActive");
-        }
-
-        if (request.getDynamicFields() != null) {
-            if (bug.getDynamicFields() == null) {
-                bug.setDynamicFields(new HashMap<>());
-            }
-            request.getDynamicFields().forEach((key, value) -> {
-                if (value == null) {
-                    bug.getDynamicFields().remove(key);
-                } else {
-                    bug.getDynamicFields().put(key, value);
-                }
-            });
-            updatedFields.add("dynamicFields");
-        }
-
-        BugStatus effectiveStatus = request.getEffectiveStatus();
-        if (effectiveStatus != null) {
-            bug.setStatus(effectiveStatus);
-            if (effectiveStatus == BugStatus.CLOSED || effectiveStatus == BugStatus.RESOLVED) {
-                bug.setResolvedAt(Instant.now());
-            }
-            updatedFields.add("status");
-        } else if (request.getDeveloperStatus() != null) {
-            bug.setStatus(BugStatus.valueOf(request.getDeveloperStatus().name()));
-            updatedFields.add("developerStatus");
-        }
-
-        Integer effectiveAssignedTo = request.getEffectiveAssignedTo();
-        if (effectiveAssignedTo != null) {
-            User newAssignee = userRepository.findById(effectiveAssignedTo)
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + effectiveAssignedTo));
-
-            User previousAssignee = bug.getAssignedTo();
-            Integer oldAssignedUserId = previousAssignee != null ? previousAssignee.getUserId() : null;
-            Integer newAssignedUserId = newAssignee.getUserId();
-            boolean assignmentChanged = !Objects.equals(oldAssignedUserId, newAssignedUserId);
-
-            bug.setAssignedTo(newAssignee);
-
-            if (assignmentChanged) {
-                if (oldAssignedUserId == null) {
-                    notificationService.createNotification(
-                            NotificationRequest.builder()
-                                    .employeeId(authService.getCurrentUser().getUserId())
-                                    .assignedId(newAssignedUserId)
-                                    .bugId(bug.getBugId())
-                                    .build()
-                    );
-                } else {
-                    notificationService.createReassignNotification(
-                            oldAssignedUserId,
-                            newAssignedUserId,
-                            bug.getBugId()
-                    );
-                }
-            }
-
-            BugHistory history = BugHistory.builder()
-                    .bug(bug)
-                    .executedBy(authService.getCurrentUser().getUserId())
-                    .bugStatus(bug.getStatus())
-                    .assignedTo(newAssignee.getUserId())
-                    .createdAt(Instant.now())
-                    .build();
-            bugHistoryRepository.save(history);
-
-            updatedFields.add("assignedTo");
-        }
-
-        if (updatedFields.isEmpty()) {
-            throw new IllegalArgumentException("At least one field must be provided for update");
-        }
-
-        bug.setUpdatedBy(authService.getCurrentUser());
-        bugRepository.save(bug);
-
-        return "Bug with ID " + bugId + " updated successfully. Changed fields: " + String.join(", ", updatedFields);
+        return "Bug with ID " + bugId
+                + " updated successfully. Changed fields: "
+                + String.join(", ", updatedFields);
     }
 
     @Override
@@ -554,6 +629,8 @@ public class BugServiceImpl implements BugService {
         Page<Bug> bugs = bugRepository.findAll(specification, pageable);
         return bugs.map(bugMapper::toResponse);
     }
+
+
     @Transactional(readOnly = true)
     @Override
     public AttachmentDownloadResponse downloadBugAttachments(Integer bugId) {

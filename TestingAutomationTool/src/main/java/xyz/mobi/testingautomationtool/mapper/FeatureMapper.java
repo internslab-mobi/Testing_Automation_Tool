@@ -21,18 +21,14 @@ public interface FeatureMapper {
 
     @Mapping(source = "project.projectId", target = "projectId")
     @Mapping(source = "project.projectName", target = "projectName")
-    @Mapping(source = "updatedBy.userId", target = "updatedBy")
+    @Mapping(source = "createdBy.userId", target = "createdBy")
+    @Mapping(source = "createdBy.username", target = "creatorName")
     @Mapping(source = "active", target = "isActive")
-    @Mapping(source = "featureVersion", target = "version")
     @Mapping(source = "featureVersion", target = "featureVersion")
-    @Mapping(target = "createdBy", ignore = true)
-    @Mapping(target = "updatedBy", ignore = true)
-    @Mapping(target = "version", ignore = true)
     FeatureResponse toResponse(Feature feature);
 
     @Mapping(source = "project.projectId", target = "projectId")
-    @Mapping(source = "createdBy.userId", target = "createdBy")
-    @Mapping(source = "featureVersion", target = "version")
+    @Mapping(source = "updatedBy.userId", target = "updatedBy")
     @Mapping(source = "featureVersion", target = "featureVersion")
     FeaturePutResponse toPutResponse(Feature feature);
 
@@ -42,10 +38,9 @@ public interface FeatureMapper {
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "duration", ignore = true)
     @Mapping(target = "startTime", ignore = true)
-    @Mapping(target = "isActive", ignore = true)
-    @Mapping(target = "isDeleted", ignore = true)
-    @Mapping(target = "version", ignore = true)
-    Feature updateEntityFromPut(FeaturePutRequest request);
+    @Mapping(target = "active", ignore = true)
+    @Mapping(target = "deleted", ignore = true)
+    void updateEntityFromPut(@MappingTarget Feature feature, FeaturePutRequest request);
 
     @Mapping(target = "featureId", ignore = true)
     @Mapping(target = "project", ignore = true)

@@ -71,26 +71,23 @@ public interface BugMapper {
     AuditInfo toAuditInfo(Bug bug);
 
     @Mapping(target = "bugId", ignore = true)
-    @Mapping(target = "bugFormatId", ignore = true)
     @Mapping(target = "testCase", ignore = true)
     @Mapping(target = "feature", ignore = true)
     @Mapping(target = "reportedBy", ignore = true)
-    @Mapping(target = "executedBy", ignore = true)
     @Mapping(target = "assignedTo", ignore = true)
-    @Mapping(target = "resolvedAt", ignore = true)
-    @Mapping(target = "bugOccurrence", ignore = true)
+    @Mapping(target = "executedBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
-    @Mapping(target = "version", ignore = true)
+    @Mapping(target = "status", ignore = true)
+    @Mapping(target = "resolvedAt", ignore = true)
     @Mapping(target = "active", ignore = true)
     @Mapping(target = "deleted", ignore = true)
-    void updateEntity(@MappingTarget Bug bug, BugPutRequest request);
+    @Mapping(target = "version", ignore = true)
+    void updateEntity(
+            @MappingTarget Bug bug,
+            BugPutRequest request
+    );
 
-    default void patchEntity(@MappingTarget Bug bug, BugPatchRequest request) {
-        if (request == null) return;
-        if (request.getEffectiveStatus() != null) {
-            bug.setStatus(request.getEffectiveStatus());
-        }
-    }
+
 
     @Mapping(target = "assignedTo", ignore = true)
     void updateAssignment(BugAssignRequest request, @MappingTarget Bug bug);
