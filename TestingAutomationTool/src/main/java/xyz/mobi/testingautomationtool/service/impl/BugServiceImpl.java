@@ -373,7 +373,6 @@ public class BugServiceImpl implements BugService {
 
         if (request.getTitle() != null
                 && !request.getTitle().isBlank()) {
-
             bug.setTitle(request.getTitle());
             updatedFields.add("title");
         }

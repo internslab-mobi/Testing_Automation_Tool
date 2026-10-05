@@ -1,0 +1,575 @@
+{
+  "info": {
+    "_postman_id": "8f3b6c41-9a72-4d5e-8b1a-2e3f4a5b6c7d",
+    "name": "Testing Automation Tool",
+    "description": "Complete REST API collection for Testing Automation Tool with automatic JWT Bearer token capture and Refresh Token management.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Authentication & Security",
+      "item": [
+        {
+          "name": "1.1 Login (Captures Tokens Automatically)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.accessToken) {",
+                  "    pm.environment.set('accessToken', jsonData.data.accessToken);",
+                  "    console.log('Access token saved: ' + jsonData.data.accessToken);",
+                  "}",
+                  "if (jsonData.data && jsonData.data.refreshToken) {",
+                  "    pm.environment.set('refreshToken', jsonData.data.refreshToken);",
+                  "    console.log('Refresh token saved: ' + jsonData.data.refreshToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"usernameOrEmail\": \"admin\",\n  \"password\": \"Admin@123\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "login"
+              ]
+            },
+            "description": "Logs in the user, returns 15m Access Token & 24h Refresh Token, and automatically saves both into Postman environment variables."
+          }
+        },
+        {
+          "name": "1.2 Refresh Access Token (24h Window)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.accessToken) {",
+                  "    pm.environment.set('accessToken', jsonData.data.accessToken);",
+                  "    console.log('New Access Token refreshed: ' + jsonData.data.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "refresh"
+              ]
+            },
+            "description": "Exchanges the 24-hour Refresh Token for a new 15-minute Access Token. Shows 10-minute session expiry warning if close to 24h expiration."
+          }
+        },
+        {
+          "name": "1.3 Forgot Password (Request 10m Email OTP)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/forgot-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "forgot-password"
+              ]
+            },
+            "description": "Generates a 6-digit OTP stored in memory with a 10-minute TTL and sends a formatted HTML email to the registered email."
+          }
+        },
+        {
+          "name": "1.4 Verify OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"otpCode\": \"{{otpCode}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/verify-otp",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "verify-otp"
+              ]
+            },
+            "description": "Pre-validates whether the submitted OTP is valid and within the 10-minute expiration window."
+          }
+        },
+        {
+          "name": "1.5 Reset Password With OTP (Auto-Login)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.accessToken) {",
+                  "    pm.environment.set('accessToken', jsonData.data.accessToken);",
+                  "}",
+                  "if (jsonData.data && jsonData.data.refreshToken) {",
+                  "    pm.environment.set('refreshToken', jsonData.data.refreshToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"otpCode\": \"{{otpCode}}\",\n  \"newPassword\": \"NewSecret@2026\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/reset-password",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "reset-password"
+              ]
+            },
+            "description": "Resets the user's password, invalidates the OTP, revokes prior refresh tokens, and immediately generates fresh 15m Access and 24h Refresh tokens (automatic login)."
+          }
+        },
+        {
+          "name": "1.6 Logout (Revoke Refresh Token)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "logout"
+              ]
+            },
+            "description": "Revokes the refresh token in the database, preventing any future token refreshing."
+          }
+        },
+        {
+          "name": "1.7 Register New User",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"qa_tester_01\",\n  \"email\": \"qa.tester@example.com\",\n  \"password\": \"Tester@123\",\n  \"fullName\": \"John QA Tester\",\n  \"designation\": \"Senior QA Automation Engineer\",\n  \"roleName\": \"TESTER\",\n  \"skills\": [\"Selenium\", \"Java\", \"REST Assured\", \"Jira\"]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/auth/register",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "register"
+              ]
+            },
+            "description": "Registers a new user account (starts in pending status awaiting Manager approval)."
+          }
+        },
+        {
+          "name": "1.8 Get Current Profile",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/auth/profile",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "auth",
+                "profile"
+              ]
+            },
+            "description": "Fetches profile info of the currently logged-in user using the Bearer access token."
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Projects",
+      "item": [
+        {
+          "name": "2.1 List All Projects",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/project",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "project"
+              ]
+            }
+          }
+        },
+        {
+          "name": "2.2 Create Project",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectName\": \"Enterprise Cloud Core\",\n  \"region\": \"US-EAST\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/project",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "project"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "3. Features",
+      "item": [
+        {
+          "name": "3.1 List Features by Project ID",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/feature/project/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "feature",
+                "project",
+                "1"
+              ]
+            }
+          }
+        },
+        {
+          "name": "3.2 Create Feature",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"projectId\": 1,\n  \"featureName\": \"User Authentication Flow\",\n  \"sprint\": 1,\n  \"featureVersion\": \"v1.0.0\",\n  \"status\": \"ACTIVE\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/feature",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "feature"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "4. Test Cases",
+      "item": [
+        {
+          "name": "4.1 Get Test Cases (Paginated)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/testcases?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "testcases"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "4.2 Create Test Case",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"featureId\": 1,\n  \"title\": \"Verify User Login with Valid Credentials\",\n  \"testType\": \"FUNCTIONAL\",\n  \"testPriority\": \"HIGH\",\n  \"testcaseStatus\": \"ACTIVE\",\n  \"automationFeasibility\": \"AUTOMATED\",\n  \"precondition\": \"User account must be active in DB\",\n  \"testData\": \"username: admin, password: validPassword\",\n  \"executionSteps\": \"1. Enter username\\n2. Enter password\\n3. Click Login\",\n  \"uiValidations\": \"Redirects to dashboard with welcome banner\",\n  \"dbValidations\": \"testing_refresh_tokens receives new record\"\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/testcases",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "testcases"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "5. Defects & Bugs",
+      "item": [
+        {
+          "name": "5.1 List All Defects",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/bugs?page=0&size=10",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bugs"
+              ],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "0"
+                },
+                {
+                  "key": "size",
+                  "value": "10"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "5.2 Create Defect (Auto ID generated)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"featureId\": 1,\n  \"testcaseId\": 1,\n  \"title\": \"Login fails when username contains uppercase letters\",\n  \"description\": \"System returns 401 when username is provided in uppercase.\",\n  \"severity\": \"HIGH\",\n  \"priority\": \"HIGH\",\n  \"category\": \"REGRESSION\",\n  \"assignedTo\": 1\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/bugs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "bugs"
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "6. Manager Dashboard & Analytics",
+      "item": [
+        {
+          "name": "6.1 Get Pending User Registrations",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/manager/users/pending",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "manager",
+                "users",
+                "pending"
+              ]
+            }
+          }
+        },
+        {
+          "name": "6.2 Get Quality Health Score",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/manager/quality-health/1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "manager",
+                "quality-health",
+                "1"
+              ]
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

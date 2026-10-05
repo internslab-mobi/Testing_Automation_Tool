@@ -1,0 +1,19 @@
+$kind: http-request
+name: Create Manager
+order: 1000
+method: POST
+url: '{{baseUrl}}/admin/managers'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "username": "manager2",
+      "email": "manager2@example.com",
+      "password": "manager123",
+      "fullName": "Manager Two",
+      "designation": "Project Manager",
+      "skills": "Project Management, Agile"
+    }

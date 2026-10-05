@@ -1,0 +1,8 @@
+$kind: http-request
+name: Hard Delete Test Case
+order: 6000
+method: DELETE
+url: '{{baseUrl}}/admin/testcases/{{testCaseId}}/permanent'
+pathVariables:
+  - key: testCaseId
+    value: '1'
