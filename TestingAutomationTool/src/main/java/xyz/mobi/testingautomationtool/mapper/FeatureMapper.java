@@ -21,13 +21,13 @@ public interface FeatureMapper {
 
     @Mapping(source = "project.projectId", target = "projectId")
     @Mapping(source = "project.projectName", target = "projectName")
-    @Mapping(source = "createdBy.userId", target = "createdBy")
-    @Mapping(source = "createdBy.username", target = "creatorName")
     @Mapping(source = "updatedBy.userId", target = "updatedBy")
     @Mapping(source = "active", target = "isActive")
     @Mapping(source = "featureVersion", target = "version")
     @Mapping(source = "featureVersion", target = "featureVersion")
-    @Mapping(source = "version", target = "lockVersion")
+    @Mapping(target = "createdBy", ignore = true)
+    @Mapping(target = "updatedBy", ignore = true)
+    @Mapping(target = "version", ignore = true)
     FeatureResponse toResponse(Feature feature);
 
     @Mapping(source = "project.projectId", target = "projectId")
