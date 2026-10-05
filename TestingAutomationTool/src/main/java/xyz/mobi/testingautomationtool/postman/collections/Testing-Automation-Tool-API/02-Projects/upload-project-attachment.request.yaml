@@ -1,0 +1,12 @@
+$kind: http-request
+name: Upload Project Attachment
+order: 10000
+method: POST
+url: '{{baseUrl}}/project/attachment/{{projectId}}'
+body:
+  type: formdata
+  content:
+    - key: file
+      type: file
+      src: ''
+      description: 'File to upload'

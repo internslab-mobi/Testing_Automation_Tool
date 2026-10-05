@@ -1,0 +1,29 @@
+$kind: collection
+name: Testing Automation Tool API
+description: 'Complete API collection for the Testing Automation Tool backend. Covers Authentication, Projects, Features, Bugs, Test Cases, Comments, Manager Dashboard, and In-App Notifications.'
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
+variables:
+  - key: baseUrl
+    value: 'http://localhost:8090'
+  - key: token
+    value: ''
+  - key: projectId
+    value: '1'
+  - key: featureId
+    value: '1'
+  - key: bugId
+    value: '1'
+  - key: testCaseId
+    value: '1'
+  - key: commentId
+    value: '1'
+  - key: notificationId
+    value: '1'
+  - key: attachmentId
+    value: '1'
+  - key: userId
+    value: '1'

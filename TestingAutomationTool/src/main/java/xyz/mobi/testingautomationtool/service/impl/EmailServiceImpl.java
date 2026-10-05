@@ -643,6 +643,35 @@ public class EmailServiceImpl implements EmailService {
         sendHtmlEmail(toEmail, subject, htmlContent);
     }
 
+
+    @Override
+    public void sendManagerCredentials(
+            String email,
+            String username,
+            String password) {
+
+        String subject = "Testing Automation Tool - Manager Account";
+
+        String body = """
+            Hello,
+
+            Your Manager account has been created successfully.
+
+            Username: %s
+            Password: %s
+
+            Please use these credentials to log in to the
+            Testing Automation Tool.
+
+            You can reset your password after logging in.
+
+            Regards,
+            Testing Automation Tool
+            """.formatted(username, password);
+
+        sendHtmlEmail(email, subject, body);
+    }
+
     private String safeValue(
             Object value) {
 

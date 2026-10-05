@@ -1,0 +1,5 @@
+$kind: http-request
+name: Soft Delete Test Case
+order: 9000
+method: DELETE
+url: '{{baseUrl}}/testcases/soft/{{testCaseId}}'

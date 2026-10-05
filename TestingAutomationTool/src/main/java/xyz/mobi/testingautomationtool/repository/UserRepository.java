@@ -20,4 +20,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
 
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.role WHERE u.username = :username OR u.email = :email")
     Optional<User> findByUsernameOrEmail(@Param("username") String username, @Param("email") String email);
+
+    Optional<User> findByUserIdAndIsDeletedFalse(Integer userId);
 }

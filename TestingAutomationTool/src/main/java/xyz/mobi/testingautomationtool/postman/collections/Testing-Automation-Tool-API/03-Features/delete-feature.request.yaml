@@ -1,0 +1,9 @@
+$kind: http-request
+name: Delete Feature
+order: 7000
+method: DELETE
+url: '{{baseUrl}}/feature/{{featureId}}?updatedBy=1'
+queryParams:
+  - key: updatedBy
+    value: '1'
+    description: 'ID of user performing the delete'

@@ -1,6 +1,7 @@
 package xyz.mobi.testingautomationtool.enums;
 
-public enum Role {
+public enum UserRole {
+    MANAGER,
     DEVELOPER,
     TESTER
 }

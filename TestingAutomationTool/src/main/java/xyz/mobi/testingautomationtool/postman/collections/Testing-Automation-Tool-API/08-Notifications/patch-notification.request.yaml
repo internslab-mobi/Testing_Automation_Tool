@@ -1,0 +1,14 @@
+$kind: http-request
+name: Patch Notification
+order: 2000
+method: PATCH
+url: '{{baseUrl}}/in-app-notifications/{{notificationId}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "status": "READ"
+    }

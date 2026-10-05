@@ -1,0 +1,17 @@
+$kind: http-request
+name: 'Update Test Case (PUT)'
+order: 7000
+method: PUT
+url: '{{baseUrl}}/testcases/{{testCaseId}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "title": "Updated test case title",
+      "testType": "REGRESSION",
+      "testPriority": "MEDIUM",
+      "testcaseStatus": "ACTIVE"
+    }

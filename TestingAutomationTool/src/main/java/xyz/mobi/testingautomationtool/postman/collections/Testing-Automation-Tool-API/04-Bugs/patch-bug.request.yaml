@@ -1,0 +1,14 @@
+$kind: http-request
+name: Patch Bug
+order: 6000
+method: PATCH
+url: '{{baseUrl}}/bugs/{{bugId}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "status": "RESOLVED"
+    }

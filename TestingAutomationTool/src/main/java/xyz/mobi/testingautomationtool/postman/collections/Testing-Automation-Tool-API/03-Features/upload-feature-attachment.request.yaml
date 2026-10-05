@@ -1,0 +1,12 @@
+$kind: http-request
+name: Upload Feature Attachment
+order: 8000
+method: POST
+url: '{{baseUrl}}/feature/attachment/{{featureId}}'
+body:
+  type: formdata
+  content:
+    - key: file
+      type: file
+      src: ''
+      description: 'File to upload'

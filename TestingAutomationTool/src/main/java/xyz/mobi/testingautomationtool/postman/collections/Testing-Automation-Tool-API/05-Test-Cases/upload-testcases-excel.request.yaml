@@ -1,0 +1,16 @@
+$kind: http-request
+name: Upload Test Cases (Excel)
+order: 2000
+method: POST
+url: '{{baseUrl}}/testcases/upload'
+body:
+  type: formdata
+  content:
+    - key: file
+      type: file
+      src: ''
+      description: 'Excel file with test cases'
+    - key: featureId
+      type: text
+      value: '1'
+      description: 'Feature ID to associate test cases with'

@@ -1,0 +1,3 @@
+$kind: collection
+name: Bugs
+description: 'Bug tracking and management endpoints'

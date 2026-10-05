@@ -25,9 +25,6 @@ public interface FeatureMapper {
     @Mapping(source = "createdBy.username", target = "creatorName")
     @Mapping(source = "active", target = "isActive")
     @Mapping(source = "featureVersion", target = "featureVersion")
-    @Mapping(target = "createdBy", ignore = true)
-    @Mapping(target = "updatedBy", ignore = true)
-    @Mapping(target = "version", ignore = true)
     FeatureResponse toResponse(Feature feature);
 
 

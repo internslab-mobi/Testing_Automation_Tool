@@ -1,0 +1,9 @@
+$kind: http-request
+name: Patch Project Access Status (Manager)
+order: 7000
+method: PATCH
+url: '{{baseUrl}}/project/access/{{projectId}}?status=ACTIVE'
+queryParams:
+  - key: status
+    value: 'ACTIVE'
+    description: 'New project status'

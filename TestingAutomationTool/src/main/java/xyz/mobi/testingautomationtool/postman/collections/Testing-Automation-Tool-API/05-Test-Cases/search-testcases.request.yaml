@@ -1,0 +1,20 @@
+$kind: http-request
+name: Search Test Cases
+order: 6000
+method: GET
+url: '{{baseUrl}}/testcases/search?keyword=&featureId=&status=&type=&priority=&page=0&size=10'
+queryParams:
+  - key: keyword
+    value: ''
+  - key: featureId
+    value: ''
+  - key: status
+    value: ''
+  - key: type
+    value: ''
+  - key: priority
+    value: ''
+  - key: page
+    value: '0'
+  - key: size
+    value: '10'

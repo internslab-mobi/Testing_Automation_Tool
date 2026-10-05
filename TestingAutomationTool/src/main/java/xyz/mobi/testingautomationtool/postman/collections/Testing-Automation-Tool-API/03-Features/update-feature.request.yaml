@@ -1,0 +1,17 @@
+$kind: http-request
+name: 'Update Feature (PUT)'
+order: 5000
+method: PUT
+url: '{{baseUrl}}/feature/{{featureId}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "featureName": "Updated Feature Name",
+      "description": "Updated description",
+      "sprint": 2,
+      "featureVersion": "v1.1"
+    }

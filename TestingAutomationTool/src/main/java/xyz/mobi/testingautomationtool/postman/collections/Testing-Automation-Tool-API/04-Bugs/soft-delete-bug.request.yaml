@@ -1,0 +1,5 @@
+$kind: http-request
+name: Soft Delete Bug
+order: 7000
+method: DELETE
+url: '{{baseUrl}}/bugs/delete/{{bugId}}'

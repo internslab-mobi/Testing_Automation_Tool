@@ -61,7 +61,6 @@ public interface BugMapper {
 
 
     @Mapping(target = "resolvedAt", source = "resolvedAt")
-    @Mapping(target = "bugReoccurredId", ignore = true)
     @Mapping(target = "bugOccurrence", source = "bugOccurrence")
     ResolutionInfo toResolutionInfo(Bug bug);
 

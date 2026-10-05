@@ -11,4 +11,10 @@ public interface EmailService {
     void confirmationEmail(String toEmail, String username);
 
     void rejectEmail(String toEmail, String username);
+
+    void sendManagerCredentials(
+            String email,
+            String username,
+            String password
+    );
 }
