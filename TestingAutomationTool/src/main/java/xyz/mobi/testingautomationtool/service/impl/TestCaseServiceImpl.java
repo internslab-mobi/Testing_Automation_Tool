@@ -1,5 +1,6 @@
 package xyz.mobi.testingautomationtool.service.impl;
 
+import org.springframework.cache.annotation.Cacheable;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -557,6 +558,7 @@ public class TestCaseServiceImpl implements TestCaseService {
 
     @Override
     @Transactional(readOnly = true)
+    @Cacheable(value = "testCases", key = "#id")
     public TestCaseResponse getById(Integer id, boolean includeInactive) {
         TestCase testCase = testCaseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Test case not found with ID: " + id));
