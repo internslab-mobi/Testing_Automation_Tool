@@ -221,6 +221,15 @@ public class GlobalExceptionHandler {
                 HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(io.jsonwebtoken.ExpiredJwtException.class)
+    public ResponseEntity<ErrorResponse> handleExpiredJwtException(io.jsonwebtoken.ExpiredJwtException ex) {
+        log.warn("JWT token expired: {}", ex.getMessage());
+        return buildErrorResponse(
+                "ERR_SESSION_EXPIRED",
+                "Session has expired. Please login again.",
+                HttpStatus.UNAUTHORIZED);
+    }
+
     @ExceptionHandler(org.springframework.security.authentication.BadCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleBadCredentialsException(
             org.springframework.security.authentication.BadCredentialsException ex) {

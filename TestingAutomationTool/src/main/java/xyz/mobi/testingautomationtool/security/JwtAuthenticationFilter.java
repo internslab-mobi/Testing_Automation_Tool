@@ -33,23 +33,35 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     ) throws ServletException, IOException {
         try {
             String jwt = parseJwt(request);
-            if (jwt != null && jwtUtils.validateJwtToken(jwt)) {
-                String username = jwtUtils.getUsernameFromToken(jwt);
+            if (jwt != null) {
+                if (jwtUtils.validateAccessToken(jwt)) {
+                    String username = jwtUtils.getUsernameFromToken(jwt);
 
-                UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                if (userDetails != null && userDetails.isEnabled()) {
-                    UsernamePasswordAuthenticationToken authentication =
-                            new UsernamePasswordAuthenticationToken(
-                                    userDetails,
-                                    null,
-                                    userDetails.getAuthorities()
-                            );
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                    if (userDetails != null && userDetails.isEnabled()) {
+                        UsernamePasswordAuthenticationToken authentication =
+                                new UsernamePasswordAuthenticationToken(
+                                        userDetails,
+                                        null,
+                                        userDetails.getAuthorities()
+                                );
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                    }
+                } else {
+                    String tokenType = jwtUtils.getTokenType(jwt);
+                    if (JwtUtils.TOKEN_TYPE_REFRESH.equalsIgnoreCase(tokenType)) {
+                        request.setAttribute("jwt_error_message", "Refresh token cannot be used to authenticate API requests. Please call /auth/refresh to obtain an access token.");
+                    }
                 }
             }
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            log.warn("JWT access token is expired: {}", e.getMessage());
+            request.setAttribute("jwt_expired", true);
+            request.setAttribute("jwt_error_message", "Access token has expired (validity: 15 minutes). Please use your refresh token at /auth/refresh to get a new access token.");
         } catch (Exception e) {
             log.error("Cannot set user authentication: {}", e.getMessage());
+            request.setAttribute("jwt_error_message", e.getMessage());
         }
 
         filterChain.doFilter(request, response);

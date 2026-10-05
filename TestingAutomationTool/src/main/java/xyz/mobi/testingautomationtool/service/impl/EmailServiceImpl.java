@@ -643,6 +643,59 @@ public class EmailServiceImpl implements EmailService {
         sendHtmlEmail(toEmail, subject, htmlContent);
     }
 
+    @Async
+    @Override
+    public void sendPasswordResetOtpEmail(String toEmail, String username, String otpCode, int expiryMinutes) {
+        if (toEmail == null || toEmail.isBlank()) {
+            return;
+        }
+
+        String subject = "Your Password Reset OTP - Testing Automation Tool";
+
+        StringBuilder message = new StringBuilder();
+        appendHtmlHeader(message, "Password Reset Request", "Use the OTP below to reset your password.");
+
+        message.append("""
+                <p style="margin: 0 0 16px 0; font-size: 15px; color: #334155;">
+                    Hello <strong>""").append(escapeHtml(username)).append("""
+                </strong>,
+                </p>
+                <p style="margin: 0 0 20px 0; font-size: 14px; color: #475569; line-height: 1.6;">
+                    We received a request to reset your password for your <strong>Testing Automation Tool</strong> account.
+                    Please enter the following 6-digit One-Time Password (OTP) on the verification screen:
+                </p>
+                <div style="
+                    background: linear-gradient(135deg, #f0fdf4 0%, #e0e7ff 100%);
+                    border: 2px dashed #6366f1;
+                    border-radius: 12px;
+                    padding: 24px;
+                    text-align: center;
+                    margin: 25px 0;
+                ">
+                    <span style="
+                        font-size: 36px;
+                        font-weight: 800;
+                        letter-spacing: 10px;
+                        color: #4338ca;
+                        font-family: 'Courier New', Courier, monospace;
+                        display: inline-block;
+                    ">""").append(escapeHtml(otpCode)).append("""
+                    </span>
+                    <p style="margin: 12px 0 0 0; font-size: 13px; color: #64748b;">
+                        ⏱ Valid for <strong>""").append(expiryMinutes).append("""
+                        </strong> minutes only.
+                    </p>
+                </div>
+                <p style="margin: 0 0 16px 0; font-size: 13px; color: #dc2626; line-height: 1.5;">
+                    ⚠️ If you did not request a password reset, please disregard this email or notify your system administrator immediately.
+                </p>
+                """);
+
+        appendHtmlFooter(message);
+
+        sendHtmlEmail(toEmail, subject, message.toString());
+    }
+
 
     @Override
     public void sendManagerCredentials(

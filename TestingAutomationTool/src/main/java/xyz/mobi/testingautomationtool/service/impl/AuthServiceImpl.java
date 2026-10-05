@@ -11,13 +11,20 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.mobi.testingautomationtool.dto.AuthDto.*;
+import xyz.mobi.testingautomationtool.entity.RefreshToken;
 import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
+import xyz.mobi.testingautomationtool.repository.RefreshTokenRepository;
 import xyz.mobi.testingautomationtool.repository.RoleRepository;
 import xyz.mobi.testingautomationtool.repository.UserRepository;
 import xyz.mobi.testingautomationtool.security.CustomUserDetails;
 import xyz.mobi.testingautomationtool.security.JwtUtils;
 import xyz.mobi.testingautomationtool.service.AuthService;
+import xyz.mobi.testingautomationtool.service.EmailService;
+
+import java.security.SecureRandom;
+import java.time.Instant;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Service
@@ -30,6 +37,26 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
+    private final RefreshTokenRepository refreshTokenRepository;
+    private final EmailService emailService;
+
+    private static class OtpData {
+        final String otpCode;
+        Instant expiryTime;
+        final String username;
+
+        OtpData(String otpCode, Instant expiryTime, String username) {
+            this.otpCode = otpCode;
+            this.expiryTime = expiryTime;
+            this.username = username;
+        }
+
+        boolean isExpired() {
+            return Instant.now().isAfter(expiryTime);
+        }
+    }
+
+    ConcurrentHashMap<String, OtpData> otpStorage = new ConcurrentHashMap<>();
 
     @Override
     public AuthResponse register(RegisterRequest request) {
@@ -63,7 +90,7 @@ public class AuthServiceImpl implements AuthService {
                 .email(savedUser.getEmail())
                 .fullName(savedUser.getFullName())
                 .designation(savedUser.getDesignation())
-                .message("User registered successfully")
+                .message("User registered successfully. Awaiting manager approval.")
                 .build();
     }
 
@@ -91,10 +118,27 @@ public class AuthServiceImpl implements AuthService {
         SecurityContextHolder.getContext().setAuthentication(authentication);
         CustomUserDetails userDetails = (CustomUserDetails) authentication.getPrincipal();
 
-        String token = jwtUtils.generateToken(authentication);
+        String accessToken = jwtUtils.generateAccessToken(userDetails);
+        String refreshToken = jwtUtils.generateRefreshToken(userDetails);
+
+        // Revoke prior active refresh tokens for this user
+        refreshTokenRepository.revokeAllUserTokens(user.getUserId());
+
+        // Save new RefreshToken record to database
+       RefreshToken tokenEntity = RefreshToken.builder()
+                        .user(user)
+                        .token(refreshToken)
+                        .expiryDate(java.time.Instant.now().plusMillis(jwtUtils.getRefreshTokenExpirationMs()))
+                        .isRevoked(false)
+                        .build();
+        refreshTokenRepository.save(tokenEntity);
 
         return AuthResponse.builder()
-                .token(token)
+                .token(accessToken)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .expiresIn(jwtUtils.getAccessTokenExpirationMs() / 1000)
+                .refreshTokenExpiresIn(jwtUtils.getRefreshTokenExpirationMs() / 1000)
                 .type("Bearer")
                 .userId(userDetails.getUserId())
                 .username(userDetails.getUsername())
@@ -103,6 +147,172 @@ public class AuthServiceImpl implements AuthService {
                 .fullName(userDetails.getFullName())
                 .designation(user.getDesignation())
                 .message("User logged in successfully")
+                .build();
+    }
+
+    @Override
+    public AuthResponse refreshToken(RefreshTokenRequest request) {
+        String refreshToken = request.getRefreshToken();
+        if (refreshToken == null || refreshToken.isBlank()) {
+            throw new IllegalArgumentException("Refresh token cannot be blank");
+        }
+
+        try {
+            // Step 1: Validate JWT cryptographic signature and format
+            if (!jwtUtils.validateRefreshToken(refreshToken)) {
+                throw new BadCredentialsException("Invalid refresh token. Session has expired. Please login again.");
+            }
+
+            // Step 2: Validate token in database (verify exists, not revoked, and not expired)
+           RefreshToken tokenEntity =
+                    refreshTokenRepository.findByToken(refreshToken)
+                            .orElseThrow(() -> new BadCredentialsException("Revoked or untracked refresh token. Session has expired. Please login again."));
+
+            if (tokenEntity.isRevoked() || tokenEntity.isExpired()) {
+                throw new BadCredentialsException("Session has expired. Please login again.");
+            }
+
+            String username = jwtUtils.getUsernameFromToken(refreshToken);
+            User user = userRepository.findByUsernameOrEmail(username, username)
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+
+            if (!user.isActive()) {
+                throw new IllegalStateException("User account is inactive. Please contact your administrator.");
+            }
+
+            CustomUserDetails userDetails = new CustomUserDetails(user);
+
+            // Generate fresh 15-minute access token
+            String newAccessToken = jwtUtils.generateAccessToken(userDetails);
+
+            // Calculate remaining validity of refresh token
+            long remainingMs = jwtUtils.getRemainingExpirationMs(refreshToken);
+            long remainingMinutes = remainingMs / (60 * 1000);
+
+            String warningMessage = null;
+            if (remainingMinutes <= 10 && remainingMinutes > 0) {
+                warningMessage = "Warning: Your session will expire in " + remainingMinutes + " minute(s). Please login again soon.";
+            } else if (remainingMinutes <= 0) {
+                throw new BadCredentialsException("Session has expired. Please login again.");
+            }
+
+            return AuthResponse.builder()
+                    .token(newAccessToken)
+                    .accessToken(newAccessToken)
+                    .refreshToken(refreshToken)
+                    .expiresIn(jwtUtils.getAccessTokenExpirationMs() / 1000)
+                    .refreshTokenExpiresIn(remainingMs / 1000)
+                    .userId(user.getUserId())
+                    .username(user.getUsername())
+                    .build();
+
+        } catch (io.jsonwebtoken.ExpiredJwtException e) {
+            log.warn("Refresh token is expired for session: {}", e.getMessage());
+            throw new BadCredentialsException("Session has expired. Please login again.");
+        }
+    }
+
+    @Override
+    public AuthResponse sendPasswordResetOtp(ForgotPasswordRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("No active user found with email: " + email));
+
+        if (!user.isActive()) {
+            throw new IllegalStateException("User account is currently inactive. Please contact your administrator.");
+        }
+
+        SecureRandom random = new java.security.SecureRandom();
+
+        String otpCode = String.format("%06d", random.nextInt(1_000_000));
+        java.time.Instant expiryTime = java.time.Instant.now().plus(10, java.time.temporal.ChronoUnit.MINUTES);
+
+        otpStorage.put(email, new OtpData(otpCode, expiryTime, user.getUsername()));
+        emailService.sendPasswordResetOtpEmail(user.getEmail(), user.getUsername(), otpCode, 10);
+
+        return AuthResponse.builder()
+                .email(email)
+                .message("Password reset OTP has been sent to your registered email address.")
+                .build();
+    }
+
+    @Override
+    public AuthResponse verifyOtp(VerifyOtpRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+        OtpData data = otpStorage.get(email);
+
+        if (data == null || data.isExpired() || !data.otpCode.equals(request.getOtpCode().trim())) {
+            throw new IllegalArgumentException("Invalid or expired OTP code.");
+        }
+
+        return AuthResponse.builder()
+                .email(email)
+                .message("OTP verified successfully. You may now reset your password.")
+                .build();
+    }
+
+    @Override
+    public AuthResponse resetPasswordWithOtp(ResetPasswordWithOtpRequest request) {
+        String email = request.getEmail().trim().toLowerCase();
+        OtpData data = otpStorage.get(email);
+
+        if (data == null || data.isExpired() || !data.otpCode.equals(request.getOtpCode().trim())) {
+            throw new IllegalArgumentException("Invalid or expired OTP code. Please request a new OTP.");
+        }
+
+        // Consume OTP to prevent replay attacks
+        otpStorage.remove(email);
+
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("No user found with email: " + email));
+
+        // Update password with BCrypt
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        userRepository.save(user);
+
+        // Revoke all prior refresh tokens for this user upon password reset
+        refreshTokenRepository.revokeAllUserTokens(user.getUserId());
+
+        CustomUserDetails userDetails = new CustomUserDetails(user);
+
+        // Immediately issue new 15-minute access token & 24-hour refresh token
+        String accessToken = jwtUtils.generateAccessToken(userDetails);
+        String refreshToken = jwtUtils.generateRefreshToken(userDetails);
+
+        // Persist new refresh token in database
+        RefreshToken tokenEntity = RefreshToken.builder()
+                        .user(user)
+                        .token(refreshToken)
+                        .expiryDate(java.time.Instant.now().plusMillis(jwtUtils.getRefreshTokenExpirationMs()))
+                        .isRevoked(false)
+                        .build();
+        refreshTokenRepository.save(tokenEntity);
+
+        return AuthResponse.builder()
+                .token(accessToken)
+                .accessToken(accessToken)
+                .refreshToken(refreshToken)
+                .type("Bearer")
+                .expiresIn(jwtUtils.getAccessTokenExpirationMs() / 1000)
+                .refreshTokenExpiresIn(jwtUtils.getRefreshTokenExpirationMs() / 1000)
+                .userId(user.getUserId())
+                .username(user.getUsername())
+                .fullName(user.getFullName())
+                .message("Password has been reset successfully. You are now logged in.")
+                .build();
+    }
+
+    @Override
+    public AuthResponse logout(LogoutRequest request) {
+        String refreshToken = request.getRefreshToken();
+        if (refreshToken != null && !refreshToken.isBlank()) {
+            refreshTokenRepository.findByToken(refreshToken).ifPresent(token -> {
+                token.setRevoked(true);
+                refreshTokenRepository.save(token);
+            });
+        }
+        return AuthResponse.builder()
+                .message("Logged out successfully. Session revoked.")
                 .build();
     }
 

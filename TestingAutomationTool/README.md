@@ -125,6 +125,7 @@ The **Testing Automation Tool** addresses the complexities of modern software qu
 ```mermaid
 erDiagram
     ROLE ||--o{ USER : "assigned to"
+    USER ||--o{ REFRESH_TOKEN : "owns"
     USER ||--o{ PROJECT : "creates"
     USER ||--o{ FEATURE : "creates"
     USER ||--o{ TEST_CASE : "authors"
@@ -212,6 +213,16 @@ erDiagram
         json dynamic_fields
         timestamp resolved_at
     }
+
+    REFRESH_TOKEN {
+        bigint id PK
+        int user_id FK
+        string token
+        timestamp expiry_date
+        boolean is_revoked
+        timestamp created_at
+        timestamp updated_at
+    }
 ```
 
 ---
@@ -243,16 +254,29 @@ stateDiagram-v2
 
 ---
 
-## 🔐 Security, Authentication & RBAC
+## 🔐 Security, Authentication & Dual-Token (JWT) Architecture
 
-The application implements a stateless **Spring Security 6** architecture secured with **JSON Web Tokens (JWT)** and **BCrypt** hashing.
+The application implements a stateless **Spring Security 6** architecture secured with **JSON Web Tokens (JWT)** and **BCrypt** hashing, employing an enterprise-grade **Dual-Token System (Access + Refresh Tokens)** and **In-Memory Email OTP Password Reset**:
+
+### Dual-Token Lifecycle & Session Management
+- 🔑 **Access Token (`accessToken`)**: Valid for **15 minutes** (`900,000 ms`). Carries user claims (`userId`, `username`, `email`, `role`, `fullName`) and must be passed as a `Bearer <token>` in the `Authorization` header for all protected API calls.
+- 🔄 **Refresh Token (`refreshToken`)**: Valid for **24 hours** (`86,400,000 ms`). Retained by the client and submitted to `POST /auth/refresh` to obtain a fresh 15-minute access token without prompting user credentials.
+- 🗄 **Database Persistence (`testing_refresh_tokens`)**: Refresh tokens are stored in the database and mapped to the `User` entity, allowing precise revocation upon logout (`POST /auth/logout`) or password reset.
+- ⚠️ **10-Minute Session Expiry Warning**: When refreshing tokens within the last 10 minutes of the 24-hour refresh window, the API returns a structured `sessionExpiryWarning` (`"Session is expiring soon. Please log in again."`).
+- 🛑 **Session Expired Protection**: Once the 24-hour refresh token expires or is revoked, any refresh attempt is rejected with `HTTP 401 Unauthorized` and the message `"Refresh token expired. Please log in again."`, guaranteeing strict session boundaries.
+
+### 📧 In-Memory Email OTP Password Reset Flow
+1. **Request OTP (`POST /auth/forgot-password`)**: User provides their registered email. The system generates a cryptographically secure 6-digit OTP, stores it in a thread-safe `ConcurrentHashMap` with a **10-minute TTL**, and sends a formatted HTML email.
+2. **Verify OTP (`POST /auth/verify-otp`)**: Client can optionally pre-verify the OTP before prompting for the new password.
+3. **Reset Password & Auto-Login (`POST /auth/reset-password`)**: User provides email, OTP, and `newPassword`. If the OTP is valid and unexpired, the password is encrypted with BCrypt, previous refresh tokens are revoked, the OTP is invalidated, and **fresh Access (15m) and Refresh (24h) tokens are generated and returned immediately in `AuthResponse`** (immediate seamless auto-login).
 
 ### Role Hierarchy & Matrix
 
 | Module / Endpoint Path | Allowed Roles | Description |
 | :--- | :--- | :--- |
 | `POST /auth/register` | `PUBLIC` | Open registration for new accounts |
-| `POST /auth/login` | `PUBLIC` | Authenticate and obtain JWT token |
+| `POST /auth/login` | `PUBLIC` | Authenticate and obtain 15m Access Token + 24h Refresh Token |
+| `POST /auth/refresh` | `PUBLIC` | Exchange 24h Refresh Token for a new 15m Access Token |
 | `GET /auth/profile` | `ANY AUTHENTICATED` | Retrieve current user profile |
 | `POST /auth/change-password` | `ANY AUTHENTICATED` | Self-service password change |
 | `/manager/**` | `MANAGER`, `ADMIN` | Manager Analytics Dashboard, User Approval / Rejection |
@@ -297,7 +321,7 @@ $$\text{Final Health Score} = \text{clamp}\Big( \text{Base Score} - (\text{Criti
 ---
 
 ### 2. Project & Feature Management
-- **Projects**: Organized by geographical region (`region`), lifecycle status (`ACTIVE`, `INACTIVE`, `COMPLETED`, `ARCHIVED`), and soft deletion flags.
+- **Projects**: Organized by geographical region (`region`), lifecycle status (`ACTIVE`, `INACTIVE`), and soft deletion flags.
 - **Features**: Tied to projects and organized by Agile `sprint`, `featureVersion`, and status (`ACTIVE`, `IN_PROGRESS`, `COMPLETED`, `ON_HOLD`, `DEPRECATED`).
 - **File Attachments**: Upload project and feature documentation directly into the system with automated `.zip` bundling for downloads.
 
@@ -385,7 +409,12 @@ The platform generates real-time analytics consumed by the manager UI (`/manager
 | Method | Endpoint | Access | Summary |
 | :--- | :--- | :--- | :--- |
 | `POST` | `/auth/register` | Public | Register a new user account |
-| `POST` | `/auth/login` | Public | Authenticate user and receive Bearer JWT |
+| `POST` | `/auth/login` | Public | Authenticate user and receive 15m Access Token & 24h Refresh Token |
+| `POST` | `/auth/refresh` | Public | Exchange 24h Refresh Token for a new 15m Access Token (warns if near 24h expiry) |
+| `POST` | `/auth/forgot-password` | Public | Request 6-digit OTP sent to user's registered email (10m TTL in memory) |
+| `POST` | `/auth/verify-otp` | Public | Verify 6-digit OTP validity |
+| `POST` | `/auth/reset-password` | Public | Reset password with valid OTP & receive fresh Access/Refresh tokens (auto-login) |
+| `POST` | `/auth/logout` | Authenticated | Revoke refresh token in database and terminate session |
 | `GET` | `/auth/profile` | Authenticated | Retrieve authenticated user profile |
 | `POST` | `/auth/change-password`| Authenticated | Change logged-in user password |
 

@@ -37,6 +37,41 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
+    @Operation(summary = "Refresh access token using 24-hour refresh token", description = "Exchange a valid 24-hour refresh token for a new 15-minute access token. If refresh token is expired, returns session expired message.")
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refreshToken(@Valid @RequestBody RefreshTokenRequest request) {
+        AuthResponse response = authService.refreshToken(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Send password reset OTP to email", description = "Generates and emails a 6-digit OTP valid for 10 minutes to the user's registered email.")
+    @PostMapping("/forgot-password")
+    public ResponseEntity<AuthResponse> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        AuthResponse response = authService.sendPasswordResetOtp(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Verify email OTP", description = "Validates if the submitted 6-digit OTP code is correct and not expired.")
+    @PostMapping("/verify-otp")
+    public ResponseEntity<AuthResponse> verifyOtp(@Valid @RequestBody VerifyOtpRequest request) {
+        AuthResponse response = authService.verifyOtp(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Reset password with email OTP and auto-login", description = "Validates the OTP, updates the user's password, revokes previous sessions, and immediately returns 15m access token & 24h refresh token.")
+    @PostMapping("/reset-password")
+    public ResponseEntity<AuthResponse> resetPassword(@Valid @RequestBody ResetPasswordWithOtpRequest request) {
+        AuthResponse response = authService.resetPasswordWithOtp(request);
+        return ResponseEntity.ok(response);
+    }
+
+    @Operation(summary = "Logout and revoke refresh token", description = "Revokes the active refresh token in the database to terminate the session.")
+    @PostMapping("/logout")
+    public ResponseEntity<AuthResponse> logout(@Valid @RequestBody LogoutRequest request) {
+        AuthResponse response = authService.logout(request);
+        return ResponseEntity.ok(response);
+    }
+
     @Operation(summary = "Get current authenticated user profile", security = @SecurityRequirement(name = "bearerAuth"))
     @GetMapping("/profile")
     public ResponseEntity<UserProfileResponse> getCurrentProfile(@AuthenticationPrincipal UserDetails userDetails) {
