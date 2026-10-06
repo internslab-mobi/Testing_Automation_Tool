@@ -7,8 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
-import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
-import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
+import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentDownloadResponse;
+import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
 import xyz.mobi.testingautomationtool.entity.*;
 import xyz.mobi.testingautomationtool.enums.AttachmentType;
 import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
@@ -84,7 +84,7 @@ public class AttachmentServiceImpl implements AttachmentService {
         } catch (Exception e) {
             log.error("Could not determine current authenticated user", e);
             throw new AttachmentProcessingException(
-                    "Could not determine the current authenticated user");
+                    "Could not determine the current authenticated user", e);
         }
 
         Set<String> requestFileNames = new HashSet<>();

@@ -8,7 +8,6 @@ import org.springframework.stereotype.Repository;
 import xyz.mobi.testingautomationtool.entity.Attachment;
 
 import java.util.List;
-import java.util.Optional;
 
 @Repository
 public interface AttachmentRepository extends JpaRepository<Attachment, Integer> {
@@ -29,10 +28,13 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Integer>
     @Query("UPDATE Attachment a SET a.isActive = true WHERE (a.feature.project.projectId = :projectId OR a.testCase.feature.project.projectId = :projectId OR a.bug.feature.project.projectId = :projectId) AND a.isDeleted = false")
     int activateAttachmentsByProjectId(@Param("projectId") Integer projectId);
 
-    List<Attachment> findAllByProject_ProjectIdAndIsDeletedFalseAndIsActiveTrue(
-            Integer projectId
-    );
+    List<Attachment> findAllByProject_ProjectIdAndIsDeletedFalseAndIsActiveTrue(Integer projectId);
+
     List<Attachment> findAllByBug_BugIdAndIsDeletedFalseAndIsActiveTrue(Integer bugId);
+
+    List<Attachment> findAllByFeature_FeatureIdAndIsDeletedFalseAndIsActiveTrue(Integer featureId);
+
+    List<Attachment> findAllByTestCase_TestcaseIdAndIsDeletedFalseAndIsActiveTrue(Integer testcaseId);
 
     boolean existsByProject_ProjectIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(Integer projectId, String filename);
 
@@ -40,5 +42,5 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Integer>
 
     boolean existsByFeature_FeatureIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(Integer featureId, String filename);
 
-    List<Attachment> findAllByFeature_FeatureIdAndIsDeletedFalseAndIsActiveTrue(Integer projectId);
+    boolean existsByTestCase_TestcaseIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(Integer testcaseId, String filename);
 }

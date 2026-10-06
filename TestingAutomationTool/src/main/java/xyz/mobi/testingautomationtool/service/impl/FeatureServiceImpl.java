@@ -7,16 +7,13 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
-import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.FeatureDTO.*;
 import xyz.mobi.testingautomationtool.entity.Attachment;
+import xyz.mobi.testingautomationtool.dto.FeatureDto.*;
 import xyz.mobi.testingautomationtool.entity.Feature;
 import xyz.mobi.testingautomationtool.entity.Project;
 import xyz.mobi.testingautomationtool.entity.User;
-import xyz.mobi.testingautomationtool.enums.AttachmentType;
-import xyz.mobi.testingautomationtool.enums.FeatureStatus;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
 import xyz.mobi.testingautomationtool.exception.DuplicateResourceException;
@@ -58,6 +55,8 @@ public class FeatureServiceImpl implements FeatureService {
     public FeatureResponse createFeature(FeatureRequest request) {
             Project project = projectRepository.findByProjectIdAndStatusAndIsActiveTrueAndIsDeletedFalse(request.getProjectId(),
                             ProjectStatus.ACTIVE)
+        Project project = projectRepository.findByProjectIdAndStatusAndIsActiveTrueAndIsDeletedFalse(request.getProjectId(),
+                        ProjectStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not available for id: " + request.getProjectId()));
 
 
@@ -80,11 +79,11 @@ public class FeatureServiceImpl implements FeatureService {
         return featureMapper.toResponse(saved);
     }
 
-
     @Override
     @Transactional
     @CacheEvict(value = "features", key = "#featureId")
     public String patchFeature(Integer featureId, FeaturePatchRequest request) {
+
         Feature feature = featureRepository.findById(featureId)
                 .orElseThrow(() -> new ResourceNotFoundException("Feature not found with ID: " + featureId));
 
@@ -189,7 +188,9 @@ public class FeatureServiceImpl implements FeatureService {
 
         featureRepository.save(feature);
 
-        return "Feature with ID " + featureId + " updated successfully. Changed fields: " + String.join(", ", updatedFields);
+        return "Feature with ID " + featureId +
+                " updated successfully. Changed fields: " +
+                String.join(", ", updatedFields);
     }
 
     @Override
@@ -217,6 +218,7 @@ public class FeatureServiceImpl implements FeatureService {
         }
 
         featureRepository.save(feature);
+//        return "Feature with ID " + featureId + " deleted successfully.";
     }
 
     @Override
