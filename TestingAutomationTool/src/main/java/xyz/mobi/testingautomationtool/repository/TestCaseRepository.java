@@ -1,5 +1,6 @@
 package xyz.mobi.testingautomationtool.repository;
 
+import jakarta.validation.constraints.Size;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,16 +19,6 @@ import java.util.Optional;
 @Repository
 public interface TestCaseRepository extends JpaRepository<TestCase, Integer>, JpaSpecificationExecutor<TestCase> {
 
-    boolean existsByTestcaseFormatId(String testcaseFormatId);
-
-    Optional<TestCase> findByTestcaseIdAndIsDeletedFalse(Integer testcaseId);
-    boolean existsByFeature_FeatureIdAndTestcaseFormatId(
-            Integer featureId,
-            String testcaseFormatId);
-
-
-
-    Page<TestCase> findByFeature_FeatureIdAndActiveTrue(Integer featureId, Pageable pageable);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE TestCase t SET t.isActive = false WHERE t.feature.project.projectId = :projectId")
@@ -35,7 +26,7 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Integer>, Jp
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM TestCase t WHERE t.feature.project.projectId = :projectId")
-    void deleteByProjectId(@Param("projectId") Integer projectId);
+    int deleteByProjectId(@Param("projectId") Integer projectId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE TestCase t SET t.isActive = true WHERE t.feature.project.projectId = :projectId")
@@ -47,7 +38,6 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Integer>, Jp
         return findByFeature_FeatureIdAndIsDeletedFalse(featureId);
     }
 
-    Page<TestCase> findByFeature_FeatureId(Integer featureId, Pageable pageable);
 
     @Query("SELECT tc FROM TestCase tc WHERE tc.isDeleted = false " +
            "AND (:featureId IS NULL OR tc.feature.featureId = :featureId) " +
@@ -66,4 +56,6 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Integer>, Jp
     List<TestCase> findByFeature_Project_ProjectIdAndIsDeletedFalse(Integer projectId);
 
     List<TestCase> findByIsDeletedFalse();
+
+    boolean existsByFeature_FeatureIdAndTestcaseFormatId(Integer featureId, String testcaseFormatId);
 }

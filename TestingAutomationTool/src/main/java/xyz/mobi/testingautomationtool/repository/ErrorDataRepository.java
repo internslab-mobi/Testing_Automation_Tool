@@ -9,7 +9,4 @@ public interface ErrorDataRepository extends JpaRepository<Error, Integer> {
 
     Optional<Error> findByExceptionName(String exceptionName);
 
-    boolean existsByExceptionName(String exceptionName);
-
-    Optional<Error> findByErrorCode(String errorCode);
 }

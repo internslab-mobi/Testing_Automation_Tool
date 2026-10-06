@@ -16,9 +16,8 @@ public interface CommentRepository extends JpaRepository<Comment, Integer> {
 
     Page<Comment> findByBug_BugIdOrderByCreatedAtAsc(Integer bugId, Pageable pageable);
 
-    long countByBug_BugId(Integer bugId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM Comment c WHERE c.bug.feature.project.projectId = :projectId")
-    void deleteByProjectId(@Param("projectId") Integer projectId);
+    int deleteByProjectId(@Param("projectId") Integer projectId);
 }

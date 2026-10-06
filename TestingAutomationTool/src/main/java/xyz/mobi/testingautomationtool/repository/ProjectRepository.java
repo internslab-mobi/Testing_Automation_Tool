@@ -11,11 +11,13 @@ import java.util.Optional;
 
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaSpecificationExecutor<Project> {
+
     List<Project> findByIsDeletedFalse();
+
     Optional<Project> findByProjectIdAndIsDeletedFalse(Integer projectId);
+
     boolean existsByProjectNameAndRegion(String projectName, String region);
 
     Optional<Project> findByProjectIdAndStatusAndIsActiveTrueAndIsDeletedFalse( Integer projectId, ProjectStatus projectStatus);
 
-    Optional<Project> findByProjectIdAndIsActiveTrueAndIsDeletedFalse(Integer projectId);
 }

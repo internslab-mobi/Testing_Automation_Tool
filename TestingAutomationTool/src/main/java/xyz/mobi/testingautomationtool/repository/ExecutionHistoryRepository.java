@@ -8,5 +8,4 @@ import java.util.List;
 public interface ExecutionHistoryRepository
         extends JpaRepository<ExecutionHistory, Integer> {
 
-    List<ExecutionHistory> findByExecutionExecutionId(Integer executionId);
 }

@@ -8,5 +8,4 @@ import java.util.List;
 
 @Repository
 public interface BugHistoryRepository extends JpaRepository<BugHistory, Integer> {
-    List<BugHistory> findByBug_BugIdOrderByCreatedAtDesc(Integer bugId);
 }

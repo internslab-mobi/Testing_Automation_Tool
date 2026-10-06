@@ -45,7 +45,7 @@ public class AdminServiceImpl implements AdminService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
 
-    private final AdminMapper managerMapper;
+    private final AdminMapper adminMapper;
 
 
     @Override
@@ -100,7 +100,7 @@ public class AdminServiceImpl implements AdminService {
                 rawPassword
         );
 
-        return managerMapper.toResponse(savedManager);
+        return adminMapper.toResponse(savedManager);
 
     }
 
@@ -148,7 +148,7 @@ public class AdminServiceImpl implements AdminService {
 
         User updatedManager = userRepository.save(manager);
 
-        return managerMapper.toResponse(updatedManager);
+        return adminMapper.toResponse(updatedManager);
     }
 
     @Transactional
@@ -224,7 +224,7 @@ public class AdminServiceImpl implements AdminService {
                         )
                 );
 
-        return managerMapper.toResponse(user);
+        return adminMapper.toResponse(user);
     }
 
     @Transactional(readOnly = true)
@@ -234,7 +234,7 @@ public class AdminServiceImpl implements AdminService {
         return userRepository
                 .findAllByIsActiveTrue()
                 .stream()
-                .map(managerMapper::toResponse)
+                .map(adminMapper::toResponse)
                 .toList();
     }
 
@@ -246,7 +246,7 @@ public class AdminServiceImpl implements AdminService {
         return userRepository
                 .findAllByRoleRoleAndIsActiveTrue(role.name())
                 .stream()
-                .map(managerMapper::toResponse)
+                .map(adminMapper::toResponse)
                 .toList();
     }
 

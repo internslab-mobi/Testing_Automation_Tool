@@ -19,8 +19,6 @@ public interface FeatureRepository extends JpaRepository<Feature, Integer>, JpaS
 
     Optional<Feature> findByFeatureIdAndIsDeletedFalse(Integer featureId);
 
-    Optional<Feature> findByFeatureIdAndIsActiveTrueAndIsDeletedFalse(Integer featureId);
-
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT f FROM Feature f WHERE f.featureId = :featureId AND f.isDeleted = false")
     Optional<Feature> findByFeatureIdForUpdate(@Param("featureId") Integer featureId);
@@ -36,15 +34,15 @@ public interface FeatureRepository extends JpaRepository<Feature, Integer>, JpaS
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Feature f SET f.isActive = false WHERE f.project.projectId = :projectId")
-    void deactivateFeaturesByProjectId(@Param("projectId") Integer projectId);
+    int deactivateFeaturesByProjectId(@Param("projectId") Integer projectId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Feature f SET f.isDeleted = true, f.isActive = false WHERE f.project.projectId = :projectId")
-    void deleteByProjectId(@Param("projectId") Integer projectId);
+    int deleteByProjectId(@Param("projectId") Integer projectId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Feature f SET f.isActive = true WHERE f.project.projectId = :projectId AND f.isDeleted = false")
-    void activateFeaturesByProjectId(@Param("projectId") Integer projectId);
+    int activateFeaturesByProjectId(@Param("projectId") Integer projectId);
 
     Optional<Feature> findByFeatureIdAndIsDeletedFalseAndProjectStatus(
             Integer featureId,

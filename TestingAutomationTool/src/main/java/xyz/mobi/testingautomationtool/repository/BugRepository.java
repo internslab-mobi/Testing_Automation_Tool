@@ -20,12 +20,9 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
 
     Page<Bug> findByIsActiveTrue(Pageable pageable);
 
-//    List<Bug> findByActiveTrue();
-    Optional<Bug> findByBugIdAndIsActiveTrueAndIsDeletedFalse(Integer bugId);
-
     @Modifying
     @Query("UPDATE Bug b SET b.isDeleted=true, b.isActive=false WHERE b.testCase.testcaseId =:id")
-    void softDeleteBugsByTestCaseId(@Param("id") Integer id);
+    int softDeleteBugsByTestCaseId(@Param("id") Integer id);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("""
@@ -56,16 +53,12 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
     @Query("UPDATE Bug b SET b.isDeleted = true, b.isActive = false WHERE b.feature.project.projectId = :projectId")
     int deleteByProjectId(@Param("projectId") Integer projectId);
 
-    boolean existsByBugFormatId(String bugFormatId);
-
-    Optional<Bug> findByBugIdAndIsDeletedFalse(Integer bugId);
 
     Optional<Bug> findTopByFeature_FeatureIdAndBugFormatIdStartingWithOrderByBugFormatIdDesc(
             Integer featureId,
             String prefix
     );
 
-    Optional<Bug> findByBugFormatId(String bugFormatId);
 
     List<Bug> findByFeature_FeatureIdAndIsDeletedFalse(Integer featureId);
 
@@ -77,7 +70,4 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
 
     List<Bug> findByIsDeletedFalse();
 
-    List<Bug> findTop10ByIsDeletedFalseOrderByCreatedAtDesc();
-
-    List<Bug> findTop10ByFeature_Project_ProjectIdAndIsDeletedFalseOrderByCreatedAtDesc(Integer projectId);
 }

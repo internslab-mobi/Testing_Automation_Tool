@@ -12,8 +12,6 @@ import java.util.Optional;
 
 @Repository
 public interface AttachmentRepository extends JpaRepository<Attachment, Integer> {
-    List<Attachment> findByBug_BugIdAndIsDeletedFalse(Integer bugId);
-    Optional<Attachment> findTopByFeature_FeatureIdAndIsDeletedFalseOrderByCreatedAtDesc(Integer featureId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Attachment a SET a.isActive = false WHERE a.feature.project.projectId = :projectId OR a.testCase.feature.project.projectId = :projectId OR a.bug.feature.project.projectId = :projectId")
@@ -25,7 +23,7 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Integer>
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Attachment a SET a.isDeleted = true, a.isActive = false WHERE a.feature.project.projectId = :projectId OR a.testCase.feature.project.projectId = :projectId OR a.bug.feature.project.projectId = :projectId")
-    void deleteByProjectId(@Param("projectId") Integer projectId);
+    int deleteByProjectId(@Param("projectId") Integer projectId);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Attachment a SET a.isActive = true WHERE (a.feature.project.projectId = :projectId OR a.testCase.feature.project.projectId = :projectId OR a.bug.feature.project.projectId = :projectId) AND a.isDeleted = false")

@@ -19,7 +19,7 @@ public interface TestingExecutionRepository
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("DELETE FROM TestingExecution te WHERE te.testCase.feature.project.projectId = :projectId")
-    void deleteByProjectId(@Param("projectId") Integer projectId);
+    int deleteByProjectId(@Param("projectId") Integer projectId);
 
 
     List<TestingExecution> findByTestCaseTestcaseIdIn(List<Integer> testcaseIds);
