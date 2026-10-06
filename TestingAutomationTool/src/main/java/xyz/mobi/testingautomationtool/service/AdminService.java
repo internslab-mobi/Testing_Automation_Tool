@@ -1,10 +1,11 @@
 package xyz.mobi.testingautomationtool.service;
 
-import xyz.mobi.testingautomationtool.dto.AdminDto.CreateManagerRequest;
+import xyz.mobi.testingautomationtool.dto.AdminDTO.CreateManagerRequest;
+import xyz.mobi.testingautomationtool.dto.AdminDTO.ManagerResponse;
 
 public interface AdminService {
 
-    void createManager(CreateManagerRequest request);
+    ManagerResponse createManager(CreateManagerRequest request);
 
     void softDeleteUser(Integer userId);
 

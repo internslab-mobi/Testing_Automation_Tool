@@ -5,7 +5,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import xyz.mobi.testingautomationtool.dto.AdminDto.CreateManagerRequest;
+import xyz.mobi.testingautomationtool.dto.AdminDTO.CreateManagerRequest;
+import xyz.mobi.testingautomationtool.dto.AdminDTO.ManagerResponse;
 import xyz.mobi.testingautomationtool.entity.Bug;
 import xyz.mobi.testingautomationtool.entity.Feature;
 import xyz.mobi.testingautomationtool.entity.Project;
@@ -42,7 +43,7 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     @Transactional
-    public void createManager(CreateManagerRequest request) {
+    public ManagerResponse createManager(CreateManagerRequest request) {
 
         User currentAdmin = authService.getCurrentUser();
 
@@ -91,6 +92,17 @@ public class AdminServiceImpl implements AdminService {
                 savedManager.getUsername(),
                 rawPassword
         );
+
+        return ManagerResponse.builder()
+                .userId(savedManager.getUserId())
+                .username(savedManager.getUsername())
+                .email(savedManager.getEmail())
+                .fullName(savedManager.getFullName())
+                .designation(savedManager.getDesignation())
+                .skills(savedManager.getSkills())
+                .role(savedManager.getRole().getRole())
+                .build();
+
     }
 
 

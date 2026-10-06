@@ -1,10 +1,7 @@
 package xyz.mobi.testingautomationtool.service;
 
-import xyz.mobi.testingautomationtool.dto.NotificationDto.NotificationRequest;
-import xyz.mobi.testingautomationtool.dto.NotificationDto.NotificationResponse;
-import xyz.mobi.testingautomationtool.entity.Bug;
-import xyz.mobi.testingautomationtool.entity.Notification;
-import xyz.mobi.testingautomationtool.entity.User;
+import xyz.mobi.testingautomationtool.dto.NotificationDTO.NotificationRequest;
+import xyz.mobi.testingautomationtool.dto.NotificationDTO.NotificationResponse;
 import xyz.mobi.testingautomationtool.enums.NotificationStatus;
 
 import java.util.List;

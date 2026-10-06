@@ -1,12 +1,10 @@
 package xyz.mobi.testingautomationtool.service;
 
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentDownloadResponse;
-import xyz.mobi.testingautomationtool.dto.ProjectDto.*;
-import xyz.mobi.testingautomationtool.entity.Attachment;
+import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
+import xyz.mobi.testingautomationtool.dto.ProjectDTO.*;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
-import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
+import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
 
 import java.io.IOException;
 import java.util.List;
@@ -25,7 +23,6 @@ public interface ProjectService {
 
     String hardDeleteProject(Integer id);
 
-    @Transactional
     String patchProjectActiveStatus(Integer id, ProjectStatus isActive);
 
     List<ProjectResponse> getAllProjects();

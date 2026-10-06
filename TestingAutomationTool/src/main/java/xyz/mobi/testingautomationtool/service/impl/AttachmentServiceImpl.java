@@ -2,32 +2,23 @@ package xyz.mobi.testingautomationtool.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentDownloadResponse;
-import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
+import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
 import xyz.mobi.testingautomationtool.entity.Attachment;
 import xyz.mobi.testingautomationtool.entity.Bug;
 import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.AttachmentType;
-import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
 import xyz.mobi.testingautomationtool.exception.CustomException;
 import xyz.mobi.testingautomationtool.exception.ErrorCode;
-import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.repository.AttachmentRepository;
 import xyz.mobi.testingautomationtool.repository.BugRepository;
 import xyz.mobi.testingautomationtool.repository.UserRepository;
 import xyz.mobi.testingautomationtool.service.AttachmentService;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 @Slf4j
 @Service

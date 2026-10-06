@@ -2,9 +2,9 @@ package xyz.mobi.testingautomationtool.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import xyz.mobi.testingautomationtool.dto.NotificationDto.InAppNotificationResponse;
-import xyz.mobi.testingautomationtool.dto.NotificationDto.NotificationRequest;
-import xyz.mobi.testingautomationtool.dto.NotificationDto.NotificationResponse;
+import xyz.mobi.testingautomationtool.dto.NotificationDTO.InAppNotificationResponse;
+import xyz.mobi.testingautomationtool.dto.NotificationDTO.NotificationRequest;
+import xyz.mobi.testingautomationtool.dto.NotificationDTO.NotificationResponse;
 import xyz.mobi.testingautomationtool.entity.InAppNotification;
 import xyz.mobi.testingautomationtool.entity.Notification;
 

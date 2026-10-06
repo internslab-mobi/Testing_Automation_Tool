@@ -10,7 +10,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
-import xyz.mobi.testingautomationtool.dto.AuthDto.*;
+import xyz.mobi.testingautomationtool.dto.AuthDTO.*;
 import xyz.mobi.testingautomationtool.service.AuthService;
 
 import java.util.Map;

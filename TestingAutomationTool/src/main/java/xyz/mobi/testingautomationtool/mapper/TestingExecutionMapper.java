@@ -1,9 +1,9 @@
 package xyz.mobi.testingautomationtool.mapper;
 
 import org.mapstruct.*;
-import xyz.mobi.testingautomationtool.dto.TestCaseDto.TestCasePutRequest;
-import xyz.mobi.testingautomationtool.dto.TestingExecutionDto.TestingExecutionRequest;
-import xyz.mobi.testingautomationtool.dto.TestingExecutionDto.TestingExecutionResponse;
+import xyz.mobi.testingautomationtool.dto.TestCaseDTO.TestCasePutRequest;
+import xyz.mobi.testingautomationtool.dto.TestingExecutionDTO.TestingExecutionRequest;
+import xyz.mobi.testingautomationtool.dto.TestingExecutionDTO.TestingExecutionResponse;
 import xyz.mobi.testingautomationtool.entity.TestingExecution;
 
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)

@@ -7,11 +7,9 @@ import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentDownloadResponse;
-import xyz.mobi.testingautomationtool.dto.ProjectDto.*;
-import xyz.mobi.testingautomationtool.entity.Attachment;
+import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
+import xyz.mobi.testingautomationtool.dto.ProjectDTO.*;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
-import xyz.mobi.testingautomationtool.service.AttachmentService;
 import xyz.mobi.testingautomationtool.service.ProjectService;
 
 import java.io.IOException;
@@ -35,11 +33,11 @@ public class ProjectController {
 
     @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
     @PostMapping(value = "/attachment/{projectId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse> uploadAttachment(
+    public ResponseEntity<xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse> uploadAttachment(
             @RequestParam("file") MultipartFile file,
             @PathVariable("projectId") Integer projectId
     ) throws IOException {
-        xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse projectResponse = projectService.uploadAttachment(file, projectId);
+        xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse projectResponse = projectService.uploadAttachment(file, projectId);
         return ResponseEntity.ok(projectResponse);
     }
 

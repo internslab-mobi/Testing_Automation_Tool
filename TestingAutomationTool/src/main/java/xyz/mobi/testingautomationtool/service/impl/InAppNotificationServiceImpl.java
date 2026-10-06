@@ -3,7 +3,7 @@ package xyz.mobi.testingautomationtool.service.impl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import xyz.mobi.testingautomationtool.dto.NotificationDto.*;
+import xyz.mobi.testingautomationtool.dto.NotificationDTO.*;
 import xyz.mobi.testingautomationtool.entity.Bug;
 import xyz.mobi.testingautomationtool.entity.Comment;
 import xyz.mobi.testingautomationtool.entity.InAppNotification;
@@ -74,7 +74,7 @@ public class InAppNotificationServiceImpl implements InAppNotificationService {
 
     @Transactional
     @Override
-    public String patchNotification(Integer notificationId, xyz.mobi.testingautomationtool.dto.NotificationDto.NotificationPatchRequest request) {
+    public String patchNotification(Integer notificationId, xyz.mobi.testingautomationtool.dto.NotificationDTO.NotificationPatchRequest request) {
         InAppNotification notification = inAppNotificationRepository.findById(notificationId)
                 .orElseThrow(() -> new ResourceNotFoundException("Notification not found with ID: " + notificationId));
 

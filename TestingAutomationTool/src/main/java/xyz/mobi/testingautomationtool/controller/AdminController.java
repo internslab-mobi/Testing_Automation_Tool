@@ -7,7 +7,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
-import xyz.mobi.testingautomationtool.dto.AdminDto.CreateManagerRequest;
+import xyz.mobi.testingautomationtool.dto.AdminDTO.CreateManagerRequest;
+import xyz.mobi.testingautomationtool.dto.AdminDTO.ManagerResponse;
 import xyz.mobi.testingautomationtool.service.AdminService;
 
 @RestController
@@ -19,14 +20,14 @@ public class AdminController {
     private final AdminService adminService;
 
     @PostMapping("/managers")
-    public ResponseEntity<String> createManager(
+    public ResponseEntity<ManagerResponse> createManager(
             @Valid @RequestBody CreateManagerRequest request) {
 
-        adminService.createManager(request);
+        ManagerResponse response = adminService.createManager(request);
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body("Manager created successfully");
+                .body(response);
     }
 
 

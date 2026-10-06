@@ -2,7 +2,7 @@ package xyz.mobi.testingautomationtool.mapper;
 
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
+import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
 import xyz.mobi.testingautomationtool.entity.Attachment;
 
 @Mapper(componentModel = "spring")

@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import xyz.mobi.testingautomationtool.dto.NotificationDto.*;
+import xyz.mobi.testingautomationtool.dto.NotificationDTO.*;
 import xyz.mobi.testingautomationtool.service.InAppNotificationService;
 
 import java.util.List;

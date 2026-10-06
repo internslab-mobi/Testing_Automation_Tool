@@ -1,8 +1,8 @@
 package xyz.mobi.testingautomationtool.mapper;
 
 import org.mapstruct.*;
-import xyz.mobi.testingautomationtool.dto.TestCaseDto.*;
-import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDto.TestCaseExecutionRequest;
+import xyz.mobi.testingautomationtool.dto.TestCaseDTO.*;
+import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionRequest;
 import xyz.mobi.testingautomationtool.entity.TestCase;
 import xyz.mobi.testingautomationtool.entity.TestingExecution;
 

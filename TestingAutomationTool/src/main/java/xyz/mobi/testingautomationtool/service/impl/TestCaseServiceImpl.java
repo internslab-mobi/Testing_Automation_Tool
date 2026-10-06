@@ -11,11 +11,11 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.dto.ExcelDto.ExcelTestCaseRow;
 import xyz.mobi.testingautomationtool.dto.ExcelDto.ExcelUploadResponse;
-import xyz.mobi.testingautomationtool.dto.TestCaseDto.*;
-import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDto.TestCaseExecutionRequest;
-import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDto.TestCaseExecutionResponse;
-import xyz.mobi.testingautomationtool.dto.TestingExecutionDto.TestingExecutionRequest;
-import xyz.mobi.testingautomationtool.dto.TestingExecutionDto.TestingExecutionResponse;
+import xyz.mobi.testingautomationtool.dto.TestCaseDTO.*;
+import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionRequest;
+import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionResponse;
+import xyz.mobi.testingautomationtool.dto.TestingExecutionDTO.TestingExecutionRequest;
+import xyz.mobi.testingautomationtool.dto.TestingExecutionDTO.TestingExecutionResponse;
 import xyz.mobi.testingautomationtool.entity.*;
 import xyz.mobi.testingautomationtool.enums.*;
 import xyz.mobi.testingautomationtool.exception.*;
@@ -23,7 +23,6 @@ import xyz.mobi.testingautomationtool.mapper.TestCaseMapper;
 import xyz.mobi.testingautomationtool.mapper.TestingExecutionMapper;
 import xyz.mobi.testingautomationtool.repository.*;
 import xyz.mobi.testingautomationtool.service.AuthService;
-import xyz.mobi.testingautomationtool.service.InAppNotificationService;
 import xyz.mobi.testingautomationtool.service.TestCaseService;
 import xyz.mobi.testingautomationtool.utils.Utils;
 
@@ -53,7 +52,7 @@ public class TestCaseServiceImpl implements TestCaseService {
             throw new CustomException(ErrorCode.INVALID_REQUEST, "Test case request cannot be null");
         }
 
-        xyz.mobi.testingautomationtool.dto.TestCaseDto.TestCaseRequest tcReq = request.getTestCase();
+        xyz.mobi.testingautomationtool.dto.TestCaseDTO.TestCaseRequest tcReq = request.getTestCase();
         Feature feature = featureRepository.findByFeatureIdAndIsDeletedFalse(tcReq.getFeatureId())
                 .orElseThrow(() -> new ResourceNotFoundException("Feature not found with ID: " + tcReq.getFeatureId()));
 

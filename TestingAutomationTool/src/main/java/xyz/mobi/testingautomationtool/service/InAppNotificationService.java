@@ -1,6 +1,6 @@
 package xyz.mobi.testingautomationtool.service;
 
-import xyz.mobi.testingautomationtool.dto.NotificationDto.InAppNotificationResponse;
+import xyz.mobi.testingautomationtool.dto.NotificationDTO.InAppNotificationResponse;
 import xyz.mobi.testingautomationtool.entity.Bug;
 import xyz.mobi.testingautomationtool.entity.Comment;
 
@@ -13,7 +13,7 @@ public interface InAppNotificationService {
 
     void markAsRead(Integer notificationId);
 
-    String patchNotification(Integer notificationId, xyz.mobi.testingautomationtool.dto.NotificationDto.NotificationPatchRequest request);
+    String patchNotification(Integer notificationId, xyz.mobi.testingautomationtool.dto.NotificationDTO.NotificationPatchRequest request);
 
     void deleteNotification(Integer notificationId);
 

@@ -2,9 +2,9 @@ package xyz.mobi.testingautomationtool.service;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import xyz.mobi.testingautomationtool.dto.CommentDto.CommentPutRequest;
-import xyz.mobi.testingautomationtool.dto.CommentDto.CommentRequest;
-import xyz.mobi.testingautomationtool.dto.CommentDto.CommentResponse;
+import xyz.mobi.testingautomationtool.dto.CommentDTO.CommentPutRequest;
+import xyz.mobi.testingautomationtool.dto.CommentDTO.CommentRequest;
+import xyz.mobi.testingautomationtool.dto.CommentDTO.CommentResponse;
 
 import java.util.List;
 

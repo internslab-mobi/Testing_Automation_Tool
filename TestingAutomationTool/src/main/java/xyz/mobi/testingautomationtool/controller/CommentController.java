@@ -11,9 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import xyz.mobi.testingautomationtool.dto.CommentDto.CommentPutRequest;
-import xyz.mobi.testingautomationtool.dto.CommentDto.CommentRequest;
-import xyz.mobi.testingautomationtool.dto.CommentDto.CommentResponse;
+import xyz.mobi.testingautomationtool.dto.CommentDTO.CommentPutRequest;
+import xyz.mobi.testingautomationtool.dto.CommentDTO.CommentRequest;
+import xyz.mobi.testingautomationtool.dto.CommentDTO.CommentResponse;
 import xyz.mobi.testingautomationtool.service.CommentService;
 
 import java.util.List;

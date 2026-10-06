@@ -4,7 +4,7 @@ import jakarta.persistence.criteria.Join;
 import jakarta.persistence.criteria.JoinType;
 import jakarta.persistence.criteria.Predicate;
 import org.springframework.data.jpa.domain.Specification;
-import xyz.mobi.testingautomationtool.dto.FeatureDto.FeatureSearchRequest;
+import xyz.mobi.testingautomationtool.dto.FeatureDTO.FeatureSearchRequest;
 import xyz.mobi.testingautomationtool.entity.Feature;
 import xyz.mobi.testingautomationtool.entity.User;
 

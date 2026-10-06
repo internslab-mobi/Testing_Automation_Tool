@@ -12,9 +12,9 @@ import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentDownloadResponse;
-import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
-import xyz.mobi.testingautomationtool.dto.FeatureDto.*;
+import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
+import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
+import xyz.mobi.testingautomationtool.dto.FeatureDTO.*;
 import xyz.mobi.testingautomationtool.service.FeatureService;
 
 import java.io.IOException;

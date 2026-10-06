@@ -1,7 +1,7 @@
 package xyz.mobi.testingautomationtool.service;
 
 import org.springframework.security.access.prepost.PreAuthorize;
-import xyz.mobi.testingautomationtool.dto.DashboardDto.*;
+import xyz.mobi.testingautomationtool.dto.DashboardDTO.*;
 
 import java.util.List;
 

@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
-import xyz.mobi.testingautomationtool.dto.DashboardDto.*;
+import xyz.mobi.testingautomationtool.dto.DashboardDTO.*;
 import xyz.mobi.testingautomationtool.service.DashboardService;
 
 import java.util.List;

@@ -1,7 +1,7 @@
 package xyz.mobi.testingautomationtool.mapper;
 
 import org.mapstruct.*;
-import xyz.mobi.testingautomationtool.dto.FeatureDto.*;
+import xyz.mobi.testingautomationtool.dto.FeatureDTO.*;
 import xyz.mobi.testingautomationtool.entity.Feature;
 
 @Mapper(componentModel = "spring", nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
