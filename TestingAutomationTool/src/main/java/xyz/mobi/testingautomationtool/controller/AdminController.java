@@ -9,7 +9,10 @@ import org.springframework.web.bind.annotation.*;
 
 import xyz.mobi.testingautomationtool.dto.AdminDTO.CreateManagerRequest;
 import xyz.mobi.testingautomationtool.dto.AdminDTO.ManagerResponse;
+import xyz.mobi.testingautomationtool.enums.UserRole;
 import xyz.mobi.testingautomationtool.service.AdminService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/admin")
@@ -29,6 +32,59 @@ public class AdminController {
                 .status(HttpStatus.CREATED)
                 .body(response);
     }
+
+    @PutMapping("/managers/{userId}")
+    public ResponseEntity<ManagerResponse> updateManager(
+            @PathVariable Integer userId,
+            @Valid @RequestBody CreateManagerRequest request) {
+
+        ManagerResponse response =
+                adminService.updateManager(userId, request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @PatchMapping("/managers/{userId}")
+    public ResponseEntity<String> patchManager(
+            @PathVariable Integer userId,
+            @RequestBody CreateManagerRequest request) {
+
+        String response = adminService.patchManager(userId, request);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/users/{userId}")
+    public ResponseEntity<ManagerResponse> getUserById(
+            @PathVariable Integer userId) {
+
+        ManagerResponse response =
+                adminService.getUserById(userId);
+
+        return ResponseEntity.ok(response);
+    }
+
+    @GetMapping("/users")
+    public ResponseEntity<List<ManagerResponse>> getAllUsers() {
+
+        List<ManagerResponse> response =
+                adminService.getAllUsers();
+
+        return ResponseEntity.ok(response);
+    }
+
+
+    @GetMapping("/users/{role}")
+    public ResponseEntity<List<ManagerResponse>> getUsersByRole(
+            @RequestParam UserRole role
+            ){
+
+        List<ManagerResponse> response =
+                adminService.getUsersByRole(role);
+
+        return ResponseEntity.ok(response);
+    }
+
 
 
     @DeleteMapping("/users/{userId}")

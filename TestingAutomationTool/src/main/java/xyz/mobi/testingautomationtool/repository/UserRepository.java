@@ -6,6 +6,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 import xyz.mobi.testingautomationtool.entity.User;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 
@@ -21,4 +22,9 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     @Query("SELECT u FROM User u LEFT JOIN FETCH u.role WHERE u.username = :username OR u.email = :email")
     Optional<User> findByUsernameOrEmail(@Param("username") String username, @Param("email") String email);
 
+    Optional<User> findByUserIdAndIsActiveTrue(Integer userId);
+
+    List<User> findAllByIsActiveTrue();
+
+    List<User> findAllByRoleRoleAndIsActiveTrue(String user);
 }

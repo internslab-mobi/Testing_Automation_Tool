@@ -13,7 +13,9 @@ import xyz.mobi.testingautomationtool.entity.Project;
 import xyz.mobi.testingautomationtool.entity.Role;
 import xyz.mobi.testingautomationtool.entity.TestCase;
 import xyz.mobi.testingautomationtool.entity.User;
+import xyz.mobi.testingautomationtool.enums.UserRole;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
+import xyz.mobi.testingautomationtool.mapper.ManagerMapper;
 import xyz.mobi.testingautomationtool.repository.BugRepository;
 import xyz.mobi.testingautomationtool.repository.FeatureRepository;
 import xyz.mobi.testingautomationtool.repository.ProjectRepository;
@@ -23,6 +25,8 @@ import xyz.mobi.testingautomationtool.repository.UserRepository;
 import xyz.mobi.testingautomationtool.service.AdminService;
 import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.EmailService;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -39,6 +43,8 @@ public class AdminServiceImpl implements AdminService {
     private final AuthService authService;
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
+
+    private final ManagerMapper managerMapper;
 
 
     @Override
@@ -93,18 +99,155 @@ public class AdminServiceImpl implements AdminService {
                 rawPassword
         );
 
-        return ManagerResponse.builder()
-                .userId(savedManager.getUserId())
-                .username(savedManager.getUsername())
-                .email(savedManager.getEmail())
-                .fullName(savedManager.getFullName())
-                .designation(savedManager.getDesignation())
-                .skills(savedManager.getSkills())
-                .role(savedManager.getRole().getRole())
-                .build();
+        return managerMapper.toResponse(savedManager);
 
     }
 
+    @Transactional
+    @Override
+    public ManagerResponse updateManager(
+            Integer userId,
+            CreateManagerRequest request) {
+
+        User manager = userRepository
+                .findByUserIdAndIsActiveTrue(userId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Manager not found with id: " + userId
+                        )
+                );
+
+        if (!"MANAGER".equals(manager.getRole().getRole())) {
+            throw new IllegalArgumentException(
+                    "User is not a MANAGER"
+            );
+        }
+
+        if (!manager.getUsername().equals(request.getUsername())
+                && userRepository.existsByUsername(request.getUsername())) {
+
+            throw new IllegalArgumentException(
+                    "Username already exists: " + request.getUsername()
+            );
+        }
+
+        if (!manager.getEmail().equals(request.getEmail())
+                && userRepository.existsByEmail(request.getEmail())) {
+
+            throw new IllegalArgumentException(
+                    "Email already exists: " + request.getEmail()
+            );
+        }
+
+        manager.setUsername(request.getUsername());
+        manager.setEmail(request.getEmail());
+        manager.setFullName(request.getFullName());
+        manager.setDesignation(request.getDesignation());
+        manager.setSkills(request.getSkills());
+
+        User updatedManager = userRepository.save(manager);
+
+        return managerMapper.toResponse(updatedManager);
+    }
+
+    @Transactional
+    @Override
+    public String patchManager(
+            Integer userId,
+            CreateManagerRequest request) {
+
+        User manager = userRepository
+                .findByUserIdAndIsActiveTrue(userId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Manager not found with id: " + userId
+                        )
+                );
+
+        if (!"MANAGER".equals(manager.getRole().getRole())) {
+            throw new IllegalArgumentException(
+                    "User is not a MANAGER"
+            );
+        }
+
+        if (request.getUsername() != null
+                && !request.getUsername().equals(manager.getUsername())) {
+
+            if (userRepository.existsByUsername(request.getUsername())) {
+                throw new IllegalArgumentException(
+                        "Username already exists: " + request.getUsername()
+                );
+            }
+
+            manager.setUsername(request.getUsername());
+        }
+
+        if (request.getEmail() != null
+                && !request.getEmail().equals(manager.getEmail())) {
+
+            if (userRepository.existsByEmail(request.getEmail())) {
+                throw new IllegalArgumentException(
+                        "Email already exists: " + request.getEmail()
+                );
+            }
+
+            manager.setEmail(request.getEmail());
+        }
+
+        if (request.getFullName() != null) {
+            manager.setFullName(request.getFullName());
+        }
+
+        if (request.getDesignation() != null) {
+            manager.setDesignation(request.getDesignation());
+        }
+
+        if (request.getSkills() != null) {
+            manager.setSkills(request.getSkills());
+        }
+
+        User updatedManager = userRepository.save(manager);
+
+        return "Manager updated successfully";
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public ManagerResponse getUserById(Integer userId) {
+
+        User user = userRepository
+                .findByUserIdAndIsActiveTrue(userId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "User not found with id: " + userId
+                        )
+                );
+
+        return managerMapper.toResponse(user);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<ManagerResponse> getAllUsers() {
+
+        return userRepository
+                .findAllByIsActiveTrue()
+                .stream()
+                .map(managerMapper::toResponse)
+                .toList();
+    }
+
+
+    @Transactional(readOnly = true)
+    @Override
+    public List<ManagerResponse> getUsersByRole(UserRole role) {
+
+        return userRepository
+                .findAllByRoleRoleAndIsActiveTrue(role.name())
+                .stream()
+                .map(managerMapper::toResponse)
+                .toList();
+    }
 
     @Override
     @Transactional

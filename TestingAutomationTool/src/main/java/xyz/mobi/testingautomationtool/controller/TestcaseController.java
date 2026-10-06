@@ -14,7 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import xyz.mobi.testingautomationtool.dto.ExcelDto.ExcelUploadResponse;
+import xyz.mobi.testingautomationtool.dto.ExcelDTO.ExcelUploadResponse;
 import xyz.mobi.testingautomationtool.dto.TestCaseDTO.*;
 import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionRequest;
 import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionResponse;

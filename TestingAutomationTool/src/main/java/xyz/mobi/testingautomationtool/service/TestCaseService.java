@@ -3,7 +3,7 @@ package xyz.mobi.testingautomationtool.service;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
-import xyz.mobi.testingautomationtool.dto.ExcelDto.ExcelUploadResponse;
+import xyz.mobi.testingautomationtool.dto.ExcelDTO.ExcelUploadResponse;
 import xyz.mobi.testingautomationtool.dto.TestCaseDTO.*;
 import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionRequest;
 import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionResponse;
