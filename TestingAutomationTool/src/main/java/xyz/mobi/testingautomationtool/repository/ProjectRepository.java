@@ -16,4 +16,6 @@ public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaS
     boolean existsByProjectNameAndRegion(String projectName, String region);
 
     Optional<Project> findByProjectIdAndStatusAndIsActiveTrueAndIsDeletedFalse( Integer projectId, ProjectStatus projectStatus);
+
+    Optional<Project> findByProjectIdAndIsActiveTrueAndIsDeletedFalse(Integer projectId);
 }

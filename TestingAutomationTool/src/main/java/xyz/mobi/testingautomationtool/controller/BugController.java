@@ -27,6 +27,7 @@ import xyz.mobi.testingautomationtool.enums.BugStatus;
 import xyz.mobi.testingautomationtool.service.AttachmentService;
 import xyz.mobi.testingautomationtool.service.BugService;
 
+import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -113,12 +114,12 @@ public class BugController {
     }
 
     @PostMapping(value = "/{bugId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<AttachmentResponse> uploadAttachment(
+    public ResponseEntity<List<AttachmentResponse>> uploadAttachment(
+            @RequestParam("file") List<MultipartFile> file,
             @PathVariable Integer bugId,
-            @RequestParam("file") MultipartFile file,
-            @RequestParam(value = "attachmentType", required = false, defaultValue = "BUG") AttachmentType attachmentType,
-            @RequestParam("uploadedBy") Integer uploadedBy) {
-        AttachmentResponse response = attachmentService.uploadBugAttachment(bugId, file, attachmentType, uploadedBy);
+            @RequestParam(value = "attachmentType", required = false, defaultValue = "BUG") AttachmentType attachmentType) throws IOException {
+        AttachmentType attachmentType1 = AttachmentType.BUG;
+        List<AttachmentResponse> response = attachmentService.uploadAttachments(bugId,file,attachmentType1);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 

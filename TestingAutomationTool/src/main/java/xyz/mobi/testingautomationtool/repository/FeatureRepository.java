@@ -19,6 +19,8 @@ public interface FeatureRepository extends JpaRepository<Feature, Integer>, JpaS
 
     Optional<Feature> findByFeatureIdAndIsDeletedFalse(Integer featureId);
 
+    Optional<Feature> findByFeatureIdAndIsActiveTrueAndIsDeletedFalse(Integer featureId);
+
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT f FROM Feature f WHERE f.featureId = :featureId AND f.isDeleted = false")
     Optional<Feature> findByFeatureIdForUpdate(@Param("featureId") Integer featureId);

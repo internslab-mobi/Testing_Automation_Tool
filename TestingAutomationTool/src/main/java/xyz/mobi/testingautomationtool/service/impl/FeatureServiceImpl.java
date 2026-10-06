@@ -58,8 +58,8 @@ public class FeatureServiceImpl implements FeatureService {
 
     @Override
     public FeatureResponse createFeature(FeatureRequest request) {
-        Project project = projectRepository.findByProjectIdAndStatusAndIsActiveTrueAndIsDeletedFalse(request.getProjectId(),
-                        ProjectStatus.ACTIVE)
+            Project project = projectRepository.findByProjectIdAndStatusAndIsActiveTrueAndIsDeletedFalse(request.getProjectId(),
+                            ProjectStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not available for id: " + request.getProjectId()));
 
 
@@ -82,63 +82,6 @@ public class FeatureServiceImpl implements FeatureService {
         return featureMapper.toResponse(saved);
     }
 
-    @Override
-    public AttachmentResponse uploadAttachment(
-            MultipartFile file,
-            Integer featureId) throws IOException {
-
-        Feature feature = featureRepository.findById(featureId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Feature is not present for this id: " + featureId));
-
-        String filename = file.getOriginalFilename();
-        if (filename == null || filename.isBlank()) {
-            filename = "feature_attachment_" + Instant.now().toEpochMilli();
-        }
-
-        boolean exists = attachmentRepository
-                .existsByFeature_FeatureIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(
-                        featureId, filename
-                );
-
-        if (exists) {
-            throw new ResourceNotFoundException(
-                    "File already exists in this feature: " + filename
-            );
-        }
-
-        String fileType = file.getContentType();
-        Long fileSize = file.getSize();
-        byte[] bytes = file.getBytes();
-
-        User user = authService.getCurrentUser();
-
-        Attachment attachment = Attachment.builder()
-                .attachmentType(AttachmentType.FEATURE)
-                .feature(feature)
-                .fileName(filename)
-                .fileType(fileType)
-                .fileSize(fileSize)
-                .fileBlob(bytes)
-                .uploadedBy(user)
-                .updatedBy(user)
-                .isActive(true)
-                .isDeleted(false)
-                .build();
-
-        attachmentRepository.save(attachment);
-
-        return AttachmentResponse.builder()
-                .attachmentId(attachment.getAttachmentId())
-                .attachmentType(AttachmentType.FEATURE)
-                .featureId(featureId)
-                .fileName(filename)
-                .fileType(fileType)
-                .fileSize(fileSize)
-                .uploadedBy(user != null ? user.getUserId() : null)
-                .createdAt(attachment.getCreatedAt())
-                .build();
-    }
 
     @Override
     @Transactional

@@ -15,6 +15,8 @@ import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.FeatureDTO.*;
+import xyz.mobi.testingautomationtool.enums.AttachmentType;
+import xyz.mobi.testingautomationtool.service.AttachmentService;
 import xyz.mobi.testingautomationtool.service.FeatureService;
 
 import java.io.IOException;
@@ -28,6 +30,8 @@ import java.util.List;
 public class FeatureController {
 
     private final FeatureService featureService;
+
+    private final AttachmentService attachmentService;
 
     @PostMapping
     public ResponseEntity<FeatureResponse> createFeature(
@@ -88,11 +92,11 @@ public class FeatureController {
     }
 
     @PostMapping(value = "/attachment/{featureId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<AttachmentResponse> uploadAttachment(
-            @RequestParam("file") MultipartFile file,
+    public ResponseEntity<List<AttachmentResponse>> uploadAttachment(
+            @RequestParam("file") List<MultipartFile> file,
             @PathVariable("featureId") Integer featureId
-    ) throws IOException {
-        AttachmentResponse featureResponse = featureService.uploadAttachment(file, featureId);
+    ) throws  IOException{
+        List<AttachmentResponse> featureResponse = attachmentService.uploadAttachments(featureId,file, AttachmentType.FEATURE);
         return ResponseEntity.ok(featureResponse);
     }
 
