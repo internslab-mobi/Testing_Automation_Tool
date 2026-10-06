@@ -96,7 +96,7 @@ public class FeatureController {
             @RequestParam("file") List<MultipartFile> file,
             @PathVariable("featureId") Integer featureId
     ) throws  IOException{
-        List<AttachmentResponse> featureResponse = attachmentService.uploadAttachments(featureId,file, AttachmentType.FEATURE);
+        List<AttachmentResponse> featureResponse = attachmentService.uploadAttachments( AttachmentType.FEATURE,featureId,file);
         return ResponseEntity.ok(featureResponse);
     }
 

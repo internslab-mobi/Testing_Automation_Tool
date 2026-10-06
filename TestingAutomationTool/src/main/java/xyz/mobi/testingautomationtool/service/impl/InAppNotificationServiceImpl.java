@@ -65,7 +65,7 @@ public class InAppNotificationServiceImpl implements InAppNotificationService {
 
         Integer currentUserId = authService.getCurrentUser().getUserId();
         if (!Objects.equals(notification.getEmployee().getUserId(), currentUserId)) {
-            throw new IllegalStateException("You are not allowed to update this notification");
+            throw new org.springframework.security.access.AccessDeniedException("You are not allowed to update this notification");
         }
 
         notification.setNotificationStatus(InAppNotificationStatus.READ);
@@ -80,7 +80,7 @@ public class InAppNotificationServiceImpl implements InAppNotificationService {
 
         Integer currentUserId = authService.getCurrentUser().getUserId();
         if (!Objects.equals(notification.getEmployee().getUserId(), currentUserId)) {
-            throw new IllegalStateException("You are not allowed to update this notification");
+            throw new org.springframework.security.access.AccessDeniedException("You are not allowed to update this notification");
         }
 
         InAppNotificationStatus newStatus = (request != null && request.getStatus() != null)
@@ -101,7 +101,7 @@ public class InAppNotificationServiceImpl implements InAppNotificationService {
 
         Integer currentUserId = authService.getCurrentUser().getUserId();
         if (!Objects.equals(notification.getEmployee().getUserId(), currentUserId)) {
-            throw new IllegalStateException("You are not allowed to delete this notification");
+            throw new org.springframework.security.access.AccessDeniedException("You are not allowed to delete this notification");
         }
 
         inAppNotificationRepository.delete(notification);

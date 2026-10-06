@@ -49,7 +49,7 @@ public class TestCaseServiceImpl implements TestCaseService {
     @Override
     public TestCaseExecutionResponse createTestCaseByManual(TestCaseExecutionRequest request) {
         if (request == null || request.getTestCase() == null) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST, "Test case request cannot be null");
+            throw new IllegalArgumentException("Test case request cannot be null");
         }
 
         xyz.mobi.testingautomationtool.dto.TestCaseDTO.TestCaseRequest tcReq = request.getTestCase();
@@ -58,7 +58,7 @@ public class TestCaseServiceImpl implements TestCaseService {
 
         if (tcReq.getTestcaseFormatId() != null && !tcReq.getTestcaseFormatId().isBlank()) {
             if (testCaseRepository.existsByFeature_FeatureIdAndTestcaseFormatId(feature.getFeatureId(), tcReq.getTestcaseFormatId())) {
-                throw new CustomException(ErrorCode.DUPLICATE_RESOURCE, "Test case format ID already exists in this feature: " + tcReq.getTestcaseFormatId());
+                throw new DuplicateResourceException("Test case format ID already exists in this feature: " + tcReq.getTestcaseFormatId());
             }
         }
 
@@ -537,7 +537,7 @@ public class TestCaseServiceImpl implements TestCaseService {
             Pageable pageable) {
 
         if (pageable.getPageNumber() < 0 || pageable.getPageSize() <= 0) {
-            throw new CustomException(ErrorCode.INVALID_REQUEST);
+            throw new IllegalArgumentException("Invalid pagination parameters");
         }
 
         int boundedSize = Math.min(pageable.getPageSize(), 100);
@@ -559,14 +559,14 @@ public class TestCaseServiceImpl implements TestCaseService {
     @Transactional(readOnly = true)
     public TestCaseResponse getById(Integer id, boolean includeInactive) {
         TestCase testCase = testCaseRepository.findById(id)
-                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException("Test case not found with ID: " + id));
 
         if (testCase.isDeleted()) {
-            throw new CustomException(ErrorCode.RESOURCE_NOT_FOUND);
+            throw new ResourceNotFoundException("Test case not found with ID: " + id);
         }
 
         if (!includeInactive && !testCase.isActive()) {
-            throw new CustomException(ErrorCode.BUSINESS_RULE_VIOLATION);
+            throw new IllegalStateException("Test case is not active with ID: " + id);
         }
 
         TestingExecution execution = testingExecutionRepository

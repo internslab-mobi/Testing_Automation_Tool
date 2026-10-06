@@ -1,6 +1,6 @@
 package xyz.mobi.testingautomationtool.exception;
 
-public class ExcelProcessingException extends RuntimeException {
+public class ExcelProcessingException extends TestingAutomationException {
 
     public ExcelProcessingException(String message) {
         super(message);

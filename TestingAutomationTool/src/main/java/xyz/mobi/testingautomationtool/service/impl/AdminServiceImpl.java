@@ -14,6 +14,7 @@ import xyz.mobi.testingautomationtool.entity.Role;
 import xyz.mobi.testingautomationtool.entity.TestCase;
 import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.UserRole;
+import xyz.mobi.testingautomationtool.exception.DuplicateResourceException;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.mapper.ManagerMapper;
 import xyz.mobi.testingautomationtool.repository.BugRepository;
@@ -54,13 +55,13 @@ public class AdminServiceImpl implements AdminService {
         User currentAdmin = authService.getCurrentUser();
 
         if (userRepository.existsByUsername(request.getUsername())) {
-            throw new IllegalArgumentException(
+            throw new DuplicateResourceException(
                     "Username already exists: " + request.getUsername()
             );
         }
 
         if (userRepository.existsByEmail(request.getEmail())) {
-            throw new IllegalArgumentException(
+            throw new DuplicateResourceException(
                     "Email already exists: " + request.getEmail()
             );
         }
@@ -126,7 +127,7 @@ public class AdminServiceImpl implements AdminService {
         if (!manager.getUsername().equals(request.getUsername())
                 && userRepository.existsByUsername(request.getUsername())) {
 
-            throw new IllegalArgumentException(
+            throw new DuplicateResourceException(
                     "Username already exists: " + request.getUsername()
             );
         }
@@ -134,7 +135,7 @@ public class AdminServiceImpl implements AdminService {
         if (!manager.getEmail().equals(request.getEmail())
                 && userRepository.existsByEmail(request.getEmail())) {
 
-            throw new IllegalArgumentException(
+            throw new DuplicateResourceException(
                     "Email already exists: " + request.getEmail()
             );
         }
@@ -174,7 +175,7 @@ public class AdminServiceImpl implements AdminService {
                 && !request.getUsername().equals(manager.getUsername())) {
 
             if (userRepository.existsByUsername(request.getUsername())) {
-                throw new IllegalArgumentException(
+                throw new DuplicateResourceException(
                         "Username already exists: " + request.getUsername()
                 );
             }
@@ -186,7 +187,7 @@ public class AdminServiceImpl implements AdminService {
                 && !request.getEmail().equals(manager.getEmail())) {
 
             if (userRepository.existsByEmail(request.getEmail())) {
-                throw new IllegalArgumentException(
+                throw new DuplicateResourceException(
                         "Email already exists: " + request.getEmail()
                 );
             }

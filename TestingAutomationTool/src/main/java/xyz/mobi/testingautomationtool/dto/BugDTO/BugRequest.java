@@ -18,8 +18,6 @@ import java.util.Map;
 @Builder
 public class BugRequest {
 
-    private String bugFormatId;
-
     @NotNull(message = "testCaseId is required")
     private Integer testCaseId;
 

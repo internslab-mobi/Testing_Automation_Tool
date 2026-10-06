@@ -10,7 +10,9 @@ import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.ProjectDTO.*;
+import xyz.mobi.testingautomationtool.enums.AttachmentType;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
+import xyz.mobi.testingautomationtool.service.AttachmentService;
 import xyz.mobi.testingautomationtool.service.ProjectService;
 
 import java.io.IOException;
@@ -24,6 +26,7 @@ import java.util.List;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final AttachmentService attachmentService;
 
     @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
     @PostMapping
@@ -38,7 +41,7 @@ public class ProjectController {
             @RequestParam("file") List<MultipartFile> file,
             @PathVariable("projectId") Integer projectId
     ) throws IOException {
-        List<AttachmentResponse> projectResponse = attachmentService.uploadAttachments(projectId,file,  AttachmentType.PROJECT);
+        List<AttachmentResponse> projectResponse = attachmentService.uploadAttachments(AttachmentType.PROJECT,projectId,file);
         return ResponseEntity.ok(projectResponse);
     }
 

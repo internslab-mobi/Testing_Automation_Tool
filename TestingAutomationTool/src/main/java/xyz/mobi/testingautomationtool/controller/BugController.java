@@ -18,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.BugDTO.*;
-import xyz.mobi.testingautomationtool.dto.BugDTO.GetBugResponse.BugResponse;
 import xyz.mobi.testingautomationtool.enums.AttachmentType;
 import xyz.mobi.testingautomationtool.enums.BugCategory;
 import xyz.mobi.testingautomationtool.enums.BugPriority;
@@ -119,13 +118,14 @@ public class BugController {
             @PathVariable Integer bugId,
             @RequestParam(value = "attachmentType", required = false, defaultValue = "BUG") AttachmentType attachmentType) throws IOException {
         AttachmentType attachmentType1 = AttachmentType.BUG;
-        List<AttachmentResponse> response = attachmentService.uploadAttachments(bugId,file,attachmentType1);
+        List<AttachmentResponse> response = attachmentService.uploadAttachments(attachmentType1,bugId,file);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
 
     @GetMapping("/{bugId}/attachments")
     public ResponseEntity<List<AttachmentResponse>> getAttachments(@PathVariable Integer bugId) {
-        List<AttachmentResponse> attachments = attachmentService.getAttachmentsByBugId(bugId);
+        AttachmentType attachmentType1 = AttachmentType.BUG;
+        List<AttachmentResponse> attachments = attachmentService.getAttachments(attachmentType1,bugId);
         return ResponseEntity.ok(attachments);
     }
 

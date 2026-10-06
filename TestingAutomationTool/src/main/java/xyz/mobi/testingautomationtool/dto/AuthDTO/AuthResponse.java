@@ -18,9 +18,6 @@ public class AuthResponse {
     @Schema(description = "15-minute Access Token (alias for backward compatibility)", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6...")
     private String token;
 
-    @Schema(description = "15-minute Access Token", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6...")
-    private String accessToken;
-
     @Schema(description = "24-hour Refresh Token", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6...")
     private String refreshToken;
 

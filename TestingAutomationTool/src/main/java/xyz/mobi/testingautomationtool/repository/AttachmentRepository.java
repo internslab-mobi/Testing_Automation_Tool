@@ -19,6 +19,10 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Integer>
     @Query("UPDATE Attachment a SET a.isActive = false WHERE a.feature.project.projectId = :projectId OR a.testCase.feature.project.projectId = :projectId OR a.bug.feature.project.projectId = :projectId")
     int deactivateAttachmentsByProjectId(@Param("projectId") Integer projectId);
 
+    List<Attachment> findAllByTestCase_TestcaseIdAndIsDeletedFalseAndIsActiveTrue(Integer testcaseId);
+
+    boolean existsByTestCase_TestcaseIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(Integer testcaseId,String cleanFileName);
+
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE Attachment a SET a.isDeleted = true, a.isActive = false WHERE a.feature.project.projectId = :projectId OR a.testCase.feature.project.projectId = :projectId OR a.bug.feature.project.projectId = :projectId")
     void deleteByProjectId(@Param("projectId") Integer projectId);

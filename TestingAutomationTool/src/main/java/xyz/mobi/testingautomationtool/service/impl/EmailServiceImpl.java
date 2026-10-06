@@ -607,10 +607,10 @@ public class EmailServiceImpl implements EmailService {
 
             mailSender.send(mail);
 
-        } catch (MessagingException | MailException ex) {
+        } catch (MessagingException | org.springframework.mail.MailException ex) {
 
-            throw new RuntimeException(
-                    "Failed to send email",
+            throw new xyz.mobi.testingautomationtool.exception.EmailSendingException(
+                    "Failed to send email to " + recipientEmail + ": " + ex.getMessage(),
                     ex
             );
         }

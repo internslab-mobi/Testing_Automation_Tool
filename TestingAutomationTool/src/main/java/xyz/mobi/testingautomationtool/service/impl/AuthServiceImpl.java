@@ -13,6 +13,10 @@ import org.springframework.transaction.annotation.Transactional;
 import xyz.mobi.testingautomationtool.dto.AuthDTO.*;
 import xyz.mobi.testingautomationtool.entity.RefreshToken;
 import xyz.mobi.testingautomationtool.entity.User;
+import xyz.mobi.testingautomationtool.exception.AccountDisabledException;
+import xyz.mobi.testingautomationtool.exception.DuplicateResourceException;
+import xyz.mobi.testingautomationtool.exception.EmailNotFoundException;
+import xyz.mobi.testingautomationtool.exception.InvalidTokenException;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.repository.RefreshTokenRepository;
 import xyz.mobi.testingautomationtool.repository.RoleRepository;
@@ -64,11 +68,11 @@ public class AuthServiceImpl implements AuthService {
         String email = request.getEmail().trim().toLowerCase();
 
         if (userRepository.existsByUsername(username)) {
-            throw new IllegalArgumentException("Username '" + username + "' is already taken");
+            throw new DuplicateResourceException("Username '" + username + "' is already taken");
         }
 
         if (userRepository.existsByEmail(email)) {
-            throw new IllegalArgumentException("Email '" + email + "' is already registered");
+            throw new DuplicateResourceException("Email '" + email + "' is already registered");
         }
 
         User user = User.builder()
@@ -102,7 +106,7 @@ public class AuthServiceImpl implements AuthService {
                 .orElseThrow(() -> new BadCredentialsException("Invalid username/email or password"));
 
         if (!user.isActive()) {
-            throw new IllegalStateException("User account is inactive. Please contact your administrator.");
+            throw new AccountDisabledException("User account is inactive. Please contact your administrator.");
         }
 
         Authentication authentication;
@@ -135,7 +139,6 @@ public class AuthServiceImpl implements AuthService {
 
         return AuthResponse.builder()
                 .token(accessToken)
-                .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .expiresIn(jwtUtils.getAccessTokenExpirationMs() / 1000)
                 .refreshTokenExpiresIn(jwtUtils.getRefreshTokenExpirationMs() / 1000)
@@ -177,7 +180,7 @@ public class AuthServiceImpl implements AuthService {
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             if (!user.isActive()) {
-                throw new IllegalStateException("User account is inactive. Please contact your administrator.");
+                throw new AccountDisabledException("User account is inactive. Please contact your administrator.");
             }
 
             CustomUserDetails userDetails = new CustomUserDetails(user);
@@ -198,7 +201,6 @@ public class AuthServiceImpl implements AuthService {
 
             return AuthResponse.builder()
                     .token(newAccessToken)
-                    .accessToken(newAccessToken)
                     .refreshToken(refreshToken)
                     .expiresIn(jwtUtils.getAccessTokenExpirationMs() / 1000)
                     .refreshTokenExpiresIn(remainingMs / 1000)
@@ -216,10 +218,10 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse sendPasswordResetOtp(ForgotPasswordRequest request) {
         String email = request.getEmail().trim().toLowerCase();
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("No active user found with email: " + email));
+                .orElseThrow(() -> new EmailNotFoundException("No active user found with email: " + email));
 
         if (!user.isActive()) {
-            throw new IllegalStateException("User account is currently inactive. Please contact your administrator.");
+            throw new AccountDisabledException("User account is currently inactive. Please contact your administrator.");
         }
 
         SecureRandom random = new java.security.SecureRandom();
@@ -242,7 +244,7 @@ public class AuthServiceImpl implements AuthService {
         OtpData data = otpStorage.get(email);
 
         if (data == null || data.isExpired() || !data.otpCode.equals(request.getOtpCode().trim())) {
-            throw new IllegalArgumentException("Invalid or expired OTP code.");
+            throw new InvalidTokenException("Invalid or expired OTP code.");
         }
 
         return AuthResponse.builder()
@@ -257,14 +259,14 @@ public class AuthServiceImpl implements AuthService {
         OtpData data = otpStorage.get(email);
 
         if (data == null || data.isExpired() || !data.otpCode.equals(request.getOtpCode().trim())) {
-            throw new IllegalArgumentException("Invalid or expired OTP code. Please request a new OTP.");
+            throw new InvalidTokenException("Invalid or expired OTP code. Please request a new OTP.");
         }
 
-        // Consume OTP to prevent replay attacks
+        // Physicially consume OTP to prevent replay attacks
         otpStorage.remove(email);
 
         User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("No user found with email: " + email));
+                .orElseThrow(() -> new EmailNotFoundException("No user found with email: " + email));
 
         // Update password with BCrypt
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
@@ -290,7 +292,6 @@ public class AuthServiceImpl implements AuthService {
 
         return AuthResponse.builder()
                 .token(accessToken)
-                .accessToken(accessToken)
                 .refreshToken(refreshToken)
                 .type("Bearer")
                 .expiresIn(jwtUtils.getAccessTokenExpirationMs() / 1000)

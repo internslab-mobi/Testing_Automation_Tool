@@ -19,10 +19,8 @@ import xyz.mobi.testingautomationtool.enums.AttachmentType;
 import xyz.mobi.testingautomationtool.enums.FeatureStatus;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
-import xyz.mobi.testingautomationtool.exception.CustomException;
-import xyz.mobi.testingautomationtool.exception.ErrorCode;
+import xyz.mobi.testingautomationtool.exception.DuplicateResourceException;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
-import xyz.mobi.testingautomationtool.exception.*;
 import xyz.mobi.testingautomationtool.mapper.FeatureMapper;
 import xyz.mobi.testingautomationtool.repository.AttachmentRepository;
 import xyz.mobi.testingautomationtool.repository.FeatureRepository;
@@ -88,10 +86,10 @@ public class FeatureServiceImpl implements FeatureService {
     @CacheEvict(value = "features", key = "#featureId")
     public String patchFeature(Integer featureId, FeaturePatchRequest request) {
         Feature feature = featureRepository.findById(featureId)
-                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException("Feature not found with ID: " + featureId));
 
         if (feature.isDeleted()) {
-            throw new CustomException(ErrorCode.RESOURCE_NOT_FOUND);
+            throw new ResourceNotFoundException("Feature not found with ID: " + featureId);
         }
 
         List<String> updatedFields = new ArrayList<>();
@@ -102,7 +100,7 @@ public class FeatureServiceImpl implements FeatureService {
 
             Integer projectId = feature.getProject() != null ? feature.getProject().getProjectId() : null;
             if (projectId != null && featureRepository.existsByProject_ProjectIdAndFeatureName(projectId, request.getFeatureName())) {
-                throw new CustomException(ErrorCode.DUPLICATE_RESOURCE);
+                throw new DuplicateResourceException("Feature name already exists in this project: " + request.getFeatureName());
             }
 
             feature.setFeatureName(request.getFeatureName().trim());
@@ -176,7 +174,7 @@ public class FeatureServiceImpl implements FeatureService {
 
         if (request.getUpdatedBy() != null) {
             User updater = userRepository.findById(request.getUpdatedBy())
-                    .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
+                    .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + request.getUpdatedBy()));
             feature.setUpdatedBy(updater);
         } else {
             try {
@@ -199,10 +197,10 @@ public class FeatureServiceImpl implements FeatureService {
     @CacheEvict(value = "features", key = "#featureId")
     public void deleteFeature(Integer featureId, Integer updatedBy) {
         Feature feature = featureRepository.findById(featureId)
-                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException("Feature not found with ID: " + featureId));
 
         if (feature.isDeleted()) {
-            throw new CustomException(ErrorCode.RESOURCE_NOT_FOUND);
+            throw new ResourceNotFoundException("Feature not found with ID: " + featureId);
         }
 
         feature.setDeleted(true);
@@ -228,7 +226,7 @@ public class FeatureServiceImpl implements FeatureService {
         Feature feature = featureRepository.findByFeatureIdAndIsDeletedFalseAndProjectStatus(
                         featureId,
                         ProjectStatus.ACTIVE)
-                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException("Feature not found with ID: " + featureId));
 
         return featureMapper.toResponse(feature);
     }
@@ -289,7 +287,7 @@ public class FeatureServiceImpl implements FeatureService {
                 .orElseThrow(() -> new ResourceNotFoundException("Feature not found with id: " + featureId));
 
         if(feature.isDeleted() || !feature.isActive()){
-            throw new IllegalArgumentException("Cannot update disabled/deleted feature with ID: " + featureId);
+            throw new IllegalStateException("Cannot update disabled/deleted feature with ID: " + featureId);
         }
         featureMapper.updateEntityFromPut(feature,request);
 

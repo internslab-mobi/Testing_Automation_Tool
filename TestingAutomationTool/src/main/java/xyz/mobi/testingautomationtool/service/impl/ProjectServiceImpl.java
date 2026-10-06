@@ -17,8 +17,7 @@ import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.AttachmentType;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
-import xyz.mobi.testingautomationtool.exception.CustomException;
-import xyz.mobi.testingautomationtool.exception.ErrorCode;
+import xyz.mobi.testingautomationtool.exception.DuplicateResourceException;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.mapper.ProjectMapper;
 import xyz.mobi.testingautomationtool.repository.*;
@@ -54,7 +53,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Transactional
     public ProjectResponse createProject(ProjectRequest request) {
         if (projectRepository.existsByProjectNameAndRegion(request.getProjectName(), request.getRegion())) {
-            throw new CustomException(ErrorCode.DUPLICATE_RESOURCE);
+            throw new DuplicateResourceException("Project already exists with name: " + request.getProjectName() + " and region: " + request.getRegion());
         }
 
         User user = authService.getCurrentUser();
@@ -288,7 +287,7 @@ public class ProjectServiceImpl implements ProjectService {
     @Cacheable(value = "projects", key = "#projectId")
     public ProjectResponse getProjectById(Integer projectId) {
         Project project = projectRepository.findByProjectIdAndIsDeletedFalse(projectId)
-                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + projectId));
         return projectMapper.toResponse(project);
     }
 

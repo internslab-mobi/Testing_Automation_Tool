@@ -10,16 +10,12 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
-import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
-import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
+import xyz.mobi.testingautomationtool.dto.AttachmentDTO.*;
 import xyz.mobi.testingautomationtool.dto.BugDTO.*;
-import xyz.mobi.testingautomationtool.dto.BugDTO.GetBugResponse.BugResponse;
 import xyz.mobi.testingautomationtool.dto.NotificationDTO.NotificationRequest;
 import xyz.mobi.testingautomationtool.entity.*;
 import xyz.mobi.testingautomationtool.enums.*;
 import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
-import xyz.mobi.testingautomationtool.exception.CustomException;
-import xyz.mobi.testingautomationtool.exception.ErrorCode;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.mapper.BugMapper;
 import xyz.mobi.testingautomationtool.repository.*;
@@ -53,38 +49,34 @@ public class BugServiceImpl implements BugService {
 
     @Override
     public BugResponse createBug(BugRequest request) {
-        // Step 1: Duplicate guard - verify bugFormatId is unique
-        if (request.getBugFormatId() != null && bugRepository.existsByBugFormatId(request.getBugFormatId())) {
-            throw new IllegalArgumentException("Bug with format ID '" + request.getBugFormatId() + "' already exists");
-        }
 
-        // Step 2: Restrict bug creation status to OPEN only
+
         if (request.getStatus() != null && request.getStatus() != BugStatus.OPEN) {
             throw new IllegalArgumentException("New bug can only be created with OPEN status, received: " + request.getStatus());
         }
 
-        // Step 3: Fetch and validate test case
         TestCase testCase = testCaseRepository.findById(request.getTestCaseId())
                 .orElseThrow(() -> new ResourceNotFoundException("Test case not found with id: " + request.getTestCaseId()));
 
         if (testCase.isDeleted()) {
-            throw new CustomException(ErrorCode.RESOURCE_NOT_FOUND);
+            throw new ResourceNotFoundException("Test case not found with id: " + request.getTestCaseId());
         }
 
         // Resolve Feature
-        Integer featureId = request.getFeatureId();
-        if (featureId == null && testCase.getFeature() != null) {
-            featureId = testCase.getFeature().getFeatureId();
+        Integer resolvedFeatureId = request.getFeatureId();
+        if (resolvedFeatureId == null && testCase.getFeature() != null) {
+            resolvedFeatureId = testCase.getFeature().getFeatureId();
         }
-        if (featureId == null) {
-            throw new CustomException(ErrorCode.RESOURCE_NOT_FOUND);
+        if (resolvedFeatureId == null) {
+            throw new ResourceNotFoundException("Feature not found for test case: " + testCase.getTestcaseId());
         }
 
-        Feature feature = featureRepository.findByFeatureIdForUpdate(featureId)
-                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
+        final Integer finalFeatureId = resolvedFeatureId;
+        Feature feature = featureRepository.findByFeatureIdForUpdate(finalFeatureId)
+                .orElseThrow(() -> new ResourceNotFoundException("Feature not found with ID: " + finalFeatureId));
 
-        String bugFormatId = request.getBugFormatId();
-        if (bugFormatId == null || bugFormatId.isBlank()) {
+        String bugFormatId ;
+
             String featureName = feature.getFeatureName()
                     .trim()
                     .toUpperCase()
@@ -95,7 +87,7 @@ public class BugServiceImpl implements BugService {
 
             Optional<Bug> latestBug =
                     bugRepository.findTopByFeature_FeatureIdAndBugFormatIdStartingWithOrderByBugFormatIdDesc(
-                            featureId,
+                            finalFeatureId,
                             prefix
                     );
 
@@ -108,40 +100,35 @@ public class BugServiceImpl implements BugService {
                 }
             }
             bugFormatId = prefix + String.format("%03d", nextNumber);
-        }
 
-        // Step 4: Fetch reporter
         User reporter;
         if (request.getReportedBy() != null) {
             reporter = userRepository.findById(request.getReportedBy())
-                    .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
+                    .orElseThrow(() -> new ResourceNotFoundException("Reported by user not found with ID: " + request.getReportedBy()));
         } else {
             reporter = authService.getCurrentUser();
         }
 
-        // Step 5: Fetch optional assigned developer
         User assignedTo = null;
         if (request.getAssignedTo() != null) {
             assignedTo = userRepository.findById(request.getAssignedTo())
-                    .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
+                    .orElseThrow(() -> new ResourceNotFoundException("Assigned to user not found with ID: " + request.getAssignedTo()));
         }
 
-        // Step 6: Validate re-occurrence and compute occurrence number
         int occurrence = 1;
         if (request.getBugReoccurredId() != null) {
             Bug previousBug = bugRepository.findById(request.getBugReoccurredId())
-                    .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
+                    .orElseThrow(() -> new ResourceNotFoundException("Reoccurred bug not found with ID: " + request.getBugReoccurredId()));
 
             if (previousBug.getTestCase() == null ||
                     !previousBug.getTestCase().getTestcaseId().equals(testCase.getTestcaseId())) {
-                throw new CustomException(ErrorCode.BUSINESS_RULE_VIOLATION);
+                throw new IllegalStateException("Reoccurred bug does not belong to the specified test case");
             }
 
             int prevOccurrence = previousBug.getBugOccurrence() != null ? previousBug.getBugOccurrence() : 1;
             occurrence = prevOccurrence + 1;
         }
 
-        // Step 7: Apply defaults and build Bug entity
         BugSeverity severity = request.getSeverity() != null ? request.getSeverity() : BugSeverity.MEDIUM;
         BugPriority priority = request.getPriority() != null ? request.getPriority() : BugPriority.MEDIUM;
         BugCategory category = request.getCategory() != null ? request.getCategory() : BugCategory.PRE_PRODUCTION;
@@ -168,7 +155,6 @@ public class BugServiceImpl implements BugService {
 
         Bug savedBug = bugRepository.save(bug);
 
-        // Step 8: Create initial BugHistory audit record
         BugHistory history = BugHistory.builder()
                 .bug(savedBug)
                 .executedBy(reporter.getUserId())
@@ -178,7 +164,6 @@ public class BugServiceImpl implements BugService {
                 .build();
         bugHistoryRepository.save(history);
 
-        // Step 9: Notification and email dispatch if assigned
         if (assignedTo != null) {
             notificationService.createNotification(
                     NotificationRequest.builder()
@@ -661,7 +646,7 @@ public class BugServiceImpl implements BugService {
         // One file → download original file
         if (validAttachments.size() == 1) {
 
-            Attachment attachment = validAttachments.get(0);
+            Attachment attachment = validAttachments.getFirst();
 
             String contentType = attachment.getFileType() != null
                     ? attachment.getFileType()

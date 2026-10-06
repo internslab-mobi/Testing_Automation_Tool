@@ -2,27 +2,30 @@ package xyz.mobi.testingautomationtool.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
+import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
 import xyz.mobi.testingautomationtool.entity.*;
-import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
-import xyz.mobi.testingautomationtool.entity.Attachment;
-import xyz.mobi.testingautomationtool.entity.Bug;
-import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.AttachmentType;
-import xyz.mobi.testingautomationtool.exception.CustomException;
-import xyz.mobi.testingautomationtool.exception.ErrorCode;
+import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
+import xyz.mobi.testingautomationtool.mapper.AttachmentMapper;
 import xyz.mobi.testingautomationtool.repository.*;
-import xyz.mobi.testingautomationtool.repository.AttachmentRepository;
-import xyz.mobi.testingautomationtool.repository.BugRepository;
-import xyz.mobi.testingautomationtool.repository.UserRepository;
 import xyz.mobi.testingautomationtool.service.AttachmentService;
 import xyz.mobi.testingautomationtool.service.AuthService;
+
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Slf4j
 @Service
@@ -31,166 +34,284 @@ public class AttachmentServiceImpl implements AttachmentService {
 
     private final AttachmentRepository attachmentRepository;
     private final BugRepository bugRepository;
-    private final UserRepository userRepository;
-    private final AuthService authService;
     private final FeatureRepository featureRepository;
     private final ProjectRepository projectRepository;
+    private final TestCaseRepository testCaseRepository;
+    private final AuthService authService;
+    private final AttachmentMapper attachmentMapper;
 
+    @Override
     @Transactional
     public List<AttachmentResponse> uploadAttachments(
-            Integer parentId,
-            List<MultipartFile> files,
-            AttachmentType attachmentType) throws IOException {
+            AttachmentType type,
+            Integer entityId,
+            List<MultipartFile> files) {
 
-        // 1. Validate request
-        if (files == null || files.isEmpty()) {
-            throw new IllegalArgumentException("No files provided");
-        }
-
-        if (attachmentType == null) {
+        if (type == null) {
             throw new IllegalArgumentException("Attachment type cannot be null");
         }
+        if (entityId == null || entityId <= 0) {
+            throw new IllegalArgumentException("Entity ID must be a positive integer");
+        }
+        if (files == null || files.isEmpty()) {
+            throw new IllegalArgumentException("Files list cannot be null or empty");
+        }
 
-        User user = authService.getCurrentUser();
-
-        // 2. Validate parent entity
         Bug bug = null;
         Feature feature = null;
         Project project = null;
+        TestCase testCase = null;
 
-        switch (attachmentType) {
-
-            case BUG -> bug = bugRepository.findByBugIdAndIsActiveTrueAndIsDeletedFalse(parentId)
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Bug is not present for this id: " + parentId));
-
-            case FEATURE -> feature = featureRepository.findByFeatureIdAndIsActiveTrueAndIsDeletedFalse(parentId)
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Feature is not present for this id: " + parentId));
-
-            case PROJECT -> project = projectRepository.findByProjectIdAndIsActiveTrueAndIsDeletedFalse(parentId)
-                    .orElseThrow(() -> new ResourceNotFoundException(
-                            "Project is not present for this id: " + parentId));
-
-            default -> throw new IllegalArgumentException(
-                    "Unsupported attachment type: " + attachmentType);
+        switch (type) {
+            case BUG -> bug = bugRepository.findById(entityId)
+                    .filter(b -> !b.isDeleted() && b.isActive())
+                    .orElseThrow(() -> new ResourceNotFoundException("Bug not found with ID: " + entityId));
+            case FEATURE -> feature = featureRepository.findById(entityId)
+                    .filter(f -> !f.isDeleted() && f.isActive())
+                    .orElseThrow(() -> new ResourceNotFoundException("Feature not found with ID: " + entityId));
+            case PROJECT -> project = projectRepository.findById(entityId)
+                    .filter(p -> !p.isDeleted() && p.isActive())
+                    .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + entityId));
+            case TESTCASE -> testCase = testCaseRepository.findById(entityId)
+                    .filter(t -> !t.isDeleted() && t.isActive())
+                    .orElseThrow(() -> new ResourceNotFoundException("TestCase not found with ID: " + entityId));
         }
 
-        List<Attachment> attachments = new ArrayList<>();
-        Set<String> uploadedFileNames = new HashSet<>();
+        User user;
+
+        try {
+            user = authService.getCurrentUser();
+        } catch (Exception e) {
+            log.error("Could not determine current authenticated user", e);
+            throw new AttachmentProcessingException(
+                    "Could not determine the current authenticated user");
+        }
+
+        Set<String> requestFileNames = new HashSet<>();
+        List<Attachment> attachmentsToSave = new ArrayList<>();
 
         for (MultipartFile file : files) {
-
             if (file == null || file.isEmpty()) {
-                throw new IllegalArgumentException(
-                        "Uploaded file cannot be empty");
+                throw new IllegalArgumentException("Uploaded file cannot be null or empty");
             }
 
-            String filename = file.getOriginalFilename();
-
-            if (filename == null || filename.isBlank()) {
-                filename = "attachment_" + UUID.randomUUID();
+            String originalFilename = file.getOriginalFilename();
+            if (originalFilename == null || originalFilename.isBlank()) {
+                throw new IllegalArgumentException("File name cannot be empty");
             }
 
-            if (!uploadedFileNames.add(filename)) {
-                throw new IllegalArgumentException(
-                        "Duplicate filename in upload: " + filename);
+            String cleanFileName = StringUtils.cleanPath(originalFilename);
+            if (cleanFileName.contains("..")) {
+                throw new IllegalArgumentException("File name contains invalid path sequence: " + originalFilename);
             }
 
-            boolean exists;
-
-            // Duplicate in database
-            switch (attachmentType) {
-
-                case BUG ->  exists = attachmentRepository.existsByBug_BugIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(parentId, filename);
-
-                case FEATURE -> exists = attachmentRepository.existsByFeature_FeatureIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(parentId, filename);
-
-                case PROJECT -> exists = attachmentRepository.existsByProject_ProjectIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(parentId, filename);
-
-                default -> throw new IllegalArgumentException(
-                        "Unsupported attachment type: " + attachmentType);
+            if (!requestFileNames.add(cleanFileName)) {
+                throw new IllegalArgumentException("Duplicate filename in upload request: " + cleanFileName);
             }
 
-            if (exists) {
-                throw new IllegalArgumentException(
-                        "File already exists: " + filename);
+            boolean existsInDb = switch (type) {
+                case BUG -> attachmentRepository.existsByBug_BugIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(entityId, cleanFileName);
+                case FEATURE -> attachmentRepository.existsByFeature_FeatureIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(entityId, cleanFileName);
+                case PROJECT -> attachmentRepository.existsByProject_ProjectIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(entityId, cleanFileName);
+                case TESTCASE -> attachmentRepository.existsByTestCase_TestcaseIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(entityId, cleanFileName);
+            };
+
+            if (existsInDb) {
+                throw new IllegalArgumentException("File already exists for " + type + " with ID " + entityId + ": " + cleanFileName);
             }
 
-            Attachment.AttachmentBuilder builder = Attachment.builder()
-                    .attachmentType(attachmentType)
-                    .fileName(filename)
-                    .fileType(file.getContentType())
+            byte[] bytes;
+            try {
+                bytes = file.getBytes();
+            } catch (IOException e) {
+                log.error("Failed to read bytes for file '{}': {}", cleanFileName, e.getMessage());
+                throw new AttachmentProcessingException("Failed to read file content for: " + cleanFileName);
+            }
+
+            String fileType = file.getContentType();
+            if (fileType == null || fileType.isBlank()) {
+                fileType = MediaType.APPLICATION_OCTET_STREAM_VALUE;
+            }
+
+            Attachment attachment = Attachment.builder()
+                    .attachmentType(type)
+                    .fileName(cleanFileName)
+                    .fileType(fileType)
                     .fileSize(file.getSize())
-                    .fileBlob(file.getBytes())
+                    .fileBlob(bytes)
                     .uploadedBy(user)
                     .updatedBy(user)
                     .isActive(true)
-                    .isDeleted(false);
+                    .isDeleted(false)
+                    .build();
 
-            // Attach the correct parent
-            switch (attachmentType) {
-                case BUG -> builder.bug(bug);
-                case FEATURE -> builder.feature(feature);
-                case PROJECT -> builder.project(project);
+            switch (type) {
+                case BUG -> attachment.setBug(bug);
+                case FEATURE -> attachment.setFeature(feature);
+                case PROJECT -> attachment.setProject(project);
+                case TESTCASE -> attachment.setTestCase(testCase);
             }
 
-            attachments.add(builder.build());
+            attachmentsToSave.add(attachment);
         }
 
-        // 4. Save
-        List<Attachment> savedAttachments =
-                attachmentRepository.saveAll(attachments);
-
-        // 5. Response
-        return savedAttachments.stream()
-                .map(attachment -> AttachmentResponse.builder()
-                        .attachmentId(attachment.getAttachmentId())
-                        .bugId(attachment.getBug() != null ? attachment.getBug().getBugId() : null)
-                        .featureId(attachment.getFeature() != null ? attachment.getFeature().getFeatureId() : null)
-                        .projectId(attachment.getProject() != null ? attachment.getProject().getProjectId() : null)
-                        .attachmentType(attachment.getAttachmentType())
-                        .fileName(attachment.getFileName())
-                        .fileType(attachment.getFileType())
-                        .fileSize(attachment.getFileSize())
-                        .uploadedBy(
-                                attachment.getUploadedBy() != null
-                                        ? attachment.getUploadedBy().getUserId()
-                                        : null
-                        )
-                        .createdAt(attachment.getCreatedAt())
-                        .build()
-                )
+        List<Attachment> saved = attachmentRepository.saveAll(attachmentsToSave);
+        return saved.stream()
+                .map(attachmentMapper::toResponse)
                 .toList();
     }
-
-
 
     @Override
     @Transactional(readOnly = true)
-    public List<AttachmentResponse> getAttachmentsByBugId(Integer bugId) {
-        Bug bug = bugRepository.findById(bugId)
-                .orElseThrow(() -> new CustomException(ErrorCode.RESOURCE_NOT_FOUND));
-
-        if (bug.isDeleted()) {
-            throw new CustomException(ErrorCode.RESOURCE_NOT_FOUND);
+    public List<AttachmentResponse> getAttachments(AttachmentType type, Integer entityId) {
+        if (type == null) {
+            throw new IllegalArgumentException("Attachment type cannot be null");
+        }
+        if (entityId == null || entityId <= 0) {
+            throw new IllegalArgumentException("Entity ID must be a positive integer");
         }
 
-        return attachmentRepository.findByBug_BugIdAndIsDeletedFalse(bugId).stream()
-                .map(this::toResponse)
+        validateEntityExists(type, entityId);
+
+        List<Attachment> attachments = switch (type) {
+            case BUG -> attachmentRepository.findAllByBug_BugIdAndIsDeletedFalseAndIsActiveTrue(entityId);
+            case FEATURE -> attachmentRepository.findAllByFeature_FeatureIdAndIsDeletedFalseAndIsActiveTrue(entityId);
+            case PROJECT -> attachmentRepository.findAllByProject_ProjectIdAndIsDeletedFalseAndIsActiveTrue(entityId);
+            case TESTCASE -> attachmentRepository.findAllByTestCase_TestcaseIdAndIsDeletedFalseAndIsActiveTrue(entityId);
+        };
+
+        return attachments.stream()
+                .map(attachmentMapper::toResponse)
                 .toList();
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public AttachmentDownloadResponse downloadAttachments(AttachmentType type, Integer entityId) {
+        if (type == null) {
+            throw new IllegalArgumentException("Attachment type cannot be null");
+        }
+        if (entityId == null || entityId <= 0) {
+            throw new IllegalArgumentException("Entity ID must be a positive integer");
+        }
 
-    private AttachmentResponse toResponse(Attachment a) {
-        return AttachmentResponse.builder()
-                .attachmentId(a.getAttachmentId())
-                .bugId(a.getBug() != null ? a.getBug().getBugId() : null)
-                .fileName(a.getFileName())
-                .fileType(a.getFileType())
-                .fileSize(a.getFileSize())
-                .uploadedBy(a.getUploadedBy() != null ? a.getUploadedBy().getUserId() : null)
-                .createdAt(a.getCreatedAt())
-                .build();
+        validateEntityExists(type, entityId);
+
+        List<Attachment> attachments = switch (type) {
+            case BUG -> attachmentRepository.findAllByBug_BugIdAndIsDeletedFalseAndIsActiveTrue(entityId);
+            case FEATURE -> attachmentRepository.findAllByFeature_FeatureIdAndIsDeletedFalseAndIsActiveTrue(entityId);
+            case PROJECT -> attachmentRepository.findAllByProject_ProjectIdAndIsDeletedFalseAndIsActiveTrue(entityId);
+            case TESTCASE -> attachmentRepository.findAllByTestCase_TestcaseIdAndIsDeletedFalseAndIsActiveTrue(entityId);
+        };
+
+        List<Attachment> valid = attachments.stream()
+                .filter(a -> a.getFileName() != null && !a.getFileName().isBlank() && a.getFileBlob() != null && a.getFileBlob().length > 0)
+                .toList();
+
+        if (valid.isEmpty()) {
+            throw new ResourceNotFoundException("No attachments found for " + type + " ID: " + entityId);
+        }
+
+        if (valid.size() == 1) {
+            Attachment single = valid.get(0);
+            String contentType = single.getFileType() != null && !single.getFileType().isBlank()
+                    ? single.getFileType()
+                    : MediaType.APPLICATION_OCTET_STREAM_VALUE;
+
+            return AttachmentDownloadResponse.builder()
+                    .file(single.getFileBlob())
+                    .fileName(single.getFileName())
+                    .contentType(contentType)
+                    .build();
+        }
+
+        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+             ZipOutputStream zos = new ZipOutputStream(baos)) {
+
+            Set<String> entryNames = new HashSet<>();
+            for (Attachment a : valid) {
+                String baseName = a.getFileName();
+                String entryName = baseName;
+                int count = 1;
+                while (!entryNames.add(entryName)) {
+                    int dotIdx = baseName.lastIndexOf('.');
+                    if (dotIdx != -1) {
+                        entryName = baseName.substring(0, dotIdx) + " (" + count + ")" + baseName.substring(dotIdx);
+                    } else {
+                        entryName = baseName + " (" + count + ")";
+                    }
+                    count++;
+                }
+
+                ZipEntry zipEntry = new ZipEntry(entryName);
+                zos.putNextEntry(zipEntry);
+                zos.write(a.getFileBlob());
+                zos.closeEntry();
+            }
+            zos.finish();
+
+            String zipFileName = type.name().toLowerCase() + "-" + entityId + "-attachments.zip";
+            return AttachmentDownloadResponse.builder()
+                    .file(baos.toByteArray())
+                    .fileName(zipFileName)
+                    .contentType("application/zip")
+                    .build();
+
+        } catch (IOException e) {
+            log.error("Failed to package attachments into ZIP for {} ID {}: {}", type, entityId, e.getMessage());
+            throw new AttachmentProcessingException("Failed to package attachments into ZIP for " + type + " ID: " + entityId);
+        }
+    }
+
+    private void validateEntityExists(AttachmentType type, Integer entityId) {
+
+        switch (type) {
+
+            case BUG -> bugRepository.findById(entityId)
+                    .filter(b -> !b.isDeleted() && b.isActive())
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException(
+                                    "Bug not found or inactive with ID: " + entityId));
+
+            case FEATURE -> featureRepository.findById(entityId)
+                    .filter(f -> !f.isDeleted() && f.isActive())
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException(
+                                    "Feature not found or inactive with ID: " + entityId));
+
+            case PROJECT -> projectRepository.findById(entityId)
+                    .filter(p -> !p.isDeleted() && p.isActive())
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException(
+                                    "Project not found or inactive with ID: " + entityId));
+
+            case TESTCASE -> testCaseRepository.findById(entityId)
+                    .filter(t -> !t.isDeleted() && t.isActive())
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException(
+                                    "TestCase not found or inactive with ID: " + entityId));
+        }
+    }
+
+    @Override
+    @Transactional
+    public String deleteAttachment(Integer attachmentId) {
+
+        Attachment attachment = attachmentRepository.findById(attachmentId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Attachment not found with ID: " + attachmentId));
+
+        if (attachment.isDeleted()) {
+            throw new ResourceNotFoundException(
+                    "Attachment not found with ID: " + attachmentId);
+        }
+
+        attachment.setDeleted(true);
+        attachment.setActive(false);
+
+        attachmentRepository.save(attachment);
+
+        return "Attachment '" + attachment.getFileName() + "' deleted successfully.";
     }
 }
