@@ -23,5 +23,5 @@ public class ExcelUploadResponse {
 
     private Integer failedRows;
 
-    private List<xyz.mobi.testingautomationtool.dto.ExcelDto.ExcelUploadErrorResponse> errors;
+    private List<xyz.mobi.testingautomationtool.dto.ExcelDTO.ExcelUploadErrorResponse> errors;
 }

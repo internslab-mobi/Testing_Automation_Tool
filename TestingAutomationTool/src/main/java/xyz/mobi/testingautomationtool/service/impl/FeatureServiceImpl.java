@@ -10,10 +10,11 @@ import org.springframework.transaction.annotation.Transactional;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.FeatureDTO.*;
 import xyz.mobi.testingautomationtool.entity.Attachment;
-import xyz.mobi.testingautomationtool.dto.FeatureDto.*;
+import xyz.mobi.testingautomationtool.dto.FeatureDTO.*;
 import xyz.mobi.testingautomationtool.entity.Feature;
 import xyz.mobi.testingautomationtool.entity.Project;
 import xyz.mobi.testingautomationtool.entity.User;
+import xyz.mobi.testingautomationtool.enums.FeatureStatus;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
 import xyz.mobi.testingautomationtool.exception.DuplicateResourceException;
@@ -53,8 +54,8 @@ public class FeatureServiceImpl implements FeatureService {
 
     @Override
     public FeatureResponse createFeature(FeatureRequest request) {
-            Project project = projectRepository.findByProjectIdAndStatusAndIsActiveTrueAndIsDeletedFalse(request.getProjectId(),
-                            ProjectStatus.ACTIVE)
+//            Project project = projectRepository.findByProjectIdAndStatusAndIsActiveTrueAndIsDeletedFalse(request.getProjectId(),
+//                            ProjectStatus.ACTIVE)
         Project project = projectRepository.findByProjectIdAndStatusAndIsActiveTrueAndIsDeletedFalse(request.getProjectId(),
                         ProjectStatus.ACTIVE)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not available for id: " + request.getProjectId()));
