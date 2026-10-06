@@ -10,7 +10,7 @@ import xyz.mobi.testingautomationtool.entity.User;
         componentModel = "spring",
         nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE
 )
-public interface ManagerMapper {
+public interface AdminMapper {
 
     @Mapping(target = "role", source = "role.role")
     ManagerResponse toResponse(User manager);

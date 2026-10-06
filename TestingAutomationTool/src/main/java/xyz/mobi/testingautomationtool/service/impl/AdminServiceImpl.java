@@ -16,7 +16,7 @@ import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.UserRole;
 import xyz.mobi.testingautomationtool.exception.DuplicateResourceException;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
-import xyz.mobi.testingautomationtool.mapper.ManagerMapper;
+import xyz.mobi.testingautomationtool.mapper.AdminMapper;
 import xyz.mobi.testingautomationtool.repository.BugRepository;
 import xyz.mobi.testingautomationtool.repository.FeatureRepository;
 import xyz.mobi.testingautomationtool.repository.ProjectRepository;
@@ -45,7 +45,7 @@ public class AdminServiceImpl implements AdminService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
 
-    private final ManagerMapper managerMapper;
+    private final AdminMapper managerMapper;
 
 
     @Override

@@ -84,7 +84,8 @@ public class AuthController {
     public ResponseEntity<Map<String, String>> changePassword(
             @AuthenticationPrincipal UserDetails userDetails,
             @Valid @RequestBody ChangePasswordRequest request
-    ) {
+    )
+    {
         authService.changePassword(userDetails.getUsername(), request);
         return ResponseEntity.ok(Map.of("message", "Password changed successfully"));
     }
