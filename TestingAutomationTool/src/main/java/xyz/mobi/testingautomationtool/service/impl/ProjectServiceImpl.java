@@ -1,6 +1,5 @@
 package xyz.mobi.testingautomationtool.service.impl;
 
-import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.jpa.domain.Specification;
@@ -23,6 +22,7 @@ import xyz.mobi.testingautomationtool.mapper.ProjectMapper;
 import xyz.mobi.testingautomationtool.repository.*;
 import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.ProjectService;
+import xyz.mobi.testingautomationtool.specification.ProjectSpecification;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -293,48 +293,12 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<ProjectResponse> searchProjects(String keyword, ProjectStatus status) {
-        Specification<Project> spec = (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.isFalse(root.get("isDeleted")));
+    public List<ProjectResponse> searchProjects(
+            String keyword,
+            ProjectStatus status) {
 
-            if (status != null) {
-                predicates.add(cb.equal(root.get("status"), status));
-            }
-
-            if (keyword != null && !keyword.trim().isEmpty()) {
-                String trimmed = keyword.trim();
-                String searchLower = trimmed.toLowerCase();
-                String pattern = "%" + searchLower + "%";
-
-                List<Predicate> orPredicates = new ArrayList<>();
-                orPredicates.add(cb.like(cb.lower(root.get("projectName")), pattern));
-                orPredicates.add(cb.like(cb.lower(root.get("description")), pattern));
-                orPredicates.add(cb.like(cb.lower(root.get("region")), pattern));
-
-                List<ProjectStatus> matchingStatuses = new ArrayList<>();
-                for (ProjectStatus ps : ProjectStatus.values()) {
-                    String statusName = ps.name().toLowerCase();
-                    String statusWithSpace = statusName.replace('_', ' ');
-                    if (statusName.contains(searchLower) || statusWithSpace.contains(searchLower)) {
-                        matchingStatuses.add(ps);
-                    }
-                }
-                if (!matchingStatuses.isEmpty()) {
-                    orPredicates.add(root.get("status").in(matchingStatuses));
-                }
-
-                try {
-                    Integer id = Integer.valueOf(trimmed);
-                    orPredicates.add(cb.equal(root.get("projectId"), id));
-                } catch (NumberFormatException ignored) {
-                }
-
-                predicates.add(cb.or(orPredicates.toArray(new Predicate[0])));
-            }
-
-            return cb.and(predicates.toArray(new Predicate[0]));
-        };
+        Specification<Project> spec =
+                ProjectSpecification.search(keyword, status);
 
         return projectRepository.findAll(spec).stream()
                 .map(projectMapper::toResponse)

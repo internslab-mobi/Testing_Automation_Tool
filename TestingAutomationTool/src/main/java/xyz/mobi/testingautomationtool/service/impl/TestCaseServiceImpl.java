@@ -25,6 +25,7 @@ import xyz.mobi.testingautomationtool.mapper.TestingExecutionMapper;
 import xyz.mobi.testingautomationtool.repository.*;
 import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.TestCaseService;
+import xyz.mobi.testingautomationtool.specification.TestCaseSpecification;
 import xyz.mobi.testingautomationtool.utils.Utils;
 
 import java.lang.Exception;
@@ -629,36 +630,25 @@ public class TestCaseServiceImpl implements TestCaseService {
             TestPriority priority,
             Pageable pageable) {
 
-        int boundedSize = Math.min(pageable.getPageSize() <= 0 ? 10 : pageable.getPageSize(), 100);
-        Pageable safePageable = PageRequest.of(pageable.getPageNumber(), boundedSize, pageable.getSort());
+        int boundedSize = Math.min(
+                pageable.getPageSize() <= 0 ? 10 : pageable.getPageSize(), 100);
 
-        Specification<TestCase> spec = (root, query, cb) -> {
-            List<Predicate> predicates = new ArrayList<>();
-            predicates.add(cb.isFalse(root.get("isDeleted")));
+        Pageable safePageable = PageRequest.of(
+                pageable.getPageNumber(),
+                boundedSize,
+                pageable.getSort());
 
-            if (featureId != null) {
-                predicates.add(cb.equal(root.get("feature").get("featureId"), featureId));
-            }
-            if (status != null) {
-                predicates.add(cb.equal(root.get("testcaseStatus"), status));
-            }
-            if (type != null) {
-                predicates.add(cb.equal(root.get("testType"), type));
-            }
-            if (priority != null) {
-                predicates.add(cb.equal(root.get("testPriority"), priority));
-            }
-            if (keyword != null && !keyword.trim().isEmpty()) {
-                String pattern = "%" + keyword.trim().toLowerCase() + "%";
-                Predicate titleMatch = cb.like(cb.lower(root.get("title")), pattern);
-                Predicate formatMatch = cb.like(cb.lower(root.get("testcaseFormatId")), pattern);
-                predicates.add(cb.or(titleMatch, formatMatch));
-            }
+        Specification<TestCase> spec =
+                TestCaseSpecification.search(
+                        keyword,
+                        featureId,
+                        status,
+                        type,
+                        priority);
 
-            return cb.and(predicates.toArray(new Predicate[0]));
-        };
+        Page<TestCase> testCasesPage =
+                testCaseRepository.findAll(spec, safePageable);
 
-        Page<TestCase> testCasesPage = testCaseRepository.findAll(spec, safePageable);
         return mapTestCasesWithExecutions(testCasesPage);
     }
 
