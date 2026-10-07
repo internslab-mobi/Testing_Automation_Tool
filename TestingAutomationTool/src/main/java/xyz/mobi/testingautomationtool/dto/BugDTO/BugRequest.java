@@ -18,11 +18,6 @@ import java.util.Map;
 @Builder
 public class BugRequest {
 
-    @NotNull(message = "testCaseId is required")
-    private Integer testCaseId;
-
-    private Integer featureId;
-
     @NotBlank(message = "title is required")
     @Size(max = 300, message = "title must not exceed 300 characters")
     private String title;
@@ -35,16 +30,9 @@ public class BugRequest {
 
     private BugCategory category;
 
-    @NotNull(message = "reportedBy is required")
-    private Integer reportedBy;
-
     private BugStatus status;
 
     private Integer assignedTo;
-
-    private Integer bugReoccurredId;
-
-    private Integer bugOccurrence;
 
     private String comments;
 

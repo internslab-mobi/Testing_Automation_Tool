@@ -13,7 +13,7 @@ import xyz.mobi.testingautomationtool.enums.BugStatus;
 import java.time.LocalDate;
 
 public interface BugService {
-    BugResponse createBug(BugRequest request);
+    BugResponse createBug(Integer testcaseId,BugRequest request);
 
     BugResponse getById(Integer bugId);
 

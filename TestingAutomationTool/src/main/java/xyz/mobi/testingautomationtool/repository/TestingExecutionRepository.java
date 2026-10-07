@@ -23,4 +23,6 @@ public interface TestingExecutionRepository
 
 
     List<TestingExecution> findByTestCaseTestcaseIdIn(List<Integer> testcaseIds);
+
+    Optional<TestingExecution> findByTestCase_TestcaseId(Integer testCaseId);
 }

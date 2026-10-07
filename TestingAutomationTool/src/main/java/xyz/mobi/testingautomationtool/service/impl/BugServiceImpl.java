@@ -42,97 +42,110 @@ public class BugServiceImpl implements BugService {
     private final FeatureRepository featureRepository;
     private final UserRepository userRepository;
     private final BugHistoryRepository bugHistoryRepository;
+    private final TestingExecutionRepository testingExecutionRepository;
     private final NotificationService notificationService;
     private final BugMapper bugMapper;
     private final AuthService authService;
     private final AttachmentRepository attachmentRepository;
 
     @Override
-    public BugResponse createBug(BugRequest request) {
+    @Transactional
+    public BugResponse createBug(Integer testCaseId, BugRequest request) {
 
-
-        if (request.getStatus() != null && request.getStatus() != BugStatus.OPEN) {
-            throw new IllegalArgumentException("New bug can only be created with OPEN status, received: " + request.getStatus());
-        }
-
-        TestCase testCase = testCaseRepository.findById(request.getTestCaseId())
-                .orElseThrow(() -> new ResourceNotFoundException("Test case not found with id: " + request.getTestCaseId()));
+        // Get test case
+        TestCase testCase = testCaseRepository.findById(testCaseId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Test case not found with id: " + testCaseId
+                        )
+                );
 
         if (testCase.isDeleted()) {
-            throw new ResourceNotFoundException("Test case not found with id: " + request.getTestCaseId());
+            throw new ResourceNotFoundException(
+                    "Test case not found with id: " + testCaseId
+            );
         }
 
-        // Resolve Feature
-        Integer resolvedFeatureId = request.getFeatureId();
-        if (resolvedFeatureId == null && testCase.getFeature() != null) {
-            resolvedFeatureId = testCase.getFeature().getFeatureId();
-        }
-        if (resolvedFeatureId == null) {
-            throw new ResourceNotFoundException("Feature not found for test case: " + testCase.getTestcaseId());
-        }
 
-        final Integer finalFeatureId = resolvedFeatureId;
-        Feature feature = featureRepository.findByFeatureIdForUpdate(finalFeatureId)
-                .orElseThrow(() -> new ResourceNotFoundException("Feature not found with ID: " + finalFeatureId));
+        Integer featureId = testCase.getFeature().getFeatureId();
+        Feature feature = featureRepository.findByFeatureIdForUpdate(featureId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Feature not found with ID: " +featureId
+                        )
+                );
 
-        String bugFormatId ;
+        TestingExecution execution = testingExecutionRepository.findByTestCase_TestcaseId(testCaseId).orElseThrow(
+                ()-> new ResourceNotFoundException("Execution not found with id: " + testCaseId)
+        );
 
-            String featureName = feature.getFeatureName()
-                    .trim()
-                    .toUpperCase()
-                    .replaceAll("[^A-Z0-9]+", "_");
+        execution.setBugsCount(execution.getBugsCount()+1);
 
-            String prefix = "BUG-" + featureName + "-";
-            int nextNumber = 1;
+        testingExecutionRepository.save(execution);
 
-            Optional<Bug> latestBug =
-                    bugRepository.findTopByFeature_FeatureIdAndBugFormatIdStartingWithOrderByBugFormatIdDesc(
-                            finalFeatureId,
-                            prefix
-                    );
+        // Generate bug format ID
+        String featureName = feature.getFeatureName()
+                .trim()
+                .toUpperCase()
+                .replaceAll("[^A-Z0-9]+", "_");
 
-            if (latestBug.isPresent()) {
-                String latestFormatId = latestBug.get().getBugFormatId();
-                try {
-                    String numberPart = latestFormatId.substring(prefix.length());
-                    nextNumber = Integer.parseInt(numberPart) + 1;
-                } catch (Exception ignored) {
-                }
+        String prefix = "BUG-" + featureName + "-";
+        int nextNumber = 1;
+
+        Optional<Bug> latestBug =
+                bugRepository
+                        .findTopByFeature_FeatureIdAndBugFormatIdStartingWithOrderByBugFormatIdDesc(
+                                featureId,
+                                prefix
+                        );
+
+        if (latestBug.isPresent()) {
+            String latestFormatId = latestBug.get().getBugFormatId();
+
+            try {
+                String numberPart = latestFormatId.substring(prefix.length());
+                nextNumber = Integer.parseInt(numberPart) + 1;
+            } catch (NumberFormatException ignored) {
+                // Keep nextNumber as 1
             }
-            bugFormatId = prefix + String.format("%03d", nextNumber);
-
-        User reporter;
-        if (request.getReportedBy() != null) {
-            reporter = userRepository.findById(request.getReportedBy())
-                    .orElseThrow(() -> new ResourceNotFoundException("Reported by user not found with ID: " + request.getReportedBy()));
-        } else {
-            reporter = authService.getCurrentUser();
         }
 
+        String bugFormatId = prefix + String.format("%03d", nextNumber);
+
+        // Current logged-in user becomes reporter
+        User reporter = authService.getCurrentUser();
+
+        // Resolve assigned user
         User assignedTo = null;
+
         if (request.getAssignedTo() != null) {
             assignedTo = userRepository.findById(request.getAssignedTo())
-                    .orElseThrow(() -> new ResourceNotFoundException("Assigned to user not found with ID: " + request.getAssignedTo()));
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException(
+                                    "Assigned to user not found with ID: "
+                                            + request.getAssignedTo()
+                            )
+                    );
         }
 
-        int occurrence = 1;
-        if (request.getBugReoccurredId() != null) {
-            Bug previousBug = bugRepository.findById(request.getBugReoccurredId())
-                    .orElseThrow(() -> new ResourceNotFoundException("Reoccurred bug not found with ID: " + request.getBugReoccurredId()));
 
-            if (previousBug.getTestCase() == null ||
-                    !previousBug.getTestCase().getTestcaseId().equals(testCase.getTestcaseId())) {
-                throw new IllegalStateException("Reoccurred bug does not belong to the specified test case");
-            }
+        // Default values
+        BugSeverity severity =
+                request.getSeverity() != null
+                        ? request.getSeverity()
+                        : BugSeverity.MEDIUM;
 
-            int prevOccurrence = previousBug.getBugOccurrence() != null ? previousBug.getBugOccurrence() : 1;
-            occurrence = prevOccurrence + 1;
-        }
+        BugPriority priority =
+                request.getPriority() != null
+                        ? request.getPriority()
+                        : BugPriority.MEDIUM;
 
-        BugSeverity severity = request.getSeverity() != null ? request.getSeverity() : BugSeverity.MEDIUM;
-        BugPriority priority = request.getPriority() != null ? request.getPriority() : BugPriority.MEDIUM;
-        BugCategory category = request.getCategory() != null ? request.getCategory() : BugCategory.PRE_PRODUCTION;
+        BugCategory category =
+                request.getCategory() != null
+                        ? request.getCategory()
+                        : BugCategory.PRE_PRODUCTION;
 
+        // Create bug
         Bug bug = Bug.builder()
                 .bugFormatId(bugFormatId)
                 .testCase(testCase)
@@ -146,24 +159,36 @@ public class BugServiceImpl implements BugService {
                 .reportedBy(reporter)
                 .updatedBy(reporter)
                 .assignedTo(assignedTo)
-                .bugOccurrence(occurrence)
+                .executedBy(reporter)
+                .bugOccurrence(1)
                 .comments(request.getComments())
-                .dynamicFields(request.getDynamicFields() != null ? request.getDynamicFields() : new HashMap<>())
+                .dynamicFields(
+                        request.getDynamicFields() != null
+                                ? request.getDynamicFields()
+                                : new HashMap<>()
+                )
                 .isActive(true)
                 .isDeleted(false)
                 .build();
 
         Bug savedBug = bugRepository.save(bug);
 
+        // Create history
         BugHistory history = BugHistory.builder()
                 .bug(savedBug)
                 .executedBy(reporter.getUserId())
                 .bugStatus(BugStatus.OPEN)
-                .assignedTo(assignedTo != null ? assignedTo.getUserId() : null)
+                .assignedTo(
+                        assignedTo != null
+                                ? assignedTo.getUserId()
+                                : null
+                )
                 .createdAt(Instant.now())
                 .build();
+
         bugHistoryRepository.save(history);
 
+        // Notify assigned user
         if (assignedTo != null) {
             notificationService.createNotification(
                     NotificationRequest.builder()

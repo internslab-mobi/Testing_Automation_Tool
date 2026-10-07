@@ -42,8 +42,10 @@ public class BugController {
     private final AttachmentService attachmentService;
 
     @PostMapping
-    public ResponseEntity<ApiResponse<BugResponse>> createBug(@Valid @RequestBody BugRequest request) {
-        BugResponse response = bugService.createBug(request);
+    public ResponseEntity<ApiResponse<BugResponse>> createBug(
+            @RequestParam Integer testcaseId,
+            @Valid @RequestBody BugRequest request) {
+        BugResponse response = bugService.createBug(testcaseId,request);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(ApiResponse.success("Bug created successfully", response));
     }

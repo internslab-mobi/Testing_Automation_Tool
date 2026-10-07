@@ -137,7 +137,7 @@ public class Bug extends Auditable {
                     name = "fk_bugs_updated_by"
             )
     )
-    private User updatedBy=null;
+    private User updatedBy;
 
     @Version
     @Column(name = "version", nullable = false)
