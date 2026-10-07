@@ -40,7 +40,7 @@ public interface TestCaseService {
             TestPriority priority,
             Pageable pageable);
 
-    TestCasePutResponse updateTestcaseDetails(
+    TestCaseResponse updateTestcaseDetails(
             TestCasePutRequest testCaseRequest,
             Integer id);
 

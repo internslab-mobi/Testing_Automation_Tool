@@ -110,46 +110,6 @@ public interface TestCaseMapper {
     @Mapping(target = "version", ignore = true)
     TestCase putMethodMapper(TestCasePutRequest testCasePutRequest, @MappingTarget TestCase testCase);
 
-    default TestCasePutResponse toPutResponse(TestCase testCase, TestingExecution execution) {
-        if (testCase == null) {
-            return null;
-        }
-
-        TestCasePutResponse.TestCaseDetails details = TestCasePutResponse.TestCaseDetails.builder()
-                .testcaseId(testCase.getTestcaseId())
-                .featureId(testCase.getFeature() != null ? testCase.getFeature().getFeatureId() : null)
-                .title(testCase.getTitle())
-                .testType(testCase.getTestType())
-                .testPriority(testCase.getTestPriority())
-                .build();
-
-        TestCasePutResponse.AuditResponse audit = TestCasePutResponse.AuditResponse.builder()
-                .updatedBy(testCase.getUpdatedBy() != null ? testCase.getUpdatedBy().getUsername() : null)
-                .updatedAt(testCase.getUpdatedAt())
-                .build();
-
-        TestCasePutResponse.ValidationResponse val = null;
-        if (execution != null) {
-            val = TestCasePutResponse.ValidationResponse.builder()
-                    .testExecution(execution.getTestExecution())
-                    .testValidation(execution.getTestValidation())
-                    .precondition(execution.getPrecondition())
-                    .testData(execution.getTestData())
-                    .executionSteps(execution.getExecutionSteps())
-                    .uiValidations(execution.getUiValidations())
-                    .dbValidations(execution.getDbValidations())
-                    .comments(execution.getComments())
-                    .build();
-        }
-
-        return TestCasePutResponse.builder()
-                .testCase(details)
-                .validation(val)
-                .audit(audit)
-                .dynamicFields(testCase.getDynamicFields())
-                .build();
-    }
-
     @Mapping(target = "testcaseId", ignore = true)
     @Mapping(target = "feature", ignore = true)
     @Mapping(target = "testcaseFormatId", ignore = true)

@@ -1,0 +1,327 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset="utf-8">
+<title>Unified API Response Architecture</title>
+<!--[if gte mso 9]>
+<xml>
+<w:WordDocument>
+<w:View>Print</w:View>
+<w:Zoom>100</w:Zoom>
+<w:DoNotOptimizeForBrowser/>
+</w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+body {
+    font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #2D3748;
+    margin: 40px;
+}
+h1 {
+    font-size: 22pt;
+    color: #1A365D;
+    border-bottom: 2px solid #2B6CB0;
+    padding-bottom: 8px;
+    margin-top: 24px;
+}
+h2 {
+    font-size: 15pt;
+    color: #2B6CB0;
+    margin-top: 20px;
+    border-bottom: 1px solid #E2E8F0;
+    padding-bottom: 4px;
+}
+h3 {
+    font-size: 12pt;
+    color: #2D3748;
+    margin-top: 16px;
+}
+p {
+    margin: 8px 0;
+}
+.highlight-box {
+    background-color: #EBF8FF;
+    border-left: 4px solid #3182CE;
+    padding: 12px 16px;
+    margin: 16px 0;
+    border-radius: 4px;
+}
+.warning-box {
+    background-color: #FFF5F5;
+    border-left: 4px solid #E53E3E;
+    padding: 12px 16px;
+    margin: 16px 0;
+    border-radius: 4px;
+}
+.success-box {
+    background-color: #F0FFF4;
+    border-left: 4px solid #38A169;
+    padding: 12px 16px;
+    margin: 16px 0;
+    border-radius: 4px;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 16px 0;
+    font-size: 10.5pt;
+}
+th {
+    background-color: #2B6CB0;
+    color: #FFFFFF;
+    text-align: left;
+    padding: 10px;
+    border: 1px solid #CBD5E0;
+}
+td {
+    padding: 9px 10px;
+    border: 1px solid #CBD5E0;
+    vertical-align: top;
+}
+tr:nth-child(even) {
+    background-color: #F7FAFC;
+}
+code {
+    font-family: 'Consolas', 'Courier New', monospace;
+    background-color: #EDF2F7;
+    padding: 2px 5px;
+    border-radius: 3px;
+    font-size: 9.5pt;
+    color: #C53030;
+}
+pre {
+    background-color: #1A202C;
+    color: #E2E8F0;
+    padding: 14px;
+    border-radius: 6px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 9.5pt;
+    line-height: 1.4;
+    overflow-x: auto;
+}
+</style>
+</head>
+<body>
+
+<h1>Unified API Response Architecture (POST, GET, PUT)</h1>
+<p><strong>Project:</strong> Testing Automation Tool &nbsp;|&nbsp; <strong>Topic:</strong> Standardizing Response DTOs &nbsp;|&nbsp; <strong>Date:</strong> October 2026</p>
+
+<div class="highlight-box">
+<strong>Document Purpose:</strong> This document explains in simple, clear English why keeping the exact same response for <code>POST</code>, <code>GET</code>, and <code>PUT</code> methods creates a faster, cleaner, and more reliable system.
+</div>
+
+<h2>1. What Was the Problem Before?</h2>
+
+<p>When the frontend (user interface) communicates with our backend server, it performs 3 main tasks:</p>
+<ul>
+    <li><strong>GET:</strong> "Fetch/Read project details"</li>
+    <li><strong>POST:</strong> "Create a new project"</li>
+    <li><strong>PUT:</strong> "Update an existing project"</li>
+</ul>
+
+<div class="warning-box">
+<strong>The Old Way (Fragmented Responses):</strong>
+<br>Previously, <code>POST</code> and <code>GET</code> returned a class called <code>ProjectResponse</code>, but <code>PUT</code> returned a separate class called <code>ProjectPutResponse</code>.
+<ul>
+    <li><code>ProjectPutResponse</code> was missing important fields like <code>comments</code> and <code>version</code>.</li>
+    <li>The audit fields were mismatched (<code>createdBy</code> was an Integer ID in GET, but a username String in PUT).</li>
+    <li>The frontend developers had to write multiple models for the same entity and often had to send a second <code>GET</code> request right after a <code>PUT</code> to fetch the missing data.</li>
+</ul>
+</div>
+
+<h2>2. The Solution: Unified Response</h2>
+
+<div class="success-box">
+<strong>The New Way (Single Source of Truth):</strong>
+<br>Now, <code>POST</code>, <code>GET</code>, and <code>PUT</code> all return the <strong>exact same standardized response DTO</strong>: <code>ApiResponse&lt;ProjectResponse&gt;</code>.
+</div>
+
+<h3>High-Level Visual Flow:</h3>
+
+<table style="width: 100%; border: none;">
+    <tr>
+        <td style="width: 50%; border: 1px solid #FEB2B2; background-color: #FFF5F5; padding: 15px;">
+            <h3 style="color: #C53030; margin-top: 0;">❌ Before (Inconsistent)</h3>
+            <p><code>GET /project/1</code> &nbsp; ➔ &nbsp; <strong>ProjectResponse</strong></p>
+            <p><code>POST /project</code> &nbsp; ➔ &nbsp; <strong>ProjectResponse</strong></p>
+            <p><code>PUT /project/1</code> &nbsp; ➔ &nbsp; <strong style="color:#C53030;">ProjectPutResponse</strong> <i>(Missing fields!)</i></p>
+        </td>
+        <td style="width: 50%; border: 1px solid #9AE6B4; background-color: #F0FFF4; padding: 15px;">
+            <h3 style="color: #276749; margin-top: 0;">✅ Now (Unified Standard)</h3>
+            <p><code>GET /project/1</code> &nbsp; ➔ &nbsp; <strong>ApiResponse&lt;ProjectResponse&gt;</strong></p>
+            <p><code>POST /project</code> &nbsp; ➔ &nbsp; <strong>ApiResponse&lt;ProjectResponse&gt;</strong></p>
+            <p><code>PUT /project/1</code> &nbsp; ➔ &nbsp; <strong>ApiResponse&lt;ProjectResponse&gt;</strong></p>
+        </td>
+    </tr>
+</table>
+
+<h2>3. Request and Response Lifecycle (How Data Travels)</h2>
+
+<p>When any create, read, or update request comes in, it flows seamlessly through 4 clean layers:</p>
+
+<table style="margin-top: 12px;">
+    <thead>
+        <tr>
+            <th style="width: 25%;">Step / Layer</th>
+            <th style="width: 35%;">Component</th>
+            <th style="width: 40%;">What Happens?</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>1. Client Request</strong></td>
+            <td>Frontend / UI Client</td>
+            <td>Sends HTTP POST, GET, or PUT to the server.</td>
+        </tr>
+        <tr>
+            <td><strong>2. Controller Layer</strong></td>
+            <td><code>ProjectController</code></td>
+            <td>Receives request, validates input, calls service.</td>
+        </tr>
+        <tr>
+            <td><strong>3. Service Layer</strong></td>
+            <td><code>ProjectServiceImpl</code></td>
+            <td>Executes business logic, updates database entity.</td>
+        </tr>
+        <tr>
+            <td><strong>4. Mapper Layer</strong></td>
+            <td><code>ProjectMapper</code> (MapStruct)</td>
+            <td>Converts the updated entity into the standard <code>ProjectResponse</code>.</td>
+        </tr>
+        <tr>
+            <td><strong>5. Standard Envelope</strong></td>
+            <td><code>ApiResponse&lt;ProjectResponse&gt;</code></td>
+            <td>Wraps data with status, message, and timestamp for the client.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>4. Detailed Before vs After Comparison</h2>
+
+<table>
+    <thead>
+        <tr>
+            <th>Aspect</th>
+            <th>❌ Before Unification</th>
+            <th>✅ After Unification (Current)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Response Model</strong></td>
+            <td>Multiple DTO classes (<code>ProjectResponse</code>, <code>ProjectPutResponse</code>, <code>FeaturePutResponse</code>, <code>TestCasePutResponse</code>)</td>
+            <td><strong>One unified DTO</strong> per entity (<code>ProjectResponse</code>, <code>FeatureResponse</code>, <code>TestCaseResponse</code>)</td>
+        </tr>
+        <tr>
+            <td><strong>Field Availability</strong></td>
+            <td>PUT was missing <code>comments</code>, <code>version</code>, and <code>isActive</code> flags.</td>
+            <td><strong>100% complete fields</strong> returned on all operations.</td>
+        </tr>
+        <tr>
+            <td><strong>Audit Metadata</strong></td>
+            <td>Mismatch: <code>createdBy</code> had different types in GET and PUT.</td>
+            <td>Standardized: <code>createdBy</code> (ID), <code>createdByName</code> (Name), <code>updatedBy</code> (ID), <code>updatedByName</code> (Name), <code>createdAt</code>, <code>updatedAt</code>.</td>
+        </tr>
+        <tr>
+            <td><strong>Frontend Complexity</strong></td>
+            <td>High: Frontend had to maintain separate TypeScript interfaces and write conversion code.</td>
+            <td><strong>Low:</strong> Single TypeScript interface for all operations.</td>
+        </tr>
+        <tr>
+            <td><strong>Network Calls</strong></td>
+            <td>2 calls: Client had to call <code>PUT</code> then immediately call <code>GET</code> to refresh.</td>
+            <td><strong>1 call:</strong> The PUT response gives everything instantly.</td>
+        </tr>
+        <tr>
+            <td><strong>Backend Maintenance</strong></td>
+            <td>High: Adding 1 field required updating 2 response files and multiple mapper methods.</td>
+            <td><strong>Low:</strong> Update 1 response DTO and 1 mapper method.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>5. Why This is Great for Frontend Developers</h2>
+
+<p>Frontend developers only need to define <strong>one simple TypeScript model</strong>:</p>
+
+<pre>
+export interface ProjectResponse {
+  project: {
+    projectId: number;
+    projectName: string;
+    description: string;
+    status: string;
+    region: string;
+    comments: string;
+    isActive: boolean;
+    isDeleted: boolean;
+    version: number;
+  };
+  audit: {
+    createdBy: number;
+    createdByName: string;
+    updatedBy: number;
+    updatedByName: string;
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+</pre>
+
+<h3>Instant UI State Synchronization</h3>
+<p>When the user updates a project in the UI and clicks "Save":</p>
+<ol>
+    <li>The frontend sends <code>PUT /project/10</code>.</li>
+    <li>The backend responds with the updated <code>ProjectResponse</code> (including updated timestamps and audit names).</li>
+    <li>The frontend immediately updates its store/cache with the response. No page refresh or extra GET call needed!</li>
+</ol>
+
+<h2>6. Standard Response Envelope (JSON Example)</h2>
+
+<p>Every response returned by the backend follows this consistent structure:</p>
+
+<pre>
+{
+  "success": true,
+  "message": "Project updated successfully",
+  "data": {
+    "project": {
+      "projectId": 10,
+      "projectName": "Mobile Automation Suite",
+      "description": "Regression test automation",
+      "status": "ACTIVE",
+      "region": "US-EAST",
+      "comments": "Sprint 3 deliverables",
+      "isActive": true,
+      "isDeleted": false,
+      "version": 2
+    },
+    "audit": {
+      "createdBy": 1,
+      "createdByName": "admin",
+      "updatedBy": 4,
+      "updatedByName": "john_tester",
+      "createdAt": "2026-10-01T10:00:00Z",
+      "updatedAt": "2026-10-07T14:30:00Z"
+    }
+  },
+  "timestamp": "2026-10-07T14:30:00.123Z"
+}
+</pre>
+
+<h2>7. Modules Unified Across the Project</h2>
+
+<ol>
+    <li><strong>Project Module:</strong> Standardized on <code>ProjectResponse</code> for <code>POST /project</code>, <code>GET /project/{id}</code>, and <code>PUT /project/{id}</code>.</li>
+    <li><strong>Feature Module:</strong> Standardized on <code>FeatureResponse</code> for <code>POST /feature</code>, <code>GET /feature/{id}</code>, and <code>PUT /feature/{id}</code>.</li>
+    <li><strong>TestCase Module:</strong> Standardized on <code>TestCaseResponse</code> for <code>GET /testcases/{id}</code> and <code>PUT /testcases/{id}</code>.</li>
+    <li><strong>Bug & Comment Modules:</strong> Already standard on <code>BugResponse</code> and <code>CommentResponse</code>.</li>
+</ol>
+
+<hr style="margin-top: 30px; border: 0; border-top: 1px solid #CBD5E0;">
+<p style="text-align: center; color: #718096; font-size: 9.5pt;">Generated for Testing Automation Tool &bull; Architecture Documentation</p>
+
+</body>
+</html>

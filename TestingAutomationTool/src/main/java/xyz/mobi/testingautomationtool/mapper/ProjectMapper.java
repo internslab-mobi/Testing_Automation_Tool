@@ -36,6 +36,7 @@ public interface ProjectMapper {
         ProjectResponse.AuditResponse audit = ProjectResponse.AuditResponse.builder()
                 .createdBy(project.getCreatedBy() != null ? project.getCreatedBy().getUserId() : null)
                 .createdByName(project.getCreatedBy() != null ? project.getCreatedBy().getUsername() : null)
+                .updatedBy(project.getUpdatedBy() != null ? project.getUpdatedBy().getUserId() : null)
                 .updatedByName(project.getUpdatedBy() != null ? project.getUpdatedBy().getUsername() : null)
                 .createdAt(project.getCreatedAt())
                 .updatedAt(project.getUpdatedAt())
@@ -54,32 +55,4 @@ public interface ProjectMapper {
     @Mapping(target = "deleted", ignore = true)
     @Mapping(target = "version", ignore = true)
     Project putMethodMapper(ProjectPutRequest projectPutRequest, @MappingTarget Project project);
-
-    default ProjectPutResponse toPutResponse(Project project) {
-        if (project == null) {
-            return null;
-        }
-
-        ProjectPutResponse.ProjectDetails details = ProjectPutResponse.ProjectDetails.builder()
-                .projectId(project.getProjectId())
-                .projectName(project.getProjectName())
-                .description(project.getDescription())
-                .status(project.getStatus())
-                .region(project.getRegion())
-                .isActive(project.isActive())
-                .isDeleted(project.isDeleted())
-                .build();
-
-        ProjectPutResponse.AuditResponse audit = ProjectPutResponse.AuditResponse.builder()
-                .createdBy(project.getCreatedBy() != null ? project.getCreatedBy().getUsername() : null)
-                .updatedBy(project.getUpdatedBy() != null ? project.getUpdatedBy().getUsername() : null)
-                .createdAt(project.getCreatedAt())
-                .updatedAt(project.getUpdatedAt())
-                .build();
-
-        return ProjectPutResponse.builder()
-                .project(details)
-                .audit(audit)
-                .build();
-    }
 }

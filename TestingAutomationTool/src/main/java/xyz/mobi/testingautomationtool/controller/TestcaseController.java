@@ -94,10 +94,10 @@ public class TestcaseController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<TestCasePutResponse>> updateTestCaseDetails(
+    public ResponseEntity<ApiResponse<TestCaseResponse>> updateTestCaseDetails(
             @Valid @RequestBody TestCasePutRequest testCasePutRequest,
             @PathVariable("id") Integer id) {
-        TestCasePutResponse response = testCaseService.updateTestcaseDetails(testCasePutRequest, id);
+        TestCaseResponse response = testCaseService.updateTestcaseDetails(testCasePutRequest, id);
         return ResponseEntity.ok(ApiResponse.success("Test case updated successfully", response));
     }
 

@@ -70,7 +70,7 @@ public class FeatureController {
     }
 
     @PutMapping("/{featureId}")
-    public ResponseEntity<ApiResponse<FeaturePutResponse>> updateFeature(
+    public ResponseEntity<ApiResponse<FeatureResponse>> updateFeature(
             @PathVariable Integer featureId,
             @Valid @RequestBody FeaturePutRequest request) {
         return ResponseEntity.ok(ApiResponse.success("Feature updated successfully", featureService.updateFeature(featureId, request)));

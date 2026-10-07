@@ -132,7 +132,7 @@ public class ProjectServiceImpl implements ProjectService {
 
     @Transactional
     @Override
-    public ProjectPutResponse updateProject(Integer id, ProjectPutRequest request) {
+    public ProjectResponse updateProject(Integer id, ProjectPutRequest request) {
         Project project = projectRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with ID: " + id));
 
@@ -144,7 +144,7 @@ public class ProjectServiceImpl implements ProjectService {
         project.setUpdatedBy(authService.getCurrentUser());
 
         Project savedProject = projectRepository.save(project);
-        return projectMapper.toPutResponse(savedProject);
+        return projectMapper.toResponse(savedProject);
     }
 
 

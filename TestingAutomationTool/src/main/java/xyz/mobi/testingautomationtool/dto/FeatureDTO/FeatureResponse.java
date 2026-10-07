@@ -72,6 +72,9 @@ public class FeatureResponse {
     public static class AuditResponse {
         private Integer createdBy;
         private String creatorName;
+        private Integer updatedBy;
+        private String updatedByName;
         private Instant createdAt;
+        private Instant updatedAt;
     }
 }

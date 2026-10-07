@@ -69,10 +69,10 @@ public class ProjectController {
 
     @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<ProjectPutResponse>> updateProject(
+    public ResponseEntity<ApiResponse<ProjectResponse>> updateProject(
             @PathVariable("id") Integer id,
             @Valid @RequestBody ProjectPutRequest request) {
-        ProjectPutResponse response = projectService.updateProject(id, request);
+        ProjectResponse response = projectService.updateProject(id, request);
         return ResponseEntity.ok(ApiResponse.success("Project updated successfully", response));
     }
 

@@ -24,7 +24,7 @@ public interface FeatureService {
             Pageable pageable
     );
 
-    FeaturePutResponse updateFeature(Integer featureId, FeaturePutRequest request);
+    FeatureResponse updateFeature(Integer featureId, FeaturePutRequest request);
 
     String patchFeature(Integer featureId, FeaturePatchRequest request);
 

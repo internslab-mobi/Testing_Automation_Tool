@@ -347,7 +347,7 @@ public class TestCaseServiceImpl implements TestCaseService {
     }
 
     @Override
-    public TestCasePutResponse updateTestcaseDetails(TestCasePutRequest testCasePutRequest, Integer id) {
+    public TestCaseResponse updateTestcaseDetails(TestCasePutRequest testCasePutRequest, Integer id) {
         TestCase testCase = testCaseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Test case not found with ID: " + id));
 
@@ -375,7 +375,7 @@ public class TestCaseServiceImpl implements TestCaseService {
 
         testingExecutionRepository.save(updatedExecution);
 
-        return testCaseMapper.toPutResponse(updatedTestCase, updatedExecution);
+        return testCaseMapper.toResponse(updatedTestCase, updatedExecution);
     }
 
     @Override

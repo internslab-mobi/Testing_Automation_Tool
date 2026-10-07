@@ -1,0 +1,400 @@
+<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+<head>
+<meta charset="utf-8">
+<title>Testing Automation Tool - Complete System Architecture & Overview</title>
+<!--[if gte mso 9]>
+<xml>
+<w:WordDocument>
+<w:View>Print</w:View>
+<w:Zoom>100</w:Zoom>
+<w:DoNotOptimizeForBrowser/>
+</w:WordDocument>
+</xml>
+<![endif]-->
+<style>
+body {
+    font-family: 'Calibri', 'Segoe UI', Arial, sans-serif;
+    font-size: 11pt;
+    line-height: 1.6;
+    color: #2D3748;
+    margin: 40px;
+}
+h1 {
+    font-size: 24pt;
+    color: #1A365D;
+    border-bottom: 3px solid #2B6CB0;
+    padding-bottom: 10px;
+    margin-top: 24px;
+}
+h2 {
+    font-size: 16pt;
+    color: #2B6CB0;
+    margin-top: 24px;
+    border-bottom: 1.5px solid #CBD5E0;
+    padding-bottom: 6px;
+}
+h3 {
+    font-size: 13pt;
+    color: #2D3748;
+    margin-top: 18px;
+}
+p {
+    margin: 8px 0;
+}
+.highlight-box {
+    background-color: #EBF8FF;
+    border-left: 5px solid #3182CE;
+    padding: 14px 18px;
+    margin: 18px 0;
+    border-radius: 4px;
+}
+.warning-box {
+    background-color: #FFF5F5;
+    border-left: 5px solid #E53E3E;
+    padding: 14px 18px;
+    margin: 18px 0;
+    border-radius: 4px;
+}
+.success-box {
+    background-color: #F0FFF4;
+    border-left: 5px solid #38A169;
+    padding: 14px 18px;
+    margin: 18px 0;
+    border-radius: 4px;
+}
+table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 18px 0;
+    font-size: 10pt;
+}
+th {
+    background-color: #2B6CB0;
+    color: #FFFFFF;
+    text-align: left;
+    padding: 10px 12px;
+    border: 1px solid #CBD5E0;
+    font-weight: 600;
+}
+td {
+    padding: 9px 12px;
+    border: 1px solid #CBD5E0;
+    vertical-align: top;
+}
+tr:nth-child(even) {
+    background-color: #F8FAFC;
+}
+code {
+    font-family: 'Consolas', 'Courier New', monospace;
+    background-color: #EDF2F7;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-size: 9.5pt;
+    color: #C53030;
+}
+pre {
+    background-color: #1A202C;
+    color: #E2E8F0;
+    padding: 14px;
+    border-radius: 6px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 9.5pt;
+    line-height: 1.4;
+    overflow-x: auto;
+}
+.badge-admin { background-color: #FED7D7; color: #9B2C2C; padding: 3px 8px; border-radius: 4px; font-weight: bold; }
+.badge-manager { background-color: #FEFCBF; color: #975A16; padding: 3px 8px; border-radius: 4px; font-weight: bold; }
+.badge-tester { background-color: #C6F6D5; color: #22543D; padding: 3px 8px; border-radius: 4px; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<h1>Testing Automation Tool (TAT)</h1>
+<p style="font-size: 13pt; color: #4A5568;"><strong>Complete Project Architecture, High-Level Flow & System Blueprint</strong></p>
+<p><strong>Platform:</strong> Spring Boot 3.5 &bull; Java 21 &bull; PostgreSQL &bull; JWT Security &bull; MapStruct &bull; Apache POI</p>
+
+<div class="highlight-box">
+<strong>Executive Summary:</strong> The <strong>Testing Automation Tool (TAT)</strong> is an enterprise Quality Assurance (QA) lifecycle management platform. It manages the entire testing pipeline: from project inception, feature slicing, manual and bulk Excel test case creation, execution cycles, real-time defect tracking with audit history, file attachment repositories, and instant team chat, up to executive KPI analytics for engineering managers.
+</div>
+
+<h2>1. High-Level System Architecture & Flow</h2>
+
+<p>The system is organized into a clean 5-tier enterprise layered architecture:</p>
+
+<table style="margin-top: 10px;">
+    <thead>
+        <tr>
+            <th style="width: 20%;">Layer</th>
+            <th style="width: 35%;">Key Components</th>
+            <th style="width: 45%;">Responsibilities</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>1. Client / UI</strong></td>
+            <td>Web Portal, SPA, Swagger UI, Excel Uploads</td>
+            <td>Sends HTTP REST requests with Bearer JWT tokens; renders dashboards and reports.</td>
+        </tr>
+        <tr>
+            <td><strong>2. Security & Gateway</strong></td>
+            <td><code>JwtAuthenticationFilter</code>, <code>SecurityConfig</code></td>
+            <td>Validates JWT tokens, extracts claims, enforces Role-Based Access Control (RBAC).</td>
+        </tr>
+        <tr>
+            <td><strong>3. API / Controller Layer</strong></td>
+            <td>10 REST Controllers (Project, Feature, TestCase, Bug, Comment, Dashboard, Attachment, etc.)</td>
+            <td>Validates incoming DTOs (<code>@Valid</code>), routes requests, returns unified <code>ApiResponse&lt;T&gt;</code>.</td>
+        </tr>
+        <tr>
+            <td><strong>4. Business Service Layer</strong></td>
+            <td>Service Interfaces & Implementations (<code>ProjectServiceImpl</code>, <code>TestCaseServiceImpl</code>, etc.)</td>
+            <td>Contains core business rules, status cascades, duration calculators, and Excel parsers.</td>
+        </tr>
+        <tr>
+            <td><strong>5. Persistence & Database</strong></td>
+            <td>Spring Data JPA, Hibernate, PostgreSQL, Dynamic Specifications</td>
+            <td>Stores entities, audit logs, binary file blobs, search indices, and execution metrics.</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>2. Core Domain Hierarchy (Parent-to-Child Relationship)</h2>
+
+<p>The entire system revolves around a hierarchical data structure. Every item has a strict parent-child relationship with automatic cascading behavior:</p>
+
+<div class="highlight-box">
+<p style="font-size: 12pt; margin: 4px 0;"><strong>Hierarchy Tree:</strong></p>
+<p style="margin: 4px 0; font-family: monospace;">
+🏢 <strong>PROJECT</strong> (e.g. Mobile Banking App, Web Portal)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;└── 📁 <strong>FEATURE</strong> (e.g. Login, Fund Transfer, Bill Payment)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── 📝 <strong>TEST CASE</strong> (e.g. Verify OTP validation on valid phone number)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── ⚡ <strong>TESTING EXECUTION</strong> (Status: Pass, Fail, Norun, Descope)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── 🐛 <strong>BUG / DEFECT</strong> (e.g. OTP not sent for +91 numbers)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;├── 💬 <strong>COMMENTS</strong> (Live team chat & updates)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;└── 📎 <strong>ATTACHMENTS</strong> (Screenshots, screen recordings, logs)
+</p>
+</div>
+
+<h3>Cascading Rules & Soft Deletion:</h3>
+<ul>
+    <li><strong>Project Deactivation:</strong> When a Manager deactivates a Project, all associated Features, Test Cases, and Bugs are automatically deactivated.</li>
+    <li><strong>Feature Deactivation:</strong> Deactivating a Feature suspends all underlying Test Cases.</li>
+    <li><strong>Soft Delete:</strong> Entities have <code>isDeleted = true</code> to preserve historical audit data while hiding them from active queries.</li>
+</ul>
+
+<h2>3. User Roles & Permission Matrix (RBAC)</h2>
+
+<p>The application supports 3 distinct roles with granular permissions:</p>
+
+<table>
+    <thead>
+        <tr>
+            <th style="width: 30%;">Capability / Action</th>
+            <th style="width: 23%; text-align: center;"><span class="badge-admin">ADMIN</span></th>
+            <th style="width: 23%; text-align: center;"><span class="badge-manager">MANAGER</span></th>
+            <th style="width: 24%; text-align: center;"><span class="badge-tester">TESTER</span></th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>User Registration & Login</td>
+            <td style="text-align: center;">✅</td>
+            <td style="text-align: center;">✅</td>
+            <td style="text-align: center;">✅</td>
+        </tr>
+        <tr>
+            <td>Approve / Confirm Pending Users</td>
+            <td style="text-align: center;">✅</td>
+            <td style="text-align: center;">✅</td>
+            <td style="text-align: center;">❌</td>
+        </tr>
+        <tr>
+            <td>View Manager KPI Dashboards & Analytics</td>
+            <td style="text-align: center;">✅</td>
+            <td style="text-align: center;">✅</td>
+            <td style="text-align: center;">❌</td>
+        </tr>
+        <tr>
+            <td>Create / Edit Projects</td>
+            <td style="text-align: center;">✅</td>
+            <td style="text-align: center;">✅</td>
+            <td style="text-align: center;">✅</td>
+        </tr>
+        <tr>
+            <td>Change Project Active / Inactive Status</td>
+            <td style="text-align: center;">✅</td>
+            <td style="text-align: center;">✅ (Exclusive)</td>
+            <td style="text-align: center;">❌</td>
+        </tr>
+        <tr>
+            <td>Create / Edit Features & Test Cases</td>
+            <td style="text-align: center;">✅</td>
+            <td style="text-align: center;">✅</td>
+            <td style="text-align: center;">✅</td>
+        </tr>
+        <tr>
+            <td>Bulk Excel Upload & Template Download</td>
+            <td style="text-align: center;">✅</td>
+            <td style="text-align: center;">✅</td>
+            <td style="text-align: center;">✅</td>
+        </tr>
+        <tr>
+            <td>Execute Test Cases (Pass/Fail) & Log Bugs</td>
+            <td style="text-align: center;">✅</td>
+            <td style="text-align: center;">✅</td>
+            <td style="text-align: center;">✅</td>
+        </tr>
+        <tr>
+            <td>Post Comments & Upload Attachments</td>
+            <td style="text-align: center;">✅</td>
+            <td style="text-align: center;">✅</td>
+            <td style="text-align: center;">✅</td>
+        </tr>
+    </tbody>
+</table>
+
+<h2>4. Detailed Core Modules Breakdown</h2>
+
+<h3>4.1 Authentication & User Approval Lifecycle</h3>
+<ul>
+    <li><strong>Registration:</strong> New users sign up with username, email, and password. By default, accounts are in a <code>PENDING</code> inactive state.</li>
+    <li><strong>Manager Confirmation:</strong> A Manager reviews pending users via <code>/manager/users/pending</code> and confirms their role (e.g. TESTER, MANAGER) or rejects them.</li>
+    <li><strong>Secure Login:</strong> Generates a short-lived <strong>Access Token</strong> (JWT) and a persisted <strong>Refresh Token</strong> for seamless session rotation.</li>
+</ul>
+
+<h3>4.2 Project & Feature Slicing</h3>
+<ul>
+    <li><strong>Projects:</strong> Groups software products by Name, Region (e.g. US, EU, APAC), and Status.</li>
+    <li><strong>Features:</strong> Slices projects into testable deliverables with sprint numbers, feature versions, and custom duration timers (Days, Hours, Minutes, or Live Start/End timers).</li>
+</ul>
+
+<h3>4.3 Test Case Management & Bulk Excel Processing</h3>
+<ul>
+    <li><strong>Manual Creation:</strong> Single test cases with Preconditions, Test Data, Execution Steps, UI Validations, and DB Validations.</li>
+    <li><strong>Dynamic Excel Template:</strong> Custom generator (<code>/testcases/template/{projectId}/{featureId}</code>) creates pre-formatted <code>.xlsx</code> templates with dropdowns and column guides.</li>
+    <li><strong>Bulk Upload Engine:</strong> High-performance Apache POI reader that parses hundreds of test cases in a single transaction, validating mandatory fields and providing row-by-row error reporting.</li>
+</ul>
+
+<h3>4.4 Test Execution Engine</h3>
+<ul>
+    <li>Tracks execution status for every test case: <code>PASS</code>, <code>FAIL</code>, <code>NORUN</code>, <code>DESCOPE</code>, <code>BLOCKED</code>.</li>
+    <li>Automatically increments failure metrics and links directly to defect creation when a test case fails.</li>
+</ul>
+
+<h3>4.5 Bug & Defect Tracking System</h3>
+<ul>
+    <li>Auto-generated unique format IDs (e.g., <code>BUG-1001</code>).</li>
+    <li>Captures Severity (<code>CRITICAL</code>, <code>HIGH</code>, <code>MEDIUM</code>, <code>LOW</code>) and Priority (<code>P1</code>, <code>P2</code>, <code>P3</code>, <code>P4</code>).</li>
+    <li><strong>Occurrence Counter:</strong> Tracks how many times a bug reproduces across test runs.</li>
+    <li><strong>Bug History:</strong> Maintains an immutable audit trail of all status changes (e.g., <code>OPEN</code> ➔ <code>IN_PROGRESS</code> ➔ <code>RESOLVED</code> ➔ <code>CLOSED</code>).</li>
+</ul>
+
+<h3>4.6 Real-Time Comments & Collaboration</h3>
+<ul>
+    <li>Live communication thread attached to any bug.</li>
+    <li>Allows testers, developers, and managers to discuss reproduction steps and fixes in real time.</li>
+</ul>
+
+<h3>4.7 Enterprise Attachment Repository</h3>
+<ul>
+    <li>Supports multi-level attachments: Attach files directly to a <strong>Project</strong>, <strong>Feature</strong>, <strong>TestCase</strong>, or <strong>Bug</strong>.</li>
+    <li>Stores files securely as BLOBs with metadata (file size, MIME type, upload timestamp, author).</li>
+    <li><strong>Bulk ZIP Downloader:</strong> Automatically packages multiple attachments into a single downloadable <code>.zip</code> file with duplicate filename resolution.</li>
+</ul>
+
+<h3>4.8 Executive & Manager Analytics Dashboards</h3>
+<ul>
+    <li><strong>Overview Dashboard:</strong> High-level cards for Total Projects, Active Features, Test Case Execution Progress, Defect Severity Distribution, and Failing Features.</li>
+    <li><strong>Project Deep-Dive:</strong> Pass/Fail ratios, descope counts, bug density per feature, and tester productivity.</li>
+    <li><strong>Feature Deep-Dive:</strong> Execution percentage, open vs resolved bugs, and average test cycle time.</li>
+</ul>
+
+<h2>5. Standardized API Architecture (Unified Responses)</h2>
+
+<div class="success-box">
+<strong>Unified API Design Philosophy:</strong>
+All <code>GET</code>, <code>POST</code>, and <code>PUT</code> endpoints return the <strong>exact same standardized response DTO</strong> wrapped in a universal <code>ApiResponse&lt;T&gt;</code> envelope.
+</div>
+
+<table>
+    <thead>
+        <tr>
+            <th>Module</th>
+            <th>HTTP POST (Create)</th>
+            <th>HTTP GET (Read by ID)</th>
+            <th>HTTP PUT (Update)</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td><strong>Project</strong></td>
+            <td><code>ApiResponse&lt;ProjectResponse&gt;</code></td>
+            <td><code>ApiResponse&lt;ProjectResponse&gt;</code></td>
+            <td><code>ApiResponse&lt;ProjectResponse&gt;</code></td>
+        </tr>
+        <tr>
+            <td><strong>Feature</strong></td>
+            <td><code>ApiResponse&lt;FeatureResponse&gt;</code></td>
+            <td><code>ApiResponse&lt;FeatureResponse&gt;</code></td>
+            <td><code>ApiResponse&lt;FeatureResponse&gt;</code></td>
+        </tr>
+        <tr>
+            <td><strong>TestCase</strong></td>
+            <td><code>ApiResponse&lt;TestCaseExecutionResponse&gt;</code></td>
+            <td><code>ApiResponse&lt;TestCaseResponse&gt;</code></td>
+            <td><code>ApiResponse&lt;TestCaseResponse&gt;</code></td>
+        </tr>
+        <tr>
+            <td><strong>Bug</strong></td>
+            <td><code>ApiResponse&lt;BugResponse&gt;</code></td>
+            <td><code>ApiResponse&lt;BugResponse&gt;</code></td>
+            <td><code>ApiResponse&lt;BugResponse&gt;</code></td>
+        </tr>
+        <tr>
+            <td><strong>Comment</strong></td>
+            <td><code>ApiResponse&lt;CommentResponse&gt;</code></td>
+            <td><code>ApiResponse&lt;List&lt;CommentResponse&gt;&gt;</code></td>
+            <td><code>ApiResponse&lt;CommentResponse&gt;</code></td>
+        </tr>
+    </tbody>
+</table>
+
+<h3>Standard JSON Envelope Example:</h3>
+<pre>
+{
+  "success": true,
+  "message": "Operation completed successfully",
+  "data": {
+    "project": {
+      "projectId": 10,
+      "projectName": "Payment Gateway 2.0",
+      "status": "ACTIVE",
+      "region": "GLOBAL",
+      "version": 1
+    },
+    "audit": {
+      "createdBy": 2,
+      "createdByName": "alex_manager",
+      "createdAt": "2026-10-07T08:00:00Z"
+    }
+  },
+  "timestamp": "2026-10-07T08:00:00.123Z"
+}
+</pre>
+
+<h2>6. End-to-End QA Workflow</h2>
+
+<ol>
+    <li><strong>Step 1 (Manager Setup):</strong> Manager logs in, creates a new <strong>Project</strong> (e.g. <i>"E-Commerce App"</i>), and slices it into <strong>Features</strong> (e.g. <i>"Checkout Flow"</i>).</li>
+    <li><strong>Step 2 (Test Authoring):</strong> Tester downloads the dynamic Excel template, fills out 50 test cases offline, and uploads the spreadsheet via <code>POST /testcases/upload</code>.</li>
+    <li><strong>Step 3 (Test Execution):</strong> Tester executes test cases sequentially, marking results as <code>PASS</code> or <code>FAIL</code>.</li>
+    <li><strong>Step 4 (Bug Filing):</strong> On test failure, Tester logs a <strong>Bug</strong> (linked to the test case), attaches error screenshots, and posts comments.</li>
+    <li><strong>Step 5 (Resolution & Retest):</strong> Developer reviews bug comments, fixes the issue, updates bug status to <code>RESOLVED</code>, and Tester re-runs the test case to mark it <code>PASS</code>.</li>
+    <li><strong>Step 6 (Executive Review):</strong> Manager opens <code>/manager/dashboard/overview</code> to view real-time release readiness, defect trends, and sign off on deployment.</li>
+</ol>
+
+<hr style="margin-top: 30px; border: 0; border-top: 1px solid #CBD5E0;">
+<p style="text-align: center; color: #718096; font-size: 9.5pt;">&copy; 2026 Testing Automation Tool &bull; Enterprise QA System Architecture</p>
+
+</body>
+</html>

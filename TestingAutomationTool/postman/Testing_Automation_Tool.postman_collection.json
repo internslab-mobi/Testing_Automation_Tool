@@ -1,0 +1,748 @@
+{
+	"info": {
+		"_postman_id": "tat-api-collection-v1",
+		"name": "Testing Automation Tool (TAT) API",
+		"description": "Complete REST API Collection for Testing Automation Tool with automated JWT bearer authentication.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"auth": {
+		"type": "bearer",
+		"bearer": [
+			{
+				"key": "token",
+				"value": "{{accessToken}}",
+				"type": "string"
+			}
+		]
+	},
+	"item": [
+		{
+			"name": "1. Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"tester_user\",\n  \"email\": \"tester@example.com\",\n  \"password\": \"Tester@123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "register"]
+						}
+					}
+				},
+				{
+					"name": "Login (Auto Token Capture)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.data && jsonData.data.accessToken) {",
+									"    pm.environment.set(\"accessToken\", jsonData.data.accessToken);",
+									"    pm.environment.set(\"refreshToken\", jsonData.data.refreshToken);",
+									"    console.log(\"Access Token auto-saved to environment!\");",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"username\": \"admin\",\n  \"password\": \"Admin@123\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "login"]
+						}
+					}
+				},
+				{
+					"name": "Refresh Token",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();",
+									"if (jsonData.data && jsonData.data.accessToken) {",
+									"    pm.environment.set(\"accessToken\", jsonData.data.accessToken);",
+									"    pm.environment.set(\"refreshToken\", jsonData.data.refreshToken);",
+									"}"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"auth": { "type": "noauth" },
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"refreshToken\": \"{{refreshToken}}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/auth/refresh",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "refresh"]
+						}
+					}
+				},
+				{
+					"name": "Logout",
+					"request": {
+						"method": "POST",
+						"url": {
+							"raw": "{{baseUrl}}/auth/logout",
+							"host": ["{{baseUrl}}"],
+							"path": ["auth", "logout"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "2. Manager & Dashboard",
+			"item": [
+				{
+					"name": "Get Manager Overview",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/manager/dashboard/overview",
+							"host": ["{{baseUrl}}"],
+							"path": ["manager", "dashboard", "overview"]
+						}
+					}
+				},
+				{
+					"name": "Get Project Dashboard",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/manager/dashboard/project/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["manager", "dashboard", "project", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get Feature Dashboard",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/manager/dashboard/feature/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["manager", "dashboard", "feature", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get Pending Users",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/manager/users/pending",
+							"host": ["{{baseUrl}}"],
+							"path": ["manager", "users", "pending"]
+						}
+					}
+				},
+				{
+					"name": "Get Active Users",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/manager/users/active",
+							"host": ["{{baseUrl}}"],
+							"path": ["manager", "users", "active"]
+						}
+					}
+				},
+				{
+					"name": "Confirm User Role",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"userId\": 2,\n  \"role\": \"TESTER\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/manager/userConfirmation",
+							"host": ["{{baseUrl}}"],
+							"path": ["manager", "userConfirmation"]
+						}
+					}
+				},
+				{
+					"name": "Reject User",
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "{{baseUrl}}/manager/userRejection/2",
+							"host": ["{{baseUrl}}"],
+							"path": ["manager", "userRejection", "2"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "3. Project Management",
+			"item": [
+				{
+					"name": "Create Project",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"projectName\": \"Mobile Banking App\",\n  \"description\": \"Comprehensive test suite for iOS & Android\",\n  \"region\": \"GLOBAL\",\n  \"comments\": \"Sprint 1 launch\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/project",
+							"host": ["{{baseUrl}}"],
+							"path": ["project"]
+						}
+					}
+				},
+				{
+					"name": "Get All Projects",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/project",
+							"host": ["{{baseUrl}}"],
+							"path": ["project"]
+						}
+					}
+				},
+				{
+					"name": "Get Project by ID",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/project/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["project", "1"]
+						}
+					}
+				},
+				{
+					"name": "Search Projects",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/project/search?keyword=Mobile&status=ACTIVE",
+							"host": ["{{baseUrl}}"],
+							"path": ["project", "search"],
+							"query": [
+								{ "key": "keyword", "value": "Mobile" },
+								{ "key": "status", "value": "ACTIVE" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Project (PUT)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"projectName\": \"Mobile Banking App Updated\",\n  \"description\": \"Updated project description\",\n  \"status\": \"ACTIVE\",\n  \"region\": \"GLOBAL\",\n  \"comments\": \"Updated comments\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/project/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["project", "1"]
+						}
+					}
+				},
+				{
+					"name": "Patch Project",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"projectName\": \"Partially Modified Project\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/project/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["project", "1"]
+						}
+					}
+				},
+				{
+					"name": "Patch Project Status (Manager)",
+					"request": {
+						"method": "PATCH",
+						"url": {
+							"raw": "{{baseUrl}}/project/access/1?status=ACTIVE",
+							"host": ["{{baseUrl}}"],
+							"path": ["project", "access", "1"],
+							"query": [
+								{ "key": "status", "value": "ACTIVE" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Soft Delete Project",
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "{{baseUrl}}/project/delete/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["project", "delete", "1"]
+						}
+					}
+				},
+				{
+					"name": "Hard Delete Project",
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "{{baseUrl}}/project/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["project", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "4. Feature Management",
+			"item": [
+				{
+					"name": "Create Feature",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"projectId\": 1,\n  \"featureName\": \"Fund Transfer Flow\",\n  \"description\": \"Inter-bank and intra-bank transfer testing\",\n  \"sprint\": 1,\n  \"featureVersion\": \"v1.0.0\",\n  \"comments\": \"High priority deliverable\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/feature",
+							"host": ["{{baseUrl}}"],
+							"path": ["feature"]
+						}
+					}
+				},
+				{
+					"name": "Get Feature by ID",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/feature/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["feature", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get Features by Project ID",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/feature/project/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["feature", "project", "1"]
+						}
+					}
+				},
+				{
+					"name": "Search Features",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/feature/search?page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["feature", "search"],
+							"query": [
+								{ "key": "page", "value": "0" },
+								{ "key": "size", "value": "10" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Feature (PUT)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"featureName\": \"Fund Transfer Flow Updated\",\n  \"description\": \"Updated feature description\",\n  \"sprint\": 2,\n  \"featureVersion\": \"v1.1.0\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/feature/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["feature", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete Feature",
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "{{baseUrl}}/feature/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["feature", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "5. Test Case Management & Excel",
+			"item": [
+				{
+					"name": "Create Test Case (Manual)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"featureId\": 1,\n  \"title\": \"Verify OTP generation on valid phone number\",\n  \"testType\": \"FUNCTIONAL\",\n  \"testPriority\": \"HIGH\",\n  \"precondition\": \"User account must exist\",\n  \"testData\": \"Phone: 9876543210\",\n  \"executionSteps\": \"1. Enter phone number\\n2. Click Send OTP\",\n  \"uiValidations\": \"OTP input box must appear\",\n  \"dbValidations\": \"OTP record stored in DB with 5 min expiry\",\n  \"comments\": \"Critical path\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/testcases",
+							"host": ["{{baseUrl}}"],
+							"path": ["testcases"]
+						}
+					}
+				},
+				{
+					"name": "Download Excel Template",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/testcases/template/1/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["testcases", "template", "1", "1"]
+						}
+					}
+				},
+				{
+					"name": "Upload Excel Test Cases",
+					"request": {
+						"method": "POST",
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "file", "type": "file", "src": "" },
+								{ "key": "featureId", "value": "1", "type": "text" }
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/testcases/upload",
+							"host": ["{{baseUrl}}"],
+							"path": ["testcases", "upload"]
+						}
+					}
+				},
+				{
+					"name": "Get All Test Cases",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/testcases?featureId=1&page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["testcases"],
+							"query": [
+								{ "key": "featureId", "value": "1" },
+								{ "key": "page", "value": "0" },
+								{ "key": "size", "value": "10" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Test Case by ID",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/testcases/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["testcases", "1"]
+						}
+					}
+				},
+				{
+					"name": "Update Test Case (PUT Execution)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"title\": \"Verify OTP generation on valid phone number\",\n  \"testType\": \"FUNCTIONAL\",\n  \"testPriority\": \"HIGH\",\n  \"testExecution\": \"PASS\",\n  \"testValidation\": \"OTP received within 3 seconds\",\n  \"executionSteps\": \"Executed on staging environment\",\n  \"comments\": \"Execution completed without errors\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/testcases/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["testcases", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete Test Case",
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "{{baseUrl}}/testcases/soft/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["testcases", "soft", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "6. Bug Tracking",
+			"item": [
+				{
+					"name": "Create Bug",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bugTitle\": \"OTP SMS not received for international country codes\",\n  \"bugDescription\": \"When entering +44 or +1 phone numbers, no SMS is triggered.\",\n  \"severity\": \"CRITICAL\",\n  \"priority\": \"P1\",\n  \"category\": \"FUNCTIONAL\",\n  \"expectedResult\": \"SMS OTP received in 5 seconds\",\n  \"actualResult\": \"Error code 500 returned by SMS gateway\",\n  \"stepsToReproduce\": \"1. Enter UK phone number\\n2. Click Send OTP\",\n  \"assignedTo\": 2\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/bugs?testcaseId=1",
+							"host": ["{{baseUrl}}"],
+							"path": ["bugs"],
+							"query": [
+								{ "key": "testcaseId", "value": "1" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Get Bug by ID",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/bugs/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["bugs", "1"]
+						}
+					}
+				},
+				{
+					"name": "Get All Bugs",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/bugs?page=0&size=10",
+							"host": ["{{baseUrl}}"],
+							"path": ["bugs"],
+							"query": [
+								{ "key": "page", "value": "0" },
+								{ "key": "size", "value": "10" }
+							]
+						}
+					}
+				},
+				{
+					"name": "Update Bug (PUT)",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"bugTitle\": \"OTP SMS not received for international numbers (Fixed)\",\n  \"bugDescription\": \"Updated gateway configuration\",\n  \"severity\": \"HIGH\",\n  \"priority\": \"P2\",\n  \"category\": \"FUNCTIONAL\",\n  \"status\": \"RESOLVED\",\n  \"assignedTo\": 2\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/bugs/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["bugs", "1"]
+						}
+					}
+				},
+				{
+					"name": "Patch Bug Status",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"status\": \"CLOSED\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/bugs/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["bugs", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete Bug",
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "{{baseUrl}}/bugs/delete/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["bugs", "delete", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "7. Comments (Bug Chat)",
+			"item": [
+				{
+					"name": "Add Comment to Bug",
+					"request": {
+						"method": "POST",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"comment\": \"Verified on staging build #42. The fix looks good!\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/bugs/1/comments",
+							"host": ["{{baseUrl}}"],
+							"path": ["bugs", "1", "comments"]
+						}
+					}
+				},
+				{
+					"name": "Get Comments for Bug",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/bugs/1/comments",
+							"host": ["{{baseUrl}}"],
+							"path": ["bugs", "1", "comments"]
+						}
+					}
+				},
+				{
+					"name": "Update Comment",
+					"request": {
+						"method": "PUT",
+						"header": [
+							{ "key": "Content-Type", "value": "application/json" }
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"comment\": \"Updated comment text with additional test logs.\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/comments/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["comments", "1"]
+						}
+					}
+				},
+				{
+					"name": "Delete Comment",
+					"request": {
+						"method": "DELETE",
+						"url": {
+							"raw": "{{baseUrl}}/comments/1",
+							"host": ["{{baseUrl}}"],
+							"path": ["comments", "1"]
+						}
+					}
+				}
+			]
+		},
+		{
+			"name": "8. Attachments",
+			"item": [
+				{
+					"name": "Upload Project Attachment",
+					"request": {
+						"method": "POST",
+						"body": {
+							"mode": "formdata",
+							"formdata": [
+								{ "key": "files", "type": "file", "src": "" }
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/project/1/attachments",
+							"host": ["{{baseUrl}}"],
+							"path": ["project", "1", "attachments"]
+						}
+					}
+				},
+				{
+					"name": "Get Project Attachments",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/project/1/attachments",
+							"host": ["{{baseUrl}}"],
+							"path": ["project", "1", "attachments"]
+						}
+					}
+				},
+				{
+					"name": "Download Project Attachments ZIP",
+					"request": {
+						"method": "GET",
+						"url": {
+							"raw": "{{baseUrl}}/project/1/attachments/download",
+							"host": ["{{baseUrl}}"],
+							"path": ["project", "1", "attachments", "download"]
+						}
+					}
+				}
+			]
+		}
+	]
+}

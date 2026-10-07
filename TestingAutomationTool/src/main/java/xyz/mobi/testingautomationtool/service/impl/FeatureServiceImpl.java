@@ -323,7 +323,7 @@ public class FeatureServiceImpl implements FeatureService {
     }
 
     @Override
-    public FeaturePutResponse updateFeature(Integer featureId, FeaturePutRequest request) {
+    public FeatureResponse updateFeature(Integer featureId, FeaturePutRequest request) {
         Feature feature = featureRepository.findByFeatureIdAndIsDeletedFalseAndProjectStatus(
                 featureId,
                         ProjectStatus.ACTIVE)
@@ -337,7 +337,7 @@ public class FeatureServiceImpl implements FeatureService {
         feature.setUpdatedBy(authService.getCurrentUser());
 
         Feature savedFeature = featureRepository.save(feature);
-        return featureMapper.toPutResponse(savedFeature);
+        return featureMapper.toResponse(savedFeature);
     }
 
 

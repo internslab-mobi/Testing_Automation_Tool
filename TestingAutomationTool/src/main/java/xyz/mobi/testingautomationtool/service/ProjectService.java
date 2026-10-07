@@ -15,7 +15,7 @@ public interface ProjectService {
 
 //    AttachmentResponse uploadAttachment(MultipartFile file, Integer projectId) throws IOException;
 
-    ProjectPutResponse updateProject(Integer id, ProjectPutRequest request);
+    ProjectResponse updateProject(Integer id, ProjectPutRequest request);
 
     String patchProject(Integer id, ProjectPatchRequest request);
 

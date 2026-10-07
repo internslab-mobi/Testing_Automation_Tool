@@ -61,6 +61,7 @@ public class ProjectResponse {
     public static class AuditResponse {
         private Integer createdBy;
         private String createdByName;
+        private Integer updatedBy;
         private String updatedByName;
         private Instant createdAt;
         private Instant updatedAt;

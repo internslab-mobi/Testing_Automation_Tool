@@ -48,45 +48,14 @@ public interface FeatureMapper {
         FeatureResponse.AuditResponse audit = FeatureResponse.AuditResponse.builder()
                 .createdBy(feature.getCreatedBy() != null ? feature.getCreatedBy().getUserId() : null)
                 .creatorName(feature.getCreatedBy() != null ? feature.getCreatedBy().getUsername() : null)
+                .updatedBy(feature.getUpdatedBy() != null ? feature.getUpdatedBy().getUserId() : null)
+                .updatedByName(feature.getUpdatedBy() != null ? feature.getUpdatedBy().getUsername() : null)
                 .createdAt(feature.getCreatedAt())
+                .updatedAt(feature.getUpdatedAt())
                 .build();
 
         return FeatureResponse.builder()
                 .feature(featureDetails)
-                .project(projectRef)
-                .audit(audit)
-                .build();
-    }
-
-    default FeaturePutResponse toPutResponse(Feature feature) {
-        if (feature == null) {
-            return null;
-        }
-
-        FeaturePutResponse.FeatureDetails details = FeaturePutResponse.FeatureDetails.builder()
-                .featureId(feature.getFeatureId())
-                .featureName(feature.getFeatureName())
-                .description(feature.getDescription())
-                .status(feature.getStatus())
-                .sprint(feature.getSprint())
-                .featureVersion(feature.getFeatureVersion())
-                .duration(feature.getDuration())
-                .startTime(feature.getStartTime())
-                .build();
-
-        FeaturePutResponse.ProjectRef projectRef = null;
-        if (feature.getProject() != null) {
-            projectRef = FeaturePutResponse.ProjectRef.builder()
-                    .projectId(feature.getProject().getProjectId())
-                    .build();
-        }
-
-        FeaturePutResponse.AuditResponse audit = FeaturePutResponse.AuditResponse.builder()
-                .updatedBy(feature.getUpdatedBy() != null ? feature.getUpdatedBy().getUserId() : null)
-                .build();
-
-        return FeaturePutResponse.builder()
-                .feature(details)
                 .project(projectRef)
                 .audit(audit)
                 .build();
