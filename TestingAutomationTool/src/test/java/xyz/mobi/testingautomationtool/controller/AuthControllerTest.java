@@ -65,9 +65,10 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
-                .andExpect(jsonPath("$.token").value("jwt.token.value"))
-                .andExpect(jsonPath("$.username").value("manager_user"))
-                .andExpect(jsonPath("$.role").value("MANAGER"));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.token").value("jwt.token.value"))
+                .andExpect(jsonPath("$.data.username").value("manager_user"))
+                .andExpect(jsonPath("$.data.role").value("MANAGER"));
     }
 
     @Test
@@ -94,8 +95,9 @@ class AuthControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.token").value("jwt.token.value"))
-                .andExpect(jsonPath("$.username").value("tester_user"))
-                .andExpect(jsonPath("$.role").value("TESTER"));
+                .andExpect(jsonPath("$.success").value(true))
+                .andExpect(jsonPath("$.data.token").value("jwt.token.value"))
+                .andExpect(jsonPath("$.data.username").value("tester_user"))
+                .andExpect(jsonPath("$.data.role").value("TESTER"));
     }
 }

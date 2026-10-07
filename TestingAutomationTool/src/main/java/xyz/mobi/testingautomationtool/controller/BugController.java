@@ -15,6 +15,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import xyz.mobi.testingautomationtool.dto.ApiResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.BugDTO.*;
@@ -41,53 +42,52 @@ public class BugController {
     private final AttachmentService attachmentService;
 
     @PostMapping
-    public ResponseEntity<BugResponse> createBug(@Valid @RequestBody BugRequest request) {
+    public ResponseEntity<ApiResponse<BugResponse>> createBug(@Valid @RequestBody BugRequest request) {
         BugResponse response = bugService.createBug(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Bug created successfully", response));
     }
 
     @GetMapping("/{bugId}")
-    public ResponseEntity<BugResponse> getById(@PathVariable Integer bugId) {
-        return ResponseEntity.ok(bugService.getById(bugId));
+    public ResponseEntity<ApiResponse<BugResponse>> getById(@PathVariable Integer bugId) {
+        return ResponseEntity.ok(ApiResponse.success("Bug retrieved successfully", bugService.getById(bugId)));
     }
 
     @GetMapping
-    public ResponseEntity<Page<BugResponse>> getAllBugs(
+    public ResponseEntity<ApiResponse<Page<BugResponse>>> getAllBugs(
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size) {
-        return ResponseEntity.ok(bugService.getAllBugs(page, size));
+        return ResponseEntity.ok(ApiResponse.success("Bugs retrieved successfully", bugService.getAllBugs(page, size)));
     }
 
     @PutMapping("/{bugId}")
-    public ResponseEntity<BugResponse> updateBug(
+    public ResponseEntity<ApiResponse<BugResponse>> updateBug(
             @PathVariable Integer bugId,
             @Valid @RequestBody BugPutRequest request) {
-        return ResponseEntity.ok(bugService.updateBug(bugId, request));
+        return ResponseEntity.ok(ApiResponse.success("Bug updated successfully", bugService.updateBug(bugId, request)));
     }
 
     @PatchMapping("/{bugId}")
-    public ResponseEntity<String> patchBug(
+    public ResponseEntity<ApiResponse<String>> patchBug(
             @PathVariable Integer bugId,
             @Valid @RequestBody BugPatchRequest request) {
-        return ResponseEntity.ok(bugService.patchBug(bugId, request));
+        return ResponseEntity.ok(ApiResponse.success(bugService.patchBug(bugId, request)));
     }
 
     @DeleteMapping("/delete/{bugId}")
-    public ResponseEntity<String> deleteBug(@PathVariable Integer bugId) {
+    public ResponseEntity<ApiResponse<String>> deleteBug(@PathVariable Integer bugId) {
         bugService.deleteBug(bugId);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                .body("Bug permanently deleted successfully");
+        return ResponseEntity.ok(ApiResponse.success("Bug soft deleted successfully"));
     }
 
     @DeleteMapping("/{bugId}")
-    public ResponseEntity<String> hardDeleteBug(@PathVariable Integer bugId) {
+    public ResponseEntity<ApiResponse<String>> hardDeleteBug(@PathVariable Integer bugId) {
         bugService.hardDelete(bugId);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                .body("Bug permanently deleted successfully");
+        return ResponseEntity.ok(ApiResponse.success("Bug permanently deleted successfully"));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Page<BugResponse>> globalSearch(
+    public ResponseEntity<ApiResponse<Page<BugResponse>>> globalSearch(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) BugSeverity severity,
             @RequestParam(required = false) BugPriority priority,
@@ -96,47 +96,48 @@ public class BugController {
             @RequestParam(required = false) Integer bugOccurrence,
             @RequestParam(required = false) Boolean isActive,
             @RequestParam(required = false) LocalDate resolvedFrom,
+            @RequestParam(required = false) LocalDate resolvedTo,
+            @RequestParam(required = false, defaultValue = "UTC") String timeZone,
             @RequestParam(required = false) String executedBy,
             @RequestParam(required = false) String assignedTo,
             @RequestParam(required = false) String updatedBy,
-            @RequestParam(required = false) LocalDate resolvedTo,
-            @RequestParam(required = false) String timeZone,
-            @PageableDefault(size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
-            @ParameterObject Pageable pageable
-    ) {
-        Page<BugResponse> response = bugService.globalSearch(
-                keyword, severity, priority, status, category,
-                bugOccurrence, isActive, resolvedFrom, resolvedTo,
-                timeZone, pageable, executedBy, assignedTo, updatedBy
+            @PageableDefault(page = 0, size = 10, sort = "createdAt", direction = Sort.Direction.DESC)
+            @ParameterObject Pageable pageable) {
+
+        return ResponseEntity.ok(
+                ApiResponse.success("Bug search results", bugService.globalSearch(keyword, severity, priority, status, category,
+                        bugOccurrence, isActive, resolvedFrom, resolvedTo, timeZone, pageable, executedBy, assignedTo, updatedBy))
         );
-        return ResponseEntity.ok(response);
     }
 
-    @PostMapping(value = "/{bugId}/attachments", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<List<AttachmentResponse>> uploadAttachment(
+    @PostMapping(value = "/attachment/{bugId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<List<AttachmentResponse>>> uploadAttachment(
             @RequestParam("file") List<MultipartFile> file,
-            @PathVariable Integer bugId,
-            @RequestParam(value = "attachmentType", required = false, defaultValue = "BUG") AttachmentType attachmentType) throws IOException {
-        AttachmentType attachmentType1 = AttachmentType.BUG;
-        List<AttachmentResponse> response = attachmentService.uploadAttachments(attachmentType1,bugId,file);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+            @PathVariable("bugId") Integer bugId
+    ) throws IOException {
+        List<AttachmentResponse> response = attachmentService.uploadAttachments(AttachmentType.BUG, bugId, file);
+        return ResponseEntity.ok(ApiResponse.success("Attachments uploaded successfully", response));
     }
 
-    @GetMapping("/{bugId}/attachments")
-    public ResponseEntity<List<AttachmentResponse>> getAttachments(@PathVariable Integer bugId) {
-        AttachmentType attachmentType1 = AttachmentType.BUG;
-        List<AttachmentResponse> attachments = attachmentService.getAttachments(attachmentType1,bugId);
-        return ResponseEntity.ok(attachments);
-    }
+    @GetMapping("/bugs/{bugId}/attachments/download")
+    public ResponseEntity<byte[]> downloadBugAttachments(
+            @PathVariable Integer bugId) {
 
-    @GetMapping("/attachments/{attachmentId}/download")
-    public ResponseEntity<byte[]> downloadAttachment(@PathVariable Integer attachmentId) {
-        AttachmentDownloadResponse attachment = bugService.downloadBugAttachments(attachmentId);
-        String contentType = attachment.getContentType() != null ? attachment.getContentType(): MediaType.APPLICATION_OCTET_STREAM_VALUE;
+        AttachmentDownloadResponse response =
+                bugService.downloadBugAttachments(bugId);
 
         return ResponseEntity.ok()
-                .contentType(MediaType.parseMediaType(contentType))
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + attachment.getFileName() + "\"")
-                .body(attachment.getFile());
+                .header(
+                        HttpHeaders.CONTENT_DISPOSITION,
+                        org.springframework.http.ContentDisposition.attachment()
+                                .filename(response.getFileName())
+                                .build()
+                                .toString()
+                )
+                .contentType(
+                        MediaType.parseMediaType(response.getContentType())
+                )
+                .contentLength(response.getFile().length)
+                .body(response.getFile());
     }
 }

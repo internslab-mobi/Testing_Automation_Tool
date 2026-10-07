@@ -15,15 +15,48 @@ import java.time.Instant;
 @AllArgsConstructor
 @Builder
 public class ProjectPutResponse {
-    private Integer projectId;
-    private String projectName;
-    private String description;
-    private ProjectStatus status;
-    private String region;
-    private boolean isActive;
-    private boolean isDeleted;
-    private String createdBy;
-    private String updatedBy;
-    private Instant createdAt;
-    private Instant updatedAt;
+
+    // --- Legacy Flat Fields (Commented to prevent duplicate keys in JSON response) ---
+    // private Integer projectId;
+    // private String projectName;
+    // private String description;
+    // private ProjectStatus status;
+    // private String region;
+    // private boolean isActive;
+    // private boolean isDeleted;
+    // private String createdBy;
+    // private String updatedBy;
+    // private Instant createdAt;
+    // private Instant updatedAt;
+
+    // Structured inner JSON fields (using static inner classes)
+    private ProjectDetails project;
+    private AuditResponse audit;
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class ProjectDetails {
+        private Integer projectId;
+        private String projectName;
+        private String description;
+        private ProjectStatus status;
+        private String region;
+        private Boolean isActive;
+        private Boolean isDeleted;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @Builder
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    public static class AuditResponse {
+        private String createdBy;
+        private String updatedBy;
+        private Instant createdAt;
+        private Instant updatedAt;
+    }
 }

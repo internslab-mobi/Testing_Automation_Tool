@@ -19,11 +19,14 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import xyz.mobi.testingautomationtool.dto.ApiResponse;
 import xyz.mobi.testingautomationtool.entity.Error;
 import xyz.mobi.testingautomationtool.repository.ErrorDataRepository;
 
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -71,24 +74,25 @@ public class GlobalExceptionHandler {
         return "ERR_" + exceptionName.toUpperCase();
     }
 
-    private ResponseEntity<ErrorResponse> buildErrorResponse(
+    private ResponseEntity<ApiResponse<Void>> buildErrorResponse(
             String errorCode,
             String errorMessage,
             HttpStatus status) {
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .success(false)
                 .errorCode(errorCode)
-                .errorMessage(errorMessage)
+                .message(errorMessage)
                 .errorStatusCode(status.value())
-                .time(Instant.now())
+                .timestamp(Instant.now())
                 .build();
 
-        return new ResponseEntity<>(errorResponse, status);
+        return new ResponseEntity<>(response, status);
     }
 
     // 1. ResourceNotFoundException (ERR_001 - 404)
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(ResourceNotFoundException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleResourceNotFoundException(ResourceNotFoundException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.warn("ResourceNotFoundException: {}", ex.getMessage());
@@ -97,7 +101,7 @@ public class GlobalExceptionHandler {
 
     // 2. IllegalArgumentException (ERR_002 - 400)
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(IllegalArgumentException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleIllegalArgumentException(IllegalArgumentException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.warn("IllegalArgumentException: {}", ex.getMessage());
@@ -106,7 +110,7 @@ public class GlobalExceptionHandler {
 
     // 3. IllegalStateException (ERR_003 - 400)
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalStateException(IllegalStateException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleIllegalStateException(IllegalStateException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.warn("IllegalStateException: {}", ex.getMessage());
@@ -115,7 +119,12 @@ public class GlobalExceptionHandler {
 
     // 4. MethodArgumentNotValidException (ERR_004 - 400)
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleValidationException(MethodArgumentNotValidException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleValidationException(MethodArgumentNotValidException ex) {
+        Map<String, String> fieldErrors = new HashMap<>();
+        for (FieldError error : ex.getBindingResult().getFieldErrors()) {
+            fieldErrors.put(error.getField(), error.getDefaultMessage());
+        }
+
         String errorMessage = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
@@ -124,12 +133,22 @@ public class GlobalExceptionHandler {
 
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
-        log.warn("MethodArgumentNotValidException: {}", errorMessage);
-        return buildErrorResponse(errorCode, errorMessage, HttpStatus.BAD_REQUEST);
+        log.warn("MethodArgumentNotValidException: {}", fieldErrors);
+
+        ApiResponse<Void> response = ApiResponse.<Void>builder()
+                .success(false)
+                .errorCode(errorCode)
+                .message(errorMessage != null && !errorMessage.isBlank() ? errorMessage : "Input validation failed")
+                .errorStatusCode(HttpStatus.BAD_REQUEST.value())
+                .validationErrors(fieldErrors)
+                .timestamp(Instant.now())
+                .build();
+
+        return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(EmailNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleEmailNotFoundException(EmailNotFoundException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleEmailNotFoundException(EmailNotFoundException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.warn("EmailNotFoundException: {}", ex.getMessage());
@@ -137,7 +156,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ErrorResponse> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleDataIntegrityViolationException(DataIntegrityViolationException ex) {
         log.error("DataIntegrityViolationException: ", ex);
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
@@ -146,7 +165,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(NullPointerException.class)
-    public ResponseEntity<ErrorResponse> handleNullPointerException(NullPointerException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleNullPointerException(NullPointerException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.error("NullPointerException occurred: ", ex);
@@ -155,7 +174,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(GlobalException.class)
-    public ResponseEntity<ErrorResponse> handleGlobalException(GlobalException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleGlobalException(GlobalException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.error("GlobalException occurred: {}", ex.getMessage(), ex);
@@ -163,7 +182,7 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(ExcelValidationException.class)
-    public ResponseEntity<ErrorResponse> handleExcelValidationException(ExcelValidationException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleExcelValidationException(ExcelValidationException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.warn("ExcelValidationException: {}", ex.getMessage());
@@ -172,7 +191,7 @@ public class GlobalExceptionHandler {
 
     // 11. ExcelProcessingException (ERR_011 - 400)
     @ExceptionHandler(ExcelProcessingException.class)
-    public ResponseEntity<ErrorResponse> handleExcelProcessingException(ExcelProcessingException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleExcelProcessingException(ExcelProcessingException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.error("ExcelProcessingException: {}", ex.getMessage(), ex);
@@ -181,7 +200,7 @@ public class GlobalExceptionHandler {
 
     // 12. MaxUploadSizeExceededException (ERR_012 - 413)
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<ErrorResponse> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.warn("MaxUploadSizeExceededException: {}", ex.getMessage());
@@ -190,7 +209,7 @@ public class GlobalExceptionHandler {
 
     // 13. ObjectOptimisticLockingFailureException (ERR_013 - 409)
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
-    public ResponseEntity<ErrorResponse> handleOptimisticLockingException(ObjectOptimisticLockingFailureException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleOptimisticLockingException(ObjectOptimisticLockingFailureException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.warn("Optimistic locking conflict: {}", ex.getMessage());
@@ -202,7 +221,7 @@ public class GlobalExceptionHandler {
 
     // 14. DuplicateResourceException (ERR_014 - 409)
     @ExceptionHandler(DuplicateResourceException.class)
-    public ResponseEntity<ErrorResponse> handleDuplicateResourceException(DuplicateResourceException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleDuplicateResourceException(DuplicateResourceException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.warn("DuplicateResourceException: {}", ex.getMessage());
@@ -211,7 +230,7 @@ public class GlobalExceptionHandler {
 
     // 15. AttachmentProcessingException (ERR_015 - 400)
     @ExceptionHandler(AttachmentProcessingException.class)
-    public ResponseEntity<ErrorResponse> handleAttachmentProcessingException(AttachmentProcessingException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleAttachmentProcessingException(AttachmentProcessingException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.error("AttachmentProcessingException: {}", ex.getMessage(), ex);
@@ -220,7 +239,7 @@ public class GlobalExceptionHandler {
 
     // 16. FileProcessingException (ERR_016 - 400)
     @ExceptionHandler(FileProcessingException.class)
-    public ResponseEntity<ErrorResponse> handleFileProcessingException(FileProcessingException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleFileProcessingException(FileProcessingException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.error("FileProcessingException: {}", ex.getMessage(), ex);
@@ -229,7 +248,7 @@ public class GlobalExceptionHandler {
 
     // 17. AccessDeniedException (ERR_017 - 403)
     @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<ErrorResponse> handleAccessDeniedException(AccessDeniedException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleAccessDeniedException(AccessDeniedException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.warn("Access denied: {}", ex.getMessage());
@@ -238,7 +257,7 @@ public class GlobalExceptionHandler {
 
     // 18. BadCredentialsException (ERR_018 - 401)
     @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ErrorResponse> handleBadCredentialsException(BadCredentialsException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleBadCredentialsException(BadCredentialsException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.warn("Bad credentials: {}", ex.getMessage());
@@ -247,7 +266,7 @@ public class GlobalExceptionHandler {
 
     // 19. AuthenticationException (ERR_019 - 401)
     @ExceptionHandler(AuthenticationException.class)
-    public ResponseEntity<ErrorResponse> handleAuthenticationException(AuthenticationException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleAuthenticationException(AuthenticationException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.warn("Authentication error: {}", ex.getMessage());
@@ -256,7 +275,7 @@ public class GlobalExceptionHandler {
 
     // 20. ExpiredJwtException (ERR_020 - 401)
     @ExceptionHandler(ExpiredJwtException.class)
-    public ResponseEntity<ErrorResponse> handleExpiredJwtException(ExpiredJwtException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleExpiredJwtException(ExpiredJwtException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.warn("JWT token expired: {}", ex.getMessage());
@@ -265,7 +284,7 @@ public class GlobalExceptionHandler {
 
     // 21. EmailSendingException (ERR_021 - 500)
     @ExceptionHandler(EmailSendingException.class)
-    public ResponseEntity<ErrorResponse> handleEmailSendingException(EmailSendingException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleEmailSendingException(EmailSendingException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.error("EmailSendingException: {}", ex.getMessage(), ex);
@@ -274,7 +293,7 @@ public class GlobalExceptionHandler {
 
     // 22. AccountDisabledException (ERR_022 - 403)
     @ExceptionHandler(AccountDisabledException.class)
-    public ResponseEntity<ErrorResponse> handleAccountDisabledException(AccountDisabledException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleAccountDisabledException(AccountDisabledException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.warn("AccountDisabledException: {}", ex.getMessage());
@@ -283,7 +302,7 @@ public class GlobalExceptionHandler {
 
     // 23. InvalidTokenException (ERR_023 - 401)
     @ExceptionHandler(InvalidTokenException.class)
-    public ResponseEntity<ErrorResponse> handleInvalidTokenException(InvalidTokenException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleInvalidTokenException(InvalidTokenException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.warn("InvalidTokenException: {}", ex.getMessage());
@@ -292,7 +311,7 @@ public class GlobalExceptionHandler {
 
     // UsernameNotFoundException (ERR_001 / ERR_005 - 404)
     @ExceptionHandler(UsernameNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleUsernameNotFoundException(UsernameNotFoundException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleUsernameNotFoundException(UsernameNotFoundException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.warn("UsernameNotFoundException: {}", ex.getMessage());
@@ -301,7 +320,7 @@ public class GlobalExceptionHandler {
 
     // Parent Business Exception Fallback (TestingAutomationException)
     @ExceptionHandler(TestingAutomationException.class)
-    public ResponseEntity<ErrorResponse> handleTestingAutomationException(TestingAutomationException ex) {
+    public ResponseEntity<ApiResponse<Void>> handleTestingAutomationException(TestingAutomationException ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.warn("TestingAutomationException ({}): {}", exceptionName, ex.getMessage());
@@ -310,7 +329,7 @@ public class GlobalExceptionHandler {
 
     // 9. Exception (ERR_999 - 500) - General Fallback Handler
     @ExceptionHandler(java.lang.Exception.class)
-    public ResponseEntity<ErrorResponse> handleGenericException(java.lang.Exception ex) {
+    public ResponseEntity<ApiResponse<Void>> handleGenericException(java.lang.Exception ex) {
         String exceptionName = ex.getClass().getSimpleName();
         String errorCode = getErrorCode(exceptionName);
         log.error("Unhandled exception occurred: ", ex);

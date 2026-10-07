@@ -19,6 +19,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
+import xyz.mobi.testingautomationtool.dto.ApiResponse;
 import xyz.mobi.testingautomationtool.entity.Error;
 import xyz.mobi.testingautomationtool.repository.ErrorDataRepository;
 
@@ -72,32 +73,38 @@ class GlobalExceptionHandlerTest {
     @Test
     void testHandleResourceNotFoundException() {
         ResourceNotFoundException ex = new ResourceNotFoundException("Resource not found");
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleResourceNotFoundException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleResourceNotFoundException(ex);
 
         assertNotNull(response);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_001", response.getBody().getErrorCode());
-        assertEquals("Resource not found", response.getBody().getErrorMessage());
+        assertEquals(404, response.getBody().getErrorStatusCode());
+        assertEquals("Resource not found", response.getBody().getMessage());
     }
 
     @Test
     void testHandleIllegalArgumentException() {
         IllegalArgumentException ex = new IllegalArgumentException("Invalid argument");
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleIllegalArgumentException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleIllegalArgumentException(ex);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_002", response.getBody().getErrorCode());
-        assertEquals("Invalid argument", response.getBody().getErrorMessage());
+        assertEquals(400, response.getBody().getErrorStatusCode());
+        assertEquals("Invalid argument", response.getBody().getMessage());
     }
 
     @Test
     void testHandleIllegalStateException() {
         IllegalStateException ex = new IllegalStateException("Illegal state");
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleIllegalStateException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleIllegalStateException(ex);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_003", response.getBody().getErrorCode());
-        assertEquals("Illegal state", response.getBody().getErrorMessage());
+        assertEquals(400, response.getBody().getErrorStatusCode());
+        assertEquals("Illegal state", response.getBody().getMessage());
     }
 
     @Test
@@ -109,173 +116,213 @@ class GlobalExceptionHandlerTest {
         when(ex.getBindingResult()).thenReturn(bindingResult);
         when(bindingResult.getFieldErrors()).thenReturn(List.of(fieldError));
 
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleValidationException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleValidationException(ex);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_004", response.getBody().getErrorCode());
-        assertEquals("must not be blank", response.getBody().getErrorMessage());
+        assertEquals(400, response.getBody().getErrorStatusCode());
+        assertEquals("must not be blank", response.getBody().getMessage());
+        assertNotNull(response.getBody().getValidationErrors());
+        assertEquals("must not be blank", response.getBody().getValidationErrors().get("field"));
     }
 
     @Test
     void testHandleEmailNotFoundException() {
         EmailNotFoundException ex = new EmailNotFoundException("Email not found");
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleEmailNotFoundException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleEmailNotFoundException(ex);
 
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_005", response.getBody().getErrorCode());
-        assertEquals("Email not found", response.getBody().getErrorMessage());
+        assertEquals(404, response.getBody().getErrorStatusCode());
+        assertEquals("Email not found", response.getBody().getMessage());
     }
 
     @Test
     void testHandleDataIntegrityViolationException() {
         DataIntegrityViolationException ex = new DataIntegrityViolationException("Integrity violation");
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleDataIntegrityViolationException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleDataIntegrityViolationException(ex);
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_006", response.getBody().getErrorCode());
+        assertEquals(409, response.getBody().getErrorStatusCode());
     }
 
     @Test
     void testHandleNullPointerException() {
         NullPointerException ex = new NullPointerException("Null value");
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleNullPointerException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleNullPointerException(ex);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_007", response.getBody().getErrorCode());
+        assertEquals(500, response.getBody().getErrorStatusCode());
     }
 
     @Test
     void testHandleGlobalException() {
         GlobalException ex = new GlobalException("Application error");
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleGlobalException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleGlobalException(ex);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_008", response.getBody().getErrorCode());
+        assertEquals(500, response.getBody().getErrorStatusCode());
     }
 
     @Test
     void testHandleExcelValidationException() {
         ExcelValidationException ex = new ExcelValidationException("Excel format error");
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleExcelValidationException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleExcelValidationException(ex);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_010", response.getBody().getErrorCode());
+        assertEquals(400, response.getBody().getErrorStatusCode());
     }
 
     @Test
     void testHandleExcelProcessingException() {
         ExcelProcessingException ex = new ExcelProcessingException("Excel read failure");
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleExcelProcessingException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleExcelProcessingException(ex);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_011", response.getBody().getErrorCode());
+        assertEquals(400, response.getBody().getErrorStatusCode());
     }
 
     @Test
     void testHandleMaxUploadSizeExceededException() {
         MaxUploadSizeExceededException ex = new MaxUploadSizeExceededException(50000000);
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleMaxUploadSizeExceededException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleMaxUploadSizeExceededException(ex);
 
         assertEquals(HttpStatus.PAYLOAD_TOO_LARGE, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_012", response.getBody().getErrorCode());
+        assertEquals(413, response.getBody().getErrorStatusCode());
     }
 
     @Test
     void testHandleObjectOptimisticLockingFailureException() {
         ObjectOptimisticLockingFailureException ex = new ObjectOptimisticLockingFailureException("Entity", 1);
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleOptimisticLockingException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleOptimisticLockingException(ex);
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_013", response.getBody().getErrorCode());
+        assertEquals(409, response.getBody().getErrorStatusCode());
     }
 
     @Test
     void testHandleDuplicateResourceException() {
         DuplicateResourceException ex = new DuplicateResourceException("Duplicate entry");
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleDuplicateResourceException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleDuplicateResourceException(ex);
 
         assertEquals(HttpStatus.CONFLICT, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_014", response.getBody().getErrorCode());
+        assertEquals(409, response.getBody().getErrorStatusCode());
     }
 
     @Test
     void testHandleAttachmentProcessingException() {
         AttachmentProcessingException ex = new AttachmentProcessingException("Attachment error");
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleAttachmentProcessingException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleAttachmentProcessingException(ex);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_015", response.getBody().getErrorCode());
+        assertEquals(400, response.getBody().getErrorStatusCode());
     }
 
     @Test
     void testHandleFileProcessingException() {
         FileProcessingException ex = new FileProcessingException("File error", new RuntimeException());
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleFileProcessingException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleFileProcessingException(ex);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_016", response.getBody().getErrorCode());
+        assertEquals(400, response.getBody().getErrorStatusCode());
     }
 
     @Test
     void testHandleAccessDeniedException() {
         AccessDeniedException ex = new AccessDeniedException("Forbidden");
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleAccessDeniedException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleAccessDeniedException(ex);
 
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_017", response.getBody().getErrorCode());
+        assertEquals(403, response.getBody().getErrorStatusCode());
     }
 
     @Test
     void testHandleBadCredentialsException() {
         BadCredentialsException ex = new BadCredentialsException("Bad creds");
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleBadCredentialsException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleBadCredentialsException(ex);
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_018", response.getBody().getErrorCode());
+        assertEquals(401, response.getBody().getErrorStatusCode());
     }
 
     @Test
     void testHandleEmailSendingException() {
         EmailSendingException ex = new EmailSendingException("Email failed to send");
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleEmailSendingException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleEmailSendingException(ex);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_021", response.getBody().getErrorCode());
+        assertEquals(500, response.getBody().getErrorStatusCode());
     }
 
     @Test
     void testHandleAccountDisabledException() {
         AccountDisabledException ex = new AccountDisabledException("Account disabled");
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleAccountDisabledException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleAccountDisabledException(ex);
 
         assertEquals(HttpStatus.FORBIDDEN, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_022", response.getBody().getErrorCode());
+        assertEquals(403, response.getBody().getErrorStatusCode());
     }
 
     @Test
     void testHandleInvalidTokenException() {
         InvalidTokenException ex = new InvalidTokenException("Invalid token");
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleInvalidTokenException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleInvalidTokenException(ex);
 
         assertEquals(HttpStatus.UNAUTHORIZED, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_023", response.getBody().getErrorCode());
+        assertEquals(401, response.getBody().getErrorStatusCode());
     }
 
     @Test
     void testHandleGenericException() {
         java.lang.Exception ex = new java.lang.Exception("Generic error");
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleGenericException(ex);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleGenericException(ex);
 
         assertEquals(HttpStatus.INTERNAL_SERVER_ERROR, response.getStatusCode());
+        assertFalse(response.getBody().isSuccess());
         assertEquals("ERR_999", response.getBody().getErrorCode());
+        assertEquals(500, response.getBody().getErrorStatusCode());
     }
 
     @Test
     void testHandleTestingAutomationExceptionHierarchy() {
         TestingAutomationException parentEx = new TestingAutomationException("Generic custom business exception");
-        ResponseEntity<ErrorResponse> response = globalExceptionHandler.handleTestingAutomationException(parentEx);
+        ResponseEntity<ApiResponse<Void>> response = globalExceptionHandler.handleTestingAutomationException(parentEx);
 
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
-        assertEquals("Generic custom business exception", response.getBody().getErrorMessage());
+        assertFalse(response.getBody().isSuccess());
+        assertEquals(400, response.getBody().getErrorStatusCode());
+        assertEquals("Generic custom business exception", response.getBody().getMessage());
     }
 }

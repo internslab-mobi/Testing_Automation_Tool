@@ -9,6 +9,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Component;
+import xyz.mobi.testingautomationtool.dto.ApiResponse;
 import xyz.mobi.testingautomationtool.exception.ErrorResponse;
 
 import java.io.IOException;
@@ -50,13 +51,14 @@ public class JwtAuthenticationEntryPoint implements AuthenticationEntryPoint {
             errorMessage = "Unauthorized access: Full authentication is required to access this resource";
         }
 
-        ErrorResponse errorResponse = ErrorResponse.builder()
-                .errorCode(errorCode)
-                .errorMessage(errorMessage)
-                .errorStatusCode(HttpServletResponse.SC_UNAUTHORIZED)
-                .time(Instant.now())
-                .build();
 
-        objectMapper.writeValue(response.getOutputStream(), errorResponse);
+        ApiResponse<Void> apiResponse = ApiResponse.error(
+                errorCode,
+                errorMessage,
+                HttpServletResponse.SC_UNAUTHORIZED
+        );
+
+
+        objectMapper.writeValue(response.getOutputStream(), apiResponse);
     }
 }

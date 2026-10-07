@@ -7,6 +7,7 @@ import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import xyz.mobi.testingautomationtool.dto.ApiResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.ProjectDTO.*;
@@ -22,7 +23,6 @@ import java.util.List;
 @RequestMapping("/project")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
-
 public class ProjectController {
 
     private final ProjectService projectService;
@@ -30,81 +30,83 @@ public class ProjectController {
 
     @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
     @PostMapping
-    public ResponseEntity<ProjectResponse> createProject(@Valid @RequestBody ProjectRequest request) {
+    public ResponseEntity<ApiResponse<ProjectResponse>> createProject(@Valid @RequestBody ProjectRequest request) {
         ProjectResponse response = projectService.createProject(request);
-        return ResponseEntity.status(HttpStatus.CREATED).body(response);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Project created successfully", response));
     }
 
     @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
     @PostMapping(value = "/attachment/{projectId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<List<AttachmentResponse>> uploadAttachment(
+    public ResponseEntity<ApiResponse<List<AttachmentResponse>>> uploadAttachment(
             @RequestParam("file") List<MultipartFile> file,
             @PathVariable("projectId") Integer projectId
     ) throws IOException {
-        List<AttachmentResponse> projectResponse = attachmentService.uploadAttachments(AttachmentType.PROJECT,projectId,file);
-        return ResponseEntity.ok(projectResponse);
+        List<AttachmentResponse> projectResponse = attachmentService.uploadAttachments(AttachmentType.PROJECT, projectId, file);
+        return ResponseEntity.ok(ApiResponse.success("Attachments uploaded successfully", projectResponse));
     }
 
     @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
     @GetMapping
-    public ResponseEntity<List<ProjectResponse>> getAllProjects() {
-        return ResponseEntity.ok(projectService.getAllProjects());
+    public ResponseEntity<ApiResponse<List<ProjectResponse>>> getAllProjects() {
+        return ResponseEntity.ok(ApiResponse.success("Projects retrieved successfully", projectService.getAllProjects()));
     }
 
     @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
     @GetMapping("/{projectId}")
-    public ResponseEntity<ProjectResponse> getProjectById(@PathVariable Integer projectId) {
-        return ResponseEntity.ok(projectService.getProjectById(projectId));
+    public ResponseEntity<ApiResponse<ProjectResponse>> getProjectById(@PathVariable Integer projectId) {
+        return ResponseEntity.ok(ApiResponse.success("Project retrieved successfully", projectService.getProjectById(projectId)));
     }
 
     @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
     @GetMapping("/search")
-    public ResponseEntity<List<ProjectResponse>> searchProjects(
+    public ResponseEntity<ApiResponse<List<ProjectResponse>>> searchProjects(
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) ProjectStatus status) {
-        return ResponseEntity.ok(projectService.searchProjects(keyword, status));
+        return ResponseEntity.ok(ApiResponse.success("Projects search results", projectService.searchProjects(keyword, status)));
     }
 
     @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<ProjectPutResponse> updateProject(
+    public ResponseEntity<ApiResponse<ProjectPutResponse>> updateProject(
             @PathVariable("id") Integer id,
             @Valid @RequestBody ProjectPutRequest request) {
         ProjectPutResponse response = projectService.updateProject(id, request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success("Project updated successfully", response));
     }
 
     @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
     @PatchMapping("/{id}")
-    public ResponseEntity<String> patchProject(
+    public ResponseEntity<ApiResponse<String>> patchProject(
             @PathVariable("id") Integer id,
             @RequestBody ProjectPatchRequest request) {
         String response = projectService.patchProject(id, request);
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PreAuthorize("hasAnyRole('MANAGER')")
     @PatchMapping("/access/{id}")
-    public ResponseEntity<String> patchProjectForManger(@PathVariable("id") Integer id,
-                                                        @RequestParam ProjectStatus status                                          ){
-        String response = projectService.patchProjectActiveStatus(id,status);
-        return ResponseEntity.ok(response);
+    public ResponseEntity<ApiResponse<String>> patchProjectForManger(
+            @PathVariable("id") Integer id,
+            @RequestParam ProjectStatus status) {
+        String response = projectService.patchProjectActiveStatus(id, status);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PreAuthorize("hasAnyRole('MANAGER')")
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<PatchProjectDeleteResponse> softDeleteProject(
+    public ResponseEntity<ApiResponse<PatchProjectDeleteResponse>> softDeleteProject(
             @PathVariable("id") Integer id) {
         PatchProjectDeleteResponse response = projectService.softDeleteProject(id);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
+        return ResponseEntity.ok(ApiResponse.success("Project soft deleted successfully", response));
     }
 
     @PreAuthorize("hasAnyRole('MANAGER')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> hardDeleteProject(
+    public ResponseEntity<ApiResponse<String>> hardDeleteProject(
             @PathVariable("id") Integer id) {
         String response = projectService.hardDeleteProject(id);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT).body(response);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
@@ -112,8 +114,7 @@ public class ProjectController {
     public ResponseEntity<byte[]> downloadProjectAttachments(
             @PathVariable Integer projectId) {
 
-        AttachmentDownloadResponse response =
-                projectService.downloadFiles(projectId);
+        AttachmentDownloadResponse response = projectService.downloadFiles(projectId);
 
         return ResponseEntity.ok()
                 .header(

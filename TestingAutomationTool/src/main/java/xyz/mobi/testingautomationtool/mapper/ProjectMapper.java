@@ -16,15 +16,36 @@ public interface ProjectMapper {
     @Mapping(target = "status", ignore = true)
     Project toEntity(ProjectRequest request);
 
-    @Mapping(target = "createdBy", source = "createdBy.userId")
-    @Mapping(target = "createdByName", source = "createdBy.username")
-    @Mapping(target = "updatedByName", ignore = true)
-    @Mapping(target = "isActive", ignore = true)
-    @Mapping(target = "isDeleted", ignore = true)
-    @Mapping(target = "status", ignore = true)
-    @Mapping(target = "version", ignore = true)
-    @Mapping(target = "updatedAt", ignore = true)
-    ProjectResponse toResponse(Project project);
+    default ProjectResponse toResponse(Project project) {
+        if (project == null) {
+            return null;
+        }
+
+        ProjectResponse.ProjectDetails projectDetails = ProjectResponse.ProjectDetails.builder()
+                .projectId(project.getProjectId())
+                .projectName(project.getProjectName())
+                .description(project.getDescription())
+                .status(project.getStatus())
+                .region(project.getRegion())
+                .comments(project.getComments())
+                .isActive(project.isActive())
+                .isDeleted(project.isDeleted())
+                .version(project.getVersion())
+                .build();
+
+        ProjectResponse.AuditResponse audit = ProjectResponse.AuditResponse.builder()
+                .createdBy(project.getCreatedBy() != null ? project.getCreatedBy().getUserId() : null)
+                .createdByName(project.getCreatedBy() != null ? project.getCreatedBy().getUsername() : null)
+                .updatedByName(project.getUpdatedBy() != null ? project.getUpdatedBy().getUsername() : null)
+                .createdAt(project.getCreatedAt())
+                .updatedAt(project.getUpdatedAt())
+                .build();
+
+        return ProjectResponse.builder()
+                .project(projectDetails)
+                .audit(audit)
+                .build();
+    }
 
     @Mapping(target = "projectId", ignore = true)
     @Mapping(target = "createdBy", ignore = true)
@@ -34,10 +55,31 @@ public interface ProjectMapper {
     @Mapping(target = "version", ignore = true)
     Project putMethodMapper(ProjectPutRequest projectPutRequest, @MappingTarget Project project);
 
-    @Mapping(source = "createdBy.username", target = "createdBy")
-    @Mapping(source = "updatedBy.username", target = "updatedBy")
-    @Mapping(source = "active", target = "isActive")
-    @Mapping(source = "deleted", target = "isDeleted")
-    ProjectPutResponse toPutResponse(Project project);
+    default ProjectPutResponse toPutResponse(Project project) {
+        if (project == null) {
+            return null;
+        }
 
+        ProjectPutResponse.ProjectDetails details = ProjectPutResponse.ProjectDetails.builder()
+                .projectId(project.getProjectId())
+                .projectName(project.getProjectName())
+                .description(project.getDescription())
+                .status(project.getStatus())
+                .region(project.getRegion())
+                .isActive(project.isActive())
+                .isDeleted(project.isDeleted())
+                .build();
+
+        ProjectPutResponse.AuditResponse audit = ProjectPutResponse.AuditResponse.builder()
+                .createdBy(project.getCreatedBy() != null ? project.getCreatedBy().getUsername() : null)
+                .updatedBy(project.getUpdatedBy() != null ? project.getUpdatedBy().getUsername() : null)
+                .createdAt(project.getCreatedAt())
+                .updatedAt(project.getUpdatedAt())
+                .build();
+
+        return ProjectPutResponse.builder()
+                .project(details)
+                .audit(audit)
+                .build();
+    }
 }

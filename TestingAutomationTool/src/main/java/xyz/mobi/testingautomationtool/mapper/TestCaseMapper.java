@@ -2,7 +2,7 @@ package xyz.mobi.testingautomationtool.mapper;
 
 import org.mapstruct.*;
 import xyz.mobi.testingautomationtool.dto.TestCaseDTO.*;
-import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.TestCaseExecutionRequest;
+import xyz.mobi.testingautomationtool.dto.TestCaseExecutionDTO.*;
 import xyz.mobi.testingautomationtool.entity.TestCase;
 import xyz.mobi.testingautomationtool.entity.TestingExecution;
 
@@ -28,29 +28,75 @@ public interface TestCaseMapper {
     @Mapping(target = "version", ignore = true)
     TestCase toEntity(TestCaseExecutionRequest request);
 
-    @Mapping(source = "feature.featureId", target = "featureId")
-    @Mapping(source = "createdBy.username", target = "createdBy")
-    @Mapping(source = "updatedBy.username", target = "updatedBy")
-    @Mapping(source = "active", target = "isActive")
-    @Mapping(source = "deleted", target = "isDeleted")
-    TestCaseResponse toResponse(TestCase testCase);
+    default TestCaseResponse toResponse(TestCase testCase) {
+        return toResponse(testCase, null);
+    }
 
     default TestCaseResponse toResponse(TestCase testCase, TestingExecution execution) {
         if (testCase == null) {
             return null;
         }
-        TestCaseResponse response = toResponse(testCase);
+
+        TestCaseResponse.TestCaseDetails testCaseDetails = TestCaseResponse.TestCaseDetails.builder()
+                .testcaseId(testCase.getTestcaseId())
+                .testcaseFormatId(testCase.getTestcaseFormatId())
+                .featureId(testCase.getFeature() != null ? testCase.getFeature().getFeatureId() : null)
+                .title(testCase.getTitle())
+                .testType(testCase.getTestType())
+                .testPriority(testCase.getTestPriority())
+                .testcaseStatus(testCase.getTestcaseStatus())
+                .isActive(testCase.isActive())
+                .isDeleted(testCase.isDeleted())
+                .version(testCase.getVersion())
+                .build();
+
+        TestCaseResponse.AuditResponse audit = TestCaseResponse.AuditResponse.builder()
+                .createdBy(testCase.getCreatedBy() != null ? testCase.getCreatedBy().getUsername() : null)
+                .updatedBy(testCase.getUpdatedBy() != null ? testCase.getUpdatedBy().getUsername() : null)
+                .createdAt(testCase.getCreatedAt())
+                .updatedAt(testCase.getUpdatedAt())
+                .build();
+
+        TestCaseResponse.ExecutionResponse executionResponse = null;
+        TestCaseResponse.ValidationResponse validationResponse = null;
+        TestCaseResponse.AutomationResponse automationResponse = null;
+        TestCaseResponse.BugSummaryResponse bugSummaryResponse = null;
+
         if (execution != null) {
-            response.setExecutionStatus(execution.getExecutionStatus());
-            response.setAutomationFeasibility(execution.getAutomationFeasibility());
-            response.setPrecondition(execution.getPrecondition());
-            response.setTestData(execution.getTestData());
-            response.setExecutionSteps(execution.getExecutionSteps());
-            response.setUiValidations(execution.getUiValidations());
-            response.setDbValidations(execution.getDbValidations());
-            response.setComments(execution.getComments());
+            executionResponse = TestCaseResponse.ExecutionResponse.builder()
+                    .executionId(execution.getExecutionId())
+                    .executionStatus(execution.getExecutionStatus())
+                    .testExecution(execution.getTestExecution())
+                    .precondition(execution.getPrecondition())
+                    .testData(execution.getTestData())
+                    .executionSteps(execution.getExecutionSteps())
+                    .comments(execution.getComments())
+                    .build();
+
+            validationResponse = TestCaseResponse.ValidationResponse.builder()
+                    .testValidation(execution.getTestValidation())
+                    .uiValidations(execution.getUiValidations())
+                    .dbValidations(execution.getDbValidations())
+                    .build();
+
+            automationResponse = TestCaseResponse.AutomationResponse.builder()
+                    .automationFeasibility(execution.getAutomationFeasibility())
+                    .build();
+
+            bugSummaryResponse = TestCaseResponse.BugSummaryResponse.builder()
+                    .bugsCount(execution.getBugsCount())
+                    .build();
         }
-        return response;
+
+        return TestCaseResponse.builder()
+                .testCase(testCaseDetails)
+                .execution(executionResponse)
+                .validations(validationResponse)
+                .automation(automationResponse)
+                .bugSummary(bugSummaryResponse)
+                .audit(audit)
+                .dynamicFields(testCase.getDynamicFields())
+                .build();
     }
 
     @Mapping(target = "testcaseId", ignore = true)
@@ -64,27 +110,45 @@ public interface TestCaseMapper {
     @Mapping(target = "version", ignore = true)
     TestCase putMethodMapper(TestCasePutRequest testCasePutRequest, @MappingTarget TestCase testCase);
 
-    @Mapping(target = "testcaseId", source = "testCase.testcaseId")
-    @Mapping(target = "featureId", source = "testCase.feature.featureId")
-    @Mapping(target = "title", source = "testCase.title")
-    @Mapping(target = "testType", source = "testCase.testType")
-    @Mapping(target = "testPriority", source = "testCase.testPriority")
-    @Mapping(target = "username", source = "testCase.updatedBy.username")
-    @Mapping(target = "updatedAt", source = "testCase.updatedAt")
-    @Mapping(target = "validation", source = "execution")
-    @Mapping(target = "dynamicFields", source = "testCase.dynamicFields")
-    TestCasePutResponse toPutResponse(TestCase testCase, TestingExecution execution);
+    default TestCasePutResponse toPutResponse(TestCase testCase, TestingExecution execution) {
+        if (testCase == null) {
+            return null;
+        }
 
-    @Mapping(target = "testExecution", source = "testExecution")
-    @Mapping(target = "testValidation", source = "testValidation")
-    @Mapping(target = "precondition", source = "precondition")
-    @Mapping(target = "testData", source = "testData")
-    @Mapping(target = "executionSteps", source = "executionSteps")
-    @Mapping(target = "uiValidations", source = "uiValidations")
-    @Mapping(target = "dbValidations", source = "dbValidations")
-    @Mapping(target = "comments", source = "comments")
-    TestCaseValidationResponse toValidationResponse(TestingExecution execution);
+        TestCasePutResponse.TestCaseDetails details = TestCasePutResponse.TestCaseDetails.builder()
+                .testcaseId(testCase.getTestcaseId())
+                .featureId(testCase.getFeature() != null ? testCase.getFeature().getFeatureId() : null)
+                .title(testCase.getTitle())
+                .testType(testCase.getTestType())
+                .testPriority(testCase.getTestPriority())
+                .build();
 
+        TestCasePutResponse.AuditResponse audit = TestCasePutResponse.AuditResponse.builder()
+                .updatedBy(testCase.getUpdatedBy() != null ? testCase.getUpdatedBy().getUsername() : null)
+                .updatedAt(testCase.getUpdatedAt())
+                .build();
+
+        TestCasePutResponse.ValidationResponse val = null;
+        if (execution != null) {
+            val = TestCasePutResponse.ValidationResponse.builder()
+                    .testExecution(execution.getTestExecution())
+                    .testValidation(execution.getTestValidation())
+                    .precondition(execution.getPrecondition())
+                    .testData(execution.getTestData())
+                    .executionSteps(execution.getExecutionSteps())
+                    .uiValidations(execution.getUiValidations())
+                    .dbValidations(execution.getDbValidations())
+                    .comments(execution.getComments())
+                    .build();
+        }
+
+        return TestCasePutResponse.builder()
+                .testCase(details)
+                .validation(val)
+                .audit(audit)
+                .dynamicFields(testCase.getDynamicFields())
+                .build();
+    }
 
     @Mapping(target = "testcaseId", ignore = true)
     @Mapping(target = "feature", ignore = true)

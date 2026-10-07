@@ -12,6 +12,7 @@ import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import xyz.mobi.testingautomationtool.dto.ApiResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.FeatureDTO.*;
@@ -30,32 +31,31 @@ import java.util.List;
 public class FeatureController {
 
     private final FeatureService featureService;
-
     private final AttachmentService attachmentService;
 
     @PostMapping
-    public ResponseEntity<FeatureResponse> createFeature(
+    public ResponseEntity<ApiResponse<FeatureResponse>> createFeature(
             @Valid @RequestBody FeatureRequest featureRequest) {
         FeatureResponse featureResponse = featureService.createFeature(featureRequest);
-        return ResponseEntity.status(HttpStatus.CREATED).body(featureResponse);
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(ApiResponse.success("Feature created successfully", featureResponse));
     }
 
     @GetMapping("/{featureId}")
-    public ResponseEntity<FeatureResponse> getFeatureById(
+    public ResponseEntity<ApiResponse<FeatureResponse>> getFeatureById(
             @PathVariable Integer featureId) {
-        return ResponseEntity.ok(featureService.getFeatureById(featureId));
+        return ResponseEntity.ok(ApiResponse.success("Feature retrieved successfully", featureService.getFeatureById(featureId)));
     }
 
     @GetMapping("/project/{projectId}")
-    public ResponseEntity<List<FeatureResponse>> getFeaturesByProjectId(
+    public ResponseEntity<ApiResponse<List<FeatureResponse>>> getFeaturesByProjectId(
             @PathVariable Integer projectId) {
-        return ResponseEntity.ok(featureService.getFeaturesByProjectId(projectId));
+        return ResponseEntity.ok(ApiResponse.success("Features retrieved successfully", featureService.getFeaturesByProjectId(projectId)));
     }
 
     @GetMapping("/search")
-    public ResponseEntity<Page<FeatureResponse>> searchFeatures(
+    public ResponseEntity<ApiResponse<Page<FeatureResponse>>> searchFeatures(
             @ModelAttribute FeatureSearchRequest request,
-
             @PageableDefault(
                     size = 10,
                     sort = "createdAt",
@@ -64,48 +64,46 @@ public class FeatureController {
             @ParameterObject Pageable pageable) {
 
         return ResponseEntity.ok(
-                featureService.searchFeatures(request, pageable)
+                ApiResponse.success("Features search results", featureService.searchFeatures(request, pageable))
         );
     }
 
     @PutMapping("/{featureId}")
-    public ResponseEntity<FeaturePutResponse> updateFeature(
+    public ResponseEntity<ApiResponse<FeaturePutResponse>> updateFeature(
             @PathVariable Integer featureId,
             @Valid @RequestBody FeaturePutRequest request) {
-        return ResponseEntity.ok(featureService.updateFeature(featureId, request));
+        return ResponseEntity.ok(ApiResponse.success("Feature updated successfully", featureService.updateFeature(featureId, request)));
     }
 
     @PatchMapping("/{featureId}")
-    public ResponseEntity<String> patchFeature(
+    public ResponseEntity<ApiResponse<String>> patchFeature(
             @PathVariable Integer featureId,
             @RequestBody FeaturePatchRequest request) {
-        return ResponseEntity.ok(featureService.patchFeature(featureId, request));
+        return ResponseEntity.ok(ApiResponse.success(featureService.patchFeature(featureId, request)));
     }
 
     @DeleteMapping("/{featureId}")
-    public ResponseEntity<String> deleteFeature(
+    public ResponseEntity<ApiResponse<String>> deleteFeature(
             @PathVariable Integer featureId,
             @RequestParam(required = false) Integer updatedBy) {
         featureService.deleteFeature(featureId, updatedBy);
-        return ResponseEntity.status(HttpStatus.NO_CONTENT)
-                .body("The feature has been deleted");
+        return ResponseEntity.ok(ApiResponse.success("The feature has been deleted"));
     }
 
     @PostMapping(value = "/attachment/{featureId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<List<AttachmentResponse>> uploadAttachment(
+    public ResponseEntity<ApiResponse<List<AttachmentResponse>>> uploadAttachment(
             @RequestParam("file") List<MultipartFile> file,
             @PathVariable("featureId") Integer featureId
-    ) throws  IOException{
-        List<AttachmentResponse> featureResponse = attachmentService.uploadAttachments( AttachmentType.FEATURE,featureId,file);
-        return ResponseEntity.ok(featureResponse);
+    ) throws IOException {
+        List<AttachmentResponse> featureResponse = attachmentService.uploadAttachments(AttachmentType.FEATURE, featureId, file);
+        return ResponseEntity.ok(ApiResponse.success("Attachments uploaded successfully", featureResponse));
     }
 
     @GetMapping("/features/{featureId}/attachments/download")
     public ResponseEntity<byte[]> downloadfeatureAttachments(
             @PathVariable Integer featureId) {
 
-        AttachmentDownloadResponse response =
-                featureService.downloadFiles(featureId);
+        AttachmentDownloadResponse response = featureService.downloadFiles(featureId);
 
         return ResponseEntity.ok()
                 .header(
