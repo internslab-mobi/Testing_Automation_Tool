@@ -558,7 +558,7 @@ public class TestCaseServiceImpl implements TestCaseService {
 
     @Override
     @Transactional(readOnly = true)
-    @Cacheable(value = "testCases", key = "#id")
+    @Cacheable(value = "testCases", key = "#id + '-' + #includeInactive")
     public TestCaseResponse getById(Integer id, boolean includeInactive) {
         TestCase testCase = testCaseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Test case not found with ID: " + id));

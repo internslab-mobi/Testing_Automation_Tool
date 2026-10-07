@@ -86,7 +86,7 @@ public class FeatureController {
     public ResponseEntity<ApiResponse<String>> deleteFeature(
             @PathVariable Integer featureId,
             @RequestParam(required = false) Integer updatedBy) {
-        featureService.deleteFeature(featureId, updatedBy);
+        featureService.deleteFeature(featureId);
         return ResponseEntity.ok(ApiResponse.success("The feature has been deleted"));
     }
 
