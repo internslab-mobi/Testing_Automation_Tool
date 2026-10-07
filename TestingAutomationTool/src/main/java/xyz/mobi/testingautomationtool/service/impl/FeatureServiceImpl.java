@@ -208,16 +208,8 @@ public class FeatureServiceImpl implements FeatureService {
             updatedFields.add("isActive");
         }
 
-        if (request.getUpdatedBy() != null) {
-            User updater = userRepository.findById(request.getUpdatedBy())
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with ID: " + request.getUpdatedBy()));
-            feature.setUpdatedBy(updater);
-        } else {
-            try {
-                feature.setUpdatedBy(authService.getCurrentUser());
-            } catch (Exception ignored) {
-            }
-        }
+        User currentUser = authService.getCurrentUser();
+        feature.setUpdatedBy(currentUser);
 
         if (updatedFields.isEmpty()) {
             throw new IllegalArgumentException("At least one field must be provided for update");
@@ -248,18 +240,17 @@ public class FeatureServiceImpl implements FeatureService {
         feature.setDeleted(true);
         feature.setActive(false);
 
-
         User currentUser = authService.getCurrentUser();
         feature.setUpdatedBy(currentUser);
 
         featureRepository.save(feature);
+
         bugRepository.deactivateBugsByProjectId(featureId);
         attachmentRepository.deactivateAttachmentsByProjectId(featureId);
         testCaseRepository.deactivateTestCasesByProjectId(featureId);
 
         return "Feature with ID " + featureId + " deleted successfully.";
     }
-
     public String hardDeleteFeature(Integer featureId) {
         Feature feature = featureRepository.findById(featureId)
                 .orElseThrow(() ->

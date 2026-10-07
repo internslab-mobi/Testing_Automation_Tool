@@ -26,5 +26,4 @@ public class FeaturePatchRequest {
     private Integer minutes;
     private String comments;
     private Boolean isActive;
-    private Integer updatedBy;
 }
