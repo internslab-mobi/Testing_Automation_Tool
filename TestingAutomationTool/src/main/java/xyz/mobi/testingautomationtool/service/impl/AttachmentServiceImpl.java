@@ -161,6 +161,45 @@ public class AttachmentServiceImpl implements AttachmentService {
                 .toList();
     }
 
+
+    @Override
+    @Transactional
+    public List<AttachmentResponse> uploadBugAttachments(
+            Integer bugId,
+            List<MultipartFile> files) {
+
+        return uploadAttachments(AttachmentType.BUG, bugId, files);
+    }
+
+    @Override
+    @Transactional
+    public List<AttachmentResponse> uploadFeatureAttachments(
+            Integer featureId,
+            List<MultipartFile> files) {
+
+        return uploadAttachments(AttachmentType.FEATURE, featureId, files);
+    }
+
+    @Override
+    @Transactional
+    public List<AttachmentResponse> uploadProjectAttachments(
+            Integer projectId,
+            List<MultipartFile> files) {
+
+        return uploadAttachments(AttachmentType.PROJECT, projectId, files);
+    }
+
+    @Override
+    @Transactional
+    public List<AttachmentResponse> uploadTestCaseAttachments(
+            Integer testcaseId,
+            List<MultipartFile> files) {
+
+        return uploadAttachments(AttachmentType.TESTCASE, testcaseId, files);
+    }
+
+
+
     @Override
     @Transactional(readOnly = true)
     public List<AttachmentResponse> getAttachments(AttachmentType type, Integer entityId) {

@@ -9,8 +9,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentDownloadResponse;
-import xyz.mobi.testingautomationtool.dto.AttachmentDto.AttachmentResponse;
+import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
+import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
 import xyz.mobi.testingautomationtool.enums.AttachmentType;
 import xyz.mobi.testingautomationtool.service.AttachmentService;
 

@@ -197,29 +197,27 @@ public class FeatureServiceImpl implements FeatureService {
     @Override
     @Transactional
     @CacheEvict(value = "features", key = "#featureId")
-    public void deleteFeature(Integer featureId, Integer updatedBy) {
+    public String deleteFeature(Integer featureId) {
+
         Feature feature = featureRepository.findById(featureId)
-                .orElseThrow(() -> new ResourceNotFoundException("Feature not found with ID: " + featureId));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Feature not found with ID: " + featureId));
 
         if (feature.isDeleted()) {
-            throw new ResourceNotFoundException("Feature not found with ID: " + featureId);
+            throw new ResourceNotFoundException(
+                    "Feature not found with ID: " + featureId);
         }
 
         feature.setDeleted(true);
         feature.setActive(false);
 
-        if (updatedBy != null) {
-            User updater = userRepository.findById(updatedBy).orElse(null);
-            feature.setUpdatedBy(updater);
-        } else {
-            try {
-                feature.setUpdatedBy(authService.getCurrentUser());
-            } catch (Exception ignored) {
-            }
-        }
+        User currentUser = authService.getCurrentUser();
+        feature.setUpdatedBy(currentUser);
 
         featureRepository.save(feature);
-//        return "Feature with ID " + featureId + " deleted successfully.";
+
+        return "Feature with ID " + featureId + " deleted successfully.";
     }
 
     @Override

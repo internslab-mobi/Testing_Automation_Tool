@@ -16,8 +16,6 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Integer>
     @Query("UPDATE Attachment a SET a.isActive = false WHERE a.feature.project.projectId = :projectId OR a.testCase.feature.project.projectId = :projectId OR a.bug.feature.project.projectId = :projectId")
     int deactivateAttachmentsByProjectId(@Param("projectId") Integer projectId);
 
-    List<Attachment> findAllByTestCase_TestcaseIdAndIsDeletedFalseAndIsActiveTrue(Integer testcaseId);
-
     boolean existsByTestCase_TestcaseIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(Integer testcaseId,String cleanFileName);
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
@@ -42,5 +40,4 @@ public interface AttachmentRepository extends JpaRepository<Attachment, Integer>
 
     boolean existsByFeature_FeatureIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(Integer featureId, String filename);
 
-    boolean existsByTestCase_TestcaseIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(Integer testcaseId, String filename);
 }

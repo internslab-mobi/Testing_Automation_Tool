@@ -28,7 +28,7 @@ public interface FeatureService {
 
     String patchFeature(Integer featureId, FeaturePatchRequest request);
 
-    void deleteFeature(Integer featureId, Integer updatedBy);
+    String deleteFeature(Integer featureId);
 
     @Transactional(readOnly = true)
     AttachmentDownloadResponse downloadFiles(Integer featureId);
