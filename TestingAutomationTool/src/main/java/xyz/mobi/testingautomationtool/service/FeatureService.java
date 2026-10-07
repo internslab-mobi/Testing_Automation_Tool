@@ -30,6 +30,8 @@ public interface FeatureService {
 
     String deleteFeature(Integer featureId);
 
-    @Transactional(readOnly = true)
-    AttachmentDownloadResponse downloadFiles(Integer featureId);
+    String hardDeleteFeature(Integer featureId);
+
+//    @Transactional(readOnly = true)
+//    AttachmentDownloadResponse downloadFiles(Integer featureId);
 }

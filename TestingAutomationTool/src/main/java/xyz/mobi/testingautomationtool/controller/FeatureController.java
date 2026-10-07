@@ -4,6 +4,7 @@ import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -84,9 +85,15 @@ public class FeatureController {
 
     @DeleteMapping("/{featureId}")
     public ResponseEntity<ApiResponse<String>> deleteFeature(
-            @PathVariable Integer featureId,
-            @RequestParam(required = false) Integer updatedBy) {
+            @PathVariable Integer featureId) {
         featureService.deleteFeature(featureId);
+        return ResponseEntity.ok(ApiResponse.success("The feature has been deleted"));
+    }
+
+    @DeleteMapping("/delete/{featureId}")
+    public ResponseEntity<ApiResponse<String>> permanentDeleteFeature(
+            @PathVariable Integer featureId) {
+        featureService.hardDeleteFeature(featureId);
         return ResponseEntity.ok(ApiResponse.success("The feature has been deleted"));
     }
 
@@ -99,13 +106,70 @@ public class FeatureController {
         return ResponseEntity.ok(ApiResponse.success("Attachments uploaded successfully", featureResponse));
     }
 
-    @GetMapping("/features/{featureId}/attachments/download")
-    public ResponseEntity<byte[]> downloadfeatureAttachments(
+//    @GetMapping("/features/{featureId}/attachments/download")
+//    public ResponseEntity<byte[]> downloadfeatureAttachments(
+//            @PathVariable Integer featureId) {
+//
+//        AttachmentDownloadResponse response = featureService.downloadFiles(featureId);
+//
+//        return ResponseEntity.ok()
+//                .header(
+//                        HttpHeaders.CONTENT_DISPOSITION,
+//                        ContentDisposition.attachment()
+//                                .filename(response.getFileName())
+//                                .build()
+//                                .toString()
+//                )
+//                .contentType(
+//                        MediaType.parseMediaType(response.getContentType())
+//                )
+//                .contentLength(response.getFile().length)
+//                .body(response.getFile());
+//    }
+
+    @PostMapping(
+            value = "/{featureId}/attachments",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<List<AttachmentResponse>> uploadFeatureAttachments(
+            @PathVariable Integer featureId,
+            @RequestParam("files") List<MultipartFile> files) {
+
+        return ResponseEntity.ok(
+                attachmentService.uploadFeatureAttachments(featureId, files)
+        );
+    }
+
+    @GetMapping("/{featureId}/attachments")
+    public ResponseEntity<List<AttachmentResponse>> getFeatureAttachments(
             @PathVariable Integer featureId) {
 
-        AttachmentDownloadResponse response = featureService.downloadFiles(featureId);
+        return ResponseEntity.ok(
+                attachmentService.getAttachments(
+                        AttachmentType.FEATURE,
+                        featureId
+                )
+        );
+    }
+
+    @GetMapping("/{featureId}/attachments/download")
+    public ResponseEntity<ByteArrayResource> downloadFeatureAttachments(
+            @PathVariable Integer featureId) {
+
+        AttachmentDownloadResponse response =
+                attachmentService.downloadAttachments(
+                        AttachmentType.FEATURE,
+                        featureId
+                );
+
+        ByteArrayResource resource =
+                new ByteArrayResource(response.getFile());
 
         return ResponseEntity.ok()
+                .contentType(
+                        MediaType.parseMediaType(response.getContentType())
+                )
+                .contentLength(response.getFile().length)
                 .header(
                         HttpHeaders.CONTENT_DISPOSITION,
                         ContentDisposition.attachment()
@@ -113,10 +177,7 @@ public class FeatureController {
                                 .build()
                                 .toString()
                 )
-                .contentType(
-                        MediaType.parseMediaType(response.getContentType())
-                )
-                .contentLength(response.getFile().length)
-                .body(response.getFile());
+                .body(resource);
     }
+
 }

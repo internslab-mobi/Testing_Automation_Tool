@@ -640,86 +640,85 @@ public class BugServiceImpl implements BugService {
     }
 
 
-    @Transactional(readOnly = true)
-    @Override
-    public AttachmentDownloadResponse downloadBugAttachments(Integer bugId) {
-
-        List<Attachment> attachments =
-                attachmentRepository
-                        .findAllByBug_BugIdAndIsDeletedFalseAndIsActiveTrue(bugId);
-
-        if (attachments.isEmpty()) {
-            throw new ResourceNotFoundException(
-                    "No attachments found for bug ID: " + bugId
-            );
-        }
-
-        List<Attachment> validAttachments = attachments.stream()
-                .filter(attachment ->
-                        attachment.getFileName() != null &&
-                                !attachment.getFileName().isBlank() &&
-                                attachment.getFileBlob() != null
-                )
-                .toList();
-
-        if (validAttachments.isEmpty()) {
-            throw new ResourceNotFoundException(
-                    "No valid attachments found for bug ID: " + bugId
-            );
-        }
-
-        // One file → download original file
-        if (validAttachments.size() == 1) {
-
-            Attachment attachment = validAttachments.getFirst();
-
-            String contentType = attachment.getFileType() != null
-                    ? attachment.getFileType()
-                    : MediaType.APPLICATION_OCTET_STREAM_VALUE;
-
-            return new AttachmentDownloadResponse(
-                    attachment.getFileBlob(),
-                    attachment.getFileName(),
-                    contentType
-            );
-        }
-
-        // Multiple files → ZIP
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             ZipOutputStream zos = new ZipOutputStream(baos)) {
-
-            Set<String> fileNames = new HashSet<>();
-
-            for (Attachment attachment : validAttachments) {
-
-                String fileName = attachment.getFileName();
-
-                if (!fileNames.add(fileName)) {
-                    continue;
-                }
-
-                ZipEntry zipEntry = new ZipEntry(fileName);
-
-                zos.putNextEntry(zipEntry);
-                zos.write(attachment.getFileBlob());
-                zos.closeEntry();
-            }
-
-            zos.finish();
-
-            return new AttachmentDownloadResponse(
-                    baos.toByteArray(),
-                    "bug-" + bugId + "-attachments.zip",
-                    "application/zip"
-            );
-
-        } catch (IOException e) {
-
-            throw new AttachmentProcessingException(
-                    "Failed to create ZIP file for bug ID: " + bugId
-            );
-        }
-    }
-
+//    @Transactional(readOnly = true)
+//    @Override
+//    public AttachmentDownloadResponse downloadBugAttachments(Integer bugId) {
+//
+//        List<Attachment> attachments =
+//                attachmentRepository
+//                        .findAllByBug_BugIdAndIsDeletedFalseAndIsActiveTrue(bugId);
+//
+//        if (attachments.isEmpty()) {
+//            throw new ResourceNotFoundException(
+//                    "No attachments found for bug ID: " + bugId
+//            );
+//        }
+//
+//        List<Attachment> validAttachments = attachments.stream()
+//                .filter(attachment ->
+//                        attachment.getFileName() != null &&
+//                                !attachment.getFileName().isBlank() &&
+//                                attachment.getFileBlob() != null
+//                )
+//                .toList();
+//
+//        if (validAttachments.isEmpty()) {
+//            throw new ResourceNotFoundException(
+//                    "No valid attachments found for bug ID: " + bugId
+//            );
+//        }
+//
+//        // One file → download original file
+//        if (validAttachments.size() == 1) {
+//
+//            Attachment attachment = validAttachments.getFirst();
+//
+//            String contentType = attachment.getFileType() != null
+//                    ? attachment.getFileType()
+//                    : MediaType.APPLICATION_OCTET_STREAM_VALUE;
+//
+//            return new AttachmentDownloadResponse(
+//                    attachment.getFileBlob(),
+//                    attachment.getFileName(),
+//                    contentType
+//            );
+//        }
+//
+//        // Multiple files → ZIP
+//        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//             ZipOutputStream zos = new ZipOutputStream(baos)) {
+//
+//            Set<String> fileNames = new HashSet<>();
+//
+//            for (Attachment attachment : validAttachments) {
+//
+//                String fileName = attachment.getFileName();
+//
+//                if (!fileNames.add(fileName)) {
+//                    continue;
+//                }
+//
+//                ZipEntry zipEntry = new ZipEntry(fileName);
+//
+//                zos.putNextEntry(zipEntry);
+//                zos.write(attachment.getFileBlob());
+//                zos.closeEntry();
+//            }
+//
+//            zos.finish();
+//
+//            return new AttachmentDownloadResponse(
+//                    baos.toByteArray(),
+//                    "bug-" + bugId + "-attachments.zip",
+//                    "application/zip"
+//            );
+//
+//        } catch (IOException e) {
+//
+//            throw new AttachmentProcessingException(
+//                    "Failed to create ZIP file for bug ID: " + bugId
+//            );
+//        }
+//    }
 
 }

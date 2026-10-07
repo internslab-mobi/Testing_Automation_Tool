@@ -20,10 +20,7 @@ import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
 import xyz.mobi.testingautomationtool.exception.DuplicateResourceException;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.mapper.FeatureMapper;
-import xyz.mobi.testingautomationtool.repository.AttachmentRepository;
-import xyz.mobi.testingautomationtool.repository.FeatureRepository;
-import xyz.mobi.testingautomationtool.repository.ProjectRepository;
-import xyz.mobi.testingautomationtool.repository.UserRepository;
+import xyz.mobi.testingautomationtool.repository.*;
 import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.FeatureService;
 import xyz.mobi.testingautomationtool.specification.FeatureSpecification;
@@ -50,6 +47,8 @@ public class FeatureServiceImpl implements FeatureService {
     private final FeatureMapper featureMapper;
     private final FeatureRepository featureRepository;
     private final AttachmentRepository attachmentRepository;
+    private final BugRepository bugRepository;
+    private final TestCaseRepository testCaseRepository;
     private final AuthService authService;
 
     @Override
@@ -212,10 +211,25 @@ public class FeatureServiceImpl implements FeatureService {
         feature.setDeleted(true);
         feature.setActive(false);
 
+
         User currentUser = authService.getCurrentUser();
         feature.setUpdatedBy(currentUser);
 
         featureRepository.save(feature);
+        bugRepository.deactivateBugsByProjectId(featureId);
+        attachmentRepository.deactivateAttachmentsByProjectId(featureId);
+        testCaseRepository.deactivateTestCasesByProjectId(featureId);
+
+        return "Feature with ID " + featureId + " deleted successfully.";
+    }
+
+    public String hardDeleteFeature(Integer featureId) {
+        Feature feature = featureRepository.findById(featureId)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Feature not found with ID: " + featureId));
+
+        featureRepository.delete(feature);
 
         return "Feature with ID " + featureId + " deleted successfully.";
     }
@@ -299,78 +313,78 @@ public class FeatureServiceImpl implements FeatureService {
     }
 
 
-    @Transactional(readOnly = true)
-    @Override
-    public AttachmentDownloadResponse downloadFiles(Integer featureId) {
-
-        List<Attachment> attachments =
-                attachmentRepository
-                        .findAllByFeature_FeatureIdAndIsDeletedFalseAndIsActiveTrue(featureId);
-
-        if (attachments.isEmpty()) {
-            throw new ResourceNotFoundException(
-                    "No attachments found for feature ID: " + featureId
-            );
-        }
-
-        if (attachments.size() == 1) {
-            Attachment attachment = attachments.getFirst();
-
-            if (attachment.getFileBlob() == null) {
-                throw new AttachmentProcessingException(
-                        "File content is missing"
-                );
-            }
-
-            return AttachmentDownloadResponse.builder()
-                    .file(attachment.getFileBlob())
-                    .fileName(attachment.getFileName())
-                    .contentType(attachment.getFileType())
-                    .build();
-        }
-
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             ZipOutputStream zos = new ZipOutputStream(baos)) {
-
-            Set<String> fileNames = new HashSet<>();
-
-            for (Attachment attachment : attachments) {
-
-                String fileName = attachment.getFileName();
-                byte[] fileBlob = attachment.getFileBlob();
-
-                if (fileName == null || fileName.isBlank()) {
-                    continue;
-                }
-
-                // Skip duplicate filenames
-                if (!fileNames.add(fileName)) {
-                    continue;
-                }
-
-                if (fileBlob == null) {
-                    continue;
-                }
-
-                ZipEntry zipEntry = new ZipEntry(fileName);
-                zos.putNextEntry(zipEntry);
-                zos.write(fileBlob);
-                zos.closeEntry();
-            }
-
-            zos.finish();
-            return AttachmentDownloadResponse.builder()
-                    .file(baos.toByteArray())
-                    .fileName("feature_" + featureId + "_attachments.zip")
-                    .contentType("application/zip")
-                    .build();
-
-        } catch (IOException e) {
-
-            throw new AttachmentProcessingException(
-                    "Failed to create ZIP file for feature ID: " + featureId
-
-            );
-        }
-    }
+//    @Transactional(readOnly = true)
+//    @Override
+//    public AttachmentDownloadResponse downloadFiles(Integer featureId) {
+//
+//        List<Attachment> attachments =
+//                attachmentRepository
+//                        .findAllByFeature_FeatureIdAndIsDeletedFalseAndIsActiveTrue(featureId);
+//
+//        if (attachments.isEmpty()) {
+//            throw new ResourceNotFoundException(
+//                    "No attachments found for feature ID: " + featureId
+//            );
+//        }
+//
+//        if (attachments.size() == 1) {
+//            Attachment attachment = attachments.getFirst();
+//
+//            if (attachment.getFileBlob() == null) {
+//                throw new AttachmentProcessingException(
+//                        "File content is missing"
+//                );
+//            }
+//
+//            return AttachmentDownloadResponse.builder()
+//                    .file(attachment.getFileBlob())
+//                    .fileName(attachment.getFileName())
+//                    .contentType(attachment.getFileType())
+//                    .build();
+//        }
+//
+//        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//             ZipOutputStream zos = new ZipOutputStream(baos)) {
+//
+//            Set<String> fileNames = new HashSet<>();
+//
+//            for (Attachment attachment : attachments) {
+//
+//                String fileName = attachment.getFileName();
+//                byte[] fileBlob = attachment.getFileBlob();
+//
+//                if (fileName == null || fileName.isBlank()) {
+//                    continue;
+//                }
+//
+//                // Skip duplicate filenames
+//                if (!fileNames.add(fileName)) {
+//                    continue;
+//                }
+//
+//                if (fileBlob == null) {
+//                    continue;
+//                }
+//
+//                ZipEntry zipEntry = new ZipEntry(fileName);
+//                zos.putNextEntry(zipEntry);
+//                zos.write(fileBlob);
+//                zos.closeEntry();
+//            }
+//
+//            zos.finish();
+//            return AttachmentDownloadResponse.builder()
+//                    .file(baos.toByteArray())
+//                    .fileName("feature_" + featureId + "_attachments.zip")
+//                    .contentType("application/zip")
+//                    .build();
+//
+//        } catch (IOException e) {
+//
+//            throw new AttachmentProcessingException(
+//                    "Failed to create ZIP file for feature ID: " + featureId
+//
+//            );
+//        }
+//    }
 }

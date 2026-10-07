@@ -68,67 +68,67 @@ public class ProjectServiceImpl implements ProjectService {
         return projectMapper.toResponse(saved);
     }
 
-    @Override
-    @Transactional
-    public AttachmentResponse uploadAttachment(
-            MultipartFile file,
-            Integer projectId) throws IOException {
-
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Project is not present for this id: " + projectId
-                ));
-
-        String filename = file.getOriginalFilename();
-
-        if (filename == null || filename.isBlank()) {
-            filename = "Project_attachment_" + Instant.now().toEpochMilli();
-        }
-
-        // Check duplicate filename within the same project
-        boolean exists = attachmentRepository
-                .existsByProject_ProjectIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(
-                        projectId, filename
-                );
-
-        if (exists) {
-            throw new ResourceNotFoundException(
-                    "File already exists in this project: " + filename
-            );
-        }
-
-        String fileType = file.getContentType();
-        Long fileSize = file.getSize();
-        byte[] bytes = file.getBytes();
-
-        User user = authService.getCurrentUser();
-
-        Attachment attachment = Attachment.builder()
-                .attachmentType(AttachmentType.PROJECT)
-                .project(project)
-                .fileName(filename)
-                .fileType(fileType)
-                .fileSize(fileSize)
-                .fileBlob(bytes)
-                .uploadedBy(user)
-                .updatedBy(user)
-                .isActive(true)
-                .isDeleted(false)
-                .build();
-
-        attachmentRepository.save(attachment);
-
-        return AttachmentResponse.builder()
-                .attachmentId(attachment.getAttachmentId())
-                .attachmentType(AttachmentType.PROJECT)
-                .projectId(projectId)
-                .fileName(filename)
-                .fileType(fileType)
-                .fileSize(fileSize)
-                .uploadedBy(user != null ? user.getUserId() : null)
-                .createdAt(attachment.getCreatedAt())
-                .build();
-    }
+//    @Override
+//    @Transactional
+//    public AttachmentResponse uploadAttachment(
+//            MultipartFile file,
+//            Integer projectId) throws IOException {
+//
+//        Project project = projectRepository.findById(projectId)
+//                .orElseThrow(() -> new ResourceNotFoundException(
+//                        "Project is not present for this id: " + projectId
+//                ));
+//
+//        String filename = file.getOriginalFilename();
+//
+//        if (filename == null || filename.isBlank()) {
+//            filename = "Project_attachment_" + Instant.now().toEpochMilli();
+//        }
+//
+//        // Check duplicate filename within the same project
+//        boolean exists = attachmentRepository
+//                .existsByProject_ProjectIdAndFileNameAndIsDeletedFalseAndIsActiveTrue(
+//                        projectId, filename
+//                );
+//
+//        if (exists) {
+//            throw new ResourceNotFoundException(
+//                    "File already exists in this project: " + filename
+//            );
+//        }
+//
+//        String fileType = file.getContentType();
+//        Long fileSize = file.getSize();
+//        byte[] bytes = file.getBytes();
+//
+//        User user = authService.getCurrentUser();
+//
+//        Attachment attachment = Attachment.builder()
+//                .attachmentType(AttachmentType.PROJECT)
+//                .project(project)
+//                .fileName(filename)
+//                .fileType(fileType)
+//                .fileSize(fileSize)
+//                .fileBlob(bytes)
+//                .uploadedBy(user)
+//                .updatedBy(user)
+//                .isActive(true)
+//                .isDeleted(false)
+//                .build();
+//
+//        attachmentRepository.save(attachment);
+//
+//        return AttachmentResponse.builder()
+//                .attachmentId(attachment.getAttachmentId())
+//                .attachmentType(AttachmentType.PROJECT)
+//                .projectId(projectId)
+//                .fileName(filename)
+//                .fileType(fileType)
+//                .fileSize(fileSize)
+//                .uploadedBy(user != null ? user.getUserId() : null)
+//                .createdAt(attachment.getCreatedAt())
+//                .build();
+//    }
 
     @Transactional
     @Override
@@ -381,78 +381,78 @@ public class ProjectServiceImpl implements ProjectService {
                 .build();
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public AttachmentDownloadResponse downloadFiles(Integer projectId) {
-
-        List<Attachment> attachments =
-                attachmentRepository
-                        .findAllByProject_ProjectIdAndIsDeletedFalseAndIsActiveTrue(projectId);
-
-        if (attachments.isEmpty()) {
-            throw new ResourceNotFoundException(
-                    "No attachments found for project ID: " + projectId
-            );
-        }
-
-        if (attachments.size() == 1) {
-            Attachment attachment = attachments.getFirst();
-
-            if (attachment.getFileBlob() == null) {
-                throw new AttachmentProcessingException(
-                        "File content is missing"
-                );
-            }
-
-            return AttachmentDownloadResponse.builder()
-                    .file(attachment.getFileBlob())
-                    .fileName(attachment.getFileName())
-                    .contentType(attachment.getFileType())
-                    .build();
-        }
-
-        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
-             ZipOutputStream zos = new ZipOutputStream(baos)) {
-
-            Set<String> fileNames = new HashSet<>();
-
-            for (Attachment attachment : attachments) {
-
-                String fileName = attachment.getFileName();
-                byte[] fileBlob = attachment.getFileBlob();
-
-                if (fileName == null || fileName.isBlank()) {
-                    continue;
-                }
-
-                // Skip duplicate filenames
-                if (!fileNames.add(fileName)) {
-                    continue;
-                }
-
-                if (fileBlob == null) {
-                    continue;
-                }
-
-                ZipEntry zipEntry = new ZipEntry(fileName);
-                zos.putNextEntry(zipEntry);
-                zos.write(fileBlob);
-                zos.closeEntry();
-            }
-
-            zos.finish();
-            return AttachmentDownloadResponse.builder()
-                    .file(baos.toByteArray())
-                    .fileName("project_" + projectId + "_attachments.zip")
-                    .contentType("application/zip")
-                    .build();
-
-        } catch (IOException e) {
-
-            throw new AttachmentProcessingException(
-                    "Failed to create ZIP file for project ID: " + projectId
-
-            );
-        }
-    }
+//    @Override
+//    @Transactional(readOnly = true)
+//    public AttachmentDownloadResponse downloadFiles(Integer projectId) {
+//
+//        List<Attachment> attachments =
+//                attachmentRepository
+//                        .findAllByProject_ProjectIdAndIsDeletedFalseAndIsActiveTrue(projectId);
+//
+//        if (attachments.isEmpty()) {
+//            throw new ResourceNotFoundException(
+//                    "No attachments found for project ID: " + projectId
+//            );
+//        }
+//
+//        if (attachments.size() == 1) {
+//            Attachment attachment = attachments.getFirst();
+//
+//            if (attachment.getFileBlob() == null) {
+//                throw new AttachmentProcessingException(
+//                        "File content is missing"
+//                );
+//            }
+//
+//            return AttachmentDownloadResponse.builder()
+//                    .file(attachment.getFileBlob())
+//                    .fileName(attachment.getFileName())
+//                    .contentType(attachment.getFileType())
+//                    .build();
+//        }
+//
+//        try (ByteArrayOutputStream baos = new ByteArrayOutputStream();
+//             ZipOutputStream zos = new ZipOutputStream(baos)) {
+//
+//            Set<String> fileNames = new HashSet<>();
+//
+//            for (Attachment attachment : attachments) {
+//
+//                String fileName = attachment.getFileName();
+//                byte[] fileBlob = attachment.getFileBlob();
+//
+//                if (fileName == null || fileName.isBlank()) {
+//                    continue;
+//                }
+//
+//                // Skip duplicate filenames
+//                if (!fileNames.add(fileName)) {
+//                    continue;
+//                }
+//
+//                if (fileBlob == null) {
+//                    continue;
+//                }
+//
+//                ZipEntry zipEntry = new ZipEntry(fileName);
+//                zos.putNextEntry(zipEntry);
+//                zos.write(fileBlob);
+//                zos.closeEntry();
+//            }
+//
+//            zos.finish();
+//            return AttachmentDownloadResponse.builder()
+//                    .file(baos.toByteArray())
+//                    .fileName("project_" + projectId + "_attachments.zip")
+//                    .contentType("application/zip")
+//                    .build();
+//
+//        } catch (IOException e) {
+//
+//            throw new AttachmentProcessingException(
+//                    "Failed to create ZIP file for project ID: " + projectId
+//
+//            );
+//        }
+//    }
 }

@@ -3,6 +3,7 @@ package xyz.mobi.testingautomationtool.controller;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -109,14 +110,72 @@ public class ProjectController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
-    @GetMapping("/projects/{projectId}/attachments/download")
-    public ResponseEntity<byte[]> downloadProjectAttachments(
+//    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+//    @GetMapping("/projects/{projectId}/attachments/download")
+//    public ResponseEntity<byte[]> downloadProjectAttachments(
+//            @PathVariable Integer projectId) {
+//
+//        AttachmentDownloadResponse response = projectService.downloadFiles(projectId);
+//
+//        return ResponseEntity.ok()
+//                .header(
+//                        HttpHeaders.CONTENT_DISPOSITION,
+//                        ContentDisposition.attachment()
+//                                .filename(response.getFileName())
+//                                .build()
+//                                .toString()
+//                )
+//                .contentType(
+//                        MediaType.parseMediaType(response.getContentType())
+//                )
+//                .contentLength(response.getFile().length)
+//                .body(response.getFile());
+//    }
+
+
+    @PostMapping(
+            value = "/{projectId}/attachments",
+            consumes = MediaType.MULTIPART_FORM_DATA_VALUE
+    )
+    public ResponseEntity<List<AttachmentResponse>> uploadProjectAttachments(
+            @PathVariable Integer projectId,
+            @RequestParam("files") List<MultipartFile> files) {
+
+        return ResponseEntity.ok(
+                attachmentService.uploadProjectAttachments(projectId, files)
+        );
+    }
+
+    @GetMapping("/{projectId}/attachments")
+    public ResponseEntity<List<AttachmentResponse>> getProjectAttachments(
             @PathVariable Integer projectId) {
 
-        AttachmentDownloadResponse response = projectService.downloadFiles(projectId);
+        return ResponseEntity.ok(
+                attachmentService.getAttachments(
+                        AttachmentType.PROJECT,
+                        projectId
+                )
+        );
+    }
+
+    @GetMapping("/{projectId}/attachments/download")
+    public ResponseEntity<ByteArrayResource> downloadProjectAttachments(
+            @PathVariable Integer projectId) {
+
+        AttachmentDownloadResponse response =
+                attachmentService.downloadAttachments(
+                        AttachmentType.PROJECT,
+                        projectId
+                );
+
+        ByteArrayResource resource =
+                new ByteArrayResource(response.getFile());
 
         return ResponseEntity.ok()
+                .contentType(
+                        MediaType.parseMediaType(response.getContentType())
+                )
+                .contentLength(response.getFile().length)
                 .header(
                         HttpHeaders.CONTENT_DISPOSITION,
                         ContentDisposition.attachment()
@@ -124,10 +183,7 @@ public class ProjectController {
                                 .build()
                                 .toString()
                 )
-                .contentType(
-                        MediaType.parseMediaType(response.getContentType())
-                )
-                .contentLength(response.getFile().length)
-                .body(response.getFile());
+                .body(resource);
     }
+
 }

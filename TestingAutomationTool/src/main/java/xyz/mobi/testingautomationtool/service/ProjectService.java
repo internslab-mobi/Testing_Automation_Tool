@@ -13,7 +13,7 @@ public interface ProjectService {
 
     ProjectResponse createProject(ProjectRequest request);
 
-    AttachmentResponse uploadAttachment(MultipartFile file, Integer projectId) throws IOException;
+//    AttachmentResponse uploadAttachment(MultipartFile file, Integer projectId) throws IOException;
 
     ProjectPutResponse updateProject(Integer id, ProjectPutRequest request);
 
@@ -31,5 +31,5 @@ public interface ProjectService {
 
     List<ProjectResponse> searchProjects(String keyword, ProjectStatus status);
 
-    AttachmentDownloadResponse downloadFiles(Integer projectId);
+//    AttachmentDownloadResponse downloadFiles(Integer projectId);
 }
