@@ -134,6 +134,43 @@ public class FeatureServiceImpl implements FeatureService {
             updatedFields.add("duration");
         }
 
+
+        if (request.getDays() != null ||
+                request.getHours() != null ||
+                request.getMinutes() != null) {
+
+            int days = request.getDays() != null ? request.getDays() : 0;
+            int hours = request.getHours() != null ? request.getHours() : 0;
+            int minutes = request.getMinutes() != null ? request.getMinutes() : 0;
+
+            if (days < 0 || hours < 0 || minutes < 0) {
+                throw new IllegalArgumentException(
+                        "Days, hours and minutes cannot be negative"
+                );
+            }
+
+            if (hours > 23) {
+                throw new IllegalArgumentException(
+                        "Hours must be between 0 and 23"
+                );
+            }
+
+            if (minutes > 59) {
+                throw new IllegalArgumentException(
+                        "Minutes must be between 0 and 59"
+                );
+            }
+
+            long manualDuration =
+                    (days * 86400L)
+                            + (hours * 3600L)
+                            + (minutes * 60L);
+
+            feature.setDuration(manualDuration);
+
+            updatedFields.add("duration");
+        }
+
         if (request.getStartTime() != null && !request.getStartTime().equals(feature.getStartTime())) {
             feature.setStartTime(request.getStartTime());
             updatedFields.add("startTime");

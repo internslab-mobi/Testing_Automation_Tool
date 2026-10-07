@@ -21,6 +21,9 @@ public class FeaturePatchRequest {
     private Instant startTime;
     private Boolean startTimer;
     private Boolean endTimer;
+    private Integer days;
+    private Integer hours;
+    private Integer minutes;
     private String comments;
     private Boolean isActive;
     private Integer updatedBy;
