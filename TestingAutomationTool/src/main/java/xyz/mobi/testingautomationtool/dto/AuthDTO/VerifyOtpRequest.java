@@ -1,5 +1,6 @@
 package xyz.mobi.testingautomationtool.dto.AuthDTO;
 
+import com.fasterxml.jackson.annotation.JsonAlias;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
@@ -21,6 +22,7 @@ public class VerifyOtpRequest {
     private String email;
 
     @NotBlank(message = "OTP code is required")
+    @JsonAlias({"otp", "otpCode"})
     @Schema(description = "6-digit OTP code received via email", example = "481920")
     private String otpCode;
 }

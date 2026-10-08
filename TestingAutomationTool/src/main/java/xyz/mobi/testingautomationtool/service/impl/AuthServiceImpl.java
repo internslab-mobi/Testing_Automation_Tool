@@ -11,6 +11,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.mobi.testingautomationtool.dto.AuthDTO.*;
+import xyz.mobi.testingautomationtool.entity.PasswordResetOtp;
 import xyz.mobi.testingautomationtool.entity.RefreshToken;
 import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.exception.AccountDisabledException;
@@ -18,6 +19,7 @@ import xyz.mobi.testingautomationtool.exception.DuplicateResourceException;
 import xyz.mobi.testingautomationtool.exception.EmailNotFoundException;
 import xyz.mobi.testingautomationtool.exception.InvalidTokenException;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
+import xyz.mobi.testingautomationtool.repository.PasswordResetOtpRepository;
 import xyz.mobi.testingautomationtool.repository.RefreshTokenRepository;
 import xyz.mobi.testingautomationtool.repository.RoleRepository;
 import xyz.mobi.testingautomationtool.repository.UserRepository;
@@ -28,7 +30,8 @@ import xyz.mobi.testingautomationtool.service.EmailService;
 
 import java.security.SecureRandom;
 import java.time.Instant;
-import java.util.concurrent.ConcurrentHashMap;
+import java.time.temporal.ChronoUnit;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -42,25 +45,8 @@ public class AuthServiceImpl implements AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtUtils jwtUtils;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final PasswordResetOtpRepository passwordResetOtpRepository;
     private final EmailService emailService;
-
-    private static class OtpData {
-        final String otpCode;
-        Instant expiryTime;
-        final String username;
-
-        OtpData(String otpCode, Instant expiryTime, String username) {
-            this.otpCode = otpCode;
-            this.expiryTime = expiryTime;
-            this.username = username;
-        }
-
-        boolean isExpired() {
-            return Instant.now().isAfter(expiryTime);
-        }
-    }
-
-    ConcurrentHashMap<String, OtpData> otpStorage = new ConcurrentHashMap<>();
 
     @Override
     public AuthResponse register(RegisterRequest request) {
@@ -125,16 +111,17 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = jwtUtils.generateAccessToken(userDetails);
         String refreshToken = jwtUtils.generateRefreshToken(userDetails);
 
-        // Revoke prior active refresh tokens for this user
-        refreshTokenRepository.revokeAllUserTokens(user.getUserId());
+        // Delete any existing refresh token for this user before storing new one
+        refreshTokenRepository.deleteByUserId(user.getUserId());
+        refreshTokenRepository.flush();
 
         // Save new RefreshToken record to database
-       RefreshToken tokenEntity = RefreshToken.builder()
-                        .user(user)
-                        .token(refreshToken)
-                        .expiryDate(java.time.Instant.now().plusMillis(jwtUtils.getRefreshTokenExpirationMs()))
-                        .isRevoked(false)
-                        .build();
+        RefreshToken tokenEntity = RefreshToken.builder()
+                .user(user)
+                .token(refreshToken)
+                .expiryDate(Instant.now().plusMillis(jwtUtils.getRefreshTokenExpirationMs()))
+                .isRevoked(false)
+                .build();
         refreshTokenRepository.save(tokenEntity);
 
         return AuthResponse.builder()
@@ -167,9 +154,8 @@ public class AuthServiceImpl implements AuthService {
             }
 
             // Step 2: Validate token in database (verify exists, not revoked, and not expired)
-           RefreshToken tokenEntity =
-                    refreshTokenRepository.findByToken(refreshToken)
-                            .orElseThrow(() -> new BadCredentialsException("Revoked or untracked refresh token. Session has expired. Please login again."));
+            RefreshToken tokenEntity = refreshTokenRepository.findByToken(refreshToken)
+                    .orElseThrow(() -> new BadCredentialsException("Revoked or untracked refresh token. Session has expired. Please login again."));
 
             if (tokenEntity.isRevoked() || tokenEntity.isExpired()) {
                 throw new BadCredentialsException("Session has expired. Please login again.");
@@ -224,12 +210,22 @@ public class AuthServiceImpl implements AuthService {
             throw new AccountDisabledException("User account is currently inactive. Please contact your administrator.");
         }
 
-        SecureRandom random = new java.security.SecureRandom();
+        // Remove existing OTP for this user if already present in table
+        passwordResetOtpRepository.deleteByUserId(user.getUserId());
+        passwordResetOtpRepository.flush();
 
+        SecureRandom random = new SecureRandom();
         String otpCode = String.format("%06d", random.nextInt(1_000_000));
-        java.time.Instant expiryTime = java.time.Instant.now().plus(10, java.time.temporal.ChronoUnit.MINUTES);
+        Instant expiryTime = Instant.now().plus(10, ChronoUnit.MINUTES);
 
-        otpStorage.put(email, new OtpData(otpCode, expiryTime, user.getUsername()));
+        PasswordResetOtp otpEntity = PasswordResetOtp.builder()
+                .user(user)
+                .email(email)
+                .otpCode(otpCode)
+                .expiryTime(expiryTime)
+                .build();
+        passwordResetOtpRepository.save(otpEntity);
+
         emailService.sendPasswordResetOtpEmail(user.getEmail(), user.getUsername(), otpCode, 10);
 
         return AuthResponse.builder()
@@ -241,11 +237,16 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse verifyOtp(VerifyOtpRequest request) {
         String email = request.getEmail().trim().toLowerCase();
-        OtpData data = otpStorage.get(email);
+        PasswordResetOtp otpEntity = passwordResetOtpRepository.findByEmail(email)
+                .orElseThrow(() -> new InvalidTokenException("Invalid or expired OTP code."));
 
-        if (data == null || data.isExpired() || !data.otpCode.equals(request.getOtpCode().trim())) {
+        if (otpEntity.isExpired() || !otpEntity.getOtpCode().equals(request.getOtpCode().trim())) {
             throw new InvalidTokenException("Invalid or expired OTP code.");
         }
+
+        // Once OTP is verified, delete the OTP from the table
+        passwordResetOtpRepository.delete(otpEntity);
+        passwordResetOtpRepository.flush();
 
         return AuthResponse.builder()
                 .email(email)
@@ -256,14 +257,18 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse resetPasswordWithOtp(ResetPasswordWithOtpRequest request) {
         String email = request.getEmail().trim().toLowerCase();
-        OtpData data = otpStorage.get(email);
 
-        if (data == null || data.isExpired() || !data.otpCode.equals(request.getOtpCode().trim())) {
-            throw new InvalidTokenException("Invalid or expired OTP code. Please request a new OTP.");
+        // If OTP is present in table, validate and consume it
+        Optional<PasswordResetOtp> otpOpt = passwordResetOtpRepository.findByEmail(email);
+        if (otpOpt.isPresent()) {
+            PasswordResetOtp otpEntity = otpOpt.get();
+            if (otpEntity.isExpired() || !otpEntity.getOtpCode().equals(request.getOtpCode().trim())) {
+                throw new InvalidTokenException("Invalid or expired OTP code. Please request a new OTP.");
+            }
+            // Consume OTP to prevent replay attacks
+            passwordResetOtpRepository.delete(otpEntity);
+            passwordResetOtpRepository.flush();
         }
-
-        // Physicially consume OTP to prevent replay attacks
-        otpStorage.remove(email);
 
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new EmailNotFoundException("No user found with email: " + email));
@@ -272,8 +277,9 @@ public class AuthServiceImpl implements AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
 
-        // Revoke all prior refresh tokens for this user upon password reset
-        refreshTokenRepository.revokeAllUserTokens(user.getUserId());
+        // Delete all prior refresh tokens for this user upon password reset
+        refreshTokenRepository.deleteByUserId(user.getUserId());
+        refreshTokenRepository.flush();
 
         CustomUserDetails userDetails = new CustomUserDetails(user);
 
@@ -283,11 +289,11 @@ public class AuthServiceImpl implements AuthService {
 
         // Persist new refresh token in database
         RefreshToken tokenEntity = RefreshToken.builder()
-                        .user(user)
-                        .token(refreshToken)
-                        .expiryDate(java.time.Instant.now().plusMillis(jwtUtils.getRefreshTokenExpirationMs()))
-                        .isRevoked(false)
-                        .build();
+                .user(user)
+                .token(refreshToken)
+                .expiryDate(Instant.now().plusMillis(jwtUtils.getRefreshTokenExpirationMs()))
+                .isRevoked(false)
+                .build();
         refreshTokenRepository.save(tokenEntity);
 
         return AuthResponse.builder()
@@ -307,10 +313,7 @@ public class AuthServiceImpl implements AuthService {
     public AuthResponse logout(LogoutRequest request) {
         String refreshToken = request.getRefreshToken();
         if (refreshToken != null && !refreshToken.isBlank()) {
-            refreshTokenRepository.findByToken(refreshToken).ifPresent(token -> {
-                token.setRevoked(true);
-                refreshTokenRepository.save(token);
-            });
+            refreshTokenRepository.deleteByToken(refreshToken);
         }
         return AuthResponse.builder()
                 .message("Logged out successfully. Session revoked.")
