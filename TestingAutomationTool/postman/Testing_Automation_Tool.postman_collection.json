@@ -48,6 +48,7 @@
 									"var jsonData = pm.response.json();",
 									"if (jsonData.data && jsonData.data.accessToken) {",
 									"    pm.environment.set(\"accessToken\", jsonData.data.accessToken);",
+									"    pm.environment.set(\"token\", jsonData.data.accessToken);",
 									"    pm.environment.set(\"refreshToken\", jsonData.data.refreshToken);",
 									"    console.log(\"Access Token auto-saved to environment!\");",
 									"}"
@@ -83,6 +84,7 @@
 									"var jsonData = pm.response.json();",
 									"if (jsonData.data && jsonData.data.accessToken) {",
 									"    pm.environment.set(\"accessToken\", jsonData.data.accessToken);",
+									"    pm.environment.set(\"token\", jsonData.data.accessToken);",
 									"    pm.environment.set(\"refreshToken\", jsonData.data.refreshToken);",
 									"}"
 								],
