@@ -27,9 +27,6 @@ public class AuthResponse {
     @Schema(description = "Refresh Token lifespan in seconds (86400s = 24 hrs)", example = "86400")
     private Long refreshTokenExpiresIn;
 
-    @Builder.Default
-    @Schema(description = "Token type", example = "Bearer")
-    private String type = "Bearer";
 
     private Integer userId;
     private String username;

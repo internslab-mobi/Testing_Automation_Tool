@@ -26,6 +26,4 @@ public class ResetPasswordRequest {
     @Schema(description = "New user password", example = "NewSecurePass123!")
     private String newPassword;
 
-    @Schema(description = "Optional confirmation of new password", example = "NewSecurePass123!")
-    private String confirmPassword;
 }

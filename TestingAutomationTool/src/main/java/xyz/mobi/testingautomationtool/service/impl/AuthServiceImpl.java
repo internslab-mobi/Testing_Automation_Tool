@@ -130,7 +130,6 @@ public class AuthServiceImpl implements AuthService {
                 .refreshToken(refreshToken)
                 .expiresIn(jwtUtils.getAccessTokenExpirationMs() / 1000)
                 .refreshTokenExpiresIn(jwtUtils.getRefreshTokenExpirationMs() / 1000)
-                .type("Bearer")
                 .userId(userDetails.getUserId())
                 .username(userDetails.getUsername())
                 .email(userDetails.getEmail())
@@ -251,11 +250,11 @@ public class AuthServiceImpl implements AuthService {
         // Invalidate the OTP code and store the reset token
         otpEntity.setOtpCode(null);
         otpEntity.setResetToken(resetToken);
-        otpEntity.setResetTokenExpiry(Instant.now().plus(1, ChronoUnit.MINUTES));
+        otpEntity.setResetTokenExpiry(Instant.now().plus(10, ChronoUnit.MINUTES));
         passwordResetOtpRepository.save(otpEntity);
         passwordResetOtpRepository.flush();
 
-        return AuthResponse.builder()
+            return AuthResponse.builder()
                 .email(email)
                 .resetToken(resetToken)
                 .resetTokenExpiresIn(15 * 60L) // 900 seconds
@@ -314,12 +313,10 @@ public class AuthServiceImpl implements AuthService {
         return AuthResponse.builder()
                 .token(accessToken)
                 .refreshToken(refreshToken)
-                .type("Bearer")
                 .expiresIn(jwtUtils.getAccessTokenExpirationMs() / 1000)
                 .refreshTokenExpiresIn(jwtUtils.getRefreshTokenExpirationMs() / 1000)
                 .userId(user.getUserId())
                 .username(user.getUsername())
-                .fullName(user.getFullName())
                 .message("Password has been reset successfully. You are now logged in.")
                 .build();
     }
