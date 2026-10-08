@@ -8,10 +8,11 @@ import {
 
 import { AuthService } from '../../core/services/authService';
 import { LoginRequest } from '../../model/auth/loginRequest';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule,RouterLink],
   templateUrl: './login.html',
   styleUrl: './login.css'
 })
@@ -47,6 +48,7 @@ export class Login {
       next: (response) => {
         this.isLoading = false;
         console.log('Login successful:', response);
+
       },
 
       error: (error) => {

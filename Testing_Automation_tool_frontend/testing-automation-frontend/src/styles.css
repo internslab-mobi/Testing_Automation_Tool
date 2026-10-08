@@ -1,4 +1,55 @@
+/* ==========================================================================
+   Design System & Global Variables
+   ========================================================================== */
+:root {
+  /* Primary & Brand Colors */
+  --primary: #2563eb;
+  --primary-hover: #1d4ed8;
+  --primary-active: #1e40af;
+  --primary-light: #eff6ff;
+  --primary-ring: rgba(37, 99, 235, 0.15);
+  --primary-shadow: rgba(37, 99, 235, 0.25);
 
+  /* Background Colors */
+  --bg-body: #ffffff;
+  --bg-page: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-input: #f8fafc;
+  --bg-input-focus: #ffffff;
+  --bg-dark-hero: #0d1527;
+  --bg-gradient-start: #f0f4ff;
+  --bg-gradient-end: #f8fafc;
+
+  /* Typography Colors */
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+  --text-subtle: #94a3b8;
+  --text-white: #ffffff;
+
+  /* Borders & Dividers */
+  --border-color: #e2e8f0;
+  --border-subtle: #edf2f7;
+  --border-card: #edf2f7;
+  --border-focus: #2563eb;
+
+  /* Status & Feedback Colors */
+  --color-success: #16a34a;
+  --color-success-bg: #f0fdf4;
+  --color-error: #dc2626;
+  --color-error-bg: #fef2f2;
+  --color-error-border: #fee2e2;
+  --color-warning: #f59e0b;
+
+  /* Password Strength Indicator Colors */
+  --strength-0: #cbd5e1;
+  --strength-1: #ef4444;
+  --strength-2: #f59e0b;
+  --strength-3: #3b82f6;
+  --strength-4: #10b981;
+}
+
+/* Global Reset & Base */
 *,
 *::before,
 *::after {
@@ -11,8 +62,74 @@ html,
 body {
   height: 100%;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-  color: #111827;
-  background-color: #ffffff;
+  color: var(--text-primary);
+  background-color: var(--bg-body);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+/* Auth Shared Utilities */
+.btn-primary {
+  width: 100%;
+  height: 46px;
+  background-color: var(--primary);
+  color: var(--text-white);
+  font-size: 14.5px;
+  font-weight: 600;
+  font-family: inherit;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  box-shadow: 0 4px 6px -1px var(--primary-shadow);
+  transition: background-color 0.15s ease, opacity 0.15s ease, transform 0.08s ease, box-shadow 0.15s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+  box-shadow: 0 6px 12px -2px var(--primary-shadow);
+  transform: translateY(-1px);
+}
+
+.btn-primary:active:not(:disabled) {
+  transform: scale(0.995);
+}
+
+.btn-primary:disabled {
+  background-color: var(--strength-0);
+  opacity: 0.65;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Password Strength Indicator */
+.strength-bar-track {
+  flex: 1;
+  height: 4px;
+  background: var(--border-color);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.strength-bar-fill {
+  height: 100%;
+  transition: width 0.3s ease, background-color 0.3s ease;
+}
+
+.strength-bar-fill[data-strength="0"] { width: 5%; background-color: var(--strength-0); }
+.strength-bar-fill[data-strength="1"] { width: 25%; background-color: var(--strength-1); }
+.strength-bar-fill[data-strength="2"] { width: 50%; background-color: var(--strength-2); }
+.strength-bar-fill[data-strength="3"] { width: 75%; background-color: var(--strength-3); }
+.strength-bar-fill[data-strength="4"] { width: 100%; background-color: var(--strength-4); }
+
+.strength-label {
+  font-size: 12px;
+  font-weight: 600;
+  min-width: 55px;
+  text-align: right;
+}
+
+.strength-label[data-strength="1"] { color: var(--strength-1); }
+.strength-label[data-strength="2"] { color: var(--strength-2); }
+.strength-label[data-strength="3"] { color: var(--strength-3); }
+.strength-label[data-strength="4"] { color: var(--strength-4); }

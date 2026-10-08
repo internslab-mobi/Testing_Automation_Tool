@@ -2,7 +2,7 @@
 .login-layout {
   min-height: 100vh;
   display: flex;
-  background-color: #ffffff;
+  background-color: var(--bg-body);
 }
 
 /* ==========================================================================
@@ -11,8 +11,8 @@
 .login-branding {
   flex: 0 0 42%;
   min-height: 100vh;
-  background-color: #0d1527;
-  color: #ffffff;
+  background-color: var(--bg-dark-hero);
+  color: var(--text-white);
   padding: 60px 64px 48px 64px;
   display: flex;
   flex-direction: column;
@@ -30,13 +30,13 @@
   font-weight: 800;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: #ffffff;
+  color: var(--text-white);
   margin: 0 0 6px 0;
 }
 
 .brand-subtitle {
   font-size: 13.5px;
-  color: #94a3b8;
+  color: var(--text-subtle);
   margin: 0;
   font-weight: 400;
 }
@@ -50,7 +50,7 @@
   font-size: 40px;
   font-weight: 700;
   line-height: 1.2;
-  color: #ffffff;
+  color: var(--text-white);
   margin: 0 0 20px 0;
   letter-spacing: -0.5px;
 }
@@ -58,7 +58,7 @@
 .hero-description {
   font-size: 15px;
   line-height: 1.6;
-  color: #94a3b8;
+  color: var(--text-subtle);
   margin: 0;
   max-width: 380px;
 }
@@ -74,7 +74,7 @@
 .card-badge-title {
   font-size: 14px;
   font-weight: 700;
-  color: #ffffff;
+  color: var(--text-white);
   margin-bottom: 6px;
   letter-spacing: 0.2px;
 }
@@ -82,7 +82,7 @@
 .card-badge-desc {
   font-size: 13px;
   line-height: 1.5;
-  color: #94a3b8;
+  color: var(--text-subtle);
   margin: 0;
 }
 
@@ -114,14 +114,14 @@
 .login-title {
   font-size: 28px;
   font-weight: 700;
-  color: #0f172a;
+  color: var(--text-primary);
   margin: 0 0 8px 0;
   letter-spacing: -0.3px;
 }
 
 .login-subtitle {
   font-size: 14px;
-  color: #64748b;
+  color: var(--text-muted);
   margin: 0;
 }
 
@@ -139,7 +139,7 @@
   display: block;
   font-size: 13px;
   font-weight: 600;
-  color: #1e293b;
+  color: var(--text-secondary);
   margin-bottom: 6px;
 }
 
@@ -149,9 +149,9 @@
   padding: 0 14px;
   font-size: 14px;
   font-family: inherit;
-  color: #0f172a;
-  background-color: #ffffff;
-  border: 1px solid #e2e8f0;
+  color: var(--text-primary);
+  background-color: var(--bg-body);
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   box-sizing: border-box;
   outline: none;
@@ -159,13 +159,13 @@
 }
 
 .form-input::placeholder {
-  color: #94a3b8;
+  color: var(--text-subtle);
   font-size: 13.5px;
 }
 
 .form-input:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px var(--primary-ring);
 }
 
 .form-actions-row {
@@ -177,13 +177,13 @@
 .forgot-password-link {
   font-size: 12.5px;
   font-weight: 600;
-  color: #2563eb;
+  color: var(--primary);
   text-decoration: none;
   transition: color 0.15s ease;
 }
 
 .forgot-password-link:hover {
-  color: #1d4ed8;
+  color: var(--primary-hover);
   text-decoration: underline;
 }
 
@@ -191,8 +191,8 @@
 .btn-primary {
   width: 100%;
   height: 46px;
-  background-color: #2563eb;
-  color: #ffffff;
+  background-color: var(--primary);
+  color: var(--text-white);
   font-size: 14.5px;
   font-weight: 600;
   font-family: inherit;
@@ -204,7 +204,7 @@
 }
 
 .btn-primary:hover:not(:disabled) {
-  background-color: #1d4ed8;
+  background-color: var(--primary-hover);
 }
 
 .btn-primary:active:not(:disabled) {
@@ -229,28 +229,28 @@
   left: 0;
   right: 0;
   height: 1px;
-  background-color: #f1f5f9;
+  background-color: var(--border-subtle);
   z-index: 1;
 }
 
 .divider-text {
   position: relative;
   z-index: 2;
-  background-color: #ffffff;
+  background-color: var(--bg-body);
   padding: 0 12px;
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--text-subtle);
 }
 
 .btn-sso {
   width: 100%;
   height: 46px;
-  background-color: #ffffff;
-  color: #0f172a;
+  background-color: var(--bg-body);
+  color: var(--text-primary);
   font-size: 14px;
   font-weight: 600;
   font-family: inherit;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--border-color);
   border-radius: 8px;
   cursor: pointer;
   display: flex;
@@ -260,8 +260,8 @@
 }
 
 .btn-sso:hover {
-  background-color: #f8fafc;
-  border-color: #cbd5e1;
+  background-color: var(--bg-page);
+  border-color: var(--strength-0);
 }
 
 .login-footer {
@@ -271,7 +271,7 @@
 
 .login-footer p {
   font-size: 12px;
-  color: #94a3b8;
+  color: var(--text-subtle);
   margin: 0;
 }
 

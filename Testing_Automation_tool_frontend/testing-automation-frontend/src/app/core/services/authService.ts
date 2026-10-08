@@ -16,5 +16,4 @@ export class AuthService {
             this.authUrl+"/login",request
         );
     }
-
 }
