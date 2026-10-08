@@ -15,6 +15,8 @@ public interface PasswordResetOtpRepository extends JpaRepository<PasswordResetO
 
     Optional<PasswordResetOtp> findByEmail(String email);
 
+    Optional<PasswordResetOtp> findByResetToken(String resetToken);
+
     Optional<PasswordResetOtp> findByUser(User user);
 
     Optional<PasswordResetOtp> findByUser_UserId(Integer userId);
@@ -30,4 +32,8 @@ public interface PasswordResetOtpRepository extends JpaRepository<PasswordResetO
     @Modifying
     @Query("DELETE FROM PasswordResetOtp o WHERE o.user = :user")
     int deleteByUser(@Param("user") User user);
+
+    @Modifying
+    @Query("DELETE FROM PasswordResetOtp o WHERE o.resetToken = :resetToken")
+    int deleteByResetToken(@Param("resetToken") String resetToken);
 }

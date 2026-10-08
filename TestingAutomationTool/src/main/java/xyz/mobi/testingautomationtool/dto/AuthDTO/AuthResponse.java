@@ -39,6 +39,12 @@ public class AuthResponse {
     private String designation;
     private String message;
 
+    @Schema(description = "Temporary reset token obtained after verifying OTP, valid for resetting password", example = "550e8400-e29b-41d4-a716-446655440000")
+    private String resetToken;
+
+    @Schema(description = "Reset Token lifespan in seconds (900s = 15 mins)", example = "900")
+    private Long resetTokenExpiresIn;
+
     @Schema(description = "Session expiry alert (e.g., when refresh token has 10 minutes or less remaining)")
     private String sessionExpiryWarning;
 }

@@ -32,6 +32,7 @@ import java.security.SecureRandom;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -240,42 +241,56 @@ public class AuthServiceImpl implements AuthService {
         PasswordResetOtp otpEntity = passwordResetOtpRepository.findByEmail(email)
                 .orElseThrow(() -> new InvalidTokenException("Invalid or expired OTP code."));
 
-        if (otpEntity.isExpired() || !otpEntity.getOtpCode().equals(request.getOtpCode().trim())) {
+        if (otpEntity.getOtpCode() == null || otpEntity.isOtpExpired() || !otpEntity.getOtpCode().equals(request.getOtpCode().trim())) {
             throw new InvalidTokenException("Invalid or expired OTP code.");
         }
 
-        // Once OTP is verified, delete the OTP from the table
-        passwordResetOtpRepository.delete(otpEntity);
+        // Generate a secure one-time reset token valid for 15 minutes
+        String resetToken = UUID.randomUUID().toString();
+
+        // Invalidate the OTP code and store the reset token
+        otpEntity.setOtpCode(null);
+        otpEntity.setResetToken(resetToken);
+        otpEntity.setResetTokenExpiry(Instant.now().plus(1, ChronoUnit.MINUTES));
+        passwordResetOtpRepository.save(otpEntity);
         passwordResetOtpRepository.flush();
 
         return AuthResponse.builder()
                 .email(email)
-                .message("OTP verified successfully. You may now reset your password.")
+                .resetToken(resetToken)
+                .resetTokenExpiresIn(15 * 60L) // 900 seconds
+                .message("OTP verified successfully. Please use the reset token to change your password within 15 minutes.")
                 .build();
     }
 
     @Override
-    public AuthResponse resetPasswordWithOtp(ResetPasswordWithOtpRequest request) {
-        String email = request.getEmail().trim().toLowerCase();
-
-        // If OTP is present in table, validate and consume it
-        Optional<PasswordResetOtp> otpOpt = passwordResetOtpRepository.findByEmail(email);
-        if (otpOpt.isPresent()) {
-            PasswordResetOtp otpEntity = otpOpt.get();
-            if (otpEntity.isExpired() || !otpEntity.getOtpCode().equals(request.getOtpCode().trim())) {
-                throw new InvalidTokenException("Invalid or expired OTP code. Please request a new OTP.");
-            }
-            // Consume OTP to prevent replay attacks
-            passwordResetOtpRepository.delete(otpEntity);
-            passwordResetOtpRepository.flush();
+    public AuthResponse resetPassword(ResetPasswordRequest request) {
+        String resetToken = request.getResetToken() != null ? request.getResetToken().trim() : "";
+        if (resetToken.isEmpty()) {
+            throw new InvalidTokenException("Reset token is required.");
         }
 
-        User user = userRepository.findByEmail(email)
-                .orElseThrow(() -> new EmailNotFoundException("No user found with email: " + email));
+        PasswordResetOtp otpEntity = passwordResetOtpRepository.findByResetToken(resetToken)
+                .orElseThrow(() -> new InvalidTokenException("Invalid or expired reset token. Please request a new password reset."));
+
+        if (otpEntity.isResetTokenExpired()) {
+            passwordResetOtpRepository.delete(otpEntity);
+            passwordResetOtpRepository.flush();
+            throw new InvalidTokenException("Password reset token has expired. Please request a new OTP.");
+        }
+
+        User user = otpEntity.getUser();
+        if (user == null) {
+            throw new EmailNotFoundException("User associated with this reset token not found.");
+        }
 
         // Update password with BCrypt
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         userRepository.save(user);
+
+        // Invalidate and delete the consumed reset token
+        passwordResetOtpRepository.delete(otpEntity);
+        passwordResetOtpRepository.flush();
 
         // Delete all prior refresh tokens for this user upon password reset
         refreshTokenRepository.deleteByUserId(user.getUserId());
@@ -308,6 +323,31 @@ public class AuthServiceImpl implements AuthService {
                 .message("Password has been reset successfully. You are now logged in.")
                 .build();
     }
+
+//    @Override
+//    public AuthResponse resetPasswordWithOtp(ResetPasswordWithOtpRequest request) {
+//        String email = request.getEmail().trim().toLowerCase();
+//
+//        Optional<PasswordResetOtp> otpOpt = passwordResetOtpRepository.findByEmail(email);
+//        if (otpOpt.isPresent()) {
+//            PasswordResetOtp otpEntity = otpOpt.get();
+//            if (otpEntity.getOtpCode() != null && !otpEntity.isOtpExpired() && otpEntity.getOtpCode().equals(request.getOtpCode().trim())) {
+//                String resetToken = UUID.randomUUID().toString();
+//                otpEntity.setOtpCode(null);
+//                otpEntity.setResetToken(resetToken);
+//                otpEntity.setResetTokenExpiry(Instant.now().plus(15, ChronoUnit.MINUTES));
+//                passwordResetOtpRepository.save(otpEntity);
+//                passwordResetOtpRepository.flush();
+//
+//                return resetPassword(ResetPasswordRequest.builder()
+//                        .resetToken(resetToken)
+//                        .newPassword(request.getNewPassword())
+//                        .build());
+//            }
+//        }
+//
+//        throw new InvalidTokenException("Invalid or expired OTP code. Please request a new OTP.");
+//    }
 
     @Override
     public AuthResponse logout(LogoutRequest request) {

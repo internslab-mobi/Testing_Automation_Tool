@@ -11,7 +11,8 @@ import java.time.Instant;
         name = "testing_password_reset_otps",
         indexes = {
                 @Index(name = "idx_testing_otps_email", columnList = "email"),
-                @Index(name = "idx_testing_otps_user", columnList = "user_id")
+                @Index(name = "idx_testing_otps_user", columnList = "user_id"),
+                @Index(name = "idx_testing_otps_reset_token", columnList = "reset_token")
         }
 )
 @Getter
@@ -37,13 +38,27 @@ public class PasswordResetOtp extends Auditable {
     @Column(name = "email", nullable = false, length = 255)
     private String email;
 
-    @Column(name = "otp_code", nullable = false, length = 10)
+    @Column(name = "otp_code", length = 10)
     private String otpCode;
 
-    @Column(name = "expiry_time", nullable = false)
+    @Column(name = "expiry_time")
     private Instant expiryTime;
 
+    @Column(name = "reset_token", length = 255)
+    private String resetToken;
+
+    @Column(name = "reset_token_expiry")
+    private Instant resetTokenExpiry;
+
     public boolean isExpired() {
-        return Instant.now().isAfter(this.expiryTime);
+        return isOtpExpired();
+    }
+
+    public boolean isOtpExpired() {
+        return this.expiryTime == null || Instant.now().isAfter(this.expiryTime);
+    }
+
+    public boolean isResetTokenExpired() {
+        return this.resetTokenExpiry == null || Instant.now().isAfter(this.resetTokenExpiry);
     }
 }

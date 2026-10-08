@@ -51,17 +51,23 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("Password reset OTP sent to email", response));
     }
 
-    @Operation(summary = "Verify email OTP", description = "Validates if the submitted 6-digit OTP code is correct and not expired.")
+    @Operation(
+            summary = "Verify email OTP and generate Reset Token",
+            description = "Validates the 6-digit OTP code sent to the email. If valid, generates a one-time Reset Token valid for 15 minutes to be used in /auth/reset-password."
+    )
     @PostMapping("/verify-otp")
     public ResponseEntity<ApiResponse<AuthResponse>> verifyOtp(@Valid @RequestBody VerifyOtpRequest request) {
         AuthResponse response = authService.verifyOtp(request);
         return ResponseEntity.ok(ApiResponse.success("OTP verified successfully", response));
     }
 
-    @Operation(summary = "Reset password with email OTP and auto-login", description = "Validates the OTP, updates the user's password, revokes previous sessions, and immediately returns 15m access token & 24h refresh token.")
+    @Operation(
+            summary = "Reset password using Reset Token and auto-login",
+            description = "Validates the temporary Reset Token, updates the user's password with BCrypt, invalidates the token, revokes previous sessions, and immediately returns 15m access token & 24h refresh token."
+    )
     @PostMapping("/reset-password")
-    public ResponseEntity<ApiResponse<AuthResponse>> resetPassword(@Valid @RequestBody ResetPasswordWithOtpRequest request) {
-        AuthResponse response = authService.resetPasswordWithOtp(request);
+    public ResponseEntity<ApiResponse<AuthResponse>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        AuthResponse response = authService.resetPassword(request);
         return ResponseEntity.ok(ApiResponse.success("Password reset successfully", response));
     }
 

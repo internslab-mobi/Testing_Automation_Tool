@@ -125,7 +125,21 @@
           }
         },
         {
-          "name": "1.4 Verify OTP",
+          "name": "1.4 Verify OTP (Issue Reset Token)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.resetToken) {",
+                  "    pm.environment.set('resetToken', jsonData.data.resetToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -148,19 +162,19 @@
                 "verify-otp"
               ]
             },
-            "description": "Pre-validates whether the submitted OTP is valid and within the 10-minute expiration window."
+            "description": "Validates the OTP and generates a temporary one-time Reset Token valid for 15 minutes."
           }
         },
         {
-          "name": "1.5 Reset Password With OTP (Auto-Login)",
+          "name": "1.5 Reset Password With Reset Token (Auto-Login)",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
                   "var jsonData = pm.response.json();",
-                  "if (jsonData.data && jsonData.data.accessToken) {",
-                  "    pm.environment.set('accessToken', jsonData.data.accessToken);",
+                  "if (jsonData.data && (jsonData.data.token || jsonData.data.accessToken)) {",
+                  "    pm.environment.set('accessToken', jsonData.data.token || jsonData.data.accessToken);",
                   "}",
                   "if (jsonData.data && jsonData.data.refreshToken) {",
                   "    pm.environment.set('refreshToken', jsonData.data.refreshToken);",
@@ -180,7 +194,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"email\": \"{{testEmail}}\",\n  \"otpCode\": \"{{otpCode}}\",\n  \"newPassword\": \"NewSecret@2026\"\n}"
+              "raw": "{\n  \"resetToken\": \"{{resetToken}}\",\n  \"newPassword\": \"NewSecret@2026\"\n}"
             },
             "url": {
               "raw": "{{baseUrl}}/auth/reset-password",
@@ -192,7 +206,7 @@
                 "reset-password"
               ]
             },
-            "description": "Resets the user's password, invalidates the OTP, revokes prior refresh tokens, and immediately generates fresh 15m Access and 24h Refresh tokens (automatic login)."
+            "description": "Resets the user's password using the temporary reset token, invalidates the token, revokes prior refresh tokens, and immediately generates fresh 15m Access and 24h Refresh tokens (automatic login)."
           }
         },
         {
