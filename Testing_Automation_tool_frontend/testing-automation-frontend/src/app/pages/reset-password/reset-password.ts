@@ -4,7 +4,7 @@ import { RouterLink } from '@angular/router';
 
 @Component({
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   selector: 'app-reset-password',
   templateUrl: './reset-password.html',
   styleUrls: ['./reset-password.css']
