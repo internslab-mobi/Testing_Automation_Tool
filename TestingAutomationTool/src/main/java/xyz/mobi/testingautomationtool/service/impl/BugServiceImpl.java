@@ -183,6 +183,7 @@ public class BugServiceImpl implements BugService {
                                 ? assignedTo.getUserId()
                                 : null
                 )
+                .resolvedAt(null)
                 .createdAt(Instant.now())
                 .build();
 
@@ -306,6 +307,19 @@ public class BugServiceImpl implements BugService {
                         newAssignedUserId
                 );
 
+        if(bug.getStatus() == BugStatus.REOPENED){
+
+            Integer testCaseId = bug.getTestCase().getTestcaseId();
+
+            TestingExecution execution = testingExecutionRepository.findByTestCase_TestcaseId(testCaseId).orElseThrow(
+                    ()-> new ResourceNotFoundException("Execution not found with id: " + testCaseId)
+            );
+
+            execution.setBugsCount(execution.getBugsCount()+1);
+
+            testingExecutionRepository.save(execution);
+        }
+
         bug = bugRepository.save(bug);
 
         if (statusChanged || assignmentChanged) {
@@ -316,6 +330,7 @@ public class BugServiceImpl implements BugService {
                     .bugStatus(bug.getStatus())
                     .assignedTo(newAssignedUserId)
                     .createdAt(Instant.now())
+                    .resolvedAt(bug.getResolvedAt())
                     .build();
 
             bugHistoryRepository.save(history);
@@ -520,6 +535,7 @@ public class BugServiceImpl implements BugService {
                     .bugStatus(bug.getStatus())
                     .assignedTo(newAssignedUserId)
                     .createdAt(Instant.now())
+                    .resolvedAt(bug.getResolvedAt())
                     .build();
 
             bugHistoryRepository.save(history);

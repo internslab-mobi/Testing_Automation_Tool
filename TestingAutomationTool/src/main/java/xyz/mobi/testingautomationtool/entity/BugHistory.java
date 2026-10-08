@@ -40,6 +40,9 @@ public class BugHistory {
     @Column(name = "assigned_to")
     private Integer assignedTo;
 
+    @Column(name = "resolved_at")
+    private Instant resolvedAt;
+
     @Column(name = "created_at", nullable = false)
     private Instant createdAt;
 }
