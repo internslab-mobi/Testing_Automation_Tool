@@ -2,15 +2,15 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideRouter } from '@angular/router';
-import { ResetPassword } from './reset-password';
+import { VerifyOtp } from './verify-otp';
 
-describe('ResetPassword', () => {
-  let component: ResetPassword;
-  let fixture: ComponentFixture<ResetPassword>;
+describe('VerifyOtp', () => {
+  let component: VerifyOtp;
+  let fixture: ComponentFixture<VerifyOtp>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [ResetPassword],
+      imports: [VerifyOtp],
       providers: [
         provideHttpClient(),
         provideHttpClientTesting(),
@@ -18,7 +18,7 @@ describe('ResetPassword', () => {
       ]
     }).compileComponents();
 
-    fixture = TestBed.createComponent(ResetPassword);
+    fixture = TestBed.createComponent(VerifyOtp);
     component = fixture.componentInstance;
     await fixture.whenStable();
   });

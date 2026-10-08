@@ -1,1 +1,203 @@
-<p>register works!</p>
+<div class="register-layout">
+  <!-- Left Side: Dark Hero / Branding -->
+  <aside class="register-branding">
+    <div class="branding-header">
+      <h2 class="brand-logo">TESTING LIFECYCLE</h2>
+      <p class="brand-subtitle">Automation & Quality Engineering Portal</p>
+    </div>
+
+    <div class="branding-hero">
+      <h1 class="hero-title">
+        Start automating<br />
+        your test suites today.
+      </h1>
+      <p class="hero-description">
+        Join teams accelerating testing cycles, managing automated test runs, and gaining real-time insights.
+      </p>
+    </div>
+
+    <div class="branding-footer-card">
+      <div class="card-badge-title">Enterprise Ready &bull; Cloud Native</div>
+      <p class="card-badge-desc">
+        Comprehensive test lifecycle management built for scale, reliability, and security.
+      </p>
+    </div>
+  </aside>
+
+  <!-- Right Side: Registration Form -->
+  <main class="register-main">
+    <div class="register-form-container">
+      <header class="register-header">
+        <h1 class="register-title">Create your account</h1>
+        <p class="register-subtitle">Get started with Testing Lifecycle Automation</p>
+      </header>
+
+      <!-- Error Alert -->
+      <div class="alert-box error" *ngIf="errorMessage">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span>{{ errorMessage }}</span>
+      </div>
+
+      <!-- Success Alert -->
+      <div class="alert-box success" *ngIf="successMessage">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+          <polyline points="22 4 12 14.01 9 11.01"></polyline>
+        </svg>
+        <span>{{ successMessage }}</span>
+      </div>
+
+      <form [formGroup]="registerForm" (ngSubmit)="onRegister()" class="auth-form">
+
+        <!-- Full Name -->
+        <div class="form-group">
+          <label for="fullName" class="form-label">Full Name</label>
+          <input
+            id="fullName"
+            type="text"
+            formControlName="fullName"
+            placeholder="John Doe"
+            class="form-input"
+            autocomplete="name"
+          />
+        </div>
+
+        <!-- Username -->
+        <div class="form-group">
+          <label for="username" class="form-label">Username</label>
+          <input
+            id="username"
+            type="text"
+            formControlName="username"
+            placeholder="johndoe"
+            class="form-input"
+            autocomplete="username"
+          />
+        </div>
+
+        <!-- Email -->
+        <div class="form-group">
+          <label for="email" class="form-label">Work Email</label>
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="name@company.com"
+            class="form-input"
+            autocomplete="email"
+          />
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <label for="password" class="form-label">Password</label>
+          <div class="input-wrapper">
+            <input
+              id="password"
+              [type]="showPassword ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="••••••••••••"
+              class="form-input"
+              #passwordInput
+              (input)="checkPassword(passwordInput.value)"
+              autocomplete="new-password"
+            />
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="showPassword = !showPassword"
+              [attr.aria-label]="showPassword ? 'Hide password' : 'Show password'"
+              tabindex="-1"
+            >
+              <svg *ngIf="!showPassword" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <svg *ngIf="showPassword" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+            </button>
+          </div>
+
+          <!-- Password Strength Indicator -->
+          <div class="strength-container" *ngIf="passwordInput.value">
+            <div class="strength-bar-track">
+              <div class="strength-bar-fill" [attr.data-strength]="strengthLevel"></div>
+            </div>
+            <span class="strength-label" [attr.data-strength]="strengthLevel">{{ strengthText }}</span>
+          </div>
+        </div>
+
+        <!-- Confirm Password -->
+        <div class="form-group">
+          <label for="confirmPassword" class="form-label">Confirm Password</label>
+          <div class="input-wrapper">
+            <input
+              id="confirmPassword"
+              [type]="showConfirmPassword ? 'text' : 'password'"
+              formControlName="confirmPassword"
+              placeholder="••••••••••••"
+              class="form-input"
+              #confirmPasswordInput
+              autocomplete="new-password"
+            />
+            <button
+              type="button"
+              class="toggle-password"
+              (click)="showConfirmPassword = !showConfirmPassword"
+              [attr.aria-label]="showConfirmPassword ? 'Hide password' : 'Show password'"
+              tabindex="-1"
+            >
+              <svg *ngIf="!showConfirmPassword" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle cx="12" cy="12" r="3"></circle>
+              </svg>
+              <svg *ngIf="showConfirmPassword" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                <line x1="1" y1="1" x2="23" y2="23"></line>
+              </svg>
+            </button>
+          </div>
+
+          <div class="match-message" *ngIf="confirmPasswordInput.value">
+            <span *ngIf="passwordsMatch" class="valid">✓ Passwords match</span>
+            <span *ngIf="!passwordsMatch" class="invalid">✕ Passwords do not match</span>
+          </div>
+        </div>
+
+        <!-- Terms Agreement -->
+        <div class="terms-group">
+          <label class="checkbox-label">
+            <input type="checkbox" formControlName="acceptTerms" />
+            <span>I agree to the Terms of Service and Privacy Policy</span>
+          </label>
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="btn-primary"
+          [disabled]="registerForm.invalid || !passwordsMatch || !isPasswordValid || isLoading"
+        >
+          <span *ngIf="!isLoading">Create Account</span>
+          <span *ngIf="isLoading">Creating account...</span>
+        </button>
+
+        <div class="signin-redirect">
+          <span>Already have an account?</span>
+          <a routerLink="/login" class="signin-link">Sign in</a>
+        </div>
+
+      </form>
+    </div>
+
+    <footer class="register-footer">
+      <p>&copy; 2026 Testing Lifecycle Automation Tool</p>
+    </footer>
+  </main>
+</div>

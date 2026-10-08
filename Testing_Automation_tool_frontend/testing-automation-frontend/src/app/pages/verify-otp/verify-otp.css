@@ -1,4 +1,4 @@
-.forgot-password-page {
+.verify-otp-page {
   min-height: 100vh;
   display: flex;
   justify-content: center;
@@ -7,7 +7,7 @@
   padding: 24px;
 }
 
-.forgot-password-card {
+.verify-otp-card {
   width: 100%;
   max-width: 440px;
   background: var(--bg-card);
@@ -31,7 +31,7 @@
   box-shadow: 0 4px 6px -1px var(--primary-ring);
 }
 
-.forgot-password-card h2 {
+.verify-otp-card h2 {
   font-size: 22px;
   font-weight: 700;
   color: var(--text-primary);
@@ -43,6 +43,10 @@
   color: var(--text-muted);
   line-height: 1.5;
   margin: 0 0 20px 0;
+}
+
+.description strong {
+  color: var(--text-primary);
 }
 
 .alert-box {
@@ -68,70 +72,94 @@
   color: var(--color-success);
 }
 
-.forgot-form {
-  text-align: left;
+.otp-inputs-wrapper {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin: 20px 0;
 }
 
-.form-group {
-  margin-bottom: 18px;
-}
-
-.form-group label {
-  display: block;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
-}
-
-.form-group input {
-  width: 100%;
-  height: 44px;
-  padding: 0 14px;
-  border: 1.5px solid var(--border-color);
-  border-radius: 8px;
-  font-size: 14px;
-  color: var(--text-secondary);
+.otp-digit-input {
+  width: 46px;
+  height: 52px;
+  text-align: center;
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-primary);
   background-color: var(--bg-input);
+  border: 1.5px solid var(--border-color);
+  border-radius: 10px;
   outline: none;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
-.form-group input:focus {
+.otp-digit-input:focus {
   background-color: var(--bg-input-focus);
   border-color: var(--border-focus);
   box-shadow: 0 0 0 3px var(--primary-ring);
+  transform: translateY(-1px);
 }
 
-.form-group input.invalid {
-  border-color: var(--color-error);
+.otp-digit-input.filled {
+  border-color: var(--primary);
+  background-color: var(--bg-input-focus);
 }
 
-.error-message {
-  margin-top: 5px;
-  font-size: 12px;
-  color: var(--color-error);
-}
-
-.back-login {
+.resend-row {
+  margin-bottom: 20px;
+  font-size: 13px;
+  color: var(--text-muted);
+  min-height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
-  margin-top: 18px;
-  color: var(--text-muted);
-  font-size: 13px;
-  font-weight: 500;
-  text-decoration: none;
-  transition: color 0.2s ease;
 }
 
-.back-login:hover {
+.countdown-text strong {
+  color: var(--primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.btn-resend {
+  background: none;
+  border: none;
+  color: var(--primary);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 8px;
+  transition: color 0.15s;
+}
+
+.btn-resend:hover:not(:disabled) {
+  color: var(--primary-hover);
+  text-decoration: underline;
+}
+
+.btn-resend:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.actions-footer {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.back-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.back-link:hover {
   color: var(--primary);
 }
 
-.expiry {
-  margin-top: 14px;
-  font-size: 12px;
-  color: var(--text-subtle);
+.dot {
+  color: var(--border-color);
 }

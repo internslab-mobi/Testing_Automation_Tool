@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Component, OnInit, inject } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { AuthService } from '../../core/services/authService';
 
 @Component({
   standalone: true,
@@ -9,7 +10,13 @@ import { RouterLink } from '@angular/router';
   templateUrl: './reset-password.html',
   styleUrls: ['./reset-password.css']
 })
-export class ResetPassword {
+export class ResetPassword implements OnInit {
+  private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  resetToken = '';
+
   minLength = false;
   hasUppercase = false;
   hasLowercase = false;
@@ -29,6 +36,15 @@ export class ResetPassword {
 
   strengthLevel = 0;
   strengthText = '';
+
+  isLoading = false;
+  errorMessage = '';
+  successMessage = '';
+
+  ngOnInit(): void {
+    const navState = history.state;
+    this.resetToken = navState?.resetToken || this.route.snapshot.queryParams['token'] || '';
+  }
 
   checkPassword(password: string): void {
     this.newPassword = password;
@@ -106,8 +122,29 @@ export class ResetPassword {
   }
 
   onResetPassword(): void {
-    if (this.isPasswordValid && this.passwordsMatch) {
-      console.log('Password reset successfully submitted');
+    if (!this.isPasswordValid || !this.passwordsMatch || this.isLoading) {
+      return;
     }
+
+    this.isLoading = true;
+    this.errorMessage = '';
+    this.successMessage = '';
+
+    this.authService.resetPassword({
+      resetToken: this.resetToken,
+      newPassword: this.newPassword
+    }).subscribe({
+      next: (response) => {
+        this.isLoading = false;
+        this.successMessage = response?.message ?? 'Password reset successfully! Redirecting to sign in...';
+        setTimeout(() => {
+          this.router.navigate(['/login']);
+        }, 1200);
+      },
+      error: (error) => {
+        this.isLoading = false;
+        this.errorMessage = error?.error?.message ?? 'Password reset failed. Please request a new OTP.';
+      }
+    });
   }
 }
