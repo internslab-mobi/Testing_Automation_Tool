@@ -9,13 +9,13 @@
       </svg>
     </div>
 
-    <h2>Enter Verification Code</h2>
-    <p class="description">
-      We sent a 6-digit OTP code to <br />
-      <strong>{{ maskedEmail }}</strong>
-    </p>
 
-    <!-- Error Message -->
+<h2>Verify your email</h2>
+<p class="description">
+  We've sent a 6-digit verification code to your email address<ng-container *ngIf="maskedEmail">:<br /><strong class="recipient-email">{{ maskedEmail }}</strong></ng-container>.
+</p>
+
+    <!-- Error Alert -->
     <div class="alert-box error" *ngIf="errorMessage">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="10"></circle>
@@ -25,7 +25,7 @@
       <span>{{ errorMessage }}</span>
     </div>
 
-    <!-- Success Message -->
+    <!-- Success Alert -->
     <div class="alert-box success" *ngIf="successMessage">
       <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
@@ -34,68 +34,85 @@
       <span>{{ successMessage }}</span>
     </div>
 
-    <!-- 6-digit OTP Input Group -->
-    <div class="otp-inputs-wrapper" (paste)="onPaste($event)">
-      <input
-        *ngFor="let digit of otpDigits; let i = index"
-        #otpInput
-        type="text"
-        inputmode="numeric"
-        pattern="[0-9]*"
-        maxlength="1"
-        class="otp-digit-input"
-        [class.filled]="digit !== ''"
-        (input)="onDigitInput(i, $event)"
-        (keydown)="onKeyDown(i, $event)"
-        autocomplete="one-time-code"
-        [attr.aria-label]="'Digit ' + (i + 1)"
-      />
-    </div>
+    <!-- OTP Form -->
+    <form [formGroup]="verifyOtpForm" (ngSubmit)="onSubmit()" class="verify-form">
 
-    <!-- Resend Countdown -->
-    <div class="resend-row">
-      <span *ngIf="!canResend" class="countdown-text">
-        Resend code in <strong>{{ formattedTimer }}</strong>
-      </span>
+      <div class="otp-inputs-wrapper" (paste)="onPaste($event)">
+        <input
+          *ngFor="let name of digitControlNames; let i = index"
+          #otpInput
+          type="text"
+          inputmode="numeric"
+          pattern="[0-9]*"
+          maxlength="1"
+          [formControlName]="name"
+          class="otp-digit-input"
+          [class.invalid]="isSubmitted && verifyOtpForm.get(name)?.invalid"
+          [class.filled]="!!verifyOtpForm.get(name)?.value"
+          (input)="onDigitInput(i, $event)"
+          (keydown)="onKeyDown(i, $event)"
+          autocomplete="one-time-code"
+          [attr.aria-label]="'Verification code digit ' + (i + 1)"
+        />
+      </div>
 
+      <!-- Validation Error -->
+      <div
+        class="error-message"
+        *ngIf="(isSubmitted || (verifyOtpForm.touched && !isOtpComplete)) && verifyOtpForm.invalid"
+      >
+        <span>Please enter all 6 digits of the verification code.</span>
+      </div>
+
+      <!-- Expiry Countdown -->
+      <div class="countdown-row">
+        <span *ngIf="!canResend" class="countdown-text">
+          OTP expires in <strong>{{ formattedTimer }}</strong>
+        </span>
+        <span *ngIf="canResend" class="countdown-expired">
+          OTP code has expired. Please request a new code.
+        </span>
+      </div>
+
+      <!-- Verify OTP Primary Button -->
       <button
-        *ngIf="canResend"
+        type="submit"
+        class="btn-primary"
+        [disabled]="verifyOtpForm.invalid || isLoading"
+      >
+        <span *ngIf="!isLoading">Verify OTP</span>
+        <span *ngIf="isLoading">Verifying...</span>
+      </button>
+
+    </form>
+
+    <!-- Resend OTP Option -->
+    <div class="resend-row">
+      <span class="resend-text">Didn't receive the code?</span>
+      <button
         type="button"
         class="btn-resend"
         (click)="resendOtp()"
-        [disabled]="isResending"
+        [disabled]="!canResend || isResending"
       >
-        <span *ngIf="!isResending">Resend Code</span>
+        <span *ngIf="!isResending">Resend OTP</span>
         <span *ngIf="isResending">Resending...</span>
       </button>
     </div>
 
-    <!-- Submit Action -->
-    <button
-      type="button"
-      class="btn-primary"
-      (click)="verifyOtp()"
-      [disabled]="!isOtpComplete || isLoading"
-    >
-      <span *ngIf="!isLoading">Verify Code</span>
-      <span *ngIf="isLoading">Verifying...</span>
-    </button>
+    <!-- Back to Forgot Password Link -->
+    <a class="back-link" routerLink="/forgot-password">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="19" y1="12" x2="5" y2="12"></line>
+        <polyline points="12 19 5 12 12 5"></polyline>
+      </svg>
+      <span>Back to Forgot Password</span>
+    </a>
 
-    <!-- Navigation Back -->
-    <div class="actions-footer">
-      <a class="back-link" routerLink="/forgot-password">
-        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="19" y1="12" x2="5" y2="12"></line>
-          <polyline points="12 19 5 12 12 5"></polyline>
-        </svg>
-
-        Change email address
-      </a>
-      <br>      
-      <a class="back-link" routerLink="/login">
-        Back to Login
-      </a>
-    </div>
+    <!-- Expiry and Footer Branding Conventions -->
+    <p class="expiry">
+      OTP codes expire after 1 minutes.
+    </p>
 
     <footer class="auth-footer">
       <p>&copy; 2026 Testing Lifecycle Automation Tool</p>

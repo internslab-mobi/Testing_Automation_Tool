@@ -63,4 +63,25 @@ describe('VerifyOtp', () => {
     component.timer = 45;
     expect(component.formattedTimer).toBe('00:45');
   });
+
+  it('should dynamically mask email', () => {
+    component.email = 'mithuna@gmail.com';
+    expect(component.maskedEmail).toBe('mit***@gmail.com');
+
+    component.email = 'alex.dev@company.com';
+    expect(component.maskedEmail).toBe('ale***@company.com');
+  });
+
+  it('should handle short email prefix', () => {
+    component.email = 'ab@domain.com';
+    expect(component.maskedEmail).toBe('a***@domain.com');
+  });
+
+  it('should handle empty or invalid email gracefully', () => {
+    component.email = '';
+    expect(component.maskedEmail).toBe('');
+
+    component.email = 'invalid-email';
+    expect(component.maskedEmail).toBe('');
+  });
 });

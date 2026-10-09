@@ -1,5 +1,14 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  ElementRef,
+  OnDestroy,
+  OnInit,
+  QueryList,
+  ViewChildren,
+  inject
+} from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/authService';
@@ -11,56 +20,99 @@ import { AuthService } from '../../core/services/authService';
   templateUrl: './verify-otp.html',
   styleUrl: './verify-otp.css'
 })
-export class VerifyOtp implements OnInit, OnDestroy {
+export class VerifyOtp implements OnInit, AfterViewInit, OnDestroy {
   @ViewChildren('otpInput') otpInputElements!: QueryList<ElementRef<HTMLInputElement>>;
 
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-  private readonly cdr = inject(ChangeDetectorRef);
 
   email = '';
-  maskedEmail = '';
-  otpDigits: string[] = ['', '', '', '', '', ''];
   isLoading = false;
   isResending = false;
+  isSubmitted = false;
   errorMessage = '';
   successMessage = '';
 
-  timer = 120;
-  timerInterval: any;
+  readonly digitControlNames = [
+    'digit0',
+    'digit1',
+    'digit2',
+    'digit3',
+    'digit4',
+    'digit5'
+  ] as const;
+
+  verifyOtpForm = new FormGroup({
+    digit0: new FormControl('', [Validators.required, Validators.pattern(/^\d$/)]),
+    digit1: new FormControl('', [Validators.required, Validators.pattern(/^\d$/)]),
+    digit2: new FormControl('', [Validators.required, Validators.pattern(/^\d$/)]),
+    digit3: new FormControl('', [Validators.required, Validators.pattern(/^\d$/)]),
+    digit4: new FormControl('', [Validators.required, Validators.pattern(/^\d$/)]),
+    digit5: new FormControl('', [Validators.required, Validators.pattern(/^\d$/)])
+  });
+
+  readonly expirySeconds = 60; // 1 minute expiry as specified in authentication flow
+  timer = 60;
+  private timerInterval?: ReturnType<typeof setInterval>;
   canResend = false;
 
   ngOnInit(): void {
     const navState = history.state;
     this.email = navState?.email || this.route.snapshot.queryParams['email'] || '';
-    this.maskedEmail = this.maskEmail(this.email);
     this.startTimer();
   }
 
-  ngOnDestroy(): void {
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-    }
+  ngAfterViewInit(): void {
+    setTimeout(() => {
+      const firstInput = this.otpInputElements?.first;
+      firstInput?.nativeElement.focus();
+    }, 100);
   }
 
-  startTimer(): void {
-    this.timer = 120;
+  ngOnDestroy(): void {
+    this.clearTimer();
+  }
+
+  /**
+   * Masks email dynamically (e.g. mithuna@gmail.com -> mit***@gmail.com).
+   * Ensures the full email is never displayed.
+   */
+
+get maskedEmail(): string {
+  if (!this.email || !this.email.includes('@')) {
+    return '';
+  }
+
+  const [user, domain] = this.email.split('@');
+
+  if (!user || !domain) {
+    return '';
+  }
+
+  return `${user.substring(0, 5)}@${domain}`;
+}
+
+  startTimer(seconds: number = this.expirySeconds): void {
+    this.timer = seconds;
     this.canResend = false;
-    if (this.timerInterval) {
-      clearInterval(this.timerInterval);
-    }
-    this.cdr.markForCheck();
+    this.clearTimer();
 
     this.timerInterval = setInterval(() => {
       if (this.timer > 0) {
         this.timer--;
       } else {
         this.canResend = true;
-        clearInterval(this.timerInterval);
+        this.clearTimer();
       }
-      this.cdr.markForCheck();
     }, 1000);
+  }
+
+  private clearTimer(): void {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = undefined;
+    }
   }
 
   get formattedTimer(): string {
@@ -69,70 +121,95 @@ export class VerifyOtp implements OnInit, OnDestroy {
     return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
   }
 
-  maskEmail(email: string): string {
-    if (!email || !email.includes('@')) return 'your email';
-    const [name, domain] = email.split('@');
-    if (name.length <= 2) {
-      return `${name[0]}*@${domain}`;
-    }
-    const visibleStart = name.slice(0, 2);
-    const masked = '*'.repeat(Math.max(1, name.length - 3));
-    const visibleEnd = name.slice(-1);
-    return `${visibleStart}${masked}${visibleEnd}@${domain}`;
+  get otpValue(): string {
+    const values = this.verifyOtpForm.value;
+    return [
+      values.digit0 ?? '',
+      values.digit1 ?? '',
+      values.digit2 ?? '',
+      values.digit3 ?? '',
+      values.digit4 ?? '',
+      values.digit5 ?? ''
+    ].join('');
+  }
+
+  get isOtpComplete(): boolean {
+    return this.verifyOtpForm.valid && this.otpValue.length === 6;
   }
 
   onDigitInput(index: number, event: Event): void {
     const input = event.target as HTMLInputElement;
-    const digits = input.value.replace(/\D/g, '');
+    const cleanDigits = input.value.replace(/\D/g, '');
 
-    if (digits.length > 1) {
-      const chars = digits.slice(0, 6).split('');
+    // Support typing or auto-completing multiple digits
+    if (cleanDigits.length > 1) {
+      const chars = cleanDigits.slice(0, 6).split('');
+      const inputs = this.otpInputElements.toArray();
       chars.forEach((char, idx) => {
         if (index + idx < 6) {
-          this.otpDigits[index + idx] = char;
+          const controlName = this.digitControlNames[index + idx];
+          this.verifyOtpForm.get(controlName)?.setValue(char);
+          if (inputs[index + idx]) {
+            inputs[index + idx].nativeElement.value = char;
+          }
         }
-      });
-      const inputs = this.otpInputElements.toArray();
-      inputs.forEach((inputEl, idx) => {
-        inputEl.nativeElement.value = this.otpDigits[idx] || '';
       });
       const targetFocus = Math.min(index + chars.length, 5);
       inputs[targetFocus]?.nativeElement.focus();
+
+      this.errorMessage = '';
       if (this.isOtpComplete) {
         this.verifyOtp();
       }
       return;
     }
 
-    const digit = digits.slice(-1);
-    this.otpDigits[index] = digit;
-    input.value = digit;
+    const char = cleanDigits.length > 0 ? cleanDigits.slice(-1) : '';
+    const controlName = this.digitControlNames[index];
+    this.verifyOtpForm.get(controlName)?.setValue(char);
+    input.value = char;
 
-    if (digit && index < this.otpDigits.length - 1) {
-      const nextInput = this.otpInputElements.toArray()[index + 1];
-      nextInput?.nativeElement.focus();
+    this.errorMessage = '';
+
+    if (char && index < 5) {
+      const inputs = this.otpInputElements.toArray();
+      const nextInput = inputs[index + 1]?.nativeElement;
+      if (nextInput) {
+        nextInput.focus();
+        nextInput.select();
+      }
+    }
+
+    if (this.isOtpComplete) {
+      this.verifyOtp();
     }
   }
 
   onKeyDown(index: number, event: KeyboardEvent): void {
+    const inputs = this.otpInputElements.toArray();
+
     if (event.key === 'Backspace') {
-      if (!this.otpDigits[index] && index > 0) {
+      const controlName = this.digitControlNames[index];
+      const currentVal = this.verifyOtpForm.get(controlName)?.value;
+
+      if (!currentVal && index > 0) {
         event.preventDefault();
-        this.otpDigits[index - 1] = '';
-        const prevInput = this.otpInputElements.toArray()[index - 1];
+        const prevControl = this.digitControlNames[index - 1];
+        this.verifyOtpForm.get(prevControl)?.setValue('');
+        const prevInput = inputs[index - 1]?.nativeElement;
         if (prevInput) {
-          prevInput.nativeElement.value = '';
-          prevInput.nativeElement.focus();
+          prevInput.value = '';
+          prevInput.focus();
         }
       } else {
-        this.otpDigits[index] = '';
+        this.verifyOtpForm.get(controlName)?.setValue('');
       }
     } else if (event.key === 'ArrowLeft' && index > 0) {
       event.preventDefault();
-      this.otpInputElements.toArray()[index - 1]?.nativeElement.focus();
+      inputs[index - 1]?.nativeElement.focus();
     } else if (event.key === 'ArrowRight' && index < 5) {
       event.preventDefault();
-      this.otpInputElements.toArray()[index + 1]?.nativeElement.focus();
+      inputs[index + 1]?.nativeElement.focus();
     }
   }
 
@@ -142,17 +219,20 @@ export class VerifyOtp implements OnInit, OnDestroy {
     const digitsOnly = pastedData.replace(/\D/g, '').slice(0, 6);
 
     if (digitsOnly.length > 0) {
+      const inputs = this.otpInputElements.toArray();
       for (let i = 0; i < 6; i++) {
-        this.otpDigits[i] = digitsOnly[i] || '';
+        const val = digitsOnly[i] || '';
+        const controlName = this.digitControlNames[i];
+        this.verifyOtpForm.get(controlName)?.setValue(val);
+        if (inputs[i]) {
+          inputs[i].nativeElement.value = val;
+        }
       }
 
-      const inputs = this.otpInputElements.toArray();
-      inputs.forEach((inputEl, idx) => {
-        inputEl.nativeElement.value = this.otpDigits[idx] || '';
-      });
+      const focusIndex = Math.min(digitsOnly.length, 5);
+      inputs[focusIndex]?.nativeElement.focus();
 
-      const focusIdx = Math.min(digitsOnly.length, 5);
-      inputs[focusIdx]?.nativeElement.focus();
+      this.errorMessage = '';
 
       if (this.isOtpComplete) {
         this.verifyOtp();
@@ -160,12 +240,13 @@ export class VerifyOtp implements OnInit, OnDestroy {
     }
   }
 
-  get isOtpComplete(): boolean {
-    return this.otpDigits.every((d) => d !== '' && /^\d$/.test(d));
-  }
-
-  get currentOtp(): string {
-    return this.otpDigits.join('');
+  onSubmit(): void {
+    this.isSubmitted = true;
+    if (this.verifyOtpForm.invalid) {
+      this.verifyOtpForm.markAllAsTouched();
+      return;
+    }
+    this.verifyOtp();
   }
 
   verifyOtp(): void {
@@ -177,51 +258,67 @@ export class VerifyOtp implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.successMessage = '';
 
-    const otp = this.currentOtp;
+    const otp = this.otpValue;
 
     this.authService.verifyOtp({ email: this.email, otp }).subscribe({
-      next: (response) => {
+      next: (response: any) => {
         this.isLoading = false;
         this.successMessage = response?.message ?? 'OTP verified successfully!';
-        console.log(response);
-        const resetToken = response.data?.resetToken || '87';
-        console.log(resetToken);
-        this.cdr.markForCheck();
-    
+        const resetToken = response?.resetToken || response?.data?.resetToken;
+
         setTimeout(() => {
           this.router.navigate(['/reset-password'], {
-            state: { resetToken }
+            state: { resetToken, email: this.email }
           });
         }, 800);
       },
       error: (error) => {
         this.isLoading = false;
-        this.errorMessage = error?.error?.message ?? 'Invalid or expired OTP. Please try again.';
-        this.cdr.markForCheck();
+        this.errorMessage =
+          error?.error?.message ?? 'Invalid or expired OTP. Please try again.';
       }
     });
   }
 
   resendOtp(): void {
-    if (!this.canResend || this.isResending) return;
+    if (!this.canResend || this.isResending) {
+      return;
+    }
+
+    if (!this.email) {
+      this.errorMessage =
+        'Email address not found. Please return to the Forgot Password page to request an OTP.';
+      return;
+    }
 
     this.isResending = true;
     this.errorMessage = '';
     this.successMessage = '';
-    this.cdr.markForCheck();
 
     this.authService.sendPasswordResetOtp({ email: this.email }).subscribe({
       next: (response) => {
         this.isResending = false;
-        this.successMessage = response?.message ?? 'A new verification code has been sent!';
+        this.successMessage =
+          response?.message ?? 'A new verification code has been sent to your email.';
+        this.resetInputs();
         this.startTimer();
-        this.cdr.markForCheck();
       },
       error: (error) => {
         this.isResending = false;
-        this.errorMessage = error?.error?.message ?? 'Failed to resend OTP. Please try again.';
-        this.cdr.markForCheck();
+        this.errorMessage =
+          error?.error?.message ?? 'Failed to resend OTP. Please try again.';
       }
     });
+  }
+
+  private resetInputs(): void {
+    this.verifyOtpForm.reset();
+    const inputs = this.otpInputElements?.toArray() ?? [];
+    inputs.forEach((inputEl) => {
+      if (inputEl.nativeElement) {
+        inputEl.nativeElement.value = '';
+      }
+    });
+    inputs[0]?.nativeElement?.focus();
   }
 }
