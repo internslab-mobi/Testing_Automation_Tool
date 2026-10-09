@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, OnDestroy, OnInit, QueryList, ViewChildren, inject } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../core/services/authService';
@@ -17,6 +17,7 @@ export class VerifyOtp implements OnInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   email = '';
   maskedEmail = '';
@@ -49,6 +50,7 @@ export class VerifyOtp implements OnInit, OnDestroy {
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
     }
+    this.cdr.markForCheck();
 
     this.timerInterval = setInterval(() => {
       if (this.timer > 0) {
@@ -57,6 +59,7 @@ export class VerifyOtp implements OnInit, OnDestroy {
         this.canResend = true;
         clearInterval(this.timerInterval);
       }
+      this.cdr.markForCheck();
     }, 1000);
   }
 
@@ -80,41 +83,55 @@ export class VerifyOtp implements OnInit, OnDestroy {
 
   onDigitInput(index: number, event: Event): void {
     const input = event.target as HTMLInputElement;
-    const val = input.value.replace(/\D/g, '');
+    const digits = input.value.replace(/\D/g, '');
 
-    if (val.length > 0) {
-      this.otpDigits[index] = val.slice(-1);
-      input.value = this.otpDigits[index];
-
-      // Focus next input
-      if (index < 5) {
-        const nextInput = this.otpInputElements.toArray()[index + 1];
-        nextInput?.nativeElement.focus();
+    if (digits.length > 1) {
+      const chars = digits.slice(0, 6).split('');
+      chars.forEach((char, idx) => {
+        if (index + idx < 6) {
+          this.otpDigits[index + idx] = char;
+        }
+      });
+      const inputs = this.otpInputElements.toArray();
+      inputs.forEach((inputEl, idx) => {
+        inputEl.nativeElement.value = this.otpDigits[idx] || '';
+      });
+      const targetFocus = Math.min(index + chars.length, 5);
+      inputs[targetFocus]?.nativeElement.focus();
+      if (this.isOtpComplete) {
+        this.verifyOtp();
       }
-    } else {
-      this.otpDigits[index] = '';
+      return;
     }
 
-    this.errorMessage = '';
+    const digit = digits.slice(-1);
+    this.otpDigits[index] = digit;
+    input.value = digit;
 
-    // Auto submit if all 6 digits entered
-    if (this.isOtpComplete) {
-      this.verifyOtp();
+    if (digit && index < this.otpDigits.length - 1) {
+      const nextInput = this.otpInputElements.toArray()[index + 1];
+      nextInput?.nativeElement.focus();
     }
   }
 
   onKeyDown(index: number, event: KeyboardEvent): void {
     if (event.key === 'Backspace') {
       if (!this.otpDigits[index] && index > 0) {
-        const prevInput = this.otpInputElements.toArray()[index - 1];
-        prevInput?.nativeElement.focus();
+        event.preventDefault();
         this.otpDigits[index - 1] = '';
+        const prevInput = this.otpInputElements.toArray()[index - 1];
+        if (prevInput) {
+          prevInput.nativeElement.value = '';
+          prevInput.nativeElement.focus();
+        }
       } else {
         this.otpDigits[index] = '';
       }
     } else if (event.key === 'ArrowLeft' && index > 0) {
+      event.preventDefault();
       this.otpInputElements.toArray()[index - 1]?.nativeElement.focus();
     } else if (event.key === 'ArrowRight' && index < 5) {
+      event.preventDefault();
       this.otpInputElements.toArray()[index + 1]?.nativeElement.focus();
     }
   }
@@ -167,8 +184,9 @@ export class VerifyOtp implements OnInit, OnDestroy {
         this.isLoading = false;
         this.successMessage = response?.message ?? 'OTP verified successfully!';
         console.log(response);
-        const resetToken = response.resetToken || '87';
-        console.log(response.resetToken);
+        const resetToken = response.data?.resetToken || '87';
+        console.log(resetToken);
+        this.cdr.markForCheck();
     
         setTimeout(() => {
           this.router.navigate(['/reset-password'], {
@@ -179,6 +197,7 @@ export class VerifyOtp implements OnInit, OnDestroy {
       error: (error) => {
         this.isLoading = false;
         this.errorMessage = error?.error?.message ?? 'Invalid or expired OTP. Please try again.';
+        this.cdr.markForCheck();
       }
     });
   }
@@ -189,16 +208,19 @@ export class VerifyOtp implements OnInit, OnDestroy {
     this.isResending = true;
     this.errorMessage = '';
     this.successMessage = '';
+    this.cdr.markForCheck();
 
     this.authService.sendPasswordResetOtp({ email: this.email }).subscribe({
       next: (response) => {
         this.isResending = false;
         this.successMessage = response?.message ?? 'A new verification code has been sent!';
         this.startTimer();
+        this.cdr.markForCheck();
       },
       error: (error) => {
         this.isResending = false;
         this.errorMessage = error?.error?.message ?? 'Failed to resend OTP. Please try again.';
+        this.cdr.markForCheck();
       }
     });
   }
