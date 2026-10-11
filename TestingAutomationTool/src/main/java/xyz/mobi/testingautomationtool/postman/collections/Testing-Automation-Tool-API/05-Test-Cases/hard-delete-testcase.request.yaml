@@ -1,5 +1,0 @@
-$kind: http-request
-name: Hard Delete Test Case
-order: 10000
-method: DELETE
-url: '{{baseUrl}}/testcases/{{testCaseId}}'

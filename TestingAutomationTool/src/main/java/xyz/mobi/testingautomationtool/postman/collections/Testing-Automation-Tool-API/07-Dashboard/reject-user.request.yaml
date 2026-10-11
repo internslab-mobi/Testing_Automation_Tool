@@ -1,5 +1,0 @@
-$kind: http-request
-name: Reject Pending User
-order: 5000
-method: DELETE
-url: '{{baseUrl}}/manager/userRejection/{{userId}}'
