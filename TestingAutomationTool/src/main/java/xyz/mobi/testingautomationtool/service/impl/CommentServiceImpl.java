@@ -1,6 +1,7 @@
 package xyz.mobi.testingautomationtool.service.impl;
 
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import xyz.mobi.testingautomationtool.dto.CommentDTO.CommentResponse;
 import xyz.mobi.testingautomationtool.entity.Bug;
 import xyz.mobi.testingautomationtool.entity.Comment;
 import xyz.mobi.testingautomationtool.entity.User;
+import xyz.mobi.testingautomationtool.event.CommentAddedEvent;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.mapper.CommentMapper;
 import xyz.mobi.testingautomationtool.repository.BugRepository;
@@ -32,6 +34,7 @@ public class CommentServiceImpl implements CommentService {
     private final UserRepository userRepository;
     private final CommentMapper commentMapper;
     private final AuthService authService;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public CommentResponse addComment(Integer bugId, CommentRequest request) {
@@ -58,6 +61,9 @@ public class CommentServiceImpl implements CommentService {
                 .build();
 
         Comment savedComment = commentRepository.save(comment);
+
+        eventPublisher.publishEvent(new CommentAddedEvent(savedComment));
+
         return commentMapper.toResponse(savedComment);
     }
 

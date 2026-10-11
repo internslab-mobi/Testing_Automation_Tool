@@ -2,6 +2,7 @@ package xyz.mobi.testingautomationtool.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -15,6 +16,7 @@ import xyz.mobi.testingautomationtool.dto.BugDTO.*;
 import xyz.mobi.testingautomationtool.dto.NotificationDTO.NotificationRequest;
 import xyz.mobi.testingautomationtool.entity.*;
 import xyz.mobi.testingautomationtool.enums.*;
+import xyz.mobi.testingautomationtool.event.BugFixedEvent;
 import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.mapper.BugMapper;
@@ -47,6 +49,7 @@ public class BugServiceImpl implements BugService {
     private final BugMapper bugMapper;
     private final AuthService authService;
     private final AttachmentRepository attachmentRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -322,6 +325,10 @@ public class BugServiceImpl implements BugService {
 
         bug = bugRepository.save(bug);
 
+        if (statusChanged && bug.getStatus() == BugStatus.FIXED) {
+            eventPublisher.publishEvent(new BugFixedEvent(bug));
+        }
+
         if (statusChanged || assignmentChanged) {
 
             BugHistory history = BugHistory.builder()
@@ -526,6 +533,10 @@ public class BugServiceImpl implements BugService {
 
 
         bug = bugRepository.save(bug);
+
+        if (statusChanged && bug.getStatus() == BugStatus.FIXED) {
+            eventPublisher.publishEvent(new BugFixedEvent(bug));
+        }
 
         if (statusChanged || assignmentChanged) {
 
