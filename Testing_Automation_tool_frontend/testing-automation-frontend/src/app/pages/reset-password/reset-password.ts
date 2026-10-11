@@ -136,7 +136,7 @@ export class ResetPassword implements OnInit {
     }).subscribe({
       next: (response) => {
         this.isLoading = false;
-        this.successMessage = response?.message ?? 'Password reset successfully! Redirecting to sign in...';
+        this.successMessage = response.message ?? 'Password reset successfully! Redirecting to sign in...';
         setTimeout(() => {
           this.router.navigate(['/login']);
         }, 1200);
