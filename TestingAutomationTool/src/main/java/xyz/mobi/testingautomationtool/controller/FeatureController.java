@@ -48,6 +48,17 @@ public class FeatureController {
         return ResponseEntity.ok(ApiResponse.success("Feature retrieved successfully", featureService.getFeatureById(featureId)));
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+    @GetMapping("/{featureId}/export")
+    public ResponseEntity<byte[]> exportFeatureSummary(@PathVariable Integer featureId) {
+        byte[] excelBytes = featureService.exportFeatureSummary(featureId);
+        String filename = "QA_Summary_Report_Feature_" + featureId + ".xlsx";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(excelBytes);
+    }
+
     @GetMapping("/project/{projectId}")
     public ResponseEntity<ApiResponse<List<FeatureResponse>>> getFeaturesByProjectId(
             @PathVariable Integer projectId) {

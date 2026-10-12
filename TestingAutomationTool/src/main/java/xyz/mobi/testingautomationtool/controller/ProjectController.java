@@ -60,6 +60,17 @@ public class ProjectController {
     }
 
     @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+    @GetMapping("/{projectId}/export")
+    public ResponseEntity<byte[]> exportProjectSummary(@PathVariable Integer projectId) {
+        byte[] excelBytes = projectService.exportProjectSummary(projectId);
+        String filename = "QA_Summary_Report_Project_" + projectId + ".xlsx";
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(excelBytes);
+    }
+
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<List<ProjectResponse>>> searchProjects(
             @RequestParam(required = false) String keyword,

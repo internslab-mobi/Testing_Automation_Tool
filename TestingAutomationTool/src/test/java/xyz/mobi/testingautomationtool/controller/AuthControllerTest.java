@@ -50,7 +50,6 @@ class AuthControllerTest {
 
         AuthResponse authResponse = AuthResponse.builder()
                 .token("jwt.token.value")
-                .type("Bearer")
                 .userId(1)
                 .username("manager_user")
                 .email("manager@example.com")
@@ -80,7 +79,6 @@ class AuthControllerTest {
 
         AuthResponse authResponse = AuthResponse.builder()
                 .token("jwt.token.value")
-                .type("Bearer")
                 .userId(2)
                 .username("tester_user")
                 .email("tester@example.com")

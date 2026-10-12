@@ -31,5 +31,7 @@ public interface ProjectService {
 
     List<ProjectResponse> searchProjects(String keyword, ProjectStatus status);
 
+    byte[] exportProjectSummary(Integer projectId);
+
 //    AttachmentDownloadResponse downloadFiles(Integer projectId);
 }

@@ -7,6 +7,7 @@ import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
+import xyz.mobi.testingautomationtool.client.SummaryExportClient;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.ProjectDTO.*;
@@ -48,6 +49,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final AttachmentRepository attachmentRepository;
     private final ProjectMapper projectMapper;
     private final AuthService authService;
+    private final SummaryExportClient summaryExportClient;
 
     @Override
     @Transactional
@@ -419,4 +421,13 @@ public class ProjectServiceImpl implements ProjectService {
 //            );
 //        }
 //    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportProjectSummary(Integer projectId) {
+        if (!projectRepository.existsById(projectId)) {
+            throw new ResourceNotFoundException("Project not found with ID: " + projectId);
+        }
+        return summaryExportClient.exportProjectSummary(projectId);
+    }
 }

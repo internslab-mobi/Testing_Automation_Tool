@@ -83,7 +83,7 @@ public class SecurityConfig {
                         // Public endpoints
                         .requestMatchers("/auth/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html", "/swagger-resources/**", "/webjars/**").permitAll()
-                        .requestMatchers("/static/**", "/bug-chat.html", "/manager-dashboard.html", "/favicon.ico", "/error").permitAll()
+                        .requestMatchers("/static/**", "/bug-chat.html", "/manager-dashboard.html", "/admin-portal.html", "/tester-workspace.html", "/favicon.ico", "/error").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // Manager & Admin endpoints: Dashboard & Project status toggle

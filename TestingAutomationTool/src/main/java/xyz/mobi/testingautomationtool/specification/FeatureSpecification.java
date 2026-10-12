@@ -12,10 +12,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 public final class FeatureSpecification {
-
     private FeatureSpecification() {
     }
-
     public static Specification<Feature> search(
             FeatureSearchRequest request) {
 

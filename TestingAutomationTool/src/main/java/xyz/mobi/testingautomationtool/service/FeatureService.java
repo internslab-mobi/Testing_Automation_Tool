@@ -32,6 +32,8 @@ public interface FeatureService {
 
     String hardDeleteFeature(Integer featureId);
 
+    byte[] exportFeatureSummary(Integer featureId);
+
 //    @Transactional(readOnly = true)
 //    AttachmentDownloadResponse downloadFiles(Integer featureId);
 }

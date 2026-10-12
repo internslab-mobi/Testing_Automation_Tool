@@ -47,14 +47,12 @@ public class TestcaseController {
         return ResponseEntity.ok(ApiResponse.success("Excel uploaded successfully", testCaseService.createTestCaseByUpload(file, featureId)));
     }
 
-    @GetMapping("/template/{projectId}/{featureId}")
-    public ResponseEntity<byte[]> downloadTemplate(
-            @PathVariable Integer projectId,
-            @PathVariable Integer featureId) {
-        byte[] excelBytes = testCaseService.downloadTemplate(projectId, featureId);
+    @GetMapping("/{featureId}/template")
+    public ResponseEntity<byte[]> downloadTemplate(@PathVariable Integer featureId) {
+        byte[] excelBytes = testCaseService.downloadTemplate(featureId);
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=testcase_template_" + featureId + ".xlsx")
-                .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"testcase_template_" + featureId + ".xlsx\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
                 .body(excelBytes);
     }
 

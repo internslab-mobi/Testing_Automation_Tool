@@ -216,7 +216,7 @@ public class AuthServiceImpl implements AuthService {
 
         SecureRandom random = new SecureRandom();
         String otpCode = String.format("%06d", random.nextInt(1_000_000));
-        Instant expiryTime = Instant.now().plus(10, ChronoUnit.MINUTES);
+        Instant expiryTime = Instant.now().plus(5, ChronoUnit.MINUTES);
 
         PasswordResetOtp otpEntity = PasswordResetOtp.builder()
                 .user(user)
@@ -250,14 +250,14 @@ public class AuthServiceImpl implements AuthService {
         // Invalidate the OTP code and store the reset token
         otpEntity.setOtpCode(null);
         otpEntity.setResetToken(resetToken);
-        otpEntity.setResetTokenExpiry(Instant.now().plus(10, ChronoUnit.MINUTES));
+        otpEntity.setResetTokenExpiry(Instant.now().plus(5, ChronoUnit.MINUTES));
         passwordResetOtpRepository.save(otpEntity);
         passwordResetOtpRepository.flush();
 
             return AuthResponse.builder()
                 .email(email)
                 .resetToken(resetToken)
-                .resetTokenExpiresIn(15 * 60L) // 900 seconds
+                .resetTokenExpiresIn(2 * 60L)
                 .message("OTP verified successfully. Please use the reset token to change your password within 15 minutes.")
                 .build();
     }

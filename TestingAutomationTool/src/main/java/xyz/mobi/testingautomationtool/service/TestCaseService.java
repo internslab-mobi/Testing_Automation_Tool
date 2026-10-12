@@ -17,7 +17,7 @@ public interface TestCaseService {
 
     ExcelUploadResponse createTestCaseByUpload(MultipartFile file, Integer featureId);
 
-    byte[] downloadTemplate(Integer projectId, Integer featureId);
+    byte[] downloadTemplate(Integer featureId);
 
     Page<TestCaseResponse> getAll(
             Integer featureId,

@@ -1,5 +1,7 @@
 package xyz.mobi.testingautomationtool.service.impl;
 
+import xyz.mobi.testingautomationtool.client.SummaryExportClient;
+
 import org.springframework.cache.annotation.Cacheable;
 import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
@@ -47,6 +49,7 @@ public class TestCaseServiceImpl implements TestCaseService {
     private final TestCaseExcelService testCaseExcelService;
     private final ExcelTemplateService excelTemplateService;
     private final AttachmentRepository attachmentRepository;
+    private final SummaryExportClient summaryExportClient;
 
     @Override
     public TestCaseExecutionResponse createTestCaseByManual(TestCaseExecutionRequest request) {
@@ -342,8 +345,14 @@ public class TestCaseServiceImpl implements TestCaseService {
 
     @Override
     @Transactional(readOnly = true)
-    public byte[] downloadTemplate(Integer projectId, Integer featureId) {
-        return excelTemplateService.generateTemplate(projectId, featureId);
+    public byte[] downloadTemplate(Integer featureId) {
+        Feature feature = featureRepository.findByFeatureIdAndIsDeletedFalse(featureId)
+                .orElseThrow(() -> new ResourceNotFoundException("Feature not found with ID: " + featureId));
+        Integer projectId = feature.getProject() != null ? feature.getProject().getProjectId() : null;
+        if (projectId == null) {
+            throw new ResourceNotFoundException("Project not associated with feature ID: " + featureId);
+        }
+        return summaryExportClient.downloadTestCaseTemplate(projectId, featureId);
     }
 
     @Override

@@ -7,6 +7,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import xyz.mobi.testingautomationtool.client.SummaryExportClient;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.FeatureDTO.*;
 import xyz.mobi.testingautomationtool.entity.Attachment;
@@ -50,6 +51,7 @@ public class FeatureServiceImpl implements FeatureService {
     private final BugRepository bugRepository;
     private final TestCaseRepository testCaseRepository;
     private final AuthService authService;
+    private final SummaryExportClient summaryExportClient;
 
     @Override
     public FeatureResponse createFeature(FeatureRequest request) {
@@ -415,4 +417,13 @@ public class FeatureServiceImpl implements FeatureService {
 //            );
 //        }
 //    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public byte[] exportFeatureSummary(Integer featureId) {
+        if (!featureRepository.existsById(featureId)) {
+            throw new ResourceNotFoundException("Feature not found with ID: " + featureId);
+        }
+        return summaryExportClient.exportFeatureSummary(featureId);
+    }
 }
