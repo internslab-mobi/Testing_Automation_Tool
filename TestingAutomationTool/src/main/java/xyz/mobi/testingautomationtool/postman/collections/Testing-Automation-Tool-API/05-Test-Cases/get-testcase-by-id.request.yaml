@@ -1,0 +1,8 @@
+$kind: http-request
+name: Get Test Case By ID
+order: 5000
+method: GET
+url: '{{baseUrl}}/testcases/{{testCaseId}}?includeInactive=false'
+queryParams:
+  - key: includeInactive
+    value: 'false'

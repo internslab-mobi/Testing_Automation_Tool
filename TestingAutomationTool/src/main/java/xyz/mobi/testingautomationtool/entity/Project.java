@@ -1,0 +1,80 @@
+package xyz.mobi.testingautomationtool.entity;
+
+import jakarta.persistence.*;
+import lombok.*;
+import xyz.mobi.testingautomationtool.audit.Auditable;
+import xyz.mobi.testingautomationtool.enums.ProjectStatus;
+
+@Entity
+@Table(
+        name = "testing_projects",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "testing_projects_project_name_region_unique",
+                        columnNames = {"project_name", "region"}
+                )
+        }
+)
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
+@Builder
+public class Project extends Auditable {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "project_id")
+    private Integer projectId;
+
+    @Column(name = "project_name", nullable = false, length = 200)
+    private String projectName;
+
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status", nullable = false)
+    @Builder.Default
+    private ProjectStatus status = ProjectStatus.ACTIVE;
+
+    @Column(name = "region", nullable = false, length = 255)
+    private String region;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "created_by",
+            nullable = false,
+            foreignKey = @ForeignKey(
+                    name = "testing_projects_created_by_foreign"
+            )
+    )
+    private User createdBy;
+
+    @Column(name = "is_active", nullable = false)
+    @Builder.Default
+    private boolean isActive = true;
+
+    @Column(name = "is_deleted", nullable = false)
+    @Builder.Default
+    private boolean isDeleted = false;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(
+            name = "updated_by",
+            foreignKey = @ForeignKey(
+                    name = "fk_projects_updated_by"
+            )
+    )
+    private User updatedBy;
+
+    @Column(name = "comments")
+    private String comments;
+
+    @Version
+    @Column(name = "version", nullable = false)
+    @Builder.Default
+    private Long version = 0L;
+
+
+}

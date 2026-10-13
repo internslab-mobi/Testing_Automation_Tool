@@ -1,0 +1,8 @@
+$kind: http-request
+name: Hard Delete Feature
+order: 5000
+method: DELETE
+url: '{{baseUrl}}/admin/features/{{featureId}}/permanent'
+pathVariables:
+  - key: featureId
+    value: '1'

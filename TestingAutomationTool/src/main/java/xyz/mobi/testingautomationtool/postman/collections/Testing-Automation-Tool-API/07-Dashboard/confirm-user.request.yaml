@@ -1,0 +1,15 @@
+$kind: http-request
+name: Confirm Pending User
+order: 4000
+method: PUT
+url: '{{baseUrl}}/manager/userConfirmation'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "userId": 1,
+      "role": "TESTER"
+    }

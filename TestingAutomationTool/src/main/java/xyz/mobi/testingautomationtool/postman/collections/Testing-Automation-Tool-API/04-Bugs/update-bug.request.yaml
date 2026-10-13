@@ -1,0 +1,21 @@
+$kind: http-request
+name: 'Update Bug (PUT)'
+order: 5000
+method: PUT
+url: '{{baseUrl}}/bugs/{{bugId}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "title": "Updated Bug Title",
+      "description": "Updated bug description",
+      "priority": "MEDIUM",
+      "severity": "MEDIUM",
+      "status": "IN_PROGRESS",
+      "category": "FUNCTIONAL",
+      "assignedTo": 2,
+      "comments": "Under investigation"
+    }

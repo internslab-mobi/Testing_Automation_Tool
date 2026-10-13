@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bug Discussion & Chat Hub</title>
+    <!-- Modern Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at 15% 15%, #1a1e2e 0%, #0c0f17 100%);
+            --glass-bg: rgba(22, 27, 46, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-highlight: rgba(255, 255, 255, 0.04);
+            
+            --primary: #6366f1;
+            --primary-glow: rgba(99, 102, 241, 0.35);
+            --accent-cyan: #06b6d4;
+            --accent-emerald: #10b981;
+            --accent-rose: #f43f5e;
+            --accent-amber: #f59e0b;
+            
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-subtle: #64748b;
+            
+            --bubble-me: linear-gradient(135deg, #4f46e5 0%, #6366f1 100%);
+            --bubble-other: rgba(30, 41, 59, 0.85);
+            
+            --radius-lg: 20px;
+            --radius-md: 14px;
+            --radius-sm: 8px;
+            
+            --shadow-card: 0 20px 40px -15px rgba(0, 0, 0, 0.6), 0 0 30px rgba(99, 102, 241, 0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Outfit', sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 24px;
+            overflow-x: hidden;
+        }
+
+        /* Background floating orbs for aesthetic glass effect */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(90px);
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.45;
+        }
+        .orb-1 { width: 400px; height: 400px; background: #6366f1; top: -100px; left: -100px; }
+        .orb-2 { width: 350px; height: 350px; background: #06b6d4; bottom: -50px; right: -50px; }
+        .orb-3 { width: 250px; height: 250px; background: #f43f5e; bottom: 30%; left: 10%; opacity: 0.2; }
+
+        /* Main Container */
+        .chat-app {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            max-width: 1050px;
+            height: 90vh;
+            max-height: 850px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-card);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            animation: fadeIn 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px) scale(0.98); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+
+        /* Top Header */
+        .chat-header {
+            padding: 18px 24px;
+            background: rgba(15, 23, 42, 0.65);
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .bug-meta {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .bug-badge {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            padding: 5px 12px;
+            border-radius: var(--radius-sm);
+            font-size: 0.85rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+
+        .bug-title-group h1 {
+            font-size: 1.15rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .bug-tags {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+            font-size: 0.75rem;
+        }
+
+        .tag {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .tag-status { background: rgba(16, 185, 129, 0.2); color: #34d399; }
+        .tag-severity { background: rgba(244, 63, 94, 0.2); color: #fb7185; }
+
+        /* Controls bar (User switcher & Bug Selector) */
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .control-group {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(30, 41, 59, 0.7);
+            padding: 6px 12px;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--glass-border);
+            font-size: 0.85rem;
+        }
+
+        .control-group label {
+            color: var(--text-muted);
+            font-size: 0.8rem;
+        }
+
+        .control-group select, .control-group input {
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            font-weight: 500;
+            outline: none;
+            cursor: pointer;
+        }
+
+        .control-group select option {
+            background: #1e293b;
+            color: #fff;
+        }
+
+        /* Message List Area */
+        .messages-container {
+            flex: 1;
+            padding: 24px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            scroll-behavior: smooth;
+        }
+
+        .messages-container::-webkit-scrollbar {
+            width: 6px;
+        }
+        .messages-container::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+
+        /* Date Separator */
+        .date-divider {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
+            position: relative;
+        }
+        .date-divider::before {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 1px;
+            background: var(--glass-border);
+            z-index: 0;
+        }
+        .date-divider span {
+            position: relative;
+            z-index: 1;
+            background: #1e293b;
+            border: 1px solid var(--glass-border);
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        /* Message Item */
+        .message-row {
+            display: flex;
+            gap: 12px;
+            max-width: 80%;
+            animation: slideUp 0.3s ease-out;
+            position: relative;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-row.incoming {
+            align-self: flex-start;
+        }
+
+        .message-row.outgoing {
+            align-self: flex-end;
+            flex-direction: row-reverse;
+        }
+
+        /* Avatar */
+        .avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.85rem;
+            color: #ffffff;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            text-transform: uppercase;
+        }
+
+        /* Bubble Content */
+        .message-body {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .message-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.8rem;
+            color: var(--text-subtle);
+        }
+        .message-row.outgoing .message-info {
+            justify-content: flex-end;
+        }
+
+        .author-name {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        .role-pill {
+            font-size: 0.68rem;
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.08);
+            color: var(--text-muted);
+        }
+
+        .bubble {
+            padding: 12px 18px;
+            border-radius: var(--radius-md);
+            font-size: 0.93rem;
+            line-height: 1.5;
+            word-break: break-word;
+            position: relative;
+            border: 1px solid var(--glass-border);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+        }
+
+        .message-row.incoming .bubble {
+            background: var(--bubble-other);
+            border-top-left-radius: 4px;
+            color: var(--text-main);
+        }
+
+        .message-row.outgoing .bubble {
+            background: var(--bubble-me);
+            border-top-right-radius: 4px;
+            color: #ffffff;
+            box-shadow: 0 6px 20px var(--primary-glow);
+        }
+
+        /* Formatted code snippet in chat */
+        .bubble code {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(0, 0, 0, 0.35);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.85em;
+        }
+
+        .bubble pre {
+            font-family: 'JetBrains Mono', monospace;
+            background: rgba(10, 14, 26, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 14px;
+            border-radius: var(--radius-sm);
+            margin: 8px 0;
+            overflow-x: auto;
+            font-size: 0.85rem;
+            color: #38bdf8;
+        }
+
+        /* Message Action Buttons */
+        .bubble-actions {
+            position: absolute;
+            top: -12px;
+            right: 8px;
+            background: #1e293b;
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            display: none;
+            padding: 2px 6px;
+            gap: 6px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .message-row:hover .bubble-actions {
+            display: flex;
+        }
+
+        .bubble-action-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.75rem;
+            padding: 2px 4px;
+            transition: color 0.2s;
+        }
+        .bubble-action-btn:hover {
+            color: var(--text-main);
+        }
+
+        /* Chat Input Box */
+        .chat-input-area {
+            padding: 18px 24px;
+            background: rgba(15, 23, 42, 0.7);
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .quick-toolbar {
+            display: flex;
+            gap: 8px;
+        }
+
+        .tool-btn {
+            background: rgba(30, 41, 59, 0.7);
+            border: 1px solid var(--glass-border);
+            color: var(--text-muted);
+            padding: 4px 10px;
+            border-radius: var(--radius-sm);
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .tool-btn:hover {
+            background: rgba(99, 102, 241, 0.2);
+            color: #818cf8;
+            border-color: rgba(99, 102, 241, 0.4);
+        }
+
+        .input-wrapper {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        textarea {
+            flex: 1;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-md);
+            padding: 12px 16px;
+            color: var(--text-main);
+            font-size: 0.95rem;
+            resize: none;
+            outline: none;
+            min-height: 48px;
+            max-height: 120px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        textarea:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+        textarea::placeholder {
+            color: var(--text-subtle);
+        }
+
+        .send-btn {
+            background: var(--bubble-me);
+            color: #fff;
+            border: none;
+            border-radius: var(--radius-md);
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            box-shadow: 0 6px 20px var(--primary-glow);
+            flex-shrink: 0;
+        }
+        .send-btn:hover {
+            transform: translateY(-2px) scale(1.04);
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.5);
+        }
+        .send-btn:active {
+            transform: translateY(0) scale(0.96);
+        }
+        .send-btn svg {
+            width: 20px;
+            height: 20px;
+            fill: currentColor;
+            transform: rotate(45deg);
+            margin-left: -2px;
+            margin-bottom: 2px;
+        }
+
+        /* Empty state */
+        .empty-chat {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            margin: auto;
+            color: var(--text-subtle);
+            text-align: center;
+            gap: 8px;
+        }
+        .empty-chat svg {
+            width: 48px;
+            height: 48px;
+            opacity: 0.3;
+        }
+
+        /* Status Banner */
+        .api-mode-banner {
+            font-size: 0.75rem;
+            text-align: center;
+            color: var(--text-subtle);
+            padding-bottom: 2px;
+        }
+        .status-dot {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--accent-emerald);
+            margin-right: 4px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Background Orbs -->
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+
+    <!-- Main Chat Window -->
+    <div class="chat-app">
+        <!-- Header -->
+        <header class="chat-header">
+            <div class="bug-meta">
+                <span class="bug-badge" id="bugFormatIdBadge">BUG-104</span>
+                <div class="bug-title-group">
+                    <h1 id="bugTitleText">OAuth Token Expiration on Safari Mobile</h1>
+                    <div class="bug-tags">
+                        <span class="tag tag-status">IN_PROGRESS</span>
+                        <span class="tag tag-severity">HIGH SEVERITY</span>
+                        <span class="tag" style="background: rgba(99,102,241,0.2); color: #818cf8;">FEATURE-02</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Controls (Select user & API mode) -->
+            <div class="header-controls">
+                <div class="control-group">
+                    <label for="userSelect">Active User:</label>
+                    <select id="userSelect">
+                        <option value="1" data-name="alex_qa" data-fullname="Alex Carter" data-role="QA Engineer">Alex (QA ID:1)</option>
+                        <option value="2" data-name="harikrishnan" data-fullname="Harikrishnan P" data-role="Developer" selected>Harikrishnan (Dev ID:2)</option>
+                        <option value="3" data-name="sarah_lead" data-fullname="Sarah Lead" data-role="Test Lead">Sarah (Lead ID:3)</option>
+                    </select>
+                </div>
+                <div class="control-group">
+                    <label for="bugIdInput">Bug ID:</label>
+                    <input type="number" id="bugIdInput" value="1" style="width: 45px;" min="1">
+                    <button class="tool-btn" id="reloadBtn" title="Fetch comments">↻</button>
+                </div>
+            </div>
+        </header>
+
+        <!-- Messages Feed -->
+        <main class="messages-container" id="messagesContainer">
+            <!-- Messages rendered dynamically -->
+        </main>
+
+        <!-- Input Footer -->
+        <footer class="chat-input-area">
+            <div class="quick-toolbar">
+                <button class="tool-btn" onclick="insertSnippet('```json\n{\n  &quot;status&quot;: &quot;FAIL&quot;\n}\n```')">📋 Insert JSON Log</button>
+                <button class="tool-btn" onclick="insertSnippet('@alex_qa verified on latest build')">💬 Tag QA</button>
+                <button class="tool-btn" onclick="insertSnippet('Reproduced in Safari v17.4 on iOS 17.')">🔍 Repro note</button>
+            </div>
+            <div class="input-wrapper">
+                <textarea id="commentInput" placeholder="Type your comment or paste logs (Shift + Enter for new line)..." rows="1"></textarea>
+                <button class="send-btn" id="sendBtn" title="Send Comment (Enter)">
+                    <svg viewBox="0 0 24 24"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+                </button>
+            </div>
+            <div class="api-mode-banner" id="apiModeBanner">
+                <span class="status-dot"></span> Mode: Connected to Spring Boot Backend (Fallback to Local Preview if offline)
+            </div>
+        </footer>
+    </div>
+
+    <!-- Script Logic -->
+    <script>
+        const API_BASE = 'http://localhost:8080';
+        let currentBugId = 1;
+
+        // Mock state if backend is offline
+        let mockComments = [
+            {
+                commentId: 101,
+                bugId: 1,
+                comment: "I reproduced the OAuth timeout issue when switching tabs on iOS 17. Token does not refresh automatically.",
+                createdByUserId: 1,
+                createdByUsername: "alex_qa",
+                createdByFullName: "Alex Carter",
+                createdAt: new Date(Date.now() - 3600000 * 4).toISOString()
+            },
+            {
+                commentId: 102,
+                bugId: 1,
+                comment: "Checking the refresh token lifecycle in `AuthService.java`:\n```java\nif (token.isExpired()) {\n    refreshToken(userId);\n}\n```\nPatch is in progress.",
+                createdByUserId: 2,
+                createdByUsername: "harikrishnan",
+                createdByFullName: "Harikrishnan P",
+                createdAt: new Date(Date.now() - 3600000 * 2).toISOString()
+            },
+            {
+                commentId: 103,
+                bugId: 1,
+                comment: "@harikrishnan please also test against staging environment once PR is up.",
+                createdByUserId: 3,
+                createdByUsername: "sarah_lead",
+                createdByFullName: "Sarah Lead",
+                createdAt: new Date(Date.now() - 1800000).toISOString()
+            }
+        ];
+
+        // Avatar color palette generator
+        const avatarColors = ['#6366f1', '#06b6d4', '#ec4899', '#10b981', '#f59e0b', '#8b5cf6'];
+        function getAvatarColor(str) {
+            let hash = 0;
+            for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+            return avatarColors[Math.abs(hash) % avatarColors.length];
+        }
+
+        // Format Date
+        function formatTime(dateStr) {
+            const d = new Date(dateStr);
+            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+
+        // Format message content with code formatting
+        function formatMessageContent(text) {
+            let escaped = text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+
+            // Multi-line code blocks
+            escaped = escaped.replace(/```([a-zA-Z]*)\n([\s\S]*?)```/g, (match, lang, code) => {
+                return `<pre><code>${code.trim()}</code></pre>`;
+            });
+
+            // Inline code
+            escaped = escaped.replace(/`([^`]+)`/g, '<code>$1</code>');
+
+            // Mentions
+            escaped = escaped.replace(/@([a-zA-Z0-9_]+)/g, '<span style="color:#38bdf8; font-weight:600;">@$1</span>');
+
+            // Convert newlines to breaks if not inside pre
+            return escaped.replace(/\n/g, '<br>');
+        }
+
+        // Render Comments List
+        function renderComments(comments) {
+            const container = document.getElementById('messagesContainer');
+            const currentUserId = parseInt(document.getElementById('userSelect').value);
+
+            if (!comments || comments.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-chat">
+                        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+                        <p>No comments yet on this bug.</p>
+                        <span style="font-size:0.8rem;">Start the conversation below!</span>
+                    </div>
+                `;
+                return;
+            }
+
+            let html = `
+                <div class="date-divider">
+                    <span>Discussion History</span>
+                </div>
+            `;
+
+            comments.forEach(c => {
+                const isMe = (c.createdByUserId === currentUserId);
+                const initials = (c.createdByFullName || c.createdByUsername || 'U').split(' ').map(n => n[0]).join('').substring(0, 2);
+                const avatarBg = getAvatarColor(c.createdByUsername || 'user');
+                const role = isMe ? 'You' : (c.createdByUserId === 1 ? 'QA' : c.createdByUserId === 2 ? 'Dev' : 'Lead');
+
+                html += `
+                    <div class="message-row ${isMe ? 'outgoing' : 'incoming'}" id="comment-${c.commentId}">
+                        <div class="avatar" style="background: ${avatarBg}">${initials}</div>
+                        <div class="message-body">
+                            <div class="message-info">
+                                <span class="author-name">${c.createdByFullName || c.createdByUsername}</span>
+                                <span class="role-pill">${role}</span>
+                                <span>• ${formatTime(c.createdAt)}</span>
+                            </div>
+                            <div class="bubble">
+                                <div class="bubble-actions">
+                                    <button class="bubble-action-btn" onclick="editCommentPrompt(${c.commentId}, '${escapeHtml(c.comment)}')">Edit</button>
+                                    <button class="bubble-action-btn" onclick="deleteCommentAction(${c.commentId})" style="color:#f43f5e;">Delete</button>
+                                </div>
+                                ${formatMessageContent(c.comment)}
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/'/g, "\\'").replace(/\n/g, "\\n");
+        }
+
+        // Fetch comments from backend (or fallback to mock)
+        async function loadComments() {
+            currentBugId = parseInt(document.getElementById('bugIdInput').value) || 1;
+            document.getElementById('bugFormatIdBadge').innerText = `BUG-${String(currentBugId).padStart(3, '0')}`;
+
+            try {
+                const response = await fetch(`${API_BASE}/bugs/${currentBugId}/comments`);
+                if (response.ok) {
+                    const data = await response.json();
+                    renderComments(data);
+                    document.getElementById('apiModeBanner').innerHTML = `<span class="status-dot" style="background:#10b981;"></span> Live API Connected (GET /bugs/${currentBugId}/comments)`;
+                    return;
+                }
+            } catch (err) {
+                // Fallback to local mock comments for seamless offline UI preview
+            }
+
+            renderComments(mockComments);
+            document.getElementById('apiModeBanner').innerHTML = `<span class="status-dot" style="background:#f59e0b;"></span> Interactive Demo Mode (Backend offline/mock preview)`;
+        }
+
+        // Send new comment
+        async function sendComment() {
+            const input = document.getElementById('commentInput');
+            const commentText = input.value.trim();
+            if (!commentText) return;
+
+            const userSelect = document.getElementById('userSelect');
+            const userId = parseInt(userSelect.value);
+            const userOption = userSelect.options[userSelect.selectedIndex];
+
+            const payload = {
+                comment: commentText,
+                userId: userId
+            };
+
+            input.value = '';
+            autoResizeTextarea();
+
+            try {
+                const response = await fetch(`${API_BASE}/bugs/${currentBugId}/comments`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (response.ok) {
+                    loadComments();
+                    return;
+                }
+            } catch (err) {
+                // Mock update if backend offline
+            }
+
+            // Mock append
+            const newComment = {
+                commentId: Date.now(),
+                bugId: currentBugId,
+                comment: commentText,
+                createdByUserId: userId,
+                createdByUsername: userOption.dataset.name,
+                createdByFullName: userOption.dataset.fullname,
+                createdAt: new Date().toISOString()
+            };
+            mockComments.push(newComment);
+            renderComments(mockComments);
+        }
+
+        // Edit comment
+        async function editCommentPrompt(commentId, oldText) {
+            const updatedText = prompt("Edit your comment:", oldText.replace(/\\n/g, '\n').replace(/\\'/g, "'"));
+            if (!updatedText || updatedText.trim() === oldText) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/comments/${commentId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ comment: updatedText })
+                });
+                if (response.ok) {
+                    loadComments();
+                    return;
+                }
+            } catch (err) {}
+
+            // Mock edit
+            const target = mockComments.find(c => c.commentId === commentId);
+            if (target) {
+                target.comment = updatedText;
+                renderComments(mockComments);
+            }
+        }
+
+        // Delete comment
+        async function deleteCommentAction(commentId) {
+            if (!confirm("Are you sure you want to delete this comment?")) return;
+
+            try {
+                const response = await fetch(`${API_BASE}/comments/${commentId}`, {
+                    method: 'DELETE'
+                });
+                if (response.ok) {
+                    loadComments();
+                    return;
+                }
+            } catch (err) {}
+
+            // Mock delete
+            mockComments = mockComments.filter(c => c.commentId !== commentId);
+            renderComments(mockComments);
+        }
+
+        // Textarea auto-resize
+        const textarea = document.getElementById('commentInput');
+        function autoResizeTextarea() {
+            textarea.style.height = 'auto';
+            textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+        }
+        textarea.addEventListener('input', autoResizeTextarea);
+
+        // Enter key to send
+        textarea.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendComment();
+            }
+        });
+
+        // Quick snippet insert
+        function insertSnippet(snippet) {
+            textarea.value = snippet;
+            textarea.focus();
+            autoResizeTextarea();
+        }
+
+        // Event listeners
+        document.getElementById('sendBtn').addEventListener('click', sendComment);
+        document.getElementById('reloadBtn').addEventListener('click', loadComments);
+        document.getElementById('bugIdInput').addEventListener('change', loadComments);
+        document.getElementById('userSelect').addEventListener('change', () => renderComments(mockComments));
+
+        // Initial Load
+        loadComments();
+    </script>
+</body>
+</html>

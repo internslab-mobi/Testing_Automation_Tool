@@ -1,0 +1,1286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Testing Automation Tool (TAT) — High-Level Project Flowchart</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #090d16;
+      --bg-canvas: #0c1222;
+      --bg-card: rgba(19, 29, 51, 0.85);
+      --bg-card-hover: rgba(30, 45, 78, 0.95);
+      --border: rgba(255, 255, 255, 0.1);
+      --border-glow: rgba(99, 102, 241, 0.4);
+      
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+      
+      --primary: #6366f1;
+      --primary-light: #818cf8;
+      --primary-glow: rgba(99, 102, 241, 0.35);
+      
+      --success: #10b981;
+      --success-light: #34d399;
+      --success-glow: rgba(16, 185, 129, 0.3);
+      
+      --warning: #f59e0b;
+      --warning-light: #fbbf24;
+      --warning-glow: rgba(245, 158, 11, 0.3);
+      
+      --danger: #ef4444;
+      --danger-light: #f87171;
+      --danger-glow: rgba(239, 68, 68, 0.3);
+      
+      --cyan: #06b6d4;
+      --cyan-light: #22d3ee;
+      --purple: #a855f7;
+      
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      
+      --radius-sm: 8px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+      
+      --shadow-lg: 0 20px 30px -10px rgba(0, 0, 0, 0.6);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.12) 0px, transparent 50%),
+        radial-gradient(at 50% 50%, rgba(6, 182, 212, 0.08) 0px, transparent 50%);
+      color: var(--text-main);
+      min-height: 100vh;
+      overflow-x: hidden;
+      line-height: 1.5;
+    }
+
+    /* Header */
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      background: rgba(9, 13, 22, 0.88);
+      border-bottom: 1px solid var(--border);
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      text-decoration: none;
+    }
+
+    .brand-logo {
+      width: 42px;
+      height: 42px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, var(--primary), var(--purple));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      box-shadow: 0 0 16px var(--primary-glow);
+    }
+
+    .brand-title h1 {
+      font-size: 1.15rem;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .brand-title p {
+      font-size: 0.74rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .badge-live {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      background: rgba(16, 185, 129, 0.15);
+      color: var(--success-light);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+    }
+
+    .badge-live::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      background: var(--success);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--success);
+      animation: pulse 1.5s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.3; transform: scale(0.8); }
+    }
+
+    /* Navigation View Switcher */
+    .view-switcher {
+      display: flex;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 4px;
+      border-radius: var(--radius-full);
+      border: 1px solid var(--border);
+      gap: 4px;
+    }
+
+    .view-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-sans);
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 8px 18px;
+      border-radius: var(--radius-full);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.25s ease;
+    }
+
+    .view-btn:hover {
+      color: #ffffff;
+    }
+
+    .view-btn.active {
+      background: linear-gradient(135deg, var(--primary), #4338ca);
+      color: #ffffff;
+      box-shadow: 0 0 16px var(--primary-glow);
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .header-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border);
+      color: var(--text-main);
+      padding: 8px 14px;
+      border-radius: var(--radius-md);
+      font-size: 0.82rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .header-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    /* Hero Headline */
+    .hero-section {
+      max-width: 1200px;
+      margin: 28px auto 16px;
+      padding: 0 24px;
+      text-align: center;
+    }
+
+    .hero-tag {
+      display: inline-block;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      color: var(--cyan-light);
+      background: rgba(6, 182, 212, 0.12);
+      border: 1px solid rgba(6, 182, 212, 0.3);
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 12px;
+    }
+
+    .hero-section h2 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      margin-bottom: 8px;
+      background: linear-gradient(120deg, #ffffff 30%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-section p {
+      color: var(--text-muted);
+      font-size: 0.98rem;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* Main Container */
+    main {
+      max-width: 1240px;
+      margin: 0 auto;
+      padding: 24px 20px 100px;
+    }
+
+    /* Flowchart Canvas */
+    .flowchart-container {
+      background: var(--bg-canvas);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 40px 30px;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+    }
+
+    /* Flowchart Legend */
+    .flow-legend {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 36px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend-shape {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+    }
+    .shape-start { border-radius: 50%; background: var(--purple); box-shadow: 0 0 8px var(--purple); }
+    .shape-proc { background: var(--primary); border: 1px solid var(--primary-light); }
+    .shape-decision { transform: rotate(45deg); background: var(--warning); width: 11px; height: 11px; }
+    .shape-success { background: var(--success); }
+    .shape-danger { background: var(--danger); }
+
+    /* Flowchart Vertical Tree Layout */
+    .flow-tree {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0px;
+      position: relative;
+    }
+
+    /* Flow Nodes Styles */
+    .fc-node {
+      position: relative;
+      z-index: 2;
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      cursor: pointer;
+    }
+
+    .fc-node:hover {
+      transform: translateY(-3px) scale(1.02);
+    }
+
+    /* 1. START / TERMINATOR CAPSULE */
+    .node-terminator {
+      background: linear-gradient(135deg, rgba(168, 85, 247, 0.25), rgba(99, 102, 241, 0.25));
+      border: 2px solid var(--purple);
+      color: #ffffff;
+      padding: 12px 28px;
+      border-radius: var(--radius-full);
+      font-weight: 700;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+    }
+
+    /* 2. PROCESS RECTANGLE */
+    .node-process {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--node-accent, var(--primary));
+      border-radius: var(--radius-md);
+      padding: 16px 22px;
+      width: 100%;
+      max-width: 480px;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(12px);
+    }
+
+    .node-process:hover {
+      border-color: var(--primary-light);
+      box-shadow: 0 12px 28px rgba(0, 0, 0, 0.6), 0 0 20px var(--node-glow, var(--primary-glow));
+      background: var(--bg-card-hover);
+    }
+
+    .node-header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+
+    .node-title-text {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .node-pill {
+      font-family: var(--font-mono);
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text-muted);
+    }
+
+    .node-desc-text {
+      font-size: 0.84rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+    }
+
+    .node-tech-tag {
+      display: inline-block;
+      margin-top: 8px;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--primary-light);
+      background: rgba(99, 102, 241, 0.12);
+      padding: 2px 8px;
+      border-radius: 4px;
+    }
+
+    /* 3. DECISION DIAMOND */
+    .node-diamond-container {
+      width: 100%;
+      max-width: 520px;
+      margin: 10px 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .node-diamond {
+      background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.15));
+      border: 2px solid var(--warning);
+      border-radius: var(--radius-md);
+      padding: 16px 24px;
+      text-align: center;
+      box-shadow: 0 0 25px rgba(245, 158, 11, 0.2);
+      max-width: 380px;
+      width: 100%;
+    }
+
+    .node-diamond:hover {
+      box-shadow: 0 0 35px rgba(245, 158, 11, 0.4);
+      border-color: var(--warning-light);
+    }
+
+    .diamond-icon {
+      font-size: 20px;
+      margin-bottom: 4px;
+    }
+
+    .diamond-title {
+      font-size: 0.96rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .diamond-subtitle {
+      font-size: 0.78rem;
+      color: var(--warning-light);
+      font-weight: 500;
+    }
+
+    /* Branch Container (Left / Right split) */
+    .branch-split {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      width: 100%;
+      max-width: 880px;
+      margin: 20px 0;
+      position: relative;
+    }
+
+    .branch-split::before {
+      content: '';
+      position: absolute;
+      top: -20px;
+      left: 25%;
+      right: 25%;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .branch-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+    }
+
+    .branch-label {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 800;
+      padding: 3px 10px;
+      border-radius: var(--radius-full);
+      margin-bottom: 12px;
+      letter-spacing: 0.05em;
+    }
+    .label-yes { background: rgba(16, 185, 129, 0.2); color: var(--success-light); border: 1px solid var(--success); }
+    .label-no { background: rgba(239, 68, 68, 0.2); color: var(--danger-light); border: 1px solid var(--danger); }
+    .label-choice { background: rgba(6, 182, 212, 0.2); color: var(--cyan-light); border: 1px solid var(--cyan); }
+
+    /* Vertical Connector Line */
+    .connector-line {
+      width: 2px;
+      height: 34px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.3) 0%, rgba(99, 102, 241, 0.6) 100%);
+      position: relative;
+      margin: 0 auto;
+    }
+
+    .connector-line::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: -4px;
+      width: 0;
+      height: 0;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid var(--primary-light);
+    }
+
+    .connector-line.pass-line {
+      background: linear-gradient(180deg, rgba(16, 185, 129, 0.4), var(--success));
+    }
+    .connector-line.pass-line::after {
+      border-top-color: var(--success);
+    }
+
+    .connector-line.fail-line {
+      background: linear-gradient(180deg, rgba(239, 68, 68, 0.4), var(--danger));
+    }
+    .connector-line.fail-line::after {
+      border-top-color: var(--danger);
+    }
+
+    /* Accent themes for nodes */
+    .node-auth { --node-accent: var(--purple); --node-glow: rgba(168, 85, 247, 0.3); }
+    .node-proj { --node-accent: var(--cyan); --node-glow: rgba(6, 182, 212, 0.3); }
+    .node-test { --node-accent: var(--primary); --node-glow: var(--primary-glow); }
+    .node-bug { --node-accent: var(--danger); --node-glow: var(--danger-glow); }
+    .node-gov { --node-accent: var(--success); --node-glow: var(--success-glow); }
+    .node-warn { --node-accent: var(--warning); --node-glow: var(--warning-glow); }
+
+    /* Modal Detail View */
+    .detail-modal-backdrop {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(10px);
+      z-index: 300;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .detail-modal-backdrop.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .detail-modal-box {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      max-width: 600px;
+      width: 100%;
+      padding: 28px;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.9);
+      position: relative;
+      transform: scale(0.95);
+      transition: transform 0.3s ease;
+    }
+
+    .detail-modal-backdrop.active .detail-modal-box {
+      transform: scale(1);
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      color: var(--text-muted);
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .modal-close-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+
+    .modal-chip {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: var(--radius-full);
+      background: rgba(99, 102, 241, 0.15);
+      color: var(--primary-light);
+      display: inline-block;
+      margin-bottom: 10px;
+    }
+
+    .modal-title {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .modal-body {
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      margin-bottom: 20px;
+    }
+
+    .modal-code-box {
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: var(--radius-sm);
+      padding: 12px 16px;
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--cyan-light);
+      margin-bottom: 16px;
+    }
+
+    .modal-bullets {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--text-main);
+    }
+    .modal-bullets li {
+      position: relative;
+      padding-left: 20px;
+    }
+    .modal-bullets li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: var(--success);
+      font-weight: 800;
+    }
+
+    /* Print styling */
+    @media print {
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+      }
+      header, .hero-section p, .view-switcher, .header-actions {
+        display: none !important;
+      }
+      .flowchart-container {
+        border: none !important;
+        box-shadow: none !important;
+        background: #ffffff !important;
+      }
+      .node-process, .node-diamond, .node-terminator {
+        border: 1px solid #333 !important;
+        color: #000 !important;
+        box-shadow: none !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .branch-split {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      .branch-split::before {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Navbar -->
+  <header>
+    <a href="#" class="brand">
+      <div class="brand-logo">🧪</div>
+      <div class="brand-title">
+        <h1>Testing Automation Tool <span class="badge-live">Flow Map</span></h1>
+        <p>High-Level End-to-End System & Business Process Flowchart</p>
+      </div>
+    </a>
+
+    <!-- View Modes -->
+    <div class="view-switcher">
+      <button class="view-btn active" onclick="filterFlow('all')">
+        <span>🌐</span> Complete Flow
+      </button>
+      <button class="view-btn" onclick="filterFlow('qa')">
+        <span>🧪</span> QA Path
+      </button>
+      <button class="view-btn" onclick="filterFlow('dev')">
+        <span>💻</span> Dev Path
+      </button>
+      <button class="view-btn" onclick="filterFlow('mgr')">
+        <span>👔</span> Manager Path
+      </button>
+    </div>
+
+    <div class="header-actions">
+      <button class="header-btn" onclick="window.print()">
+        <span>🖨️</span> Print / PDF
+      </button>
+    </div>
+  </header>
+
+  <!-- Hero Header -->
+  <section class="hero-section">
+    <span class="hero-tag">System Architecture & QA Lifecycle</span>
+    <h2>What Does the Testing Automation Tool Do?</h2>
+    <p>
+      An enterprise Quality Assurance platform that unifies <strong>User Onboarding & RBAC</strong>, <strong>Project/Sprint Planning</strong>, <strong>Bulk Excel Test Authoring (Apache POI)</strong>, <strong>Automated Defect Lifecycle with RCA</strong>, and <strong>Real-time Release Health Analytics</strong>.
+    </p>
+  </section>
+
+  <!-- Main Canvas -->
+  <main>
+    <div class="flowchart-container">
+
+      <!-- Flow Legend -->
+      <div class="flow-legend">
+        <div class="legend-item"><div class="legend-shape shape-start"></div> Start / End State</div>
+        <div class="legend-item"><div class="legend-shape shape-proc"></div> Functional Process</div>
+        <div class="legend-item"><div class="legend-shape shape-decision"></div> Decision Point / Branching</div>
+        <div class="legend-item"><div class="legend-shape shape-success"></div> Success / PASS Branch</div>
+        <div class="legend-item"><div class="legend-shape shape-danger"></div> Defect / FAIL Branch</div>
+      </div>
+
+      <div class="flow-tree">
+
+        <!-- 1. START -->
+        <div class="fc-node node-terminator" onclick="showDetail('start')">
+          <span>🚀</span> START: User Accesses TAT Platform
+        </div>
+
+        <div class="connector-line"></div>
+
+        <!-- 2. DECISION: Has Account? -->
+        <div class="node-diamond-container">
+          <div class="fc-node node-diamond" onclick="showDetail('has_account')">
+            <div class="diamond-icon">❓</div>
+            <div class="diamond-title">Has Active Account?</div>
+            <div class="diamond-subtitle">Check Credentials & Activation</div>
+          </div>
+        </div>
+
+        <!-- SPLIT: Register vs Login -->
+        <div class="branch-split">
+          <!-- Left: New User Registration & Approval -->
+          <div class="branch-col">
+            <span class="branch-label label-no">NO / NEW USER</span>
+            <div class="fc-node node-process node-auth" onclick="showDetail('register')">
+              <div class="node-header-row">
+                <span class="node-title-text">📝 Self Registration</span>
+                <span class="node-pill">POST /auth/register</span>
+              </div>
+              <div class="node-desc-text">User submits credentials & skills. Account created in inactive state (<code>isActive = false</code>).</div>
+              <span class="node-tech-tag">Angular /register ➔ Spring Security</span>
+            </div>
+
+            <div class="connector-line"></div>
+
+            <div class="fc-node node-diamond" style="max-width:320px;" onclick="showDetail('manager_approval')">
+              <div class="diamond-icon">🛡️</div>
+              <div class="diamond-title">Manager Approves?</div>
+              <div class="diamond-subtitle">PUT /manager/userConfirmation</div>
+            </div>
+
+            <div class="connector-line pass-line"></div>
+
+            <div class="fc-node node-process node-gov" onclick="showDetail('activated')">
+              <div class="node-header-row">
+                <span class="node-title-text">🎉 Account Activated</span>
+                <span class="node-pill">JavaMailSender</span>
+              </div>
+              <div class="node-desc-text">Manager confirms role. Automated HTML welcome email sent to user.</div>
+            </div>
+          </div>
+
+          <!-- Right: Direct Login & Dual Token -->
+          <div class="branch-col">
+            <span class="branch-label label-yes">YES / ACTIVE USER</span>
+            <div class="fc-node node-process node-auth" onclick="showDetail('login')">
+              <div class="node-header-row">
+                <span class="node-title-text">🔑 Dual-Token Login</span>
+                <span class="node-pill">POST /auth/login</span>
+              </div>
+              <div class="node-desc-text">Issues <strong>15m Access Token (JJWT)</strong> + <strong>24h Refresh Token</strong> in MySQL DB.</div>
+              <span class="node-tech-tag">Stateless JWT Auth + 10m Expiry Warning</span>
+            </div>
+
+            <div class="connector-line"></div>
+
+            <div class="fc-node node-process node-auth" onclick="showDetail('forgot_otp')">
+              <div class="node-header-row">
+                <span class="node-title-text">📬 Forgot Password?</span>
+                <span class="node-pill">POST /auth/reset-password</span>
+              </div>
+              <div class="node-desc-text">6-digit email OTP (10m TTL) verifies & resets password with instant auto-login tokens.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="connector-line"></div>
+
+        <!-- 3. PROJECT & FEATURE SELECTION -->
+        <div class="fc-node node-process node-proj" onclick="showDetail('project_mgmt')">
+          <div class="node-header-row">
+            <span class="node-title-text">📁 Project & Feature Workspaces</span>
+            <span class="node-pill">/project & /feature</span>
+          </div>
+          <div class="node-desc-text">Select regional project ➔ Configure Agile sprint feature (v1.0) ➔ Upload specs & download ZIP attachments.</div>
+          <span class="node-tech-tag">Soft Deletions + Apache ZIP Compression</span>
+        </div>
+
+        <div class="connector-line"></div>
+
+        <!-- 4. TEST CASE CREATION DECISION -->
+        <div class="node-diamond-container">
+          <div class="fc-node node-diamond" onclick="showDetail('test_authoring_mode')">
+            <div class="diamond-icon">📋</div>
+            <div class="diamond-title">Test Authoring Mode?</div>
+            <div class="diamond-subtitle">Manual Entry or Bulk Excel Spreadsheet</div>
+          </div>
+        </div>
+
+        <!-- SPLIT: Manual vs Bulk Excel -->
+        <div class="branch-split">
+          <!-- Left: Manual Authoring -->
+          <div class="branch-col">
+            <span class="branch-label label-choice">MANUAL AUTHORING</span>
+            <div class="fc-node node-process node-test" onclick="showDetail('manual_test')">
+              <div class="node-header-row">
+                <span class="node-title-text">✍️ Single Test Case</span>
+                <span class="node-pill">POST /testcases</span>
+              </div>
+              <div class="node-desc-text">Define preconditions, UI validations, DB validations, and custom JSON fields.</div>
+            </div>
+          </div>
+
+          <!-- Right: Bulk Excel Import -->
+          <div class="branch-col">
+            <span class="branch-label label-choice">BULK EXCEL IMPORT</span>
+            <div class="fc-node node-process node-test" onclick="showDetail('excel_import')">
+              <div class="node-header-row">
+                <span class="node-title-text">📊 Apache POI Upload</span>
+                <span class="node-pill">POST /testcases/upload</span>
+              </div>
+              <div class="node-desc-text">Download template ➔ Fill 14 columns in <code>TCFormat</code> sheet ➔ Ingest hundreds of tests.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="connector-line"></div>
+
+        <!-- 5. TEST EXECUTION -->
+        <div class="fc-node node-process node-test" onclick="showDetail('test_execution')">
+          <div class="node-header-row">
+            <span class="node-title-text">🎯 Test Execution & Multi-Tier Validation</span>
+            <span class="node-pill">PUT /testcases/{id}</span>
+          </div>
+          <div class="node-desc-text">QA runs test cases, confirms UI behaviors & DB records, and logs actual execution status.</div>
+          <span class="node-tech-tag">Execution Counter + Automation Feasibility</span>
+        </div>
+
+        <div class="connector-line"></div>
+
+        <!-- 6. DECISION: PASS OR FAIL -->
+        <div class="node-diamond-container">
+          <div class="fc-node node-diamond" onclick="showDetail('execution_result')">
+            <div class="diamond-icon">⚖️</div>
+            <div class="diamond-title">Actual Test Result?</div>
+            <div class="diamond-subtitle">Did the Test Case Pass or Fail?</div>
+          </div>
+        </div>
+
+        <!-- SPLIT: PASS vs FAIL (BUG LIFECYCLE) -->
+        <div class="branch-split">
+          <!-- Left: PASS -->
+          <div class="branch-col">
+            <span class="branch-label label-yes">STATUS: PASS</span>
+            <div class="fc-node node-process node-gov" onclick="showDetail('pass_flow')">
+              <div class="node-header-row">
+                <span class="node-title-text">✅ Verified Pass</span>
+                <span class="node-pill">Execution Number + 1</span>
+              </div>
+              <div class="node-desc-text">Test marked as PASSED. Increments pass rate % and boosts overall Quality Health Score.</div>
+            </div>
+          </div>
+
+          <!-- Right: FAIL -> DEFECT WORKFLOW -->
+          <div class="branch-col">
+            <span class="branch-label label-no">STATUS: FAIL / DEFECT</span>
+            <div class="fc-node node-process node-bug" onclick="showDetail('bug_create')">
+              <div class="node-header-row">
+                <span class="node-title-text">🐛 Defect Auto-Generated</span>
+                <span class="node-pill">POST /bugs</span>
+              </div>
+              <div class="node-desc-text">Generates <code>BUG-FEATURE-001</code>. Fires async HTML email & in-app alert to assigned developer.</div>
+            </div>
+
+            <div class="connector-line fail-line"></div>
+
+            <div class="fc-node node-process node-bug" onclick="showDetail('bug_chat')">
+              <div class="node-header-row">
+                <span class="node-title-text">💬 Bug Chat & Investigation</span>
+                <span class="node-pill">bug-chat.html</span>
+              </div>
+              <div class="node-desc-text">Dev sets <code>IN_PROGRESS</code>. Collaborates via comments and uploads logs/screenshots.</div>
+            </div>
+
+            <div class="connector-line fail-line"></div>
+
+            <div class="fc-node node-process node-warn" onclick="showDetail('bug_resolve')">
+              <div class="node-header-row">
+                <span class="node-title-text">🛠️ Fix & RCA Comments</span>
+                <span class="node-pill">PATCH /bugs/{id}</span>
+              </div>
+              <div class="node-desc-text">Developer resolves defect with mandatory Root Cause Analysis (RCA) comments ➔ <code>FIXED</code>.</div>
+            </div>
+
+            <div class="connector-line fail-line"></div>
+
+            <div class="fc-node node-process node-gov" onclick="showDetail('bug_close')">
+              <div class="node-header-row">
+                <span class="node-title-text">🔍 QA Retest & Closure</span>
+                <span class="node-pill">CLOSED / REOPENED</span>
+              </div>
+              <div class="node-desc-text">QA verifies in new build. If fix passes ➔ <code>CLOSED</code>. If bug persists ➔ <code>REOPENED</code> back to Dev.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="connector-line"></div>
+
+        <!-- 7. QUALITY HEALTH SCORING -->
+        <div class="fc-node node-process node-gov" onclick="showDetail('health_score')">
+          <div class="node-header-row">
+            <span class="node-title-text">📈 Quality Health Score Engine</span>
+            <span class="node-pill">DashboardServiceImpl.java</span>
+          </div>
+          <div class="node-desc-text">
+            Calculates <strong>0–100% Release Health</strong>: <code>(Pass Rate * 0.75) + 25 - (Critical * 20) - (High * 8)</code>.
+          </div>
+          <span class="node-tech-tag">🟢 EXCELLENT (&ge;85%) | 🟡 GOOD (&ge;70%) | 🔴 CRITICAL (&lt;50%)</span>
+        </div>
+
+        <div class="connector-line"></div>
+
+        <!-- 8. EXECUTIVE DASHBOARD -->
+        <div class="fc-node node-process node-proj" onclick="showDetail('executive_dashboard')">
+          <div class="node-header-row">
+            <span class="node-title-text">📊 Manager Executive Dashboard</span>
+            <span class="node-pill">manager-dashboard.html</span>
+          </div>
+          <div class="node-desc-text">
+            Live executive control center: KPI stat cards, defect severity donuts, top failing features, and team workloads.
+          </div>
+          <span class="node-tech-tag">GET /manager/dashboard/overview</span>
+        </div>
+
+        <div class="connector-line"></div>
+
+        <!-- 9. END / RELEASE READY -->
+        <div class="fc-node node-terminator" style="border-color: var(--success); box-shadow: 0 0 25px rgba(16, 185, 129, 0.4);" onclick="showDetail('end')">
+          <span>🏁</span> END: Certified Release / Production Deployment
+        </div>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- Node Detail Modal -->
+  <div class="detail-modal-backdrop" id="modalBackdrop">
+    <div class="detail-modal-box">
+      <button class="modal-close-btn" onclick="closeModal()">&times;</button>
+      <span class="modal-chip" id="modalCategory">CATEGORY</span>
+      <h3 class="modal-title" id="modalTitle">Step Title</h3>
+      <div class="modal-code-box" id="modalCode">API / Endpoint</div>
+      <p class="modal-body" id="modalDesc">Detailed description of what this part of the project accomplishes.</p>
+      <ul class="modal-bullets" id="modalBullets">
+        <li>Bullet point 1</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    const DETAILS = {
+      start: {
+        category: "INITIATION",
+        title: "Starting the Testing Automation Tool",
+        code: "Frontend: Angular 18+ (Port 4200) | Backend: Spring Boot 4.1.1 (Port 8090)",
+        desc: "Users (QA Testers, Developers, and Managers) access the centralized quality assurance platform to collaborate, author test cases, track defects, and view release metrics.",
+        bullets: [
+          "Single Sign-On / Dual Token JWT security layer",
+          "Role-Based Access Control (ADMIN, MANAGER, TESTER, DEVELOPER)",
+          "Centralized MySQL database with JPA Auditing"
+        ]
+      },
+      has_account: {
+        category: "SECURITY GATEWAY",
+        title: "Account Status & Authentication Check",
+        code: "Spring Security Filter Chain: JwtAuthenticationFilter",
+        desc: "Determines whether the incoming user has an active, verified account in MySQL, or if they need to register or verify credentials.",
+        bullets: [
+          "Validates BCrypt password hash and active status flag (isActive == true)",
+          "Inactive accounts receive HTTP 403 Forbidden with approval reminder"
+        ]
+      },
+      register: {
+        category: "USER ONBOARDING",
+        title: "Self-Service User Registration",
+        code: "POST /auth/register -> Angular /register",
+        desc: "New team members create an account with username, email, designation, and skills. To prevent unauthorized access, accounts are locked (isActive = false) until a manager reviews them.",
+        bullets: [
+          "Unique constraints on username and email",
+          "Password encrypted via BCryptPasswordEncoder",
+          "Queued immediately for Manager review"
+        ]
+      },
+      manager_approval: {
+        category: "GOVERNANCE",
+        title: "Manager Approval Queue",
+        code: "PUT /manager/userConfirmation | manager-dashboard.html",
+        desc: "Managers review pending applicants in their dashboard, assign the appropriate role (TESTER, DEVELOPER, MANAGER), and confirm access.",
+        bullets: [
+          "Flips isActive flag to true",
+          "Dispatches automated HTML welcome email via JavaMailSender",
+          "Rejections purge request and notify user via email"
+        ]
+      },
+      activated: {
+        category: "ONBOARDING COMPLETE",
+        title: "User Account Activated",
+        code: "EmailServiceImpl.java (Gmail SMTP TLS 587)",
+        desc: "The user receives an email confirmation that their account has been approved and can now log in to the platform.",
+        bullets: [
+          "HTML email with branded styling and login instructions",
+          "Immediate access granted to role-specific features"
+        ]
+      },
+      login: {
+        category: "AUTHENTICATION",
+        title: "Stateless Dual-Token Login",
+        code: "POST /auth/login & POST /auth/refresh",
+        desc: "Generates a 15-minute Access Token for API authorization and a 24-hour Refresh Token stored in the MySQL database for session maintenance.",
+        bullets: [
+          "HMAC-SHA256 signed JWT tokens (JJWT 0.12.6)",
+          "10-minute warning before 24-hour refresh token expires",
+          "Revocation on logout (POST /auth/logout)"
+        ]
+      },
+      forgot_otp: {
+        category: "SECURITY SELF-SERVICE",
+        title: "In-Memory OTP Password Recovery",
+        code: "POST /auth/forgot-password -> /verify-otp -> /reset-password",
+        desc: "Cryptographic 6-digit OTP stored in thread-safe memory with strict 10-minute TTL. Verifies OTP, updates BCrypt password, and returns fresh tokens for seamless auto-login.",
+        bullets: [
+          "10-Minute time-to-live in-memory cache",
+          "Automatic Refresh Token revocation on password reset",
+          "Auto-login upon successful password change"
+        ]
+      },
+      project_mgmt: {
+        category: "PROJECT & SPRINT SETUP",
+        title: "Projects, Sprints & Features Hierarchy",
+        code: "POST /project | POST /feature | GET /project/projects/{id}/attachments/download",
+        desc: "Organizes tests into Projects (by geographic region) and Features (by Agile sprint and version). Allows PRD and spec document uploads bundled into ZIP downloads.",
+        bullets: [
+          "Regional grouping (US, EMEA, APAC)",
+          "Sprint and version tracking (e.g. Sprint 24, v1.2)",
+          "Multi-file ZIP archive compression for attachments"
+        ]
+      },
+      test_authoring_mode: {
+        category: "TEST SUITE DESIGN",
+        title: "Test Case Authoring Strategy",
+        code: "Manual Entry (POST /testcases) vs Bulk Excel (POST /testcases/upload)",
+        desc: "QA Engineers choose between authoring test cases one-by-one with granular dynamic fields, or uploading pre-existing test matrices in Excel.",
+        bullets: [
+          "Supports smoke, sanity, regression, and E2E test suites",
+          "Preconditions, execution steps, UI validations, and DB validations"
+        ]
+      },
+      manual_test: {
+        category: "TEST AUTHORING",
+        title: "Manual Test Case Authoring",
+        code: "POST /testcases (TestCaseController.java)",
+        desc: "Creates individual test case entities with paired 1:1 TestingExecution records. Custom fields stored as JSON in MySQL.",
+        bullets: [
+          "Dynamic fields via @JdbcTypeCode(SqlTypes.JSON)",
+          "Sequential ID generator: TC_<FEATURE>_001",
+          "Detailed UI & Database validation steps"
+        ]
+      },
+      excel_import: {
+        category: "BULK PROCESSING",
+        title: "Apache POI Bulk Excel Ingestion",
+        code: "POST /testcases/upload (TestCaseExcelService.java)",
+        desc: "Downloads standardized template. QA fills 14 columns in the 'TCFormat' sheet and uploads. System parses rows using Apache POI and batch-inserts hundreds of test cases.",
+        bullets: [
+          "Apache POI 5.4.1 streaming parser",
+          "14 standardized columns: ID, Title, Type, Priority, Validations, Steps",
+          "Error logging for malformed rows without failing the entire batch"
+        ]
+      },
+      test_execution: {
+        category: "QA EXECUTION",
+        title: "Test Execution & Multi-Tier Validation",
+        code: "PUT /testcases/{id} (TestingExecution.java)",
+        desc: "QA executes tests and logs actual run results (PASS, FAIL, BLOCKED, NO_RUN, DESCOPE), incrementing execution counters and verifying DB & UI behavior.",
+        bullets: [
+          "Records execution timestamp and executing tester identity",
+          "Validates automation feasibility (YES, NO, PLANNED, IN_PROGRESS)",
+          "Updates defect counters and execution densities"
+        ]
+      },
+      execution_result: {
+        category: "EXECUTION OUTCOME",
+        title: "Evaluating Test Run Status",
+        code: "PASS ➔ Increase Health | FAIL ➔ Defect State Machine",
+        desc: "Determines whether the executed test satisfied all acceptance criteria or requires bug logging and developer remediation.",
+        bullets: [
+          "PASS increases sprint release readiness score",
+          "FAIL initiates defect lifecycle, developer assignment, and email alerts"
+        ]
+      },
+      pass_flow: {
+        category: "QUALITY SUCCESS",
+        title: "Passing Test Verification",
+        code: "Status = PASS | ExecutionNumber++",
+        desc: "Increases the passed test tally, elevating the release Pass Rate % and contributing positively to the Quality Health Index.",
+        bullets: [
+          "Directly boosts overall sprint health score",
+          "Updates feature completion metrics"
+        ]
+      },
+      bug_create: {
+        category: "DEFECT TRACKING",
+        title: "Automated Defect Logging & ID Generation",
+        code: "POST /bugs (BugServiceImpl.java)",
+        desc: "Automatically assigns sequential formatted ID (BUG-<FEATURE>-001), logs initial history audit, and dispatches email alert to assigned developer.",
+        bullets: [
+          "Enforced initial state: OPEN",
+          "Severity categories: Critical, High, Medium, Low",
+          "Sends HTML email with test data, steps, and precondition"
+        ]
+      },
+      bug_chat: {
+        category: "COLLABORATION",
+        title: "Real-Time Bug Chat & Evidence",
+        code: "bug-chat.html | /bugs/{id}/comments | /bugs/{id}/attachments",
+        desc: "Developers and QA discuss the bug in threaded comments, upload stack trace logs, screenshots, and screen recordings.",
+        bullets: [
+          "Developer transitions state to IN_PROGRESS",
+          "Threaded discussion with timestamps and user avatars",
+          "Multi-format attachment downloads (PNG, JPG, LOG, PDF)"
+        ]
+      },
+      bug_resolve: {
+        category: "DEVELOPER FIX",
+        title: "Defect Resolution & RCA Submission",
+        code: "PATCH /bugs/{id} {status: 'RESOLVED', rca_comments: '...'}",
+        desc: "Developer submits fix with mandatory Root Cause Analysis (RCA) comments. State moves to RESOLVED and build is deployed to test environment.",
+        bullets: [
+          "Mandatory RCA explanation for quality auditing",
+          "BugHistory entity updated with timestamp and developer identity",
+          "Notifies QA that fix is ready in test build"
+        ]
+      },
+      bug_close: {
+        category: "QA VERIFICATION",
+        title: "QA Retesting & Defect Closure",
+        code: "PATCH /bugs/{id} {status: 'CLOSED' or 'REOPENED'}",
+        desc: "QA verifies fix in new build. If verified ➔ CLOSED. If defect persists ➔ REOPENED back to developer investigation.",
+        bullets: [
+          "CLOSED records resolvedAt timestamp and removes penalty from Health Score",
+          "REOPENED sends alert back to developer queue"
+        ]
+      },
+      health_score: {
+        category: "QUALITY ANALYTICS",
+        title: "Quality Health Score Algorithm",
+        code: "DashboardServiceImpl.java",
+        desc: "Calculates real-time 0–100% Quality Health Score using formula: (Pass Rate * 0.75) + 25.0 - (Critical * 20.0) - (High * 8.0).",
+        bullets: [
+          "🟢 EXCELLENT (&ge;85% & 0 Critical): Ready for Production Release",
+          "🟡 GOOD (&ge;70%): Minor defects, ongoing testing",
+          "🟠 NEEDS_ATTENTION (&ge;50%): Elevated failure rate",
+          "🔴 CRITICAL (<50% or Open Criticals): Release blocker"
+        ]
+      },
+      executive_dashboard: {
+        category: "MANAGEMENT PORTAL",
+        title: "Executive Analytics Dashboard",
+        code: "manager-dashboard.html | GET /manager/dashboard/overview",
+        desc: "High-level managerial view displaying project KPIs, defect severity breakdown charts, top failing features ranking, and team workload balances.",
+        bullets: [
+          "Real-time health score widget",
+          "Defect distribution by severity and category",
+          "Top failing features to prioritize engineering effort"
+        ]
+      },
+      end: {
+        category: "RELEASE SIGN-OFF",
+        title: "Certified Release / Deployment",
+        code: "Quality Sign-Off Achieved",
+        desc: "All test cases passing, zero critical blockers, quality health score >= 85%. Project certified ready for production release.",
+        bullets: [
+          "All acceptance criteria verified",
+          "Release readiness certification approved by Manager"
+        ]
+      }
+    };
+
+    function showDetail(key) {
+      const item = DETAILS[key];
+      if (!item) return;
+
+      document.getElementById('modalCategory').textContent = item.category;
+      document.getElementById('modalTitle').textContent = item.title;
+      document.getElementById('modalCode').textContent = item.code;
+      document.getElementById('modalDesc').innerHTML = item.desc;
+
+      const bulletsUl = document.getElementById('modalBullets');
+      bulletsUl.innerHTML = '';
+      item.bullets.forEach(b => {
+        const li = document.createElement('li');
+        li.textContent = b;
+        bulletsUl.appendChild(li);
+      });
+
+      document.getElementById('modalBackdrop').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('modalBackdrop').classList.remove('active');
+    }
+
+    document.getElementById('modalBackdrop').addEventListener('click', (e) => {
+      if (e.target.id === 'modalBackdrop') {
+        closeModal();
+      }
+    });
+
+    // Filter Flow Paths
+    function filterFlow(role) {
+      const btns = document.querySelectorAll('.view-btn');
+      btns.forEach(b => b.classList.remove('active'));
+      event.currentTarget.classList.add('active');
+
+      const nodes = document.querySelectorAll('.fc-node, .connector-line, .branch-col');
+      if (role === 'all') {
+        nodes.forEach(n => { n.style.opacity = '1'; n.style.filter = 'none'; });
+        return;
+      }
+
+      nodes.forEach(n => {
+        n.style.opacity = '0.2';
+        n.style.filter = 'grayscale(80%)';
+      });
+
+      // Role specific highlights
+      let selectors = [];
+      if (role === 'qa') {
+        selectors = ['.node-terminator', '.node-test', '.node-bug', '.node-proj', '.label-yes', '.label-no', '.label-choice', '.pass-line', '.fail-line'];
+      } else if (role === 'dev') {
+        selectors = ['.node-terminator', '.node-bug', '.node-warn', '.fail-line', '.label-no'];
+      } else if (role === 'mgr') {
+        selectors = ['.node-terminator', '.node-gov', '.node-proj', '.node-auth', '.node-diamond', '.pass-line'];
+      }
+
+      selectors.forEach(sel => {
+        document.querySelectorAll(sel).forEach(el => {
+          el.style.opacity = '1';
+          el.style.filter = 'none';
+        });
+      });
+    }
+  </script>
+</body>
+</html>

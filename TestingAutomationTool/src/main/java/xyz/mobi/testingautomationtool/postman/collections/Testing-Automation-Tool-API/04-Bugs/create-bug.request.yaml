@@ -1,0 +1,26 @@
+$kind: http-request
+name: Create Bug
+order: 1000
+method: POST
+url: '{{baseUrl}}/bugs'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "bugFormatId": "BUG-001",
+      "testCaseId": 1,
+      "featureId": 1,
+      "title": "Login button not working",
+      "description": "The login button does not respond on click",
+      "severity": "HIGH",
+      "priority": "HIGH",
+      "category": "FUNCTIONAL",
+      "reportedBy": 1,
+      "status": "OPEN",
+      "assignedTo": 2,
+      "bugOccurrence": 1,
+      "comments": "Reproducible on Chrome"
+    }

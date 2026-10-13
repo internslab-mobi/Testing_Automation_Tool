@@ -1,0 +1,5 @@
+$kind: http-request
+name: Download Test Case Template
+order: 3000
+method: GET
+url: '{{baseUrl}}/testcases/template/{{projectId}}/{{featureId}}'

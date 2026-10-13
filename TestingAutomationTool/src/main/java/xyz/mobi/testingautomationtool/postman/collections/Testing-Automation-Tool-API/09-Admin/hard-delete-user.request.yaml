@@ -1,0 +1,8 @@
+$kind: http-request
+name: Hard Delete User
+order: 3000
+method: DELETE
+url: '{{baseUrl}}/admin/users/{{userId}}/permanent'
+pathVariables:
+  - key: userId
+    value: '1'

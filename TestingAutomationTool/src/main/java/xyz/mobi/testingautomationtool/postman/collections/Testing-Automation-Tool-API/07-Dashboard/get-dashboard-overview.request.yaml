@@ -1,0 +1,5 @@
+$kind: http-request
+name: Get Manager Dashboard Overview
+order: 1000
+method: GET
+url: '{{baseUrl}}/manager/dashboard/overview'

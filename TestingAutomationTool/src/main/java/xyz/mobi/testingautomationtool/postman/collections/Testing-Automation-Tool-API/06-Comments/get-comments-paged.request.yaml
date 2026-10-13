@@ -1,0 +1,12 @@
+$kind: http-request
+name: Get Comments for Bug (Paged)
+order: 3000
+method: GET
+url: '{{baseUrl}}/bugs/{{bugId}}/comments/page?page=0&size=20&sort=createdAt%2Casc'
+queryParams:
+  - key: page
+    value: '0'
+  - key: size
+    value: '20'
+  - key: sort
+    value: 'createdAt%2Casc'

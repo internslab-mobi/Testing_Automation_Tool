@@ -1,0 +1,8 @@
+$kind: http-request
+name: Hard Delete Bug
+order: 7000
+method: DELETE
+url: '{{baseUrl}}/admin/bugs/{{bugId}}/permanent'
+pathVariables:
+  - key: bugId
+    value: '1'

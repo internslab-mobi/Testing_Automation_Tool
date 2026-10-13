@@ -1,0 +1,19 @@
+$kind: http-request
+name: Create Feature
+order: 1000
+method: POST
+url: '{{baseUrl}}/feature'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "projectId": 1,
+      "featureName": "User Authentication",
+      "description": "Feature for user login and registration",
+      "comments": "Sprint 1 feature",
+      "sprint": 1,
+      "featureVersion": "v1.0"
+    }

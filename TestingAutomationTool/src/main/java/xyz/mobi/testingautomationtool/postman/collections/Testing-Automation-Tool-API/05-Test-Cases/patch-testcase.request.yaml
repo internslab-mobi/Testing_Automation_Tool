@@ -1,0 +1,14 @@
+$kind: http-request
+name: Patch Test Case
+order: 8000
+method: PATCH
+url: '{{baseUrl}}/testcases/{{testCaseId}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "testcaseStatus": "INACTIVE"
+    }

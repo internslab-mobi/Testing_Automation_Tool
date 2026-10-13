@@ -1,0 +1,33 @@
+$kind: http-request
+name: Create Test Case (Manual)
+order: 1000
+method: POST
+url: '{{baseUrl}}/testcases'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "testCase": {
+        "featureId": 1,
+        "testcaseFormatId": "TC-001",
+        "title": "Verify login with valid credentials",
+        "testType": "FUNCTIONAL",
+        "testPriority": "HIGH",
+        "testcaseStatus": "ACTIVE",
+        "createdBy": 1
+      },
+      "testingExecutionRequest": {
+        "automationFeasibility": "FEASIBLE",
+        "testExecution": "Manual",
+        "testValidation": "Login success",
+        "precondition": "User must be registered",
+        "testData": "username: johndoe, password: password123",
+        "executionSteps": "1. Open login page\n2. Enter credentials\n3. Click login",
+        "uiValidations": "Dashboard should be visible",
+        "dbValidations": "Session token created",
+        "comments": "Happy path test"
+      }
+    }

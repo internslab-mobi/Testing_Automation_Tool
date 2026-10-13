@@ -1,0 +1,17 @@
+$kind: http-request
+name: 'Update Project (PUT)'
+order: 5000
+method: PUT
+url: '{{baseUrl}}/project/{{projectId}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "projectName": "Updated Project Name",
+      "description": "Updated description",
+      "region": "US-West",
+      "comments": "Updated comments"
+    }

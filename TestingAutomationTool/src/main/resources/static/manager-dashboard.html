@@ -1,0 +1,3197 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Testing Automation Tool — Manager Cockpit</title>
+  
+  <!-- Modern Typography (Inter + JetBrains Mono) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <style>
+    :root {
+      /* Premium SaaS Design Tokens (Linear/Stripe/Vercel inspired - Clean White & Slate) */
+      --bg-body: #f8fafc;
+      --bg-surface: #ffffff;
+      --bg-surface-hover: #f1f5f9;
+      --bg-subtle: #f8fafc;
+
+      --border-subtle: #f1f5f9;
+      --border-default: #e2e8f0;
+      --border-hover: #cbd5e1;
+      --border-active: #4f46e5;
+
+      --text-main: #0f172a;
+      --text-secondary: #334155;
+      --text-muted: #64748b;
+      --text-light: #94a3b8;
+
+      /* Manager Accents (Indigo & Emerald & Rose & Amber) */
+      --primary-600: #4f46e5;
+      --primary-500: #6366f1;
+      --primary-50: #eef2ff;
+      --primary-100: #e0e7ff;
+      --primary-border: #c7d2fe;
+
+      --emerald-600: #059669;
+      --emerald-500: #10b981;
+      --emerald-50: #ecfdf5;
+      --emerald-100: #d1fae5;
+      --emerald-border: #a7f3d0;
+
+      --purple-600: #9333ea;
+      --purple-50: #faf5ff;
+      --purple-100: #f3e8ff;
+      --purple-border: #e9d5ff;
+
+      --rose-600: #e11d48;
+      --rose-50: #fff1f2;
+      --rose-100: #ffe4e6;
+      --rose-border: #fecdd3;
+
+      --amber-600: #d97706;
+      --amber-50: #fffbeb;
+      --amber-100: #fef3c7;
+      --amber-border: #fde68a;
+
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      --radius-xs: 4px;
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+
+      --shadow-xs: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+      --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.03);
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      height: 100vh;
+      display: flex;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* 1. SIDEBAR */
+    .sidebar {
+      width: 295px;
+      background: var(--bg-surface);
+      border-right: 1px solid var(--border-default);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex-shrink: 0;
+      z-index: 20;
+    }
+
+    .sidebar-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      overflow: hidden;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-md);
+      background: linear-gradient(135deg, #4f46e5, #7c3aed);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      box-shadow: 0 2px 6px rgba(79, 70, 229, 0.3);
+      flex-shrink: 0;
+    }
+
+    .brand-meta h1 {
+      font-size: 14px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+      color: var(--text-main);
+      white-space: nowrap;
+    }
+
+    .brand-meta span {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--primary-600);
+      white-space: nowrap;
+    }
+
+    .sidebar-notif-btn {
+      width: 34px;
+      height: 34px;
+      border-radius: var(--radius-md);
+      background: #ffffff;
+      border: 1px solid var(--border-default);
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      font-size: 15px;
+      transition: all 0.15s ease;
+      position: relative;
+      box-shadow: var(--shadow-xs);
+      flex-shrink: 0;
+    }
+
+    .sidebar-notif-btn:hover {
+      background: var(--bg-surface-hover);
+      border-color: var(--border-hover);
+      color: var(--text-main);
+    }
+
+    .notif-badge-dot {
+      position: absolute;
+      top: -4px;
+      right: -4px;
+      background: var(--rose-600);
+      color: #ffffff;
+      font-size: 10px;
+      font-weight: 800;
+      height: 18px;
+      min-width: 18px;
+      padding: 0 4px;
+      border-radius: 9999px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 2px solid #ffffff;
+      box-shadow: 0 0 6px rgba(225, 29, 72, 0.45);
+      animation: pulseNotif 2.5s infinite;
+    }
+
+    @keyframes pulseNotif {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+
+    .sidebar-body {
+      flex: 1;
+      padding: 14px 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* Sidebar Manager Navigation Menu */
+    .sidebar-menu-list {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .sidebar-nav-item {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: var(--radius-md);
+      background: transparent;
+      border: 1px solid transparent;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      cursor: pointer;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      transition: all 0.15s ease;
+      text-align: left;
+    }
+
+    .sidebar-nav-item:hover {
+      background: var(--bg-surface-hover);
+      color: var(--text-main);
+    }
+
+    .sidebar-nav-item.active {
+      background: var(--primary-50);
+      border-color: var(--primary-border);
+      color: var(--primary-600);
+      font-weight: 700;
+    }
+
+    .sidebar-nav-item.active .side-nav-icon {
+      color: var(--primary-600);
+    }
+
+    .side-nav-left {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+    }
+
+    .side-nav-icon {
+      font-size: 13px;
+      color: var(--text-muted);
+      width: 16px;
+      text-align: center;
+      transition: color 0.15s;
+    }
+
+    .sidebar-divider {
+      height: 1px;
+      background: var(--border-default);
+      margin: 2px 0;
+    }
+
+    .nav-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 5px;
+      padding: 0 2px;
+    }
+
+    .sidebar-select {
+      width: 100%;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      padding: 7px 10px;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+      outline: none;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .sidebar-select:focus {
+      border-color: var(--primary-600);
+      background: #ffffff;
+      box-shadow: 0 0 0 2px var(--primary-100);
+    }
+
+    /* Search Box */
+    .sidebar-search-box {
+      position: relative;
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+    }
+
+    .sidebar-search-icon {
+      position: absolute;
+      left: 8px;
+      font-size: 11px;
+      color: var(--text-light);
+      pointer-events: none;
+    }
+
+    .sidebar-search-input {
+      width: 100%;
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      padding: 5px 8px 5px 26px;
+      font-family: var(--font-sans);
+      font-size: 11px;
+      color: var(--text-main);
+      outline: none;
+      transition: all 0.15s;
+    }
+
+    .sidebar-search-input:focus {
+      background: #ffffff;
+      border-color: var(--primary-600);
+      box-shadow: 0 0 0 2px var(--primary-100);
+    }
+
+    /* Feature Filter Pills */
+    .feature-pill-filters {
+      display: flex;
+      gap: 4px;
+      margin-bottom: 6px;
+      overflow-x: auto;
+    }
+
+    .pill-filter-btn {
+      padding: 3px 7px;
+      font-size: 10px;
+      font-weight: 600;
+      border-radius: var(--radius-xs);
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-default);
+      color: var(--text-muted);
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s;
+    }
+
+    .pill-filter-btn:hover {
+      background: var(--bg-surface-hover);
+      color: var(--text-main);
+    }
+
+    .pill-filter-btn.active {
+      background: var(--primary-50);
+      border-color: var(--primary-border);
+      color: var(--primary-600);
+      font-weight: 700;
+    }
+
+    .btn-icon-link {
+      background: none;
+      border: none;
+      color: var(--primary-600);
+      font-size: 11px;
+      font-weight: 700;
+      cursor: pointer;
+      padding: 2px 4px;
+      border-radius: var(--radius-xs);
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+    }
+
+    .btn-icon-link:hover {
+      background: var(--primary-50);
+    }
+
+    .proj-strip {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+
+    .strip-btn {
+      flex: 1;
+      background: #ffffff;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      padding: 5px 8px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      transition: all 0.15s;
+    }
+
+    .strip-btn:hover {
+      background: var(--bg-surface-hover);
+      border-color: var(--border-hover);
+      color: var(--text-main);
+    }
+
+    /* Features Navigation Items */
+    .feature-nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .feature-nav-item {
+      padding: 8px 10px;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: all 0.15s ease;
+      background: transparent;
+    }
+
+    .feature-nav-item:hover {
+      background: var(--bg-surface-hover);
+    }
+
+    .feature-nav-item.active {
+      background: var(--primary-50);
+      border-color: var(--primary-border);
+    }
+
+    .feature-nav-item.active .f-name {
+      color: var(--primary-600);
+      font-weight: 700;
+    }
+
+    .f-name {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-main);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 175px;
+    }
+
+    .f-sprint {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .sidebar-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #ffffff;
+    }
+
+    .avatar-sm {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: #e0e7ff;
+      color: var(--primary-600);
+      font-weight: 700;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 2. MAIN WORKSPACE CONTAINER */
+    .main-workspace {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      background: var(--bg-body);
+    }
+
+    /* TOPBAR */
+    .topbar {
+      height: 64px;
+      background: var(--bg-surface);
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 28px;
+      flex-shrink: 0;
+      gap: 16px;
+      box-shadow: var(--shadow-xs);
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-shrink: 0;
+    }
+
+    .feature-title-text {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: var(--text-main);
+      white-space: nowrap;
+    }
+
+    .meta-badges-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .chip-sprint {
+      background: var(--primary-50);
+      color: var(--primary-600);
+      border: 1px solid var(--primary-border);
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      padding: 3px 8px;
+      border-radius: 9999px;
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
+
+    .chip-status {
+      background: var(--emerald-50);
+      color: var(--emerald-600);
+      border: 1px solid var(--emerald-border);
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      padding: 3px 8px;
+      border-radius: 9999px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      white-space: nowrap;
+      text-transform: uppercase;
+    }
+
+    .chip-status::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--emerald-600);
+    }
+
+    .topbar-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    /* Buttons */
+    .btn {
+      height: 36px;
+      padding: 0 14px;
+      border-radius: var(--radius-md);
+      font-size: 12px;
+      font-weight: 600;
+      font-family: var(--font-sans);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+      outline: none;
+    }
+
+    .btn-secondary {
+      background: #ffffff;
+      border-color: var(--border-default);
+      color: var(--text-secondary);
+      box-shadow: var(--shadow-xs);
+    }
+
+    .btn-secondary:hover {
+      background: var(--bg-surface-hover);
+      border-color: var(--border-hover);
+      color: var(--text-main);
+    }
+
+    .btn-primary {
+      background: var(--primary-600);
+      color: #ffffff;
+      box-shadow: 0 1px 2px 0 rgba(79, 70, 229, 0.25);
+    }
+
+    .btn-primary:hover {
+      background: #4338ca;
+    }
+
+    .btn-accent-green {
+      background: var(--emerald-600);
+      color: #ffffff;
+    }
+    .btn-accent-green:hover { background: #047857; }
+
+    .btn-danger-outline {
+      background: var(--rose-50);
+      border-color: var(--rose-border);
+      color: var(--rose-600);
+    }
+
+    .btn-danger-outline:hover {
+      background: var(--rose-600);
+      color: white;
+    }
+
+    /* 3. CONTENT BODY & SUBTABS */
+    .content-body {
+      flex: 1;
+      padding: 22px 28px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .subtabs-bar {
+      display: flex;
+      gap: 10px;
+      border-bottom: 1px solid var(--border-default);
+    }
+
+    .subtab-btn {
+      padding: 10px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      position: relative;
+      transition: color 0.15s;
+    }
+
+    .subtab-btn:hover {
+      color: var(--text-main);
+    }
+
+    .subtab-btn.active {
+      color: var(--primary-600);
+      font-weight: 700;
+    }
+
+    .subtab-btn.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--primary-600);
+      border-radius: 9999px;
+    }
+
+    .tab-badge {
+      font-size: 11px;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 9999px;
+      background: #e2e8f0;
+      color: var(--text-secondary);
+    }
+
+    .tab-badge.alert {
+      background: var(--rose-100);
+      color: var(--rose-600);
+    }
+
+    .tab-badge.pending {
+      background: var(--amber-100);
+      color: var(--amber-600);
+    }
+
+    /* KPI Summary Cards Grid */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px;
+    }
+
+    @media (max-width: 1000px) {
+      .kpi-grid { grid-template-columns: 1fr; }
+    }
+
+    .kpi-card {
+      background: #ffffff;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      padding: 16px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .kpi-card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .kpi-title {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    .kpi-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+    }
+
+    .kpi-icon.indigo { background: var(--primary-50); color: var(--primary-600); }
+    .kpi-icon.emerald { background: var(--emerald-50); color: var(--emerald-600); }
+    .kpi-icon.rose { background: var(--rose-50); color: var(--rose-600); }
+
+    .kpi-value-row {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .kpi-value {
+      font-size: 26px;
+      font-weight: 800;
+      font-family: var(--font-mono);
+      color: var(--text-main);
+    }
+
+    .kpi-subtext {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Panel Cards */
+    .panel-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-card-header {
+      padding: 16px 20px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .panel-card-header h3 {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .panel-card-header p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    /* Filter Toolbar */
+    .filter-toolbar {
+      padding: 10px 20px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .filter-left-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1;
+      min-width: 320px;
+    }
+
+    .filter-input-search {
+      background: #ffffff;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      padding: 6px 12px 6px 30px;
+      font-size: 12px;
+      color: var(--text-main);
+      outline: none;
+      width: 240px;
+      transition: all 0.15s;
+    }
+
+    .filter-input-search:focus {
+      border-color: var(--primary-600);
+      box-shadow: 0 0 0 2px var(--primary-100);
+      width: 280px;
+    }
+
+    .filter-search-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .filter-search-icon {
+      position: absolute;
+      left: 10px;
+      font-size: 12px;
+      color: var(--text-muted);
+      pointer-events: none;
+    }
+
+    .filter-select {
+      background: #ffffff;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      padding: 6px 10px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      outline: none;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .filter-select:focus {
+      border-color: var(--primary-600);
+    }
+
+    .filter-stats-text {
+      font-size: 11px;
+      color: var(--text-muted);
+      font-weight: 600;
+    }
+
+    /* Tables */
+    .app-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    .app-table th {
+      background: #f8fafc;
+      color: var(--text-muted);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 12px 18px;
+      border-bottom: 1px solid var(--border-default);
+    }
+
+    .app-table td {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border-default);
+      vertical-align: middle;
+      color: var(--text-secondary);
+    }
+
+    .app-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .app-table tr:hover td {
+      background: #fafbfc;
+    }
+
+    /* Test Case Table Styling (Same as Tester) */
+    .tc-id {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      color: var(--primary-600);
+      font-size: 12px;
+    }
+
+    .tc-name {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-top: 2px;
+    }
+
+    .tc-pre {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+    .val-chip {
+      background: #f8fafc;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      padding: 7px 10px;
+      font-size: 11px;
+      margin-top: 6px;
+      line-height: 1.4;
+      color: var(--text-secondary);
+    }
+
+    .val-chip strong {
+      color: var(--text-main);
+      text-transform: uppercase;
+      font-size: 10px;
+      margin-right: 4px;
+    }
+
+    /* Progress bar */
+    .progress-track {
+      width: 100%;
+      height: 6px;
+      background: #e2e8f0;
+      border-radius: 9999px;
+      overflow: hidden;
+      display: flex;
+    }
+
+    .progress-fill-pass { background: var(--emerald-500); }
+    .progress-fill-fail { background: var(--rose-600); }
+
+    /* Badges */
+    .badge-tag {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 8px;
+      border-radius: var(--radius-xs);
+      font-size: 11px;
+      font-weight: 700;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+    }
+
+    .badge-pass { background: var(--emerald-50); color: var(--emerald-600); border: 1px solid var(--emerald-border); }
+    .badge-fail { background: var(--rose-50); color: var(--rose-600); border: 1px solid var(--rose-border); }
+    .badge-info { background: var(--primary-50); color: var(--primary-600); border: 1px solid var(--primary-border); }
+    .badge-amber { background: var(--amber-50); color: var(--amber-600); border: 1px solid var(--amber-border); }
+    .badge-purple { background: var(--purple-50); color: var(--purple-600); border: 1px solid var(--purple-border); }
+
+    /* Modals */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      padding: 20px;
+    }
+
+    .modal-overlay.show { display: flex; }
+
+    .modal-card {
+      background: #ffffff;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-xl);
+      padding: 24px;
+      width: 100%;
+      max-width: 520px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      box-shadow: var(--shadow-lg);
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: var(--radius-sm);
+    }
+
+    .modal-close:hover {
+      background: var(--bg-surface-hover);
+      color: var(--text-main);
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+    }
+
+    .form-control {
+      background: var(--bg-subtle);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      padding: 8px 12px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      color: var(--text-main);
+      outline: none;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary-600);
+      background: #ffffff;
+      box-shadow: 0 0 0 2px var(--primary-100);
+    }
+
+    /* Bug Chat Modal */
+    .chat-modal-box {
+      background: #ffffff;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-xl);
+      width: 100%;
+      max-width: 600px;
+      height: 540px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+
+    .chat-modal-header {
+      padding: 16px 20px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chat-modal-body {
+      flex: 1;
+      padding: 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      background: #ffffff;
+    }
+
+    .chat-bubble {
+      max-width: 78%;
+      padding: 10px 14px;
+      border-radius: var(--radius-lg);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .chat-bubble.tester {
+      align-self: flex-start;
+      background: #ffffff;
+      border: 1px solid var(--emerald-border);
+      box-shadow: var(--shadow-xs);
+    }
+
+    .chat-bubble.tester strong {
+      color: var(--emerald-600);
+      display: block;
+      font-size: 11px;
+      margin-bottom: 2px;
+    }
+
+    .chat-bubble.dev {
+      align-self: flex-end;
+      background: var(--primary-50);
+      border: 1px solid var(--primary-border);
+    }
+
+    .chat-bubble.dev strong {
+      color: var(--primary-600);
+      display: block;
+      font-size: 11px;
+      margin-bottom: 2px;
+    }
+
+    .chat-modal-footer {
+      padding: 12px 18px;
+      background: #f8fafc;
+      border-top: 1px solid var(--border-default);
+      display: flex;
+      gap: 10px;
+    }
+
+    /* In-App Notifications Modal */
+    .notif-modal-box {
+      background: #ffffff;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-xl);
+      width: 100%;
+      max-width: 580px;
+      max-height: 620px;
+      display: flex;
+      flex-direction: column;
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+
+    .notif-modal-header {
+      padding: 16px 20px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .notif-modal-tabs {
+      display: flex;
+      gap: 6px;
+      padding: 8px 20px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border-default);
+    }
+
+    .notif-filter-tab {
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      border-radius: var(--radius-xs);
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .notif-filter-tab.active {
+      background: var(--primary-50);
+      color: var(--primary-600);
+      border-color: var(--primary-border);
+      font-weight: 700;
+    }
+
+    .notif-list-body {
+      flex: 1;
+      padding: 12px 16px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      background: #ffffff;
+    }
+
+    .notif-card-item {
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      padding: 12px 14px;
+      background: #ffffff;
+      display: flex;
+      gap: 12px;
+      transition: all 0.15s;
+    }
+
+    .notif-card-item.unread {
+      background: #f0fdf4;
+      border-color: var(--emerald-border);
+    }
+
+    .notif-card-item:hover {
+      box-shadow: var(--shadow-xs);
+    }
+
+    .notif-icon-bubble {
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 14px;
+    }
+
+    .notif-icon-fixed { background: var(--emerald-50); color: var(--emerald-600); border: 1px solid var(--emerald-border); }
+    .notif-icon-chat { background: var(--primary-50); color: var(--primary-600); border: 1px solid var(--primary-border); }
+    .notif-icon-user { background: var(--amber-50); color: var(--amber-600); border: 1px solid var(--amber-border); }
+
+    .notif-card-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .notif-card-title {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-main);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .notif-card-msg {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+
+    .notif-card-meta {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-top: 4px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .notif-card-actions {
+      display: flex;
+      gap: 6px;
+      margin-top: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 1. LEFT SIDEBAR: REGION ➔ PROJECT ➔ FEATURES WITH SEARCH & FILTERS -->
+  <aside class="sidebar">
+    
+    <!-- Sidebar Header: TAT Cockpit + In-App Notification Bell -->
+    <div class="sidebar-header">
+      <div class="brand-group">
+        <div class="brand-logo"><i class="fa-solid fa-briefcase"></i></div>
+        <div class="brand-meta">
+          <h1>TAT Cockpit</h1>
+          <span>Manager Governance Portal</span>
+        </div>
+      </div>
+
+      <!-- Notification Bell next to TAT Cockpit -->
+      <button class="sidebar-notif-btn" onclick="openInAppNotificationsModal()" title="In-App Notifications">
+        <i class="fa-regular fa-bell"></i>
+        <span class="notif-badge-dot" id="in-app-notif-count">4</span>
+      </button>
+    </div>
+
+    <div class="sidebar-body">
+      
+      <!-- Primary Manager Cockpit Navigation -->
+      <div>
+        <div class="nav-label">
+          <span><i class="fa-solid fa-compass"></i> Manager Cockpit</span>
+        </div>
+        <div class="sidebar-menu-list">
+          <button class="sidebar-nav-item active" id="side-nav-health" onclick="switchManagerTab('health')">
+            <div class="side-nav-left">
+              <i class="fa-solid fa-chart-pie side-nav-icon"></i>
+              <span>Quality & Health</span>
+            </div>
+            <span class="tab-badge" id="side-health-score">92%</span>
+          </button>
+
+          <button class="sidebar-nav-item" id="side-nav-users" onclick="switchManagerTab('users')">
+            <div class="side-nav-left">
+              <i class="fa-solid fa-users-gear side-nav-icon"></i>
+              <span>User Directory</span>
+            </div>
+            <span class="tab-badge pending" id="side-users-count">2 Pending</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="sidebar-divider"></div>
+
+      <!-- Scope & Hierarchy: Region Selector -->
+      <div>
+        <div class="nav-label">
+          <span><i class="fa-solid fa-earth-americas"></i> Region</span>
+        </div>
+        <select class="sidebar-select" id="sidebar-region-select" onchange="onRegionChange(this.value)">
+          <option value="US-EAST" selected>US-EAST (Main)</option>
+          <option value="EU-CENTRAL">EU-CENTRAL</option>
+          <option value="APAC">APAC</option>
+        </select>
+      </div>
+
+      <!-- Project Selector & Project Search/Filter -->
+      <div>
+        <div class="nav-label">
+          <span><i class="fa-solid fa-folder"></i> Project (<span id="sidebar-proj-count">3</span>)</span>
+          <button class="btn-icon-link" onclick="openModal('modal-project-create')">+ New</button>
+        </div>
+
+        <!-- Project Search Input -->
+        <div class="sidebar-search-box">
+          <i class="fa-solid fa-magnifying-glass sidebar-search-icon"></i>
+          <input type="text" class="sidebar-search-input" id="sidebar-proj-search" placeholder="Search projects..." onkeyup="filterProjects()">
+        </div>
+
+        <!-- Project Select Dropdown -->
+        <select class="sidebar-select" id="sidebar-project-select" onchange="onProjectChange(this.value)">
+          <option value="PROJ-1" selected>Core Banking Platform</option>
+          <option value="PROJ-2">Retail Banking Portal</option>
+          <option value="PROJ-3">Wealth Management Suite</option>
+        </select>
+
+        <div class="proj-strip">
+          <button class="strip-btn" onclick="openProjectGovernanceModal()">
+            <i class="fa-solid fa-sliders"></i> Governance
+          </button>
+          <button class="strip-btn" onclick="openProjectAttachmentsModal()">
+            <i class="fa-solid fa-paperclip"></i> Files (<span id="proj-files-count">2</span>)
+          </button>
+        </div>
+      </div>
+
+      <!-- Features Section with Search & Category Filter Pills -->
+      <div style="margin-top: 4px;">
+        <div class="nav-label">
+          <span><i class="fa-solid fa-layer-group"></i> Features (<span id="sidebar-feat-count">3</span>)</span>
+          <button class="btn-icon-link" onclick="openModal('modal-feature-create')">+ Add</button>
+        </div>
+
+        <!-- Feature Search Input -->
+        <div class="sidebar-search-box">
+          <i class="fa-solid fa-magnifying-glass sidebar-search-icon"></i>
+          <input type="text" class="sidebar-search-input" id="sidebar-feat-search" placeholder="Search features, sprints..." onkeyup="filterFeatures()">
+        </div>
+
+        <!-- Feature Quick Filter Pills -->
+        <div class="feature-pill-filters">
+          <button class="pill-filter-btn active" id="feat-pill-all" onclick="setFeatureCategoryFilter('ALL', this)">All</button>
+          <button class="pill-filter-btn" id="feat-pill-bugs" onclick="setFeatureCategoryFilter('BUGS', this)">🔴 Has Bugs</button>
+          <button class="pill-filter-btn" id="feat-pill-pass" onclick="setFeatureCategoryFilter('PASSED', this)">🟢 Passed</button>
+        </div>
+
+        <!-- Dynamic Feature Nav List -->
+        <div class="feature-nav-list" id="sidebar-feature-list">
+          
+          <div class="feature-nav-item active" data-status="BUGS" data-sprint="12" onclick="selectFeature('FEAT-1', 'User Auth & OTP', 'Sprint 12 • v2.4.0', this)">
+            <div>
+              <div class="f-name">User Auth & OTP</div>
+              <div class="f-sprint">Sprint 12 • v2.4.0</div>
+            </div>
+            <span class="badge-tag badge-fail" style="font-size: 10px;">1 Bug</span>
+          </div>
+
+          <div class="feature-nav-item" data-status="PASSED" data-sprint="12" onclick="selectFeature('FEAT-2', 'Fund Transfer & UPI', 'Sprint 12 • v2.4.1', this)">
+            <div>
+              <div class="f-name">Fund Transfer & UPI</div>
+              <div class="f-sprint">Sprint 12 • v2.4.1</div>
+            </div>
+            <span class="badge-tag badge-pass" style="font-size: 10px;">Passed</span>
+          </div>
+
+          <div class="feature-nav-item" data-status="PASSED" data-sprint="11" onclick="selectFeature('FEAT-3', 'Account Statements POI', 'Sprint 11 • v2.3.0', this)">
+            <div>
+              <div class="f-name">Statements POI</div>
+              <div class="f-sprint">Sprint 11 • v2.3.0</div>
+            </div>
+            <span class="badge-tag badge-pass" style="font-size: 10px;">Passed</span>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- User Profile Footer -->
+    <div class="sidebar-footer">
+      <div class="avatar-sm">RS</div>
+      <div style="flex: 1; overflow: hidden;">
+        <div style="font-size: 13px; font-weight: 700; color: var(--text-main); white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">Rahul Sharma</div>
+        <div style="font-size: 11px; color: var(--primary-600); font-weight: 600;">QA Lead / Manager</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 2. MAIN WORKSPACE -->
+  <main class="main-workspace">
+    
+    <!-- TOPBAR: SINGLE-ROW DYNAMIC CONTEXT -->
+    <header class="topbar">
+      
+      <!-- Left: Active Context -->
+      <div class="topbar-left">
+        <h2 class="feature-title-text" id="topbar-context-title">User Auth & OTP</h2>
+        <div class="meta-badges-group">
+          <span class="chip-sprint" id="topbar-context-badge">Sprint 12 • v2.4.0</span>
+          <span class="chip-status" id="topbar-context-status">ACTIVE</span>
+        </div>
+      </div>
+
+      <!-- Right: Feature Actions (shown when in Feature mode) -->
+      <div class="topbar-toolbar" id="topbar-feature-actions">
+        <button class="btn btn-secondary" onclick="openModal('modal-edit-feature')">
+          <i class="fa-solid fa-pen-to-square"></i> Edit Details
+        </button>
+        <button class="btn btn-secondary" onclick="openModal('modal-feature-attachments')">
+          <i class="fa-solid fa-paperclip"></i> Docs (<span id="feat-docs-count">2</span>)
+        </button>
+      </div>
+
+    </header>
+
+    <!-- CONTENT BODY -->
+    <div class="content-body">
+      
+      <!-- ========================================== -->
+      <!-- VIEW 1: FEATURE WORKSPACE (SAME AS TESTER) -->
+      <!-- ========================================== -->
+      <div id="subview-feature" style="display: flex; flex-direction: column; gap: 16px;">
+        
+        <!-- Sub-Tabs: Test Cases vs Defects -->
+        <div class="subtabs-bar">
+          <button class="subtab-btn active" id="btn-tab-tc" onclick="switchFeatureTab('tc')">
+            <i class="fa-solid fa-list-check"></i> Test Cases Suite
+            <span class="tab-badge" id="tab-tc-count">2</span>
+          </button>
+
+          <button class="subtab-btn" id="btn-tab-bugs" onclick="switchFeatureTab('bugs')">
+            <i class="fa-solid fa-bug"></i> Defects / Bugs
+            <span class="tab-badge alert" id="tab-bugs-count">1</span>
+          </button>
+        </div>
+
+        <!-- FEATURE TAB 1: TEST CASES TABLE -->
+        <div id="subview-tc" class="panel-card">
+          <div class="panel-card-header">
+            <div>
+              <h3>Test Suite Executions</h3>
+              <p>Execute manual validations. Test failures trigger auto-mapped defect creation.</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-secondary" style="height: 32px; font-size: 11px;" onclick="alert('Downloading dynamic blank Excel template (.xlsx) for this feature...')">
+                <i class="fa-solid fa-file-excel" style="color: var(--emerald-600);"></i> Template (.xlsx)
+              </button>
+              <button class="btn btn-secondary" style="height: 32px; font-size: 11px;" onclick="openModal('modal-excel')">
+                <i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary-600);"></i> Bulk Excel Upload
+              </button>
+              <button class="btn btn-primary" style="height: 32px; font-size: 11px;" onclick="openModal('modal-testcase')">
+                <i class="fa-solid fa-plus"></i> Add Test Case
+              </button>
+            </div>
+          </div>
+
+          <!-- Filter Bar for Test Cases -->
+          <div class="filter-toolbar">
+            <div class="filter-left-group">
+              <div class="filter-search-wrapper">
+                <i class="fa-solid fa-magnifying-glass filter-search-icon"></i>
+                <input type="text" class="filter-input-search" id="tc-search-input" placeholder="Search test cases by ID, title..." onkeyup="filterTestCases()">
+              </div>
+              
+              <select class="filter-select" id="tc-type-filter" onchange="filterTestCases()">
+                <option value="ALL">All Types</option>
+                <option value="FUNCTIONAL">Functional</option>
+                <option value="SECURITY">Security</option>
+                <option value="REGRESSION">Regression</option>
+              </select>
+
+              <select class="filter-select" id="tc-status-filter" onchange="filterTestCases()">
+                <option value="ALL">All Statuses</option>
+                <option value="FAILED">Failed</option>
+                <option value="PASSED">Passed</option>
+              </select>
+            </div>
+
+            <div class="filter-stats-text" id="tc-filter-count-text">Showing 2 test cases in feature</div>
+          </div>
+
+          <table class="app-table">
+            <thead>
+              <tr>
+                <th style="width: 38%;">Test Case ID & Title</th>
+                <th style="width: 16%;">Type & Priority</th>
+                <th style="width: 32%;">Validations (UI & DB)</th>
+                <th style="width: 14%;">Status & Action</th>
+              </tr>
+            </thead>
+            <tbody id="feature-tc-table-body">
+              
+              <!-- TC 1: FAILED -->
+              <tr data-type="FUNCTIONAL" data-status="FAILED">
+                <td>
+                  <span class="tc-id">TC_AUTH_001</span>
+                  <div class="tc-name">Verify 6-digit OTP input auto-focus & paste handling</div>
+                  <div class="tc-pre"><strong>Precondition:</strong> User initiated password reset via email</div>
+                </td>
+                <td>
+                  <span class="badge-tag badge-info">FUNCTIONAL</span>
+                  <div style="color: var(--rose-600); font-size: 11px; font-weight: 700; margin-top: 4px;">P1 - CRITICAL</div>
+                </td>
+                <td>
+                  <div class="val-chip"><strong>UI:</strong> Auto-advance focus on digit entry; backspace moves left.</div>
+                  <div class="val-chip"><strong>DB:</strong> Verify <code>testing_password_reset_otp</code> table with 10m TTL.</div>
+                </td>
+                <td>
+                  <span class="badge-tag badge-fail">FAILED</span>
+                  <div style="margin-top: 8px;">
+                    <button class="btn btn-danger-outline" style="height: 28px; padding: 0 10px; font-size: 11px;" onclick="triggerCreateBugFromTest('TC_AUTH_001', 'Verify 6-digit OTP input auto-focus & paste handling')">
+                      <i class="fa-solid fa-bug"></i> Create Bug
+                    </button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- TC 2: PASSED -->
+              <tr data-type="SECURITY" data-status="PASSED">
+                <td>
+                  <span class="tc-id">TC_AUTH_002</span>
+                  <div class="tc-name">Verify Dual-Token JWT issuance upon credentials validation</div>
+                  <div class="tc-pre"><strong>Precondition:</strong> Active manager-approved account</div>
+                </td>
+                <td>
+                  <span class="badge-tag badge-info">SECURITY</span>
+                  <div style="color: var(--amber-600); font-size: 11px; font-weight: 700; margin-top: 4px;">P2 - HIGH</div>
+                </td>
+                <td>
+                  <div class="val-chip"><strong>UI:</strong> Access token (15m) & refresh token (24h) stored.</div>
+                  <div class="val-chip"><strong>DB:</strong> Token record saved in <code>testing_refresh_tokens</code>.</div>
+                </td>
+                <td>
+                  <span class="badge-tag badge-pass">PASSED</span>
+                  <div style="margin-top: 8px; font-size: 11px; color: var(--emerald-600); font-weight: 700;">
+                    <i class="fa-solid fa-circle-check"></i> No action
+                  </div>
+                </td>
+              </tr>
+
+            </tbody>
+          </table>
+        </div>
+
+        <!-- FEATURE TAB 2: DEFECTS TABLE (STRICTLY NO +REPORT BUG BUTTON) -->
+        <div id="subview-bugs" class="panel-card" style="display: none;">
+          <div class="panel-card-header">
+            <div>
+              <h3>Mapped Feature Defects</h3>
+              <p>Defects generated strictly from test case failures. Open individual chat discussions per bug.</p>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-circle-info" style="color: var(--primary-600);"></i> Mapped to Active Feature
+            </div>
+          </div>
+
+          <!-- Filter Bar for Feature Defects -->
+          <div class="filter-toolbar">
+            <div class="filter-left-group">
+              <div class="filter-search-wrapper">
+                <i class="fa-solid fa-magnifying-glass filter-search-icon"></i>
+                <input type="text" class="filter-input-search" id="bug-search-input" placeholder="Search defects by ID, title..." onkeyup="filterDefects()">
+              </div>
+              
+              <select class="filter-select" id="bug-sev-filter" onchange="filterDefects()">
+                <option value="ALL">All Severities</option>
+                <option value="CRITICAL">Critical</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+              </select>
+
+              <select class="filter-select" id="bug-status-filter" onchange="filterDefects()">
+                <option value="ALL">All Statuses</option>
+                <option value="OPEN">Open</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="RESOLVED">Resolved</option>
+                <option value="FIXED">Fixed</option>
+              </select>
+            </div>
+
+            <div class="filter-stats-text" id="bug-filter-count-text">Showing 1 defect</div>
+          </div>
+
+          <table class="app-table">
+            <thead>
+              <tr>
+                <th style="width: 24%;">Bug Format ID</th>
+                <th style="width: 38%;">Defect Title & Origin TC</th>
+                <th style="width: 14%;">Severity</th>
+                <th style="width: 12%;">Status</th>
+                <th style="width: 12%;">Action</th>
+              </tr>
+            </thead>
+            <tbody id="feature-bugs-table-body">
+              <tr data-sev="CRITICAL" data-status="OPEN">
+                <td>
+                  <span style="font-family: var(--font-mono); font-weight: 700; color: var(--rose-600);">BUG-AUTH_MODULE-001</span>
+                </td>
+                <td>
+                  <strong style="color: var(--text-main); font-size: 13px;">OTP auto-focus fails on Safari iOS clipboard paste</strong>
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Origin: <code>TC_AUTH_001</code> • Assigned: Devon (Developer)</div>
+                </td>
+                <td><span class="badge-tag badge-fail">CRITICAL</span></td>
+                <td><span class="badge-tag badge-info">OPEN</span></td>
+                <td>
+                  <button class="btn btn-secondary" style="height: 28px; padding: 0 10px; font-size: 11px; color: var(--primary-600); font-weight:700;" onclick="openSpecificBugChat('BUG-AUTH_MODULE-001', 'OTP auto-focus fails on Safari iOS clipboard paste', 'TC_AUTH_001', 'Devon (Developer)', 'CRITICAL')">
+                    <i class="fa-solid fa-comments"></i> Chat
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <!-- =================================================== -->
+      <!-- VIEW 2: QUALITY HEALTH & FEATURE GOVERNANCE MATRIX  -->
+      <!-- =================================================== -->
+      <div id="subview-health" style="display: none; flex-direction: column; gap: 16px;">
+        
+        <!-- Executive KPI Summary Row -->
+        <div class="kpi-grid">
+          
+          <div class="kpi-card">
+            <div class="kpi-card-header">
+              <span class="kpi-title">Quality Health Score</span>
+              <div class="kpi-icon indigo"><i class="fa-solid fa-gauge-high"></i></div>
+            </div>
+            <div class="kpi-value-row">
+              <span class="kpi-value" style="color: var(--primary-600);">92%</span>
+              <span class="badge-tag badge-pass" style="font-size:10px;">GRADE A</span>
+            </div>
+            <span class="kpi-subtext">Calculated from execution pass rates & severity weights</span>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-card-header">
+              <span class="kpi-title">Test Suite Coverage</span>
+              <div class="kpi-icon emerald"><i class="fa-solid fa-list-check"></i></div>
+            </div>
+            <div class="kpi-value-row">
+              <span class="kpi-value">12</span>
+              <span class="kpi-subtext">/ 14 Executed</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill-pass" style="width: 86%;"></div>
+              <div class="progress-fill-fail" style="width: 14%;"></div>
+            </div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-card-header">
+              <span class="kpi-title">Active Defect Load</span>
+              <div class="kpi-icon rose"><i class="fa-solid fa-bug"></i></div>
+            </div>
+            <div class="kpi-value-row">
+              <span class="kpi-value" style="color: var(--rose-600);">2</span>
+              <span class="badge-tag badge-fail" style="font-size:10px;">1 CRITICAL</span>
+            </div>
+            <span class="kpi-subtext">Avg resolution turnaround: 4.2 hours</span>
+          </div>
+
+        </div>
+
+        <!-- Features Quality Matrix Table -->
+        <div class="panel-card">
+          <div class="panel-card-header">
+            <div>
+              <h3>Feature Governance & Sprint Delivery Status</h3>
+              <p>Oversight of all features mapped to this project. Transition feature statuses and inspect coverage.</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-secondary" style="height: 32px; font-size: 11px;" onclick="openModal('modal-feature-create')">
+                <i class="fa-solid fa-plus"></i> Add Feature
+              </button>
+            </div>
+          </div>
+
+          <table class="app-table">
+            <thead>
+              <tr>
+                <th style="width: 28%;">Feature & Sprint</th>
+                <th style="width: 22%;">Test Execution Coverage</th>
+                <th style="width: 14%;">Open Defects</th>
+                <th style="width: 18%;">Governance Status</th>
+                <th style="width: 18%;">Manager Action</th>
+              </tr>
+            </thead>
+            <tbody id="manager-feature-matrix-body">
+              <tr>
+                <td>
+                  <strong style="color: var(--text-main); font-size: 13px;">User Auth & OTP</strong>
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Sprint 12 • v2.4.0</div>
+                </td>
+                <td>
+                  <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; margin-bottom:4px;">
+                    <span>50% Passed</span>
+                    <span>1/2 Tests</span>
+                  </div>
+                  <div class="progress-track">
+                    <div class="progress-fill-pass" style="width: 50%;"></div>
+                    <div class="progress-fill-fail" style="width: 50%;"></div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge-tag badge-fail">1 Critical</span>
+                </td>
+                <td>
+                  <span class="badge-tag badge-info" id="feat-status-badge-1">ACTIVE</span>
+                </td>
+                <td>
+                  <div style="display:flex; gap:6px;">
+                    <select class="filter-select" style="padding:4px 8px; font-size:11px;" onchange="updateFeatureStatus('User Auth & OTP', this.value, 'feat-status-badge-1')">
+                      <option value="ACTIVE" selected>ACTIVE</option>
+                      <option value="IN_PROGRESS">IN_PROGRESS</option>
+                      <option value="COMPLETED">COMPLETED</option>
+                      <option value="ON_HOLD">ON_HOLD</option>
+                    </select>
+                  </div>
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  <strong style="color: var(--text-main); font-size: 13px;">Fund Transfer & UPI</strong>
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Sprint 12 • v2.4.1</div>
+                </td>
+                <td>
+                  <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; margin-bottom:4px;">
+                    <span>100% Passed</span>
+                    <span>4/4 Tests</span>
+                  </div>
+                  <div class="progress-track">
+                    <div class="progress-fill-pass" style="width: 100%;"></div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge-tag badge-pass">0 Defects</span>
+                </td>
+                <td>
+                  <span class="badge-tag badge-pass" id="feat-status-badge-2">COMPLETED</span>
+                </td>
+                <td>
+                  <div style="display:flex; gap:6px;">
+                    <select class="filter-select" style="padding:4px 8px; font-size:11px;" onchange="updateFeatureStatus('Fund Transfer & UPI', this.value, 'feat-status-badge-2')">
+                      <option value="ACTIVE">ACTIVE</option>
+                      <option value="IN_PROGRESS">IN_PROGRESS</option>
+                      <option value="COMPLETED" selected>COMPLETED</option>
+                      <option value="ON_HOLD">ON_HOLD</option>
+                    </select>
+                  </div>
+                </td>
+              </tr>
+
+              <tr>
+                <td>
+                  <strong style="color: var(--text-main); font-size: 13px;">Account Statements POI</strong>
+                  <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Sprint 11 • v2.3.0</div>
+                </td>
+                <td>
+                  <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; margin-bottom:4px;">
+                    <span>100% Passed</span>
+                    <span>3/3 Tests</span>
+                  </div>
+                  <div class="progress-track">
+                    <div class="progress-fill-pass" style="width: 100%;"></div>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge-tag badge-pass">0 Defects</span>
+                </td>
+                <td>
+                  <span class="badge-tag badge-pass" id="feat-status-badge-3">COMPLETED</span>
+                </td>
+                <td>
+                  <div style="display:flex; gap:6px;">
+                    <select class="filter-select" style="padding:4px 8px; font-size:11px;" onchange="updateFeatureStatus('Account Statements POI', this.value, 'feat-status-badge-3')">
+                      <option value="ACTIVE">ACTIVE</option>
+                      <option value="IN_PROGRESS">IN_PROGRESS</option>
+                      <option value="COMPLETED" selected>COMPLETED</option>
+                      <option value="ON_HOLD">ON_HOLD</option>
+                    </select>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+      </div>
+
+      <!-- =================================================== -->
+      <!-- VIEW 3: ALL USERS & PENDING USER APPROVALS DIRECTORY -->
+      <!-- =================================================== -->
+      <div id="subview-users" class="panel-card" style="display: none;">
+        <div class="panel-card-header">
+          <div>
+            <h3>Employee Directory & Access Governance</h3>
+            <p>Manage all organization employees, activate pending registrations, and modify role permissions.</p>
+          </div>
+          <div style="font-size: 11px; font-weight: 700; color: var(--amber-600);">
+            <i class="fa-solid fa-clock"></i> <span id="pending-queue-badge">2 Users Awaiting Activation</span>
+          </div>
+        </div>
+
+        <!-- User Category Filter Tabs -->
+        <div class="filter-toolbar" style="border-bottom: 1px solid var(--border-default);">
+          <div class="feature-pill-filters" style="margin-bottom: 0;">
+            <button class="pill-filter-btn active" id="user-pill-all" onclick="filterUserDirectory('ALL', this)">All Users (<span id="user-count-all">6</span>)</button>
+            <button class="pill-filter-btn" id="user-pill-pending" onclick="filterUserDirectory('PENDING', this)">🟡 Pending Approvals (<span id="user-count-pending">2</span>)</button>
+            <button class="pill-filter-btn" id="user-pill-active" onclick="filterUserDirectory('ACTIVE', this)">🟢 Active Users (<span id="user-count-active">4</span>)</button>
+          </div>
+
+          <div class="filter-left-group" style="justify-content: flex-end; min-width: auto;">
+            <div class="filter-search-wrapper">
+              <i class="fa-solid fa-magnifying-glass filter-search-icon"></i>
+              <input type="text" class="filter-input-search" id="user-search-input" placeholder="Search name, email, role..." onkeyup="searchUsers()">
+            </div>
+            
+            <select class="filter-select" id="user-role-filter" onchange="searchUsers()">
+              <option value="ALL">All Roles</option>
+              <option value="TESTER">Tester</option>
+              <option value="DEVELOPER">Developer</option>
+              <option value="MANAGER">Manager</option>
+            </select>
+          </div>
+        </div>
+
+        <table class="app-table">
+          <thead>
+            <tr>
+              <th style="width: 26%;">Employee Name & Email</th>
+              <th style="width: 18%;">Department / Title</th>
+              <th style="width: 14%;">Status</th>
+              <th style="width: 16%;">Registered / Active Date</th>
+              <th style="width: 14%;">Role Designation</th>
+              <th style="width: 12%;">Manager Action</th>
+            </tr>
+          </thead>
+          <tbody id="all-users-table-body">
+            
+            <!-- PENDING USER 1 -->
+            <tr data-status="PENDING" data-role="TESTER" id="user-row-1">
+              <td>
+                <div style="font-weight: 700; color: var(--text-main);">Vikram Patel</div>
+                <div style="font-size: 11px; color: var(--text-muted);">vikram.p@mobi.xyz</div>
+              </td>
+              <td><span class="badge-tag badge-info">Quality Assurance</span></td>
+              <td><span class="badge-tag badge-amber">PENDING</span></td>
+              <td><span style="font-size: 11px; color: var(--text-muted);"><i class="fa-regular fa-clock"></i> Today, 10:15 AM</span></td>
+              <td>
+                <select class="filter-select" id="user-role-select-1" style="width: 100%;">
+                  <option value="TESTER" selected>TESTER</option>
+                  <option value="DEVELOPER">DEVELOPER</option>
+                  <option value="MANAGER">MANAGER</option>
+                </select>
+              </td>
+              <td>
+                <div style="display:flex; gap:6px;">
+                  <button class="btn btn-accent-green" style="height: 28px; padding: 0 10px; font-size: 11px;" onclick="approveUser('user-row-1', 'Vikram Patel', 'user-role-select-1')">
+                    <i class="fa-solid fa-check"></i> Approve
+                  </button>
+                  <button class="btn btn-secondary" style="height: 28px; padding: 0 8px; font-size: 11px; color: var(--rose-600);" onclick="rejectUser('user-row-1', 'Vikram Patel')">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- PENDING USER 2 -->
+            <tr data-status="PENDING" data-role="DEVELOPER" id="user-row-2">
+              <td>
+                <div style="font-weight: 700; color: var(--text-main);">Ananya Sen</div>
+                <div style="font-size: 11px; color: var(--text-muted);">ananya.s@mobi.xyz</div>
+              </td>
+              <td><span class="badge-tag badge-purple">Core Backend Eng</span></td>
+              <td><span class="badge-tag badge-amber">PENDING</span></td>
+              <td><span style="font-size: 11px; color: var(--text-muted);"><i class="fa-regular fa-clock"></i> Today, 11:45 AM</span></td>
+              <td>
+                <select class="filter-select" id="user-role-select-2" style="width: 100%;">
+                  <option value="DEVELOPER" selected>DEVELOPER</option>
+                  <option value="TESTER">TESTER</option>
+                  <option value="MANAGER">MANAGER</option>
+                </select>
+              </td>
+              <td>
+                <div style="display:flex; gap:6px;">
+                  <button class="btn btn-accent-green" style="height: 28px; padding: 0 10px; font-size: 11px;" onclick="approveUser('user-row-2', 'Ananya Sen', 'user-role-select-2')">
+                    <i class="fa-solid fa-check"></i> Approve
+                  </button>
+                  <button class="btn btn-secondary" style="height: 28px; padding: 0 8px; font-size: 11px; color: var(--rose-600);" onclick="rejectUser('user-row-2', 'Ananya Sen')">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+              </td>
+            </tr>
+
+            <!-- ACTIVE USER 1 -->
+            <tr data-status="ACTIVE" data-role="MANAGER" id="user-row-3">
+              <td>
+                <div style="font-weight: 700; color: var(--text-main);">Rahul Sharma (You)</div>
+                <div style="font-size: 11px; color: var(--text-muted);">rahul.s@mobi.xyz</div>
+              </td>
+              <td><span class="badge-tag badge-info">QA & Governance</span></td>
+              <td><span class="badge-tag badge-pass">ACTIVE</span></td>
+              <td><span style="font-size: 11px; color: var(--text-muted);">Oct 01, 2026</span></td>
+              <td>
+                <span class="badge-tag badge-purple">MANAGER</span>
+              </td>
+              <td>
+                <span style="font-size: 11px; color: var(--emerald-600); font-weight: 700;"><i class="fa-solid fa-shield-check"></i> Super Admin</span>
+              </td>
+            </tr>
+
+            <!-- ACTIVE USER 2 -->
+            <tr data-status="ACTIVE" data-role="DEVELOPER" id="user-row-4">
+              <td>
+                <div style="font-weight: 700; color: var(--text-main);">Devon Vance</div>
+                <div style="font-size: 11px; color: var(--text-muted);">devon.v@mobi.xyz</div>
+              </td>
+              <td><span class="badge-tag badge-purple">Frontend Specialist</span></td>
+              <td><span class="badge-tag badge-pass">ACTIVE</span></td>
+              <td><span style="font-size: 11px; color: var(--text-muted);">Oct 02, 2026</span></td>
+              <td>
+                <select class="filter-select" onchange="alert('Role updated to ' + this.value)" style="width: 100%;">
+                  <option value="DEVELOPER" selected>DEVELOPER</option>
+                  <option value="TESTER">TESTER</option>
+                  <option value="MANAGER">MANAGER</option>
+                </select>
+              </td>
+              <td>
+                <span style="font-size: 11px; color: var(--text-muted);"><i class="fa-solid fa-user-check"></i> Active</span>
+              </td>
+            </tr>
+
+            <!-- ACTIVE USER 3 -->
+            <tr data-status="ACTIVE" data-role="DEVELOPER" id="user-row-5">
+              <td>
+                <div style="font-weight: 700; color: var(--text-main);">Alex Rivera</div>
+                <div style="font-size: 11px; color: var(--text-muted);">alex.r@mobi.xyz</div>
+              </td>
+              <td><span class="badge-tag badge-purple">Senior Backend Dev</span></td>
+              <td><span class="badge-tag badge-pass">ACTIVE</span></td>
+              <td><span style="font-size: 11px; color: var(--text-muted);">Oct 03, 2026</span></td>
+              <td>
+                <select class="filter-select" onchange="alert('Role updated to ' + this.value)" style="width: 100%;">
+                  <option value="DEVELOPER" selected>DEVELOPER</option>
+                  <option value="TESTER">TESTER</option>
+                  <option value="MANAGER">MANAGER</option>
+                </select>
+              </td>
+              <td>
+                <span style="font-size: 11px; color: var(--text-muted);"><i class="fa-solid fa-user-check"></i> Active</span>
+              </td>
+            </tr>
+
+            <!-- ACTIVE USER 4 -->
+            <tr data-status="ACTIVE" data-role="TESTER" id="user-row-6">
+              <td>
+                <div style="font-weight: 700; color: var(--text-main);">David Kim</div>
+                <div style="font-size: 11px; color: var(--text-muted);">david.k@mobi.xyz</div>
+              </td>
+              <td><span class="badge-tag badge-info">Fullstack QA Engineer</span></td>
+              <td><span class="badge-tag badge-pass">ACTIVE</span></td>
+              <td><span style="font-size: 11px; color: var(--text-muted);">Oct 04, 2026</span></td>
+              <td>
+                <select class="filter-select" onchange="alert('Role updated to ' + this.value)" style="width: 100%;">
+                  <option value="TESTER" selected>TESTER</option>
+                  <option value="DEVELOPER">DEVELOPER</option>
+                  <option value="MANAGER">MANAGER</option>
+                </select>
+              </td>
+              <td>
+                <span style="font-size: 11px; color: var(--text-muted);"><i class="fa-solid fa-user-check"></i> Active</span>
+              </td>
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </main>
+
+  <!-- ========================================== -->
+  <!-- MODALS -->
+  <!-- ========================================== -->
+
+  <!-- MODAL: ADD TEST CASE -->
+  <div class="modal-overlay" id="modal-testcase">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-plus-circle" style="color: var(--primary-600);"></i> Add New Test Case</h3>
+        <button class="modal-close" onclick="closeModal('modal-testcase')">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Test Case Identifier</label>
+        <input type="text" class="form-control" id="new-tc-id" value="TC_AUTH_003" style="font-family: var(--font-mono); font-weight: 700;">
+      </div>
+      <div class="form-group">
+        <label>Test Scenario Title</label>
+        <input type="text" class="form-control" id="new-tc-title" placeholder="e.g. Verify biometric token exchange with FaceID">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+          <label>Test Type</label>
+          <select class="form-control" id="new-tc-type">
+            <option value="FUNCTIONAL">FUNCTIONAL</option>
+            <option value="SECURITY">SECURITY</option>
+            <option value="REGRESSION">REGRESSION</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Priority</label>
+          <select class="form-control" id="new-tc-priority">
+            <option value="P1 - CRITICAL">P1 - CRITICAL</option>
+            <option value="P2 - HIGH" selected>P2 - HIGH</option>
+            <option value="P3 - MEDIUM">P3 - MEDIUM</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Precondition</label>
+        <input type="text" class="form-control" id="new-tc-pre" placeholder="e.g. Biometric authentication enabled in mobile app settings">
+      </div>
+      <div class="form-group">
+        <label>UI & DB Validation Requirements</label>
+        <input type="text" class="form-control" id="new-tc-val" placeholder="UI: Prompt FaceID sheet; DB: Store hash in testing_biometric_keys">
+      </div>
+      <button class="btn btn-primary" style="height: 40px;" onclick="saveNewTestCase()"><i class="fa-solid fa-check"></i> Add Test Case to Suite</button>
+    </div>
+  </div>
+
+  <!-- MODAL: BULK EXCEL UPLOAD -->
+  <div class="modal-overlay" id="modal-excel">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary-600);"></i> Bulk Test Cases Excel Import</h3>
+        <button class="modal-close" onclick="closeModal('modal-excel')">&times;</button>
+      </div>
+      <div style="border: 2px dashed #cbd5e1; background: #f8fafc; border-radius: var(--radius-md); padding: 24px; text-align: center; cursor: pointer;" onclick="simulateExcelUpload()">
+        <i class="fa-solid fa-file-excel" style="color: var(--emerald-600); font-size: 32px; margin-bottom: 8px;"></i>
+        <div style="font-size: 13px; font-weight: 700; color: var(--text-main);">Click to Upload Test Case Sheet (.xlsx, .csv)</div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Columns: TestCaseId, Title, Type, Priority, Precondition, Validations</div>
+      </div>
+      <div style="font-size: 11px; color: var(--text-muted); text-align: center;">
+        Need template? <a href="javascript:void(0)" onclick="alert('Downloading standard Excel test template...')" style="color: var(--primary-600); font-weight: 700;">Download Blank Template</a>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: AUTO-MAPPED CREATE BUG FROM TEST CASE -->
+  <div class="modal-overlay" id="modal-create-bug">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-bug" style="color: var(--rose-600);"></i> Log Defect from Failed Test Case</h3>
+        <button class="modal-close" onclick="closeModal('modal-create-bug')">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Origin Test Case ID (Locked Traceability)</label>
+        <input type="text" class="form-control" id="bug-modal-tc-id" readonly style="font-weight: 700; font-family: var(--font-mono); color: var(--primary-600); background: #eef2ff;">
+      </div>
+      <div class="form-group">
+        <label>Defect Identifier</label>
+        <input type="text" class="form-control" id="bug-modal-gen-id" readonly style="font-weight: 700; font-family: var(--font-mono); color: var(--rose-600);">
+      </div>
+      <div class="form-group">
+        <label>Defect Summary Title</label>
+        <input type="text" class="form-control" id="bug-modal-title">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+          <label>Severity Level</label>
+          <select class="form-control" id="bug-modal-sev">
+            <option value="CRITICAL" selected>CRITICAL</option>
+            <option value="HIGH">HIGH</option>
+            <option value="MEDIUM">MEDIUM</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Assignee (Developer)</label>
+          <select class="form-control" id="bug-modal-assignee">
+            <option value="Devon (Developer)" selected>Devon (Developer)</option>
+            <option value="Alex (Developer)">Alex (Developer)</option>
+            <option value="David (Developer)">David (Developer)</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn btn-primary" style="height: 40px; background: var(--rose-600);" onclick="saveBugAndMapToFeature()"><i class="fa-solid fa-bug"></i> Save Defect & Dispatch Alert</button>
+    </div>
+  </div>
+
+  <!-- MODAL: EDIT FEATURE DETAILS -->
+  <div class="modal-overlay" id="modal-edit-feature">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-pen-to-square" style="color: var(--primary-600);"></i> Edit Feature Details</h3>
+        <button class="modal-close" onclick="closeModal('modal-edit-feature')">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Feature Title</label>
+        <input type="text" class="form-control" id="edit-feat-name" value="User Auth & OTP">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+          <label>Sprint Designation</label>
+          <input type="text" class="form-control" id="edit-feat-sprint" value="Sprint 12 • v2.4.0">
+        </div>
+        <div class="form-group">
+          <label>Feature Status</label>
+          <select class="form-control" id="edit-feat-status">
+            <option value="ACTIVE" selected>ACTIVE</option>
+            <option value="IN_PROGRESS">IN_PROGRESS</option>
+            <option value="COMPLETED">COMPLETED</option>
+            <option value="ON_HOLD">ON_HOLD</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Acceptance Criteria & Notes</label>
+        <input type="text" class="form-control" value="Dual token verification with 6 digit OTP input on mobile & web.">
+      </div>
+      <button class="btn btn-primary" style="height: 40px;" onclick="saveFeatureDetails()">Save Feature Changes</button>
+    </div>
+  </div>
+
+  <!-- MODAL: FEATURE FILE ATTACHMENTS -->
+  <div class="modal-overlay" id="modal-feature-attachments">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-paperclip" style="color: var(--primary-600);"></i> Feature Documents & Attachments</h3>
+        <button class="modal-close" onclick="closeModal('modal-feature-attachments')">&times;</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto;" id="feature-attachments-list">
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12px;">
+          <div><i class="fa-solid fa-file-pdf" style="color:var(--rose-600);"></i> <strong>Auth_Flow_Spec_v2.4.pdf</strong> (1.2 MB)</div>
+          <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 10px;" onclick="alert('Downloading Auth_Flow_Spec_v2.4.pdf...')"><i class="fa-solid fa-download"></i></button>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12px;">
+          <div><i class="fa-solid fa-file-image" style="color:var(--primary-600);"></i> <strong>OTP_Input_Wireframe.png</strong> (480 KB)</div>
+          <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 10px;" onclick="alert('Downloading OTP_Input_Wireframe.png...')"><i class="fa-solid fa-download"></i></button>
+        </div>
+      </div>
+
+      <div style="border: 2px dashed #cbd5e1; background: #f8fafc; border-radius: var(--radius-md); padding: 18px; text-align: center; cursor: pointer;" onclick="uploadFeatureFile()">
+        <i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary-600); font-size: 20px; margin-bottom: 4px;"></i>
+        <div style="font-size: 12px; font-weight: 600;">Click to upload specs, wireframes (.pdf, .png, .docx)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CREATE PROJECT -->
+  <div class="modal-overlay" id="modal-project-create">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-folder-plus" style="color: var(--primary-600);"></i> Create New Project</h3>
+        <button class="modal-close" onclick="closeModal('modal-project-create')">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Project Name</label>
+        <input type="text" class="form-control" id="new-proj-name" placeholder="e.g. Corporate Loans Portal">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+          <label>Target Region</label>
+          <select class="form-control" id="new-proj-region">
+            <option value="US-EAST" selected>US-EAST (Main)</option>
+            <option value="EU-CENTRAL">EU-CENTRAL</option>
+            <option value="APAC">APAC</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Initial Version</label>
+          <input type="text" class="form-control" id="new-proj-version" value="v1.0.0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Manager Overview Notes</label>
+        <input type="text" class="form-control" id="new-proj-notes" placeholder="e.g. Q4 strategic initiative for commercial banking">
+      </div>
+      <button class="btn btn-primary" style="height: 40px;" onclick="createNewProject()"><i class="fa-solid fa-plus"></i> Create & Launch Project</button>
+    </div>
+  </div>
+
+  <!-- MODAL: CREATE FEATURE -->
+  <div class="modal-overlay" id="modal-feature-create">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-layer-group" style="color: var(--primary-600);"></i> Add New Feature</h3>
+        <button class="modal-close" onclick="closeModal('modal-feature-create')">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Feature Title</label>
+        <input type="text" class="form-control" id="new-feat-name" placeholder="e.g. Biometric Authentication">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+          <label>Sprint Designation</label>
+          <input type="text" class="form-control" id="new-feat-sprint" value="Sprint 13 • v2.5.0">
+        </div>
+        <div class="form-group">
+          <label>Initial Governance Status</label>
+          <select class="form-control" id="new-feat-status">
+            <option value="ACTIVE" selected>ACTIVE</option>
+            <option value="IN_PROGRESS">IN_PROGRESS</option>
+            <option value="COMPLETED">COMPLETED</option>
+            <option value="ON_HOLD">ON_HOLD</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Acceptance Criteria / Description</label>
+        <input type="text" class="form-control" id="new-feat-desc" placeholder="e.g. Support FaceID and Fingerprint biometric token exchange">
+      </div>
+      <button class="btn btn-primary" style="height: 40px;" onclick="createNewFeature()"><i class="fa-solid fa-plus"></i> Add Feature to Project</button>
+    </div>
+  </div>
+
+  <!-- MODAL: PROJECT GOVERNANCE -->
+  <div class="modal-overlay" id="modal-project-gov">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-sliders" style="color: var(--primary-600);"></i> Project Governance & Status</h3>
+        <button class="modal-close" onclick="closeModal('modal-project-gov')">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Project Name</label>
+        <input type="text" class="form-control" id="gov-proj-name" value="Core Banking Platform" readonly style="font-weight:700;">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+          <label>Region</label>
+          <input type="text" class="form-control" id="gov-proj-region" value="US-EAST" readonly>
+        </div>
+        <div class="form-group">
+          <label>Project Status</label>
+          <select class="form-control" id="gov-proj-status">
+            <option value="ACTIVE" selected>ACTIVE</option>
+            <option value="IN_PROGRESS">IN_PROGRESS</option>
+            <option value="ON_HOLD">ON_HOLD</option>
+            <option value="ARCHIVED">ARCHIVED</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Manager Delivery Notes</label>
+        <input type="text" class="form-control" value="Sprint 12 verification phase in progress. Target go-live on track.">
+      </div>
+      <button class="btn btn-primary" style="height: 40px;" onclick="saveProjectGovernance()">Update Project Governance</button>
+    </div>
+  </div>
+
+  <!-- MODAL: PROJECT FILE ATTACHMENTS -->
+  <div class="modal-overlay" id="modal-project-attachments">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-paperclip" style="color: var(--primary-600);"></i> Project File Attachments</h3>
+        <button class="modal-close" onclick="closeModal('modal-project-attachments')">&times;</button>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto;" id="project-attachments-list">
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12px;">
+          <div><i class="fa-solid fa-file-pdf" style="color:var(--rose-600);"></i> <strong>Architecture_Design.pdf</strong> (1.4 MB)</div>
+          <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 10px;" onclick="alert('Downloading Architecture_Design.pdf...')"><i class="fa-solid fa-download"></i></button>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12px;">
+          <div><i class="fa-solid fa-file-zipper" style="color:var(--amber-600);"></i> <strong>API_Specifications.zip</strong> (3.2 MB)</div>
+          <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 10px;" onclick="alert('Downloading API_Specifications.zip...')"><i class="fa-solid fa-download"></i></button>
+        </div>
+      </div>
+
+      <div style="border: 2px dashed #cbd5e1; background: #f8fafc; border-radius: var(--radius-md); padding: 18px; text-align: center; cursor: pointer;" onclick="uploadProjectFile()">
+        <i class="fa-solid fa-cloud-arrow-up" style="color: var(--primary-600); font-size: 20px; margin-bottom: 4px;"></i>
+        <div style="font-size: 12px; font-weight: 600;">Click to upload project specifications (.pdf, .docx, .zip)</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DEDICATED BUG CHAT -->
+  <div class="modal-overlay" id="modal-bug-chat">
+    <div class="chat-modal-box">
+      <div class="chat-modal-header">
+        <div>
+          <h3 style="font-size: 14px; font-weight: 700; color: var(--text-main);" id="specific-bug-chat-title">
+            <i class="fa-solid fa-comments" style="color: var(--primary-600);"></i> Discussion: BUG-AUTH_MODULE-001
+          </h3>
+          <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;" id="specific-bug-chat-sub">
+            Linked Test Case: TC_AUTH_001 • Assignee: Devon (Developer) • Severity: CRITICAL
+          </p>
+        </div>
+        <button class="modal-close" onclick="closeModal('modal-bug-chat')">&times;</button>
+      </div>
+
+      <div class="chat-modal-body" id="specific-chat-stream">
+        <div class="chat-bubble tester">
+          <strong>Rahul (Tester):</strong>
+          On iOS Safari, pasting the 6-digit OTP only fills the first input box and doesn't advance focus. (Logged from TC_AUTH_001).
+        </div>
+        <div class="chat-bubble dev">
+          <strong>Devon (Developer):</strong>
+          Thanks for the report! I checked the paste handler for Feature User Auth & OTP. Pushing fix to staging shortly!
+        </div>
+      </div>
+
+      <div class="chat-modal-footer">
+        <input type="text" class="form-control" id="specific-chat-input" placeholder="Type message as Manager..." style="flex:1;" onkeypress="if(event.key==='Enter') sendSpecificChat()">
+        <button class="btn btn-secondary" style="padding: 0 10px;" title="Attach Screenshot"><i class="fa-solid fa-paperclip"></i></button>
+        <button class="btn btn-primary" style="padding: 0 16px;" onclick="sendSpecificChat()"><i class="fa-solid fa-paper-plane"></i> Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: IN-APP NOTIFICATION CENTER -->
+  <div class="modal-overlay" id="modal-in-app-notifications">
+    <div class="notif-modal-box">
+      <div class="notif-modal-header">
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <h3 style="font-size: 15px; font-weight: 700; color: var(--text-main);">
+            <i class="fa-solid fa-bell" style="color: var(--primary-600);"></i> Manager Notifications
+          </h3>
+          <span class="badge-tag badge-fail" id="notif-modal-unread-count" style="font-size: 10px;">4 Unread</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <button class="btn-icon-link" onclick="markAllNotificationsAsRead()" title="Mark all as read">
+            <i class="fa-solid fa-check-double"></i> Mark all read
+          </button>
+          <button class="modal-close" onclick="closeModal('modal-in-app-notifications')">&times;</button>
+        </div>
+      </div>
+
+      <!-- Category Filter Tabs -->
+      <div class="notif-modal-tabs">
+        <button class="notif-filter-tab active" onclick="filterNotifList('ALL', this)">All</button>
+        <button class="notif-filter-tab" onclick="filterNotifList('UNREAD', this)">Unread</button>
+        <button class="notif-filter-tab" onclick="filterNotifList('USER', this)">User Approvals</button>
+        <button class="notif-filter-tab" onclick="filterNotifList('FIXED', this)">Bug Fixes</button>
+      </div>
+
+      <!-- Notification Items Body -->
+      <div class="notif-list-body" id="in-app-notif-list">
+        
+        <!-- Notification 1: User Registration -->
+        <div class="notif-card-item unread" id="notif-item-1" data-type="USER" data-read="false">
+          <div class="notif-icon-bubble notif-icon-user">
+            <i class="fa-solid fa-user-plus"></i>
+          </div>
+          <div class="notif-card-content">
+            <div class="notif-card-title">
+              <span>New Registration — <strong>Vikram Patel (QA)</strong></span>
+              <span style="font-size: 10px; color: var(--rose-600); font-weight: 700;">● NEW</span>
+            </div>
+            <div class="notif-card-msg">
+              Vikram Patel registered with email <code>vikram.p@mobi.xyz</code>. Awaiting role assignment & activation.
+            </div>
+            <div class="notif-card-meta">
+              <span><i class="fa-solid fa-shield-halved"></i> Access Control</span>
+              <span>•</span>
+              <span><i class="fa-regular fa-clock"></i> 10 mins ago</span>
+            </div>
+            <div class="notif-card-actions">
+              <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 11px; color: var(--primary-600); font-weight:700;" onclick="switchManagerTab('users'); closeModal('modal-in-app-notifications');">
+                <i class="fa-solid fa-user-check"></i> Review & Approve
+              </button>
+              <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 10px;" onclick="toggleNotifRead('notif-item-1')">
+                <i class="fa-solid fa-check"></i> Mark read
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Notification 2: Defect Fixed -->
+        <div class="notif-card-item unread" id="notif-item-2" data-type="FIXED" data-read="false">
+          <div class="notif-icon-bubble notif-icon-fixed">
+            <i class="fa-solid fa-circle-check"></i>
+          </div>
+          <div class="notif-card-content">
+            <div class="notif-card-title">
+              <span>Defect Marked FIXED — <strong style="color: var(--emerald-600); font-family: var(--font-mono);">BUG-AUTH_MODULE-001</strong></span>
+              <span style="font-size: 10px; color: var(--rose-600); font-weight: 700;">● NEW</span>
+            </div>
+            <div class="notif-card-msg">
+              <strong>Devon (Developer)</strong> resolved OTP auto-focus defect in User Auth & OTP. Deployed to Staging.
+            </div>
+            <div class="notif-card-meta">
+              <span><i class="fa-solid fa-layer-group"></i> User Auth & OTP</span>
+              <span>•</span>
+              <span><i class="fa-regular fa-clock"></i> 25 mins ago</span>
+            </div>
+            <div class="notif-card-actions">
+              <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 11px; color: var(--primary-600); font-weight:700;" onclick="openSpecificBugChat('BUG-AUTH_MODULE-001', 'OTP auto-focus fails on Safari iOS clipboard paste', 'TC_AUTH_001', 'Devon (Developer)', 'CRITICAL'); closeModal('modal-in-app-notifications');">
+                <i class="fa-solid fa-comments"></i> Inspect Thread
+              </button>
+              <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 10px;" onclick="toggleNotifRead('notif-item-2')">
+                <i class="fa-solid fa-check"></i> Mark read
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let activeRegion = 'US-EAST';
+    let activeProject = 'Core Banking Platform';
+    let activeFeature = 'User Auth & OTP';
+    let activeFeatureSprint = 'Sprint 12 • v2.4.0';
+    let activeFeatureFilterCategory = 'ALL';
+    let activeUserDirectoryFilter = 'ALL';
+    let activeMode = 'FEATURE'; // 'FEATURE', 'HEALTH', 'USERS'
+
+    const projectData = {
+      'US-EAST': [
+        { 
+          id: 'PROJ-1', 
+          name: 'Core Banking Platform', 
+          version: 'v2.1', 
+          status: 'ACTIVE', 
+          features: [
+            { id: 'FEAT-1', name: 'User Auth & OTP', sprint: 'Sprint 12 • v2.4.0', sprintNum: 12, bugs: 1, tcCount: 2, status: 'BUGS' },
+            { id: 'FEAT-2', name: 'Fund Transfer & UPI', sprint: 'Sprint 12 • v2.4.1', sprintNum: 12, bugs: 0, tcCount: 4, status: 'PASSED' },
+            { id: 'FEAT-3', name: 'Account Statements POI', sprint: 'Sprint 11 • v2.3.0', sprintNum: 11, bugs: 0, tcCount: 3, status: 'PASSED' }
+          ]
+        },
+        { 
+          id: 'PROJ-2', 
+          name: 'Retail Banking Portal', 
+          version: 'v1.4', 
+          status: 'ACTIVE', 
+          features: [
+            { id: 'FEAT-R1', name: 'Customer Onboarding', sprint: 'Sprint 5 • v1.2', sprintNum: 5, bugs: 0, tcCount: 5, status: 'PASSED' },
+            { id: 'FEAT-R2', name: 'KYC Verification Flow', sprint: 'Sprint 6 • v1.3', sprintNum: 6, bugs: 1, tcCount: 3, status: 'BUGS' }
+          ]
+        },
+        { 
+          id: 'PROJ-3', 
+          name: 'Wealth Management Suite', 
+          version: 'v1.0', 
+          status: 'ACTIVE', 
+          features: [
+            { id: 'FEAT-W1', name: 'Portfolio Rebalancing', sprint: 'Sprint 8 • v1.0', sprintNum: 8, bugs: 1, tcCount: 4, status: 'BUGS' }
+          ]
+        }
+      ],
+      'EU-CENTRAL': [
+        { 
+          id: 'PROJ-EU1', 
+          name: 'Payment Gateway API', 
+          version: 'v1.8', 
+          status: 'ACTIVE', 
+          features: [
+            { id: 'FEAT-E1', name: 'Stripe 3DS Webhook', sprint: 'Sprint 10 • v1.8', sprintNum: 10, bugs: 0, tcCount: 3, status: 'PASSED' }
+          ]
+        }
+      ],
+      'APAC': [
+        { 
+          id: 'PROJ-APAC1', 
+          name: 'Stock Portfolio Hub', 
+          version: 'v1.0', 
+          status: 'ACTIVE', 
+          features: [
+            { id: 'FEAT-A1', name: 'Stock Portfolio Sync', sprint: 'Sprint 1 • v0.9', sprintNum: 1, bugs: 0, tcCount: 2, status: 'PASSED' }
+          ]
+        }
+      ]
+    };
+
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+
+    // MANAGER NAVIGATION SWITCHING
+    function switchManagerTab(tabKey) {
+      document.querySelectorAll('.sidebar-nav-item').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.feature-nav-item').forEach(i => i.classList.remove('active'));
+      document.getElementById('subview-feature').style.display = 'none';
+      document.getElementById('subview-health').style.display = 'none';
+      document.getElementById('subview-users').style.display = 'none';
+      document.getElementById('topbar-feature-actions').style.display = 'none';
+
+      if (tabKey === 'health') {
+        activeMode = 'HEALTH';
+        const sideBtn = document.getElementById('side-nav-health');
+        if (sideBtn) sideBtn.classList.add('active');
+        document.getElementById('subview-health').style.display = 'flex';
+        document.getElementById('topbar-context-title').innerText = `${activeProject} — Quality & Governance`;
+        document.getElementById('topbar-context-badge').innerText = activeRegion;
+        document.getElementById('topbar-context-status').innerText = 'GOVERNANCE';
+      } else if (tabKey === 'users') {
+        activeMode = 'USERS';
+        const sideBtn = document.getElementById('side-nav-users');
+        if (sideBtn) sideBtn.classList.add('active');
+        document.getElementById('subview-users').style.display = 'block';
+        document.getElementById('topbar-context-title').innerText = 'Employee Directory & Access Control';
+        document.getElementById('topbar-context-badge').innerText = activeRegion;
+        document.getElementById('topbar-context-status').innerText = 'ACTIVE DIRECTORY';
+        filterUserDirectory(activeUserDirectoryFilter);
+      }
+    }
+
+    // FEATURE WORKSPACE TAB SWITCHING (Same as Tester: Test Cases vs Defects)
+    function switchFeatureTab(tabKey) {
+      document.querySelectorAll('.subtab-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById('subview-tc').style.display = 'none';
+      document.getElementById('subview-bugs').style.display = 'none';
+
+      if (tabKey === 'tc') {
+        document.getElementById('btn-tab-tc').classList.add('active');
+        document.getElementById('subview-tc').style.display = 'block';
+      } else if (tabKey === 'bugs') {
+        document.getElementById('btn-tab-bugs').classList.add('active');
+        document.getElementById('subview-bugs').style.display = 'block';
+      }
+    }
+
+    // REGION & PROJECT FILTERING
+    function onRegionChange(reg) {
+      activeRegion = reg;
+      document.getElementById('sidebar-proj-search').value = '';
+      filterProjects();
+    }
+
+    function filterProjects() {
+      const search = (document.getElementById('sidebar-proj-search').value || '').toLowerCase();
+      const projSelect = document.getElementById('sidebar-project-select');
+      projSelect.innerHTML = '';
+      
+      const allProjects = projectData[activeRegion] || [];
+      const filtered = allProjects.filter(p => p.name.toLowerCase().includes(search));
+
+      document.getElementById('sidebar-proj-count').innerText = filtered.length;
+
+      filtered.forEach((p, idx) => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.text = p.name;
+        if (idx === 0) opt.selected = true;
+        projSelect.appendChild(opt);
+      });
+
+      if (filtered.length > 0) {
+        onProjectChange(filtered[0].id);
+      }
+    }
+
+    function onProjectChange(projId) {
+      const list = projectData[activeRegion] || [];
+      const proj = list.find(p => p.id === projId) || list[0];
+      if (!proj) return;
+
+      activeProject = proj.name;
+      document.getElementById('sidebar-feat-search').value = '';
+      activeFeatureFilterCategory = 'ALL';
+
+      renderFeaturesList(proj.features);
+      renderFeatureGovernanceMatrix(proj.features);
+
+      if (proj.features && proj.features.length > 0) {
+        selectFeature(proj.features[0].id, proj.features[0].name, proj.features[0].sprint, document.querySelector('.feature-nav-item'));
+      }
+    }
+
+    // CREATE PROJECT & CREATE FEATURE
+    function createNewProject() {
+      const name = document.getElementById('new-proj-name').value.trim();
+      const region = document.getElementById('new-proj-region').value;
+      const version = document.getElementById('new-proj-version').value.trim() || 'v1.0.0';
+
+      if (!name) {
+        alert('Please enter a project name.');
+        return;
+      }
+
+      const newProjId = 'PROJ-' + Date.now();
+      const newProjObj = {
+        id: newProjId,
+        name: name,
+        version: version,
+        status: 'ACTIVE',
+        features: [
+          { id: 'FEAT-' + Date.now(), name: name + ' Core Module', sprint: 'Sprint 1 • ' + version, sprintNum: 1, bugs: 0, tcCount: 2, status: 'PASSED' }
+        ]
+      };
+
+      if (!projectData[region]) projectData[region] = [];
+      projectData[region].push(newProjObj);
+
+      if (activeRegion !== region) {
+        document.getElementById('sidebar-region-select').value = region;
+        onRegionChange(region);
+      } else {
+        filterProjects();
+      }
+
+      document.getElementById('sidebar-project-select').value = newProjId;
+      onProjectChange(newProjId);
+
+      closeModal('modal-project-create');
+      document.getElementById('new-proj-name').value = '';
+      alert(`Project [${name}] created successfully under region [${region}]!`);
+    }
+
+    function createNewFeature() {
+      const name = document.getElementById('new-feat-name').value.trim();
+      const sprint = document.getElementById('new-feat-sprint').value.trim() || 'Sprint 13 • v2.5.0';
+      const status = document.getElementById('new-feat-status').value;
+
+      if (!name) {
+        alert('Please enter a feature name.');
+        return;
+      }
+
+      const list = projectData[activeRegion] || [];
+      const currentProjId = document.getElementById('sidebar-project-select').value;
+      const proj = list.find(p => p.id === currentProjId) || list[0];
+      if (!proj) return;
+
+      const newFeat = {
+        id: 'FEAT-' + Date.now(),
+        name: name,
+        sprint: sprint,
+        sprintNum: 13,
+        bugs: 0,
+        tcCount: 2,
+        status: 'PASSED'
+      };
+
+      proj.features.push(newFeat);
+      renderFeaturesList(proj.features);
+      renderFeatureGovernanceMatrix(proj.features);
+
+      closeModal('modal-feature-create');
+      document.getElementById('new-feat-name').value = '';
+      alert(`Feature [${name}] added to project [${proj.name}]!`);
+    }
+
+    function renderFeatureGovernanceMatrix(features) {
+      const tbody = document.getElementById('manager-feature-matrix-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+
+      if (!features || features.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);"><i class="fa-solid fa-layer-group"></i> No features found for this project.</td></tr>`;
+        return;
+      }
+
+      features.forEach((f, idx) => {
+        const tr = document.createElement('tr');
+        const badgeId = `feat-status-badge-${idx + 1}`;
+        const passPct = f.bugs === 0 ? 100 : (f.tcCount > 1 ? 50 : 0);
+        const passClass = f.bugs === 0 ? 'progress-fill-pass' : (passPct > 0 ? 'progress-fill-pass' : 'progress-fill-fail');
+
+        tr.innerHTML = `
+          <td>
+            <strong style="color: var(--text-main); font-size: 13px;">${f.name}</strong>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${f.sprint}</div>
+          </td>
+          <td>
+            <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; margin-bottom:4px;">
+              <span>${passPct}% Passed</span>
+              <span>${f.bugs === 0 ? f.tcCount : Math.max(1, f.tcCount - f.bugs)}/${f.tcCount} Tests</span>
+            </div>
+            <div class="progress-track">
+              <div class="${passClass}" style="width: ${passPct}%;"></div>
+              ${f.bugs > 0 ? `<div class="progress-fill-fail" style="width: ${100 - passPct}%;"></div>` : ''}
+            </div>
+          </td>
+          <td>
+            ${f.bugs > 0 ? `<span class="badge-tag badge-fail">${f.bugs} Critical</span>` : `<span class="badge-tag badge-pass">0 Defects</span>`}
+          </td>
+          <td>
+            <span class="badge-tag ${f.bugs === 0 ? 'badge-pass' : 'badge-info'}" id="${badgeId}">ACTIVE</span>
+          </td>
+          <td>
+            <div style="display:flex; gap:6px;">
+              <select class="filter-select" style="padding:4px 8px; font-size:11px;" onchange="updateFeatureStatus('${f.name}', this.value, '${badgeId}')">
+                <option value="ACTIVE" selected>ACTIVE</option>
+                <option value="IN_PROGRESS">IN_PROGRESS</option>
+                <option value="COMPLETED">COMPLETED</option>
+                <option value="ON_HOLD">ON_HOLD</option>
+              </select>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // FEATURES
+    function setFeatureCategoryFilter(cat, btn) {
+      activeFeatureFilterCategory = cat;
+      document.querySelectorAll('.feature-pill-filters .pill-filter-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      filterFeatures();
+    }
+
+    function filterFeatures() {
+      const list = projectData[activeRegion] || [];
+      const currentProjId = document.getElementById('sidebar-project-select').value;
+      const proj = list.find(p => p.id === currentProjId) || list[0];
+      if (!proj) return;
+
+      const search = (document.getElementById('sidebar-feat-search').value || '').toLowerCase();
+      
+      const filtered = proj.features.filter(f => {
+        const matchesSearch = !search || f.name.toLowerCase().includes(search) || f.sprint.toLowerCase().includes(search);
+        let matchesCat = true;
+        if (activeFeatureFilterCategory === 'BUGS') {
+          matchesCat = f.bugs > 0;
+        } else if (activeFeatureFilterCategory === 'PASSED') {
+          matchesCat = f.bugs === 0;
+        }
+        return matchesSearch && matchesCat;
+      });
+
+      renderFeaturesList(filtered);
+    }
+
+    function renderFeaturesList(features) {
+      const featList = document.getElementById('sidebar-feature-list');
+      featList.innerHTML = '';
+      document.getElementById('sidebar-feat-count').innerText = features.length;
+
+      if (features.length === 0) {
+        featList.innerHTML = `<div style="padding:14px 8px; font-size:11px; color:var(--text-muted); text-align:center;"><i class="fa-solid fa-magnifying-glass"></i> No features match filter</div>`;
+        return;
+      }
+
+      features.forEach((f, idx) => {
+        const item = document.createElement('div');
+        item.className = `feature-nav-item ${idx === 0 ? 'active' : ''}`;
+        item.onclick = function() { selectFeature(f.id, f.name, f.sprint, item); };
+        item.innerHTML = `
+          <div>
+            <div class="f-name" title="${f.name}">${f.name}</div>
+            <div class="f-sprint">${f.sprint}</div>
+          </div>
+          ${f.bugs > 0 ? `<span class="badge-tag badge-fail" style="font-size:10px;">${f.bugs} Bug</span>` : `<span class="badge-tag badge-pass" style="font-size:10px;">Passed</span>`}
+        `;
+        featList.appendChild(item);
+      });
+    }
+
+    function selectFeature(featId, featName, sprint, el) {
+      activeMode = 'FEATURE';
+      activeFeature = featName;
+      activeFeatureSprint = sprint;
+
+      document.querySelectorAll('.sidebar-nav-item').forEach(i => i.classList.remove('active'));
+      document.querySelectorAll('.feature-nav-item').forEach(i => i.classList.remove('active'));
+      if (el) el.classList.add('active');
+
+      document.getElementById('subview-health').style.display = 'none';
+      document.getElementById('subview-users').style.display = 'none';
+      document.getElementById('subview-feature').style.display = 'flex';
+      document.getElementById('topbar-feature-actions').style.display = 'flex';
+
+      document.getElementById('topbar-context-title').innerText = featName;
+      document.getElementById('topbar-context-badge').innerText = sprint;
+      document.getElementById('topbar-context-status').innerText = 'ACTIVE';
+
+      document.getElementById('edit-feat-name').value = featName;
+      document.getElementById('edit-feat-sprint').value = sprint;
+
+      switchFeatureTab('tc');
+    }
+
+    // TEST CASES & DEFECTS FILTERING
+    function filterTestCases() {
+      const search = (document.getElementById('tc-search-input').value || '').toLowerCase();
+      const type = document.getElementById('tc-type-filter').value;
+      const status = document.getElementById('tc-status-filter').value;
+      const rows = document.querySelectorAll('#feature-tc-table-body tr');
+
+      let visible = 0;
+      rows.forEach(r => {
+        const text = r.innerText.toLowerCase();
+        const rType = r.getAttribute('data-type');
+        const rStatus = r.getAttribute('data-status');
+
+        const matchesSearch = !search || text.includes(search);
+        const matchesType = type === 'ALL' || rType === type;
+        const matchesStatus = status === 'ALL' || rStatus === status;
+
+        if (matchesSearch && matchesType && matchesStatus) {
+          r.style.display = '';
+          visible++;
+        } else {
+          r.style.display = 'none';
+        }
+      });
+      document.getElementById('tc-filter-count-text').innerText = `Showing ${visible} test cases in feature`;
+    }
+
+    function filterDefects() {
+      const search = (document.getElementById('bug-search-input').value || '').toLowerCase();
+      const sev = document.getElementById('bug-sev-filter').value;
+      const status = document.getElementById('bug-status-filter').value;
+      const rows = document.querySelectorAll('#feature-bugs-table-body tr');
+
+      let visible = 0;
+      rows.forEach(r => {
+        const text = r.innerText.toLowerCase();
+        const rSev = r.getAttribute('data-sev');
+        const rStatus = r.getAttribute('data-status');
+
+        const matchesSearch = !search || text.includes(search);
+        const matchesSev = sev === 'ALL' || rSev === sev;
+        const matchesStatus = status === 'ALL' || rStatus === status;
+
+        if (matchesSearch && matchesSev && matchesStatus) {
+          r.style.display = '';
+          visible++;
+        } else {
+          r.style.display = 'none';
+        }
+      });
+      document.getElementById('bug-filter-count-text').innerText = `Showing ${visible} defects`;
+    }
+
+    function saveNewTestCase() {
+      const id = document.getElementById('new-tc-id').value.trim();
+      const title = document.getElementById('new-tc-title').value.trim();
+      const type = document.getElementById('new-tc-type').value;
+      const priority = document.getElementById('new-tc-priority').value;
+      const pre = document.getElementById('new-tc-pre').value.trim() || 'Active user session';
+      const val = document.getElementById('new-tc-val').value.trim() || 'UI: Validation matches spec; DB: Correct audit entry stored.';
+
+      if (!title) {
+        alert('Please enter a test scenario title.');
+        return;
+      }
+
+      const tbody = document.getElementById('feature-tc-table-body');
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-type', type);
+      tr.setAttribute('data-status', 'PASSED');
+      tr.innerHTML = `
+        <td>
+          <span class="tc-id">${id}</span>
+          <div class="tc-name">${title}</div>
+          <div class="tc-pre"><strong>Precondition:</strong> ${pre}</div>
+        </td>
+        <td>
+          <span class="badge-tag badge-info">${type}</span>
+          <div style="color: var(--amber-600); font-size: 11px; font-weight: 700; margin-top: 4px;">${priority}</div>
+        </td>
+        <td>
+          <div class="val-chip"><strong>Validations:</strong> ${val}</div>
+        </td>
+        <td>
+          <span class="badge-tag badge-pass">PASSED</span>
+          <div style="margin-top: 8px; font-size: 11px; color: var(--emerald-600); font-weight: 700;">
+            <i class="fa-solid fa-circle-check"></i> Passed
+          </div>
+        </td>
+      `;
+      tbody.appendChild(tr);
+
+      const count = tbody.querySelectorAll('tr').length;
+      document.getElementById('tab-tc-count').innerText = count;
+      document.getElementById('tc-filter-count-text').innerText = `Showing ${count} test cases in feature`;
+
+      closeModal('modal-testcase');
+      alert(`Test Case [${id}] added to suite successfully!`);
+    }
+
+    function simulateExcelUpload() {
+      closeModal('modal-excel');
+      alert('Success: Imported 4 Test Cases from Excel file into ' + activeFeature + '!');
+    }
+
+    function triggerCreateBugFromTest(tcId, tcTitle) {
+      document.getElementById('bug-modal-tc-id').value = tcId;
+      document.getElementById('bug-modal-gen-id').value = 'BUG-' + activeFeature.toUpperCase().replace(/\s+/g, '_').substring(0, 8) + '-00' + (document.querySelectorAll('#feature-bugs-table-body tr').length + 1);
+      document.getElementById('bug-modal-title').value = 'Failure: ' + tcTitle;
+      openModal('modal-create-bug');
+    }
+
+    function saveBugAndMapToFeature() {
+      const tcId = document.getElementById('bug-modal-tc-id').value;
+      const bugId = document.getElementById('bug-modal-gen-id').value;
+      const title = document.getElementById('bug-modal-title').value;
+      const sev = document.getElementById('bug-modal-sev').value;
+      const assignee = document.getElementById('bug-modal-assignee').value;
+
+      const tbody = document.getElementById('feature-bugs-table-body');
+      const tr = document.createElement('tr');
+      tr.setAttribute('data-sev', sev);
+      tr.setAttribute('data-status', 'OPEN');
+      tr.innerHTML = `
+        <td><span style="font-family: var(--font-mono); font-weight: 700; color: var(--rose-600);">${bugId}</span></td>
+        <td>
+          <strong style="color: var(--text-main); font-size: 13px;">${title}</strong>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Origin: <code>${tcId}</code> • Assigned: ${assignee}</div>
+        </td>
+        <td><span class="badge-tag badge-fail">${sev}</span></td>
+        <td><span class="badge-tag badge-info">OPEN</span></td>
+        <td>
+          <button class="btn btn-secondary" style="height: 28px; padding: 0 10px; font-size: 11px; color: var(--primary-600); font-weight:700;" onclick="openSpecificBugChat('${bugId}', '${title}', '${tcId}', '${assignee}', '${sev}')">
+            <i class="fa-solid fa-comments"></i> Chat
+          </button>
+        </td>
+      `;
+      tbody.appendChild(tr);
+
+      const count = tbody.querySelectorAll('tr').length;
+      document.getElementById('tab-bugs-count').innerText = count;
+
+      closeModal('modal-create-bug');
+      switchFeatureTab('bugs');
+      alert(`Defect [${bugId}] created and mapped to test [${tcId}]!`);
+    }
+
+    // USER DIRECTORY: SEARCH & FILTER (ALL USERS + PENDING USERS)
+    function filterUserDirectory(category, btn) {
+      activeUserDirectoryFilter = category;
+      document.querySelectorAll('#subview-users .pill-filter-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      else {
+        const targetBtn = document.getElementById(`user-pill-${category.toLowerCase()}`);
+        if (targetBtn) targetBtn.classList.add('active');
+      }
+      searchUsers();
+    }
+
+    function searchUsers() {
+      const search = (document.getElementById('user-search-input').value || '').toLowerCase();
+      const roleFilter = document.getElementById('user-role-filter').value;
+      const rows = document.querySelectorAll('#all-users-table-body tr');
+
+      let visible = 0;
+      rows.forEach(r => {
+        const text = r.innerText.toLowerCase();
+        const rStatus = r.getAttribute('data-status');
+        const rRole = r.getAttribute('data-role');
+
+        const matchesCat = activeUserDirectoryFilter === 'ALL' || rStatus === activeUserDirectoryFilter;
+        const matchesSearch = !search || text.includes(search);
+        const matchesRole = roleFilter === 'ALL' || rRole === roleFilter;
+
+        if (matchesCat && matchesSearch && matchesRole) {
+          r.style.display = '';
+          visible++;
+        } else {
+          r.style.display = 'none';
+        }
+      });
+    }
+
+    function approveUser(rowId, name, selectId) {
+      const role = document.getElementById(selectId).value;
+      const row = document.getElementById(rowId);
+      if (row) {
+        row.setAttribute('data-status', 'ACTIVE');
+        row.setAttribute('data-role', role);
+        row.style.background = "#ecfdf5";
+        
+        row.children[2].innerHTML = '<span class="badge-tag badge-pass">ACTIVE</span>';
+        row.children[3].innerHTML = '<span style="font-size: 11px; color: var(--text-muted);">Just now</span>';
+        row.children[4].innerHTML = `<select class="filter-select" onchange="alert('Role updated to ' + this.value)" style="width: 100%;">
+          <option value="TESTER" ${role==='TESTER'?'selected':''}>TESTER</option>
+          <option value="DEVELOPER" ${role==='DEVELOPER'?'selected':''}>DEVELOPER</option>
+          <option value="MANAGER" ${role==='MANAGER'?'selected':''}>MANAGER</option>
+        </select>`;
+        row.children[5].innerHTML = '<span style="font-size: 11px; color: var(--emerald-600); font-weight:700;"><i class="fa-solid fa-user-check"></i> Active</span>';
+
+        setTimeout(() => {
+          row.style.background = "";
+          updateUserCounts();
+          alert(`Success: User [${name}] approved with role [${role}]! Credentials sent.`);
+        }, 300);
+      }
+    }
+
+    function rejectUser(rowId, name) {
+      if (!confirm(`Are you sure you want to reject registration for ${name}?`)) return;
+      const row = document.getElementById(rowId);
+      if (row) {
+        row.remove();
+        updateUserCounts();
+        alert(`Registration for ${name} has been rejected.`);
+      }
+    }
+
+    function updateUserCounts() {
+      const allCount = document.querySelectorAll('#all-users-table-body tr').length;
+      const pendingCount = document.querySelectorAll('#all-users-table-body tr[data-status="PENDING"]').length;
+      const activeCount = document.querySelectorAll('#all-users-table-body tr[data-status="ACTIVE"]').length;
+
+      document.getElementById('user-count-all').innerText = allCount;
+      document.getElementById('user-count-pending').innerText = pendingCount;
+      document.getElementById('user-count-active').innerText = activeCount;
+      document.getElementById('side-users-count').innerText = `${pendingCount} Pending`;
+      document.getElementById('pending-queue-badge').innerText = `${pendingCount} Users Awaiting Activation`;
+    }
+
+    // GOVERNANCE & FILE MODALS
+    function openProjectGovernanceModal() {
+      document.getElementById('gov-proj-name').value = activeProject;
+      document.getElementById('gov-proj-region').value = activeRegion;
+      openModal('modal-project-gov');
+    }
+
+    function saveProjectGovernance() {
+      const status = document.getElementById('gov-proj-status').value;
+      closeModal('modal-project-gov');
+      alert(`Project [${activeProject}] governance status updated to [${status}].`);
+    }
+
+    function updateFeatureStatus(featName, newStatus, badgeId) {
+      const badge = document.getElementById(badgeId);
+      if (badge) {
+        badge.innerText = newStatus;
+        badge.className = newStatus === 'COMPLETED' ? 'badge-tag badge-pass' : 'badge-tag badge-info';
+      }
+      alert(`Feature [${featName}] transitioned to status [${newStatus}].`);
+    }
+
+    function saveFeatureDetails() {
+      const name = document.getElementById('edit-feat-name').value.trim();
+      const sprint = document.getElementById('edit-feat-sprint').value.trim();
+      const status = document.getElementById('edit-feat-status').value;
+
+      if (!name) return;
+      activeFeature = name;
+      activeFeatureSprint = sprint;
+      document.getElementById('topbar-context-title').innerText = name;
+      document.getElementById('topbar-context-badge').innerText = sprint;
+      document.getElementById('topbar-context-status').innerText = status;
+
+      closeModal('modal-edit-feature');
+      alert(`Feature details updated to [${name} • ${sprint}]!`);
+    }
+
+    function openProjectAttachmentsModal() {
+      openModal('modal-project-attachments');
+    }
+
+    function uploadProjectFile() {
+      const list = document.getElementById('project-attachments-list');
+      const item = document.createElement('div');
+      item.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid var(--border-default); border-radius:var(--radius-sm); padding:8px 12px; font-size:12px;";
+      item.innerHTML = `
+        <div><i class="fa-solid fa-file-pdf" style="color:var(--rose-600);"></i> <strong>Project_Scope_Update.pdf</strong> (620 KB)</div>
+        <button class="btn btn-secondary" style="height:24px; padding:0 8px; font-size:10px;" onclick="alert('Downloading...')"><i class="fa-solid fa-download"></i></button>
+      `;
+      list.appendChild(item);
+      const count = list.children.length;
+      document.getElementById('proj-files-count').innerText = count;
+      alert('Specification file uploaded to project successfully!');
+    }
+
+    function uploadFeatureFile() {
+      const list = document.getElementById('feature-attachments-list');
+      const item = document.createElement('div');
+      item.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid var(--border-default); border-radius:var(--radius-sm); padding:8px 12px; font-size:12px;";
+      item.innerHTML = `
+        <div><i class="fa-solid fa-file-pdf" style="color:var(--rose-600);"></i> <strong>Feature_Specs_Supplemental.pdf</strong> (340 KB)</div>
+        <button class="btn btn-secondary" style="height:24px; padding:0 8px; font-size:10px;" onclick="alert('Downloading...')"><i class="fa-solid fa-download"></i></button>
+      `;
+      list.appendChild(item);
+      const count = list.children.length;
+      document.getElementById('feat-docs-count').innerText = count;
+      alert('Document uploaded to feature successfully!');
+    }
+
+    // IN-APP NOTIFICATIONS
+    function openInAppNotificationsModal() {
+      openModal('modal-in-app-notifications');
+    }
+
+    function filterNotifList(type, btn) {
+      document.querySelectorAll('.notif-filter-tab').forEach(t => t.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+
+      const items = document.querySelectorAll('#in-app-notif-list .notif-card-item');
+      items.forEach(item => {
+        const itemType = item.getAttribute('data-type');
+        const isUnread = item.getAttribute('data-read') === 'false';
+
+        if (type === 'ALL') {
+          item.style.display = 'flex';
+        } else if (type === 'UNREAD') {
+          item.style.display = isUnread ? 'flex' : 'none';
+        } else if (itemType === type) {
+          item.style.display = 'flex';
+        } else {
+          item.style.display = 'none';
+        }
+      });
+    }
+
+    function toggleNotifRead(itemId) {
+      const item = document.getElementById(itemId);
+      if (!item) return;
+      const wasUnread = item.getAttribute('data-read') === 'false';
+      item.setAttribute('data-read', wasUnread ? 'true' : 'false');
+      item.classList.toggle('unread', !wasUnread);
+      updateNotificationCounts();
+    }
+
+    function markAllNotificationsAsRead() {
+      document.querySelectorAll('#in-app-notif-list .notif-card-item').forEach(i => {
+        i.setAttribute('data-read', 'true');
+        i.classList.remove('unread');
+      });
+      updateNotificationCounts();
+    }
+
+    function updateNotificationCounts() {
+      const unread = document.querySelectorAll('#in-app-notif-list .notif-card-item[data-read="false"]').length;
+      const badge = document.getElementById('in-app-notif-count');
+      const modalBadge = document.getElementById('notif-modal-unread-count');
+      if (badge) {
+        badge.innerText = unread;
+        badge.style.display = unread > 0 ? 'flex' : 'none';
+      }
+      if (modalBadge) modalBadge.innerText = `${unread} Unread`;
+    }
+
+    // BUG CHAT
+    function openSpecificBugChat(bugId, title, tcId, assignee, sev) {
+      document.getElementById('specific-bug-chat-title').innerHTML = `<i class="fa-solid fa-comments" style="color: var(--primary-600);"></i> Discussion: ${bugId}`;
+      document.getElementById('specific-bug-chat-sub').innerText = `Linked Test Case: ${tcId} • Assignee: ${assignee} • Severity: ${sev}`;
+      openModal('modal-bug-chat');
+    }
+
+    function sendSpecificChat() {
+      const input = document.getElementById('specific-chat-input');
+      const text = input.value.trim();
+      if (!text) return;
+
+      const stream = document.getElementById('specific-chat-stream');
+      const bubble = document.createElement('div');
+      bubble.className = 'chat-bubble dev';
+      bubble.innerHTML = `<strong>Rahul (Manager):</strong> ${text}`;
+      stream.appendChild(bubble);
+      stream.scrollTop = stream.scrollHeight;
+      input.value = '';
+    }
+
+    // Initialize state
+    updateUserCounts();
+    updateNotificationCounts();
+  </script>
+</body>
+</html>

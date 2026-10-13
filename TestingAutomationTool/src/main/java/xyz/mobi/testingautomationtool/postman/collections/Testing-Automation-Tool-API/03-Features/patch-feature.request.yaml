@@ -1,0 +1,14 @@
+$kind: http-request
+name: Patch Feature
+order: 6000
+method: PATCH
+url: '{{baseUrl}}/feature/{{featureId}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "description": "Partially updated feature description"
+    }

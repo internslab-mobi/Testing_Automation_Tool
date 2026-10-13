@@ -1,0 +1,5 @@
+$kind: http-request
+name: Get Current Profile
+order: 3000
+method: GET
+url: '{{baseUrl}}/auth/profile'

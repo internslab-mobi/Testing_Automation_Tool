@@ -1,0 +1,20 @@
+$kind: http-request
+name: Upload Bug Attachment
+order: 9000
+method: POST
+url: '{{baseUrl}}/bugs/{{bugId}}/attachments'
+body:
+  type: formdata
+  content:
+    - key: file
+      type: file
+      src: ''
+      description: 'File to upload'
+    - key: attachmentType
+      type: text
+      value: 'BUG'
+      description: 'Attachment type'
+    - key: uploadedBy
+      type: text
+      value: '1'
+      description: 'User ID of uploader'

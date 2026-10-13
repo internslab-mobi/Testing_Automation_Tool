@@ -1,0 +1,25 @@
+$kind: http-request
+name: Search Bugs
+order: 4000
+method: GET
+url: '{{baseUrl}}/bugs/search?keyword=&severity=&priority=&status=&category=&page=0&size=10'
+queryParams:
+  - key: keyword
+    value: ''
+    description: 'Search keyword'
+  - key: severity
+    value: ''
+    description: 'BugSeverity: LOW, MEDIUM, HIGH, CRITICAL'
+  - key: priority
+    value: ''
+    description: 'BugPriority: LOW, MEDIUM, HIGH, CRITICAL'
+  - key: status
+    value: ''
+    description: 'BugStatus: OPEN, IN_PROGRESS, RESOLVED, CLOSED'
+  - key: category
+    value: ''
+    description: 'BugCategory: FUNCTIONAL, UI, PERFORMANCE, etc.'
+  - key: page
+    value: '0'
+  - key: size
+    value: '10'

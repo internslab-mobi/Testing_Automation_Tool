@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Testing Automation Tool — User Flow & Workflow Architecture</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-canvas: #0b1120;
+      --bg-panel: #111a2e;
+      --bg-card: rgba(18, 28, 49, 0.88);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      
+      --text-main: #f1f5f9;
+      --text-muted: #94a3b8;
+      --text-dim: #64748b;
+
+      /* Role Palette */
+      --admin-color: #ef4444;
+      --admin-bg: rgba(239, 68, 68, 0.08);
+      --admin-border: rgba(239, 68, 68, 0.35);
+
+      --manager-color: #a855f7;
+      --manager-bg: rgba(168, 85, 247, 0.08);
+      --manager-border: rgba(168, 85, 247, 0.35);
+
+      --tester-color: #10b981;
+      --tester-bg: rgba(16, 185, 129, 0.08);
+      --tester-border: rgba(16, 185, 129, 0.35);
+
+      --dev-color: #3b82f6;
+      --dev-bg: rgba(59, 130, 246, 0.08);
+      --dev-border: rgba(59, 130, 246, 0.35);
+
+      --bug-color: #06b6d4;
+      --bug-bg: rgba(6, 182, 212, 0.08);
+      --bug-border: rgba(6, 182, 212, 0.35);
+
+      --notif-color: #818cf8;
+      --notif-bg: rgba(129, 140, 248, 0.08);
+      --notif-border: rgba(129, 140, 248, 0.35);
+
+      --audit-color: #f59e0b;
+      --audit-bg: rgba(245, 158, 11, 0.08);
+      --audit-border: rgba(245, 158, 11, 0.35);
+
+      --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-canvas);
+      background-image: 
+        radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.12) 0px, transparent 50%),
+        radial-gradient(at 100% 100%, rgba(168, 85, 247, 0.1) 0px, transparent 50%),
+        radial-gradient(at 50% 50%, rgba(16, 185, 129, 0.05) 0px, transparent 50%);
+      color: var(--text-main);
+      min-height: 100vh;
+      padding: 30px 20px 60px;
+      overflow-x: auto;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 28px;
+    }
+
+    /* Header Banner */
+    .header-banner {
+      background: linear-gradient(135deg, #1e293b, #0f172a);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 16px;
+      padding: 16px 40px;
+      text-align: center;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), 0 0 20px rgba(59, 130, 246, 0.15);
+      position: relative;
+    }
+
+    .header-banner h1 {
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #ffffff, #93c5fd, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+    }
+
+    /* Start / End Node */
+    .pill-node {
+      background: linear-gradient(135deg, #38bdf8, #818cf8);
+      color: #0f172a;
+      font-weight: 800;
+      font-size: 15px;
+      padding: 8px 36px;
+      border-radius: 9999px;
+      box-shadow: 0 0 20px rgba(56, 189, 248, 0.4);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    /* Login Node */
+    .login-node {
+      background: rgba(30, 41, 59, 0.95);
+      border: 1px solid rgba(129, 140, 248, 0.4);
+      padding: 14px 32px;
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 15px rgba(99, 102, 241, 0.2);
+    }
+
+    .login-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #6366f1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 16px;
+    }
+
+    .login-text {
+      font-weight: 700;
+      font-size: 15px;
+    }
+
+    .login-sub {
+      color: var(--text-muted);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    /* Connector line */
+    .v-line {
+      width: 2px;
+      height: 22px;
+      background: linear-gradient(to bottom, #818cf8, #64748b);
+    }
+
+    /* 4 Roles Grid */
+    .roles-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 20px;
+      width: 100%;
+      align-items: stretch;
+    }
+
+    @media (max-width: 1100px) {
+      .roles-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 650px) {
+      .roles-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Role Card */
+    .role-card {
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+      position: relative;
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .role-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .role-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+      font-size: 17px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .role-icon {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
+    /* Admin Styles */
+    .card-admin {
+      background: var(--admin-bg);
+      border: 1px solid var(--admin-border);
+    }
+    .card-admin .role-header { color: var(--admin-color); }
+    .card-admin .role-icon { background: rgba(239, 68, 68, 0.2); color: var(--admin-color); }
+
+    /* Manager Styles */
+    .card-manager {
+      background: var(--manager-bg);
+      border: 1px solid var(--manager-border);
+    }
+    .card-manager .role-header { color: var(--manager-color); }
+    .card-manager .role-icon { background: rgba(168, 85, 247, 0.2); color: var(--manager-color); }
+
+    /* Tester Styles */
+    .card-tester {
+      background: var(--tester-bg);
+      border: 1px solid var(--tester-border);
+    }
+    .card-tester .role-header { color: var(--tester-color); }
+    .card-tester .role-icon { background: rgba(16, 185, 129, 0.2); color: var(--tester-color); }
+
+    /* Developer Styles */
+    .card-dev {
+      background: var(--dev-bg);
+      border: 1px solid var(--dev-border);
+    }
+    .card-dev .role-header { color: var(--dev-color); }
+    .card-dev .role-icon { background: rgba(59, 130, 246, 0.2); color: var(--dev-color); }
+
+    /* Step Blocks */
+    .step-box {
+      background: rgba(15, 23, 42, 0.75);
+      border: 1px solid var(--border-subtle);
+      border-radius: 10px;
+      padding: 10px 14px;
+      font-size: 13px;
+      line-height: 1.45;
+      color: #e2e8f0;
+      text-align: center;
+      position: relative;
+    }
+
+    .step-box.highlight {
+      border-color: rgba(255, 255, 255, 0.25);
+      background: rgba(30, 41, 59, 0.85);
+      font-weight: 600;
+    }
+
+    .step-list {
+      text-align: left;
+      font-size: 12px;
+      margin-top: 6px;
+      padding-left: 18px;
+      color: var(--text-muted);
+    }
+
+    .step-list li {
+      margin-bottom: 4px;
+    }
+
+    .step-subtext {
+      display: block;
+      font-size: 11px;
+      color: var(--text-dim);
+      margin-top: 3px;
+    }
+
+    .two-cols {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    /* Decision Diamond */
+    .diamond-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 6px 0;
+      gap: 10px;
+    }
+
+    .diamond {
+      background: linear-gradient(135deg, #0ea5e9, #6366f1);
+      color: white;
+      font-weight: 700;
+      font-size: 12px;
+      padding: 8px 18px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.3);
+      text-align: center;
+    }
+
+    .decision-branches {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      width: 100%;
+    }
+
+    .branch-yes {
+      border: 1px solid rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.12);
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .branch-no {
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      background: rgba(239, 68, 68, 0.12);
+      border-radius: 8px;
+      padding: 8px;
+      text-align: center;
+      font-size: 12px;
+    }
+
+    .branch-tag {
+      font-weight: 800;
+      font-size: 10px;
+      text-transform: uppercase;
+      padding: 2px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      margin-bottom: 4px;
+    }
+
+    .branch-yes .branch-tag { background: #10b981; color: #064e3b; }
+    .branch-no .branch-tag { background: #ef4444; color: #450a0a; }
+
+    /* Bottom Workflows Grid */
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 2fr 1.3fr 1fr;
+      gap: 20px;
+      width: 100%;
+    }
+
+    @media (max-width: 1100px) {
+      .bottom-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Bug Workflow Box */
+    .box-bugflow {
+      background: var(--bug-bg);
+      border: 1px solid var(--bug-border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .box-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 800;
+      font-size: 16px;
+    }
+
+    .flow-steps {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .flow-step {
+      background: rgba(15, 23, 42, 0.85);
+      border: 1px solid rgba(6, 182, 212, 0.35);
+      border-radius: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #e2e8f0;
+      text-align: center;
+      flex: 1;
+      min-width: 110px;
+    }
+
+    .flow-arrow {
+      color: var(--bug-color);
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .reopen-loop {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px dashed rgba(239, 68, 68, 0.4);
+      border-radius: 8px;
+      padding: 6px 12px;
+      font-size: 11px;
+      color: #fca5a5;
+      text-align: center;
+      margin-top: 4px;
+    }
+
+    /* Notification Box */
+    .box-notif {
+      background: var(--notif-bg);
+      border: 1px solid var(--notif-border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .sub-panel {
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 10px;
+      padding: 10px 12px;
+    }
+
+    .sub-panel-title {
+      font-size: 12px;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 6px;
+    }
+
+    /* Audit & Logs Box */
+    .box-audit {
+      background: var(--audit-bg);
+      border: 1px solid var(--audit-border);
+      border-radius: 16px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    /* Interactive Tooltip / Badge */
+    .badge {
+      font-family: var(--font-mono);
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.1);
+      color: #cbd5e1;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    
+    <!-- Top Banner Title -->
+    <div class="header-banner">
+      <h1>Testing Automation Tool – Workflow</h1>
+    </div>
+
+    <!-- Start Node -->
+    <div class="pill-node">Start</div>
+    <div class="v-line"></div>
+
+    <!-- Login Node -->
+    <div class="login-node">
+      <div class="login-icon">👤</div>
+      <div>
+        <div class="login-text">Login</div>
+        <div class="login-sub">(Admin / Manager / Tester / Developer)</div>
+      </div>
+    </div>
+
+    <div class="v-line"></div>
+
+    <!-- 4 Roles Column Grid -->
+    <div class="roles-grid">
+
+      <!-- 1. ADMIN (Red) -->
+      <div class="role-card card-admin">
+        <div class="role-header">
+          <div class="role-icon">👑</div>
+          <div>Admin</div>
+        </div>
+
+        <div class="step-box highlight">Full Access to all modules</div>
+        
+        <div class="step-box">
+          <strong>Create Manager</strong>
+          <span class="step-subtext">Provisions initial managerial accounts</span>
+        </div>
+
+        <div class="step-box">
+          <strong>Send username & password to Manager via Email</strong>
+          <span class="step-subtext">Automated onboarding email</span>
+        </div>
+      </div>
+
+      <!-- 2. MANAGER (Purple) -->
+      <div class="role-card card-manager">
+        <div class="role-header">
+          <div class="role-icon">💼</div>
+          <div>Manager</div>
+        </div>
+
+        <div class="step-box highlight">
+          View new user registrations
+          <span class="step-subtext">(Pending Access Queue)</span>
+        </div>
+
+        <div class="step-box">
+          <strong>Choose role & activate users</strong>
+          <span class="step-subtext">Grants Tester / Developer / Manager role</span>
+        </div>
+
+        <div class="step-box">
+          <strong>Module Access</strong>
+          <ul class="step-list">
+            <li>Manager Dashboard (Health Score)</li>
+            <li>Project Dashboard</li>
+            <li>Feature Dashboard</li>
+            <li>User Activation Control</li>
+            <li><em>(Same access as Tester)</em></li>
+          </ul>
+        </div>
+
+        <div class="two-cols">
+          <div class="step-box">Change Project Status</div>
+          <div class="step-box">Change Feature Status</div>
+        </div>
+      </div>
+
+      <!-- 3. TESTER (Green) -->
+      <div class="role-card card-tester">
+        <div class="role-header">
+          <div class="role-icon">🧪</div>
+          <div>Tester</div>
+        </div>
+
+        <div class="step-box highlight">Access to all modules</div>
+
+        <div class="step-box">
+          <strong>Create Project</strong>
+          <span class="step-subtext">Each region has a unique project</span>
+        </div>
+
+        <div class="step-box">
+          <strong>Add Features</strong>
+          <span class="step-subtext">Multiple features per project with version & sprint</span>
+        </div>
+
+        <div class="step-box">
+          <strong>Manage Test Cases</strong>
+          <div class="two-cols" style="margin-top: 6px;">
+            <div style="font-size: 11px; text-align: left;">
+              • Add manually<br>
+              • Bulk upload (Excel)<br>
+              • Map with entity
+            </div>
+            <div style="font-size: 11px; text-align: left;">
+              • Validate data<br>
+              • Save attachment
+            </div>
+          </div>
+        </div>
+
+        <div class="step-box highlight">Update Test Case Status</div>
+
+        <!-- Decision Diamond -->
+        <div class="diamond-wrapper">
+          <div class="diamond">Test Case Passed?</div>
+          <div class="decision-branches">
+            <div class="branch-yes">
+              <span class="branch-tag">Yes</span>
+              <div>No further action</div>
+            </div>
+            <div class="branch-no">
+              <span class="branch-tag">No</span>
+              <div><strong>Create Bug</strong><br><span style="font-size:10px;">Fill bug details & assign dev</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="step-box">
+          <strong>Update Bug Status & Assignee</strong>
+          <span class="step-subtext">• Chat with assigned developer</span>
+        </div>
+      </div>
+
+      <!-- 4. DEVELOPER (Blue) -->
+      <div class="role-card card-dev">
+        <div class="role-header">
+          <div class="role-icon">💻</div>
+          <div>Developer</div>
+        </div>
+
+        <div class="step-box highlight">
+          <strong>View assigned bug details</strong>
+          <ul class="step-list">
+            <li>Bug info & severity</li>
+            <li>Test case details & logs</li>
+            <li>Project / Feature details</li>
+          </ul>
+        </div>
+
+        <div class="step-box" style="margin-top: auto;">
+          <strong>Chat with Tester</strong>
+          <span class="step-subtext">(In the bug discussion thread)</span>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Bottom Architecture Grid -->
+    <div class="bottom-grid">
+
+      <!-- Bug Workflow Box -->
+      <div class="box-bugflow">
+        <div class="box-header" style="color: var(--bug-color);">
+          <span>🪲</span> Bug Workflow
+        </div>
+
+        <div class="flow-steps">
+          <div class="flow-step">Bug Created</div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-step">Assigned to Developer</div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-step">Developer Updates Status / Comments</div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-step">Fix / Reopen</div>
+          <div class="flow-arrow">➔</div>
+          <div class="flow-step" style="border-color: #10b981; color: #34d399;">Resolved (Closed)</div>
+        </div>
+
+        <div class="reopen-loop">
+          🔄 <strong>If Reopened:</strong> Increase bug count (for the same bug) ➔ Routes back to Developer Updates Status / Comments
+        </div>
+      </div>
+
+      <!-- Notifications Box -->
+      <div class="box-notif">
+        <div class="box-header" style="color: var(--notif-color);">
+          <span>🔔</span> Notifications
+        </div>
+
+        <div class="sub-panel">
+          <div class="sub-panel-title" style="color: #93c5fd;">
+            ✉️ Email Notifications
+          </div>
+          <ul class="step-list">
+            <li>Bug assigned to developer</li>
+            <li>Bug reassigned to another developer</li>
+            <li>Reassignment mail + new assignee gets details</li>
+          </ul>
+        </div>
+
+        <div class="sub-panel">
+          <div class="sub-panel-title" style="color: #c084fc;">
+            🔔 In-App Notifications
+          </div>
+          <ul class="step-list">
+            <li>Developer changes status to Fixed</li>
+            <li>Developer comments posted</li>
+            <li>Sent to bug reporter</li>
+            <li>Track in Notification History (who received)</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Audit & Logs Box -->
+      <div class="box-audit">
+        <div class="box-header" style="color: var(--audit-color);">
+          <span>📑</span> Audit & Logs
+        </div>
+
+        <div class="sub-panel">
+          <div class="sub-panel-title" style="color: #fbbf24;">
+            📝 Bug Log
+          </div>
+          <ul class="step-list">
+            <li>Every status change</li>
+            <li>Comments trail</li>
+            <li>Assignee changes</li>
+          </ul>
+        </div>
+
+        <div class="sub-panel">
+          <div class="sub-panel-title" style="color: #f87171;">
+            🔢 Bug Count
+          </div>
+          <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">
+            Increases when status is <strong>Reopened</strong>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- End Node -->
+    <div class="v-line"></div>
+    <div class="pill-node">End</div>
+
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,5 @@
+$kind: http-request
+name: Get Feature Dashboard
+order: 3000
+method: GET
+url: '{{baseUrl}}/manager/dashboard/feature/{{featureId}}'

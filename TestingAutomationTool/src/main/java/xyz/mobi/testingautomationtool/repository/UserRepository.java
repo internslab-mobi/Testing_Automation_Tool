@@ -1,0 +1,35 @@
+package xyz.mobi.testingautomationtool.repository;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
+import xyz.mobi.testingautomationtool.entity.User;
+
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+
+public interface UserRepository extends JpaRepository<User, Integer> {
+
+    Optional<User> findByEmail(String email);
+
+    boolean existsByUsername(String username);
+
+    boolean existsByEmail(String email);
+
+    List<User> findByIsActiveFalse();
+
+    List<User> findByIsActiveTrue();
+
+    Optional<User> findByUserIdAndIsActiveFalse(Integer userId);
+
+    @Query("SELECT u FROM User u LEFT JOIN FETCH u.role WHERE u.username = :username OR u.email = :email")
+    Optional<User> findByUsernameOrEmail(@Param("username") String username, @Param("email") String email);
+
+    Optional<User> findByUserIdAndIsActiveTrue(Integer userId);
+
+    List<User> findAllByIsActiveTrue();
+
+    List<User> findAllByRoleRoleAndIsActiveTrue(String user);
+}

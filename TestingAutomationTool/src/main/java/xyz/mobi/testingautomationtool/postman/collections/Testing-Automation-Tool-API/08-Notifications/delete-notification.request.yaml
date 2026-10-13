@@ -1,0 +1,5 @@
+$kind: http-request
+name: Delete Notification
+order: 3000
+method: DELETE
+url: '{{baseUrl}}/in-app-notifications/{{notificationId}}'

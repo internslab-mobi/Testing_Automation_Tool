@@ -1,0 +1,5 @@
+$kind: http-request
+name: Download Project Attachments
+order: 11000
+method: GET
+url: '{{baseUrl}}/project/projects/{{projectId}}/attachments/download'

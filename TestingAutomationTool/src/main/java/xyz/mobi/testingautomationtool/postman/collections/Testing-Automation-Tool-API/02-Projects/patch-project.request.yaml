@@ -1,0 +1,14 @@
+$kind: http-request
+name: Patch Project
+order: 6000
+method: PATCH
+url: '{{baseUrl}}/project/{{projectId}}'
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "description": "Partially updated description"
+    }
