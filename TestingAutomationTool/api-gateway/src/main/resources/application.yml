@@ -1,0 +1,98 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      # Global CORS for web browsers / SPAs
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOriginPatterns:
+              - "http://localhost:*"
+              - "http://127.0.0.1:*"
+              - "http://192.168.*:*"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - PATCH
+              - DELETE
+              - OPTIONS
+            allowedHeaders:
+              - "*"
+            exposedHeaders:
+              - "Authorization"
+              - "Set-Cookie"
+              - "X-XSRF-TOKEN"
+              - "X-CSRF-TOKEN"
+              - "XSRF-TOKEN"
+            allowCredentials: true
+            maxAge: 3600
+
+      # Reverse Proxy Routes
+      routes:
+        # Route 1: Authentication Microservice (port 8081)
+        - id: auth-service
+          uri: ${services.auth-service.url:http://localhost:8081}
+          predicates:
+            - Path=/auth/**
+
+        # Route 2: Main Business Microservice (port 8090)
+        - id: main-service-business
+          uri: ${services.main-service.url:http://localhost:8090}
+          predicates:
+            - Path=/manager/**, /project/**, /feature/**, /testcases/**, /testcase/**, /bugs/**, /comments/**, /attachments/**, /in-app-notifications/**, /admin/**
+
+        # Route 3: Main Service Static Assets & Web UI (port 8090)
+        - id: main-service-static
+          uri: ${services.main-service.url:http://localhost:8090}
+          predicates:
+            - Path=/static/**, /bug-chat.html, /manager-dashboard.html, /favicon.ico, /error
+
+        # Route 4: Swagger / OpenAPI Documentation aggregation
+        - id: auth-docs
+          uri: ${services.auth-service.url:http://localhost:8081}
+          predicates:
+            - Path=/v3/api-docs/auth/**
+          filters:
+            - RewritePath=/v3/api-docs/auth(?<segment>.*), /v3/api-docs${segment}
+
+        - id: main-docs
+          uri: ${services.main-service.url:http://localhost:8090}
+          predicates:
+            - Path=/v3/api-docs/main/**
+          filters:
+            - RewritePath=/v3/api-docs/main(?<segment>.*), /v3/api-docs${segment}
+
+        # Route 5: Main Service Swagger UI via Gateway
+        - id: swagger-ui
+          uri: ${services.main-service.url:http://localhost:8090}
+          predicates:
+            - Path=/swagger-ui/**, /swagger-ui.html, /v3/api-docs/**, /swagger-resources/**, /webjars/**
+
+# Downstream Microservices target URLs
+services:
+  auth-service:
+    url: ${AUTH_SERVICE_URL:http://localhost:8081}
+  main-service:
+    url: ${MAIN_SERVICE_URL:http://localhost:8090}
+
+# JWT Secret for Gateway Level Security Validation
+app:
+  jwt:
+    secret: ${JWT_SECRET:404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970}
+    cookie:
+      name: accessToken
+      refresh-name: refreshToken
+      secure: ${COOKIE_SECURE:false}
+      same-site: Lax
+
+logging:
+  level:
+    root: INFO
+    xyz.mobi.testingautomationtool.gateway: DEBUG
+    org.springframework.cloud.gateway: INFO

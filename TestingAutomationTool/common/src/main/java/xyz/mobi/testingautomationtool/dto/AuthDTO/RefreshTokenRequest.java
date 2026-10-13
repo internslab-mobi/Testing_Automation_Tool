@@ -14,7 +14,6 @@ import lombok.NoArgsConstructor;
 @Schema(description = "Refresh Token Request payload")
 public class RefreshTokenRequest {
 
-    @NotBlank(message = "Refresh token cannot be blank")
-    @Schema(description = "24-hour Refresh Token received upon login", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6...")
+    @Schema(description = "24-hour Refresh Token (optional if provided via HttpOnly cookie)", example = "eyJhbGciOiJIUzI1NiIsInR5cCI6...")
     private String refreshToken;
 }

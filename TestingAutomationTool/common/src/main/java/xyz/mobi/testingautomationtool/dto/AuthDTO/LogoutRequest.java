@@ -14,7 +14,6 @@ import lombok.NoArgsConstructor;
 @Schema(description = "Request payload to revoke refresh token and logout")
 public class LogoutRequest {
 
-    @NotBlank(message = "Refresh token is required")
-    @Schema(description = "Refresh Token to be revoked upon logout")
+    @Schema(description = "Refresh Token to be revoked upon logout (optional if provided via HttpOnly cookie)")
     private String refreshToken;
 }
