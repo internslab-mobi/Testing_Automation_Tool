@@ -14,7 +14,7 @@ import { ApiResponse } from "../../model/auth/commonApiResponse/apiResponse";
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly authUrl = 'http://localhost:8090/auth';
+  private readonly authUrl = 'http://localhost:8080/auth';
 
   login(request: LoginRequest): Observable<ApiResponse<AuthResponse>> {
     return this.http.post<ApiResponse<AuthResponse>>(`${this.authUrl}/login`, request);
