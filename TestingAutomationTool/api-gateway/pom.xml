@@ -18,6 +18,8 @@
     <description>API Gateway Microservice for Routing and Cookie-Based Security Relay</description>
 
     <dependencies>
+
+
         <!-- Spring Cloud Gateway -->
         <dependency>
             <groupId>org.springframework.cloud</groupId>

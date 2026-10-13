@@ -1,5 +1,0 @@
-$kind: http-request
-name: Delete Comment
-order: 5000
-method: DELETE
-url: '{{baseUrl}}/comments/{{commentId}}'

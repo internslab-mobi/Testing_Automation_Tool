@@ -3,7 +3,6 @@ package xyz.mobi.testingautomationtool.service.impl;
 import xyz.mobi.testingautomationtool.client.SummaryExportClient;
 
 import org.springframework.cache.annotation.Cacheable;
-import jakarta.persistence.criteria.Predicate;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -47,7 +46,6 @@ public class TestCaseServiceImpl implements TestCaseService {
     private final TestingExecutionMapper testingExecutionMapper;
     private final AuthService authService;
     private final TestCaseExcelService testCaseExcelService;
-    private final ExcelTemplateService excelTemplateService;
     private final AttachmentRepository attachmentRepository;
     private final SummaryExportClient summaryExportClient;
 

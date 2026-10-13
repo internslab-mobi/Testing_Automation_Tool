@@ -1,8 +1,0 @@
-$kind: http-request
-name: Hard Delete Project
-order: 4000
-method: DELETE
-url: '{{baseUrl}}/admin/projects/{{projectId}}/permanent'
-pathVariables:
-  - key: projectId
-    value: '1'

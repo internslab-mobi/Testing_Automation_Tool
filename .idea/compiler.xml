@@ -26,13 +26,20 @@
           <entry name="$MAVEN_REPOSITORY$/org/projectlombok/lombok-mapstruct-binding/0.2.0/lombok-mapstruct-binding-0.2.0.jar" />
           <entry name="$MAVEN_REPOSITORY$/org/mapstruct/mapstruct-processor/1.6.3/mapstruct-processor-1.6.3.jar" />
         </processorPath>
-        <module name="TestingAutomationTool" />
+        <module name="api-gateway" />
+        <module name="auth-service" />
+        <module name="main-service" />
+        <module name="common" />
       </profile>
     </annotationProcessing>
   </component>
   <component name="JavacSettings">
     <option name="ADDITIONAL_OPTIONS_OVERRIDE">
       <module name="TestingAutomationTool" options="-parameters" />
+      <module name="api-gateway" options="-parameters" />
+      <module name="auth-service" options="-parameters" />
+      <module name="common" options="-parameters" />
+      <module name="main-service" options="-parameters" />
       <module name="summary-export-service" options="-parameters" />
     </option>
   </component>

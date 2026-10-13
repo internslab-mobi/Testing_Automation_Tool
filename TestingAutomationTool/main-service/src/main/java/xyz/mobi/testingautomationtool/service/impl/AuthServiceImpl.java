@@ -24,48 +24,4 @@ public class AuthServiceImpl implements AuthService {
         return userDetails.getUser();
     }
 
-    @Override
-    public AuthResponse register(RegisterRequest request) {
-        throw new UnsupportedOperationException("Registration is handled by auth-service");
-    }
-
-    @Override
-    public AuthResponse login(LoginRequest request) {
-        throw new UnsupportedOperationException("Login is handled by auth-service");
-    }
-
-    @Override
-    public AuthResponse refreshToken(RefreshTokenRequest request) {
-        throw new UnsupportedOperationException("Token refresh is handled by auth-service");
-    }
-
-    @Override
-    public AuthResponse sendPasswordResetOtp(ForgotPasswordRequest request) {
-        throw new UnsupportedOperationException("Password reset is handled by auth-service");
-    }
-
-    @Override
-    public AuthResponse verifyOtp(VerifyOtpRequest request) {
-        throw new UnsupportedOperationException("OTP verification is handled by auth-service");
-    }
-
-    @Override
-    public AuthResponse resetPassword(ResetPasswordRequest request) {
-        throw new UnsupportedOperationException("Password reset is handled by auth-service");
-    }
-
-    @Override
-    public AuthResponse logout(LogoutRequest request) {
-        throw new UnsupportedOperationException("Logout is handled by auth-service");
-    }
-
-    @Override
-    public UserProfileResponse getCurrentUserProfile(String username) {
-        throw new UnsupportedOperationException("User profile is handled by auth-service");
-    }
-
-    @Override
-    public void changePassword(String username, ChangePasswordRequest request) {
-        throw new UnsupportedOperationException("Password change is handled by auth-service");
-    }
 }

@@ -1,5 +1,0 @@
-$kind: http-request
-name: Get Pending Users
-order: 7000
-method: GET
-url: '{{baseUrl}}/manager/users/pending'
