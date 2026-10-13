@@ -106,8 +106,6 @@ public class SummaryExcelExportServiceImpl implements SummaryExcelExportService 
         List<TestingExecution> executions = testCaseIds.isEmpty() ? Collections.emptyList()
                 : testingExecutionRepository.findByTestcaseIdIn(testCaseIds);
 
-        System.out.println("executions: " + executions.size());
-
         Map<Integer, TestingExecution> executionMap = executions.stream()
                 .collect(Collectors.toMap(TestingExecution::getTestcaseId, e -> e, (existing, replacement) ->
                         (replacement.getExecutionId() != null && existing.getExecutionId() != null && replacement.getExecutionId() > existing.getExecutionId())
@@ -152,7 +150,8 @@ public class SummaryExcelExportServiceImpl implements SummaryExcelExportService 
 
         List<TestingExecution> executions = testCaseIds.isEmpty() ? Collections.emptyList()
                 : testingExecutionRepository.findByTestcaseIdIn(testCaseIds);
-        System.out.println("executions: " + executions.size());
+
+
         Map<Integer, TestingExecution> executionMap = executions.stream()
                 .collect(Collectors.toMap(TestingExecution::getTestcaseId, e -> e, (existing, replacement) ->
                         (replacement.getExecutionId() != null && existing.getExecutionId() != null && replacement.getExecutionId() > existing.getExecutionId())
