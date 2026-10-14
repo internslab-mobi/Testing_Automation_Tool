@@ -1,0 +1,352 @@
+{
+  "info": {
+    "_postman_id": "f5819777-a16f-4c5c-9cb3-9118541e4577",
+    "name": "Email Notification Microservice API",
+    "description": "Collection for testing the standalone Spring Boot Email Notification Service including SMTP submission, tracking persistence, history retrieval, and API Key authentication.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:8091",
+      "type": "string"
+    },
+    {
+      "key": "apiKey",
+      "value": "test-secret-api-key",
+      "type": "string"
+    },
+    {
+      "key": "notificationId",
+      "value": "550e8400-e29b-41d4-a716-446655440000",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Actuator Health Check (Public)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/actuator/health",
+          "host": ["{{baseUrl}}"],
+          "path": ["actuator", "health"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Send Email - HTML Notification",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "if (pm.response.code === 202) {",
+              "    var jsonData = pm.response.json();",
+              "    if (jsonData.data && jsonData.data.notificationId) {",
+              "        pm.collectionVariables.set('notificationId', jsonData.data.notificationId);",
+              "    }",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-KEY",
+            "value": "{{apiKey}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"to\": [\"customer@example.com\"],\n  \"cc\": [\"billing@example.com\"],\n  \"subject\": \"Order Confirmation #ORD-10928\",\n  \"isHtml\": true,\n  \"body\": \"<h1>Order Confirmed</h1><p>Thank you for your order #ORD-10928. Your items have shipped.</p>\",\n  \"metadata\": {\n    \"correlationId\": \"corr-9988\",\n    \"sourceApp\": \"e-commerce-portal\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/notifications/email",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "notifications", "email"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Send Email - With Attachment",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-KEY",
+            "value": "{{apiKey}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"to\": [\"client@example.com\"],\n  \"subject\": \"Invoice #1024 Attached\",\n  \"isHtml\": false,\n  \"body\": \"Please find attached your invoice for services rendered.\",\n  \"attachments\": [\n    {\n      \"fileName\": \"invoice_1024.pdf\",\n      \"contentType\": \"application/pdf\",\n      \"contentBase64\": \"JVBERi0xLjQKJcTl8uXr...\n    }\n  ],\n  \"headers\": {\n    \"X-Priority\": \"1\",\n    \"X-Reference-ID\": \"INV-1024\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/notifications/email",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "notifications", "email"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Notification By ID",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-KEY",
+            "value": "{{apiKey}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/notifications/{{notificationId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "notifications", "{{notificationId}}"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Get Notification History (Paginated)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-KEY",
+            "value": "{{apiKey}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/notifications?page=0&size=10&sort=createdAt,desc",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "notifications"],
+          "query": [
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "10"
+            },
+            {
+              "key": "sort",
+              "value": "createdAt,desc"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Search Notifications - Combined Filters",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-KEY",
+            "value": "{{apiKey}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/notifications/search?recipient=customer&status=SUBMITTED&subject=Order&page=0&size=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "notifications", "search"],
+          "query": [
+            {
+              "key": "recipient",
+              "value": "customer"
+            },
+            {
+              "key": "status",
+              "value": "SUBMITTED"
+            },
+            {
+              "key": "subject",
+              "value": "Order"
+            },
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Search Notifications - Empty Filters (All Records)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-KEY",
+            "value": "{{apiKey}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/notifications/search?page=0&size=10",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "notifications", "search"],
+          "query": [
+            {
+              "key": "page",
+              "value": "0"
+            },
+            {
+              "key": "size",
+              "value": "10"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Search Notifications - Date Range",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-KEY",
+            "value": "{{apiKey}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/notifications/search?fromDate=2026-10-01T00:00:00Z&toDate=2026-10-31T23:59:59Z",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "notifications", "search"],
+          "query": [
+            {
+              "key": "fromDate",
+              "value": "2026-10-01T00:00:00Z"
+            },
+            {
+              "key": "toDate",
+              "value": "2026-10-31T23:59:59Z"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Search Error - Invalid Date Range (400)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-KEY",
+            "value": "{{apiKey}}"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/notifications/search?fromDate=2026-10-25&toDate=2026-10-10",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "notifications", "search"],
+          "query": [
+            {
+              "key": "fromDate",
+              "value": "2026-10-25"
+            },
+            {
+              "key": "toDate",
+              "value": "2026-10-10"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Error - Missing or Invalid API Key (401)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "X-API-KEY",
+            "value": "invalid-or-missing-key"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/notifications",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "notifications"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Error - Validation Failure (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-KEY",
+            "value": "{{apiKey}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"to\": [],\n  \"subject\": \"\",\n  \"body\": \"\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/notifications/email",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "notifications", "email"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Error - Blocked File Extension (415)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "X-API-KEY",
+            "value": "{{apiKey}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"to\": [\"customer@example.com\"],\n  \"subject\": \"Security Alert\",\n  \"body\": \"Please run the attached patch.\",\n  \"attachments\": [\n    {\n      \"fileName\": \"installer.exe\",\n      \"contentType\": \"application/octet-stream\",\n      \"contentBase64\": \"SGVsbG8=\"\n    }\n  ]\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/notifications/email",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "v1", "notifications", "email"]
+        }
+      },
+      "response": []
+    }
+  ]
+}

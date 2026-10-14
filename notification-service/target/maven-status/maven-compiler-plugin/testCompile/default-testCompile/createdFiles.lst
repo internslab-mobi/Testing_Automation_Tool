@@ -1,0 +1,6 @@
+xyz\mobi\notificationservice\config\OpenApiIntegrationTest.class
+xyz\mobi\notificationservice\config\OpenApiConfigTest.class
+xyz\mobi\notificationservice\repository\NotificationRepositoryTest.class
+xyz\mobi\notificationservice\EmailNotificationControllerTest.class
+xyz\mobi\notificationservice\EmailRequestValidatorTest.class
+xyz\mobi\notificationservice\OutlookEmailNotificationServiceImplTest.class
