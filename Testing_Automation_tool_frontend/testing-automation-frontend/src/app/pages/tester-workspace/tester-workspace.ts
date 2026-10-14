@@ -1,8 +1,9 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TesterService } from '../../core/services/testerService';
+import { AuthService } from '../../core/services/authService';
 
 export interface FeatureItem {
   id: string;
@@ -90,7 +91,9 @@ export interface FileAttachment {
 export class TesterWorkspace implements OnInit {
   private readonly router = inject(Router);
   private readonly testerService = inject(TesterService);
-  private readonly cd = inject
+  private readonly authService = inject(AuthService);
+  private readonly cd = inject(ChangeDetectorRef);
+
   // User Profile
   userName = 'Tester';
   userRole = 'QA Tester';
@@ -209,19 +212,34 @@ export class TesterWorkspace implements OnInit {
   }
 
   loadUserSession(): void {
-    const fullName = localStorage.getItem('fullName');
-    const username = localStorage.getItem('username');
-    const role = localStorage.getItem('role');
-    const designation = localStorage.getItem('designation');
+    const cachedUser = this.authService.currentUser();
+    if (cachedUser) {
+      this.applyUserProfile(cachedUser);
+    } else {
+      // On page reload (zero localStorage): Fetch profile using the HttpOnly accessToken cookie
+      this.authService.getProfile().subscribe({
+        next: (response) => {
+          if (response?.data) {
+            this.applyUserProfile(response.data);
+            this.cd.detectChanges();
+          }
+        },
+        error: (err) => {
+          console.warn('Could not fetch user profile session:', err?.message || err);
+        }
+      });
+    }
+  }
 
-    if (fullName) {
-      this.userName = fullName;
-    } else if (username) {
-      this.userName = username;
+  private applyUserProfile(user: { fullName?: string; username?: string; role?: string; designation?: string }): void {
+    if (user.fullName) {
+      this.userName = user.fullName;
+    } else if (user.username) {
+      this.userName = user.username;
     }
 
-    if (role) {
-      this.userRole = designation ? `${designation} (${role})` : `${role}`;
+    if (user.role) {
+      this.userRole = user.designation ? `${user.designation} (${user.role})` : `${user.role}`;
     }
 
     if (this.userName) {
@@ -323,6 +341,7 @@ export class TesterWorkspace implements OnInit {
       this.activeProject = null;
       this.activeFeature = null;
     }
+    this.cd.detectChanges();
   }
 
   fetchFeaturesForProject(project: ProjectItem): void {
@@ -356,11 +375,13 @@ export class TesterWorkspace implements OnInit {
           project.features = [];
           this.activeFeature = null;
         }
+        this.cd.detectChanges();
       },
       error: (err) => {
         console.warn('Backend /feature/project error:', err?.message || err);
         project.features = [];
         this.activeFeature = null;
+        this.cd.detectChanges();
       }
     });
   }
@@ -371,6 +392,7 @@ export class TesterWorkspace implements OnInit {
     this.testerService.getTestCases({ featureId: feature.rawId }).subscribe({
       next: (response) => {
         const pageData = response?.data;
+        console.log("size",pageData.size)
         const tcList = pageData?.content || (Array.isArray(pageData) ? pageData : null);
 
         if (Array.isArray(tcList)) {
@@ -404,11 +426,13 @@ export class TesterWorkspace implements OnInit {
           this.testCases = this.testCases.filter(t => t.featureName !== feature.name);
           feature.tcCount = 0;
         }
+        this.cd.detectChanges();
       },
       error: (err) => {
         console.warn('Backend /testcases error:', err?.message || err);
         this.testCases = this.testCases.filter(t => t.featureName !== feature.name);
         feature.tcCount = 0;
+        this.cd.detectChanges();
       }
     });
 
@@ -450,12 +474,14 @@ export class TesterWorkspace implements OnInit {
           feature.bugs = 0;
           feature.status = 'PASSED';
         }
+        this.cd.detectChanges();
       },
       error: (err) => {
         console.warn('Backend /bugs error:', err?.message || err);
         this.defects = [];
         feature.bugs = 0;
         feature.status = 'PASSED';
+        this.cd.detectChanges();
       }
     });
   }

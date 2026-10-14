@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
 import {
   AfterViewInit,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   OnDestroy,
@@ -26,7 +27,7 @@ export class VerifyOtp implements OnInit, AfterViewInit, OnDestroy {
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
-
+  private readonly cd = inject(ChangeDetectorRef)
   email = '';
   isLoading = false;
   isResending = false;
@@ -97,6 +98,7 @@ get maskedEmail(): string {
     this.timer = seconds;
     this.canResend = false;
     this.clearTimer();
+    this.cd.detectChanges();
 
     this.timerInterval = setInterval(() => {
       if (this.timer > 0) {
@@ -105,6 +107,7 @@ get maskedEmail(): string {
         this.canResend = true;
         this.clearTimer();
       }
+      this.cd.detectChanges();
     }, 1000);
   }
 
@@ -112,6 +115,7 @@ get maskedEmail(): string {
     if (this.timerInterval) {
       clearInterval(this.timerInterval);
       this.timerInterval = undefined;
+      this.cd.detectChanges();
     }
   }
 
@@ -265,6 +269,7 @@ get maskedEmail(): string {
         this.isLoading = false;
         this.successMessage = response?.message ?? 'OTP verified successfully!';
         const resetToken = response?.resetToken || response?.data?.resetToken;
+        this.cd.detectChanges();
 
         setTimeout(() => {
           this.router.navigate(['/reset-password'], {
@@ -274,8 +279,13 @@ get maskedEmail(): string {
       },
       error: (error) => {
         this.isLoading = false;
+        const errObj = error?.error;
         this.errorMessage =
-          error?.error?.message ?? 'Invalid or expired OTP. Please try again.';
+          errObj?.message ||
+          (typeof errObj === 'string' ? errObj : null) ||
+          error?.statusText ||
+          'Invalid or expired OTP. Please try again.';
+        this.cd.detectChanges();
       }
     });
   }
@@ -288,12 +298,14 @@ get maskedEmail(): string {
     if (!this.email) {
       this.errorMessage =
         'Email address not found. Please return to the Forgot Password page to request an OTP.';
+      this.cd.detectChanges();
       return;
     }
 
     this.isResending = true;
     this.errorMessage = '';
     this.successMessage = '';
+    this.cd.detectChanges();
 
     this.authService.sendPasswordResetOtp({ email: this.email }).subscribe({
       next: (response) => {
@@ -302,11 +314,17 @@ get maskedEmail(): string {
           response?.message ?? 'A new verification code has been sent to your email.';
         this.resetInputs();
         this.startTimer();
+        this.cd.detectChanges();
       },
       error: (error) => {
         this.isResending = false;
+        const errObj = error?.error;
         this.errorMessage =
-          error?.error?.message ?? 'Failed to resend OTP. Please try again.';
+          errObj?.message ||
+          (typeof errObj === 'string' ? errObj : null) ||
+          error?.statusText ||
+          'Failed to resend OTP. Please try again.';
+        this.cd.detectChanges();
       }
     });
   }
