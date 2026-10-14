@@ -32,31 +32,31 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final JwtAuthenticationEntryPoint authenticationEntryPoint;
     private final CustomAccessDeniedHandler accessDeniedHandler;
-    @Bean
-    public CorsConfigurationSource corsConfigurationSource() {
-        CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*"));
-        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-        configuration.setAllowedHeaders(Arrays.asList(
-                "Authorization",
-                "Content-Type",
-                "X-Requested-With",
-                "Accept",
-                "Origin",
-                "Access-Control-Request-Method",
-                "Access-Control-Request-Headers",
-                "Cookie",
-                "X-XSRF-TOKEN",
-                "X-CSRF-TOKEN"
-        ));
-        configuration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie", "XSRF-TOKEN"));
-        configuration.setAllowCredentials(true);
-        configuration.setMaxAge(3600L);
+//     @Bean
+//     public CorsConfigurationSource corsConfigurationSource() {
+//         CorsConfiguration configuration = new CorsConfiguration();
+//         configuration.setAllowedOriginPatterns(List.of("*"));
+//         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+//         configuration.setAllowedHeaders(Arrays.asList(
+//                 "Authorization",
+//                 "Content-Type",
+//                 "X-Requested-With",
+//                 "Accept",
+//                 "Origin",
+//                 "Access-Control-Request-Method",
+//                 "Access-Control-Request-Headers",
+//                 "Cookie",
+//                 "X-XSRF-TOKEN",
+//                 "X-CSRF-TOKEN"
+//         ));
+//         configuration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie", "XSRF-TOKEN"));
+//         configuration.setAllowCredentials(true);
+//         configuration.setMaxAge(3600L);
 
-        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-        source.registerCorsConfiguration("/**", configuration);
-        return source;
-    }
+//         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//         source.registerCorsConfiguration("/**", configuration);
+//         return source;
+//     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(
@@ -64,9 +64,9 @@ public class SecurityConfig {
 
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .cors(cors ->
-                        cors.configurationSource(corsConfigurationSource())
-                )
+                // .cors(cors ->
+                //         cors.configurationSource(corsConfigurationSource())
+                // )
                 .sessionManagement(session ->
                         session.sessionCreationPolicy(
                                 SessionCreationPolicy.STATELESS

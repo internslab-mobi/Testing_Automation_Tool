@@ -63,8 +63,14 @@
 
         
 
-        <button type="submit" class="btn-primary" [disabled]="loginForm.invalid">
-          Sign in
+        @if (loginError) {
+          <div class="login-error-alert" style="background-color: #fef2f2; border: 1px solid #fee2e2; color: #dc2626; padding: 10px 14px; border-radius: 8px; font-size: 13px; margin: 12px 0;">
+            {{ loginError }}
+          </div>
+        }
+
+        <button type="submit" class="btn-primary" [disabled]="loginForm.invalid || isLoading">
+          {{ isLoading ? 'Signing in...' : 'Sign in' }}
         </button>
 
         <div class="signup-redirect">

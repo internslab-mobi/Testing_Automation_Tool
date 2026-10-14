@@ -1,0 +1,1121 @@
+<div class="workspace-layout">
+  
+  <!-- 1. LEFT SIDEBAR: REGION ➔ PROJECT ➔ FEATURES -->
+  <aside class="sidebar">
+    
+    <!-- Sidebar Header: TAT Cockpit + In-App Notification Bell -->
+    <div class="sidebar-header">
+      <div class="brand-group">
+        <div class="brand-logo"><i class="fa-solid fa-flask"></i></div>
+        <div class="brand-meta">
+          <h1>TAT Cockpit</h1>
+          <span>Quality Assurance Hub</span>
+        </div>
+      </div>
+
+      <!-- Bell Button next to TAT Cockpit -->
+      <button class="sidebar-notif-btn" (click)="openModal('modal-in-app-notifications')" title="In-App Notifications">
+        <i class="fa-regular fa-bell"></i>
+        @if (unreadNotificationCount > 0) {
+          <span class="notif-badge-dot">{{ unreadNotificationCount }}</span>
+        }
+      </button>
+    </div>
+
+    <div class="sidebar-body">
+      
+      <!-- Region Selector -->
+      <div>
+        <div class="nav-label">
+          <span><i class="fa-solid fa-earth-americas"></i> Region</span>
+        </div>
+        <select class="sidebar-select" [ngModel]="activeRegion" (ngModelChange)="onRegionChange($event)">
+          <option value="ALL">All Regions ({{ allProjects.length }})</option>
+          @for (reg of availableRegions; track reg) {
+            <option [value]="reg">{{ reg }} ({{ getRegionProjectCount(reg) }})</option>
+          }
+        </select>
+      </div>
+
+      <!-- Project Selector & Project Search/Filter -->
+      <div>
+        <div class="nav-label">
+          <span><i class="fa-solid fa-folder"></i> Project ({{ filteredProjects.length }})</span>
+          <button class="btn-icon-link" (click)="openCreateProjectModal()">+ New</button>
+        </div>
+
+        <!-- Project Search Input -->
+        <div class="sidebar-search-box">
+          <i class="fa-solid fa-magnifying-glass sidebar-search-icon"></i>
+          <input
+            type="text"
+            class="sidebar-search-input"
+            [(ngModel)]="projectSearchQuery"
+            placeholder="Search projects..."
+          />
+        </div>
+
+        <!-- Project Select Dropdown -->
+        <select class="sidebar-select" [value]="activeProject?.id" (change)="onProjectDropdownChange($event)">
+          @for (proj of filteredProjects; track proj.id) {
+            <option [value]="proj.id">{{ proj.name }} ({{ proj.region }})</option>
+          } @empty {
+            <option value="" disabled selected>No projects in {{ activeRegion === 'ALL' ? 'workspace' : activeRegion }}</option>
+          }
+        </select>
+
+        <div class="proj-strip">
+          <button class="strip-btn" (click)="openEditProjectModal()" [disabled]="!activeProject">
+            <i class="fa-solid fa-pen-to-square"></i> Edit
+          </button>
+          <button class="strip-btn" (click)="openModal('modal-project-attachments')" [disabled]="!activeProject">
+            <i class="fa-solid fa-paperclip"></i> Files ({{ projectAttachments.length }})
+          </button>
+        </div>
+      </div>
+
+      <!-- Features Section with Search & Category Filter Pills -->
+      <div style="margin-top: 4px;">
+        <div class="nav-label">
+          <span><i class="fa-solid fa-layer-group"></i> Features ({{ filteredFeatures.length }})</span>
+          <button class="btn-icon-link" (click)="openCreateFeatureModal()">+ Add</button>
+        </div>
+
+        <!-- Feature Search Input -->
+        <div class="sidebar-search-box">
+          <i class="fa-solid fa-magnifying-glass sidebar-search-icon"></i>
+          <input
+            type="text"
+            class="sidebar-search-input"
+            [(ngModel)]="featureSearchQuery"
+            placeholder="Search features, sprints..."
+          />
+        </div>
+
+        <!-- Feature Quick Filter Pills -->
+        <div class="feature-pill-filters">
+          <button
+            class="pill-filter-btn"
+            [class.active]="featureFilterCategory === 'ALL'"
+            (click)="setFeatureCategoryFilter('ALL')"
+          >
+            All
+          </button>
+          <button
+            class="pill-filter-btn"
+            [class.active]="featureFilterCategory === 'BUGS'"
+            (click)="setFeatureCategoryFilter('BUGS')"
+          >
+            🔴 Has Bugs
+          </button>
+          <button
+            class="pill-filter-btn"
+            [class.active]="featureFilterCategory === 'PASSED'"
+            (click)="setFeatureCategoryFilter('PASSED')"
+          >
+            🟢 Passed
+          </button>
+        </div>
+
+        <!-- Dynamic Feature Nav List -->
+        <div class="feature-nav-list">
+          @for (feat of filteredFeatures; track feat.id) {
+            <div
+              class="feature-nav-item"
+              [class.active]="activeFeature?.id === feat.id"
+              (click)="selectFeature(feat)"
+            >
+              <div style="overflow: hidden;">
+                <div class="f-name" [title]="feat.name">{{ feat.name }}</div>
+                <div class="f-sprint">{{ feat.sprint }}</div>
+              </div>
+              @if (feat.bugs > 0) {
+                <span class="badge-tag badge-fail" style="font-size: 10px;">{{ feat.bugs }} Bug</span>
+              } @else {
+                <span class="badge-tag badge-pass" style="font-size: 10px;">Passed</span>
+              }
+            </div>
+          } @empty {
+            <div style="padding: 14px 8px; font-size: 11px; color: var(--text-muted); text-align: center;">
+              <i class="fa-solid fa-magnifying-glass"></i> No features match filter
+            </div>
+          }
+        </div>
+      </div>
+
+    </div>
+
+    <!-- User Profile Footer -->
+    <div class="sidebar-footer">
+      <div class="avatar-sm">{{ userInitials }}</div>
+      <div style="flex: 1; overflow: hidden;">
+        <div class="user-fullname-text" [title]="userName">{{ userName }}</div>
+        <div class="user-role-text">{{ userRole }}</div>
+      </div>
+      <button class="logout-icon-btn" (click)="logout()" title="Logout session">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+      </button>
+    </div>
+  </aside>
+
+  <!-- 2. MAIN WORKSPACE CONTAINER -->
+  <main class="main-workspace">
+    
+    <!-- TOPBAR: FEATURE NAME + SPRINT + ACTIONS -->
+    <header class="topbar">
+      <!-- Left: Feature Title & Meta Badges -->
+      <div class="topbar-left">
+        <h2 class="feature-title-text">{{ activeFeature?.name || (activeProject ? 'Select a Feature' : 'Select or Create a Project') }}</h2>
+        @if (activeFeature) {
+          <div class="meta-badges-group">
+            <span class="chip-sprint">{{ activeFeature.sprint }}</span>
+            <span class="chip-status">{{ activeFeature.status }}</span>
+          </div>
+        }
+      </div>
+
+      <!-- Right: Toolbar (Edit Details & Docs) -->
+      <div class="topbar-toolbar">
+        <button class="btn btn-secondary" (click)="openEditFeatureModal()" [disabled]="!activeFeature">
+          <i class="fa-solid fa-pen-to-square"></i> Edit Details
+        </button>
+        <button class="btn btn-secondary" (click)="openModal('modal-feature-attachments')" [disabled]="!activeFeature">
+          <i class="fa-solid fa-paperclip"></i> Docs ({{ featureAttachments.length }})
+        </button>
+      </div>
+    </header>
+
+    <!-- CONTENT BODY -->
+    <div class="content-body">
+      
+      <!-- Sub-Tabs: Test Cases vs Defects -->
+      <div class="subtabs-bar">
+        <button
+          class="subtab-btn"
+          [class.active]="activeTab === 'tc'"
+          (click)="switchTab('tc')"
+        >
+          <i class="fa-solid fa-list-check"></i> Test Cases Suite
+          <span class="tab-badge">{{ currentFeatureTestCases.length }}</span>
+        </button>
+
+        <button
+          class="subtab-btn"
+          [class.active]="activeTab === 'bugs'"
+          (click)="switchTab('bugs')"
+        >
+          <i class="fa-solid fa-bug"></i> Defects / Bugs
+          <span class="tab-badge alert">{{ currentFeatureDefects.length }}</span>
+        </button>
+      </div>
+
+      <!-- SUB-VIEW 1: TEST CASES TABLE WITH ACTIONS & FILTERS -->
+      @if (activeTab === 'tc') {
+        <div class="panel-card">
+          <!-- Panel Header -->
+          <div class="panel-card-header">
+            <div>
+              <h3>Test Suite Executions</h3>
+              <p>Execute manual validations. Test failures trigger auto-mapped defect creation.</p>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn btn-secondary" style="height: 32px; font-size: 11px;" (click)="downloadExcelTemplate()" [disabled]="!activeFeature">
+                <i class="fa-solid fa-file-excel" style="color: var(--emerald-600);"></i> Template (.xlsx)
+              </button>
+              <button class="btn btn-secondary" style="height: 32px; font-size: 11px;" (click)="openModal('modal-excel')" [disabled]="!activeFeature">
+                <i class="fa-solid fa-cloud-arrow-up" style="color: var(--indigo-600);"></i> Bulk Excel Upload
+              </button>
+              <button class="btn btn-primary" style="height: 32px; font-size: 11px;" (click)="openModal('modal-testcase')" [disabled]="!activeFeature">
+                <i class="fa-solid fa-plus"></i> Add Test Case
+              </button>
+            </div>
+          </div>
+
+          <!-- Filter Bar for Test Cases -->
+          <div class="filter-toolbar">
+            <div class="filter-left-group">
+              <div class="filter-search-wrapper">
+                <i class="fa-solid fa-magnifying-glass filter-search-icon"></i>
+                <input
+                  type="text"
+                  class="filter-input-search"
+                  [(ngModel)]="tcSearchQuery"
+                  placeholder="Search test cases by ID, title..."
+                />
+              </div>
+
+              <select class="filter-select" [(ngModel)]="tcTypeFilter">
+                <option value="ALL">All Types</option>
+                <option value="FUNCTIONAL">Functional</option>
+                <option value="SECURITY">Security</option>
+                <option value="REGRESSION">Regression</option>
+              </select>
+
+              <select class="filter-select" [(ngModel)]="tcStatusFilter">
+                <option value="ALL">All Statuses</option>
+                <option value="FAILED">Failed</option>
+                <option value="PASSED">Passed</option>
+              </select>
+            </div>
+
+            <div class="filter-stats-text">
+              Showing {{ filteredTestCases.length }} of {{ currentFeatureTestCases.length }} test cases in feature
+            </div>
+          </div>
+
+          <!-- Test Cases Table Container -->
+          <div class="table-scroll-wrapper">
+            <table class="app-table">
+              <thead>
+                <tr>
+                  <th style="width: 38%;">Test Case ID & Title</th>
+                  <th style="width: 16%;">Type & Priority</th>
+                  <th style="width: 32%;">Validations (UI & DB)</th>
+                  <th style="width: 14%;">Status & Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (tc of paginatedTestCases; track tc.id) {
+                  <tr>
+                    <td>
+                      <span class="tc-id">{{ tc.id }}</span>
+                      <div class="tc-name">{{ tc.title }}</div>
+                      <div class="tc-pre"><strong>Precondition:</strong> {{ tc.precondition }}</div>
+                    </td>
+                    <td>
+                      <span class="badge-tag badge-info">{{ tc.type }}</span>
+                      <div
+                        style="font-size: 11px; font-weight: 700; margin-top: 4px;"
+                        [style.color]="tc.priority === 'CRITICAL' ? 'var(--rose-600)' : 'var(--amber-600)'"
+                      >
+                        {{ tc.priority === 'CRITICAL' ? 'P1 - CRITICAL' : 'P2 - HIGH' }}
+                      </div>
+                    </td>
+                    <td>
+                      <div class="val-chip"><strong>UI:</strong> {{ tc.uiValidation }}</div>
+                      <div class="val-chip"><strong>DB:</strong> {{ tc.dbValidation }}</div>
+                    </td>
+                    <td>
+                      @if (tc.status === 'FAILED') {
+                        <span class="badge-tag badge-fail">FAILED</span>
+                        <div style="margin-top: 8px;">
+                          <button
+                            class="btn btn-danger-outline"
+                            style="height: 28px; padding: 0 10px; font-size: 11px;"
+                            (click)="triggerCreateBugFromTest(tc)"
+                          >
+                            <i class="fa-solid fa-bug"></i> Create Bug
+                          </button>
+                        </div>
+                      } @else {
+                        <span class="badge-tag badge-pass">PASSED</span>
+                        <div style="margin-top: 8px; font-size: 11px; color: var(--emerald-600); font-weight: 700;">
+                          <i class="fa-solid fa-circle-check"></i> Verified
+                        </div>
+                      }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="4" style="text-align: center; padding: 32px; color: var(--text-muted);">
+                      <i class="fa-solid fa-vial-circle-check" style="font-size: 24px; margin-bottom: 8px; display: block;"></i>
+                      {{ activeFeature ? 'No test cases in this feature yet. Click "+ Add Test Case" or "Bulk Excel Upload".' : 'No feature selected. Please select a feature from the left sidebar.' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar for Test Cases -->
+          <div class="pagination-toolbar">
+            <div class="pagination-info">
+              Showing <strong>{{ filteredTestCases.length === 0 ? 0 : (tcCurrentPage - 1) * tcPageSize + 1 }}</strong> - 
+              <strong>{{ filteredTestCases.length < tcCurrentPage * tcPageSize ? filteredTestCases.length : tcCurrentPage * tcPageSize }}</strong>
+              of <strong>{{ filteredTestCases.length }}</strong> test cases
+            </div>
+
+            <div class="pagination-controls">
+              <div class="page-size-selector">
+                <span>Rows per page:</span>
+                <select class="pagination-select" [value]="tcPageSize" (change)="onTcPageSizeChange($any($event.target).value)">
+                  <option [value]="5">5</option>
+                  <option [value]="10">10</option>
+                  <option [value]="25">25</option>
+                  <option [value]="50">50</option>
+                </select>
+              </div>
+
+              <div class="page-nav-group">
+                <button
+                  class="page-nav-btn"
+                  [disabled]="tcCurrentPage <= 1"
+                  (click)="prevTcPage()"
+                  title="Previous Page"
+                >
+                  <i class="fa-solid fa-chevron-left"></i> Prev
+                </button>
+
+                <div class="page-indicator">
+                  <span class="page-current">{{ tcCurrentPage }}</span>
+                  <span class="page-separator">/</span>
+                  <span class="page-total">{{ tcTotalPages }}</span>
+                </div>
+
+                <button
+                  class="page-nav-btn"
+                  [disabled]="tcCurrentPage >= tcTotalPages"
+                  (click)="nextTcPage()"
+                  title="Next Page"
+                >
+                  Next <i class="fa-solid fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- SUB-VIEW 2: DEFECTS TABLE (STRICTLY AUTO-MAPPED ONLY) -->
+      @if (activeTab === 'bugs') {
+        <div class="panel-card">
+          <!-- Header (Strictly NO +Report Bug button) -->
+          <div class="panel-card-header">
+            <div>
+              <h3>Mapped Feature Defects</h3>
+              <p>Defects generated strictly from test case failures. Open individual chat discussions per bug.</p>
+            </div>
+            <div style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
+              <i class="fa-solid fa-circle-info" style="color: var(--indigo-600);"></i> Mapped to Active Feature
+            </div>
+          </div>
+
+          <!-- Filter Bar for Feature Defects -->
+          <div class="filter-toolbar">
+            <div class="filter-left-group">
+              <div class="filter-search-wrapper">
+                <i class="fa-solid fa-magnifying-glass filter-search-icon"></i>
+                <input
+                  type="text"
+                  class="filter-input-search"
+                  [(ngModel)]="bugSearchQuery"
+                  placeholder="Search defects by ID, title..."
+                />
+              </div>
+
+              <select class="filter-select" [(ngModel)]="bugSevFilter">
+                <option value="ALL">All Severities</option>
+                <option value="CRITICAL">Critical</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+              </select>
+
+              <select class="filter-select" [(ngModel)]="bugStatusFilter">
+                <option value="ALL">All Statuses</option>
+                <option value="OPEN">Open</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="RESOLVED">Resolved</option>
+                <option value="FIXED">Fixed</option>
+                <option value="CLOSED">Closed</option>
+              </select>
+            </div>
+
+            <div class="filter-stats-text">
+              Showing {{ filteredDefects.length }} defects
+            </div>
+          </div>
+
+          <!-- Defects Table Container -->
+          <div class="table-scroll-wrapper">
+            <table class="app-table">
+              <thead>
+                <tr>
+                  <th>Bug Format ID</th>
+                  <th>Defect Title</th>
+                  <th>Origin Test Case</th>
+                  <th>Severity</th>
+                  <th>Assignee</th>
+                  <th>Status</th>
+                  <th>Actions & Chat</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (bug of paginatedDefects; track bug.id) {
+                  <tr>
+                    <td>
+                      <strong style="color: var(--rose-600); font-family: var(--font-mono);">{{ bug.id }}</strong>
+                    </td>
+                    <td>
+                      <strong style="color: var(--text-main);">{{ bug.title }}</strong>
+                      <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+                        {{ bug.precondition }}
+                      </div>
+                    </td>
+                    <td>
+                      <span class="badge-tag badge-info">{{ bug.originTestCaseId }}</span>
+                    </td>
+                    <td>
+                      <span class="badge-tag badge-fail">{{ bug.severity }}</span>
+                    </td>
+                    <td>{{ bug.assignee }}</td>
+                    <td>
+                      <span
+                        class="badge-tag"
+                        [ngClass]="{
+                          'badge-info': bug.status === 'OPEN' || bug.status === 'IN_PROGRESS',
+                          'badge-pass': bug.status === 'FIXED' || bug.status === 'CLOSED',
+                          'badge-amber': bug.status === 'RESOLVED'
+                        }"
+                      >
+                        {{ bug.status }}
+                      </span>
+                    </td>
+                    <td>
+                      <div style="display: flex; gap: 6px;">
+                        <button
+                          class="btn btn-secondary"
+                          style="height: 28px; padding: 0 8px; font-size: 11px;"
+                          (click)="advanceBugState(bug)"
+                        >
+                          Advance ➔
+                        </button>
+                        <button
+                          class="btn btn-secondary"
+                          style="height: 28px; padding: 0 10px; font-size: 11px; color: var(--indigo-600); font-weight: 700;"
+                          (click)="openSpecificBugChat(bug)"
+                        >
+                          <i class="fa-solid fa-comments"></i> 💬 Chat
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="7" style="text-align: center; padding: 32px; color: var(--text-muted);">
+                      <i class="fa-solid fa-shield-halved" style="font-size: 24px; margin-bottom: 8px; display: block; color: var(--emerald-600);"></i>
+                      {{ activeFeature ? 'No defects mapped to this feature. Failed test executions will appear here.' : 'No feature selected.' }}
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar for Defects -->
+          <div class="pagination-toolbar">
+            <div class="pagination-info">
+              Showing <strong>{{ filteredDefects.length === 0 ? 0 : (bugCurrentPage - 1) * bugPageSize + 1 }}</strong> - 
+              <strong>{{ filteredDefects.length < bugCurrentPage * bugPageSize ? filteredDefects.length : bugCurrentPage * bugPageSize }}</strong>
+              of <strong>{{ filteredDefects.length }}</strong> defects
+            </div>
+
+            <div class="pagination-controls">
+              <div class="page-size-selector">
+                <span>Rows per page:</span>
+                <select class="pagination-select" [value]="bugPageSize" (change)="onBugPageSizeChange($any($event.target).value)">
+                  <option [value]="5">5</option>
+                  <option [value]="10">10</option>
+                  <option [value]="25">25</option>
+                  <option [value]="50">50</option>
+                </select>
+              </div>
+
+              <div class="page-nav-group">
+                <button
+                  class="page-nav-btn"
+                  [disabled]="bugCurrentPage <= 1"
+                  (click)="prevBugPage()"
+                  title="Previous Page"
+                >
+                  <i class="fa-solid fa-chevron-left"></i> Prev
+                </button>
+
+                <div class="page-indicator">
+                  <span class="page-current">{{ bugCurrentPage }}</span>
+                  <span class="page-separator">/</span>
+                  <span class="page-total">{{ bugTotalPages }}</span>
+                </div>
+
+                <button
+                  class="page-nav-btn"
+                  [disabled]="bugCurrentPage >= bugTotalPages"
+                  (click)="nextBugPage()"
+                  title="Next Page"
+                >
+                  Next <i class="fa-solid fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+    </div>
+  </main>
+
+  <!-- ==================== MODALS ==================== -->
+
+  <!-- MODAL: IN-APP NOTIFICATION CENTER -->
+  @if (activeModal === 'modal-in-app-notifications') {
+    <div class="modal-overlay show" (click)="closeModal('modal-in-app-notifications')">
+      <div class="notif-modal-box" (click)="$event.stopPropagation()">
+        <div class="notif-modal-header">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <h3 style="font-size: 15px; font-weight: 700; color: var(--text-main);">
+              <i class="fa-solid fa-bell" style="color: var(--emerald-600);"></i> In-App Notifications
+            </h3>
+            <span class="badge-tag badge-fail" style="font-size: 10px;">{{ unreadNotificationCount }} Unread</span>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <button class="btn-icon-link" (click)="markAllNotificationsAsRead()" title="Mark all as read">
+              <i class="fa-solid fa-check-double"></i> Mark all read
+            </button>
+            <button class="modal-close" (click)="closeModal('modal-in-app-notifications')">&times;</button>
+          </div>
+        </div>
+
+        <!-- Category Filter Tabs -->
+        <div class="notif-modal-tabs">
+          <button
+            class="notif-filter-tab"
+            [class.active]="notifFilterCategory === 'ALL'"
+            (click)="setNotifFilterCategory('ALL')"
+          >
+            All
+          </button>
+          <button
+            class="notif-filter-tab"
+            [class.active]="notifFilterCategory === 'UNREAD'"
+            (click)="setNotifFilterCategory('UNREAD')"
+          >
+            Unread
+          </button>
+          <button
+            class="notif-filter-tab"
+            [class.active]="notifFilterCategory === 'FIXED'"
+            (click)="setNotifFilterCategory('FIXED')"
+          >
+            Bug Fixes
+          </button>
+          <button
+            class="notif-filter-tab"
+            [class.active]="notifFilterCategory === 'COMMENT'"
+            (click)="setNotifFilterCategory('COMMENT')"
+          >
+            Comments
+          </button>
+        </div>
+
+        <!-- Notification Items Body -->
+        <div class="notif-list-body">
+          @for (notif of filteredNotifications; track notif.id) {
+            <div class="notif-card-item" [class.unread]="!notif.read">
+              <div
+                class="notif-icon-bubble"
+                [ngClass]="{
+                  'notif-icon-fixed': notif.type === 'FIXED',
+                  'notif-icon-chat': notif.type === 'COMMENT',
+                  'notif-icon-tc': notif.type === 'TC'
+                }"
+              >
+                @if (notif.type === 'FIXED') {
+                  <i class="fa-solid fa-circle-check"></i>
+                } @else if (notif.type === 'COMMENT') {
+                  <i class="fa-solid fa-comment-dots"></i>
+                } @else {
+                  <i class="fa-solid fa-vial"></i>
+                }
+              </div>
+
+              <div class="notif-card-content">
+                <div class="notif-card-title">
+                  <span>
+                    {{ notif.title }} —
+                    @if (notif.highlightId) {
+                      <strong style="color: var(--emerald-600); font-family: var(--font-mono);">{{ notif.highlightId }}</strong>
+                    }
+                  </span>
+                  @if (!notif.read) {
+                    <span style="font-size: 10px; color: var(--rose-600); font-weight: 700;">● NEW</span>
+                  }
+                </div>
+                <div class="notif-card-msg">{{ notif.message }}</div>
+                <div class="notif-card-meta">
+                  <span><i class="fa-solid fa-layer-group"></i> {{ notif.featureName }}</span>
+                  <span>•</span>
+                  <span><i class="fa-regular fa-clock"></i> {{ notif.timeAgo }}</span>
+                </div>
+                <div class="notif-card-actions">
+                  @if (notif.type === 'FIXED' || notif.type === 'COMMENT') {
+                    <button
+                      class="btn btn-secondary"
+                      style="height: 24px; padding: 0 8px; font-size: 11px; color: var(--indigo-600); font-weight: 700;"
+                      (click)="viewBugFromNotification(notif)"
+                    >
+                      <i class="fa-solid fa-comments"></i> View Bug & Chat
+                    </button>
+                  } @else {
+                    <button
+                      class="btn btn-secondary"
+                      style="height: 24px; padding: 0 8px; font-size: 11px; color: var(--emerald-600); font-weight: 700;"
+                      (click)="openFeatureFromNotification(notif.featureName)"
+                    >
+                      <i class="fa-solid fa-arrow-right"></i> Open Feature
+                    </button>
+                  }
+                  <button
+                    class="btn btn-secondary"
+                    style="height: 24px; padding: 0 8px; font-size: 10px;"
+                    (click)="toggleNotifRead(notif)"
+                  >
+                    <i class="fa-solid fa-check"></i> {{ notif.read ? 'Mark unread' : 'Mark read' }}
+                  </button>
+                  <button
+                    class="btn btn-secondary"
+                    style="height: 24px; padding: 0 6px; font-size: 10px;"
+                    (click)="dismissNotification(notif)"
+                  >
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          } @empty {
+            <div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 12px;">
+              <i class="fa-regular fa-bell-slash" style="font-size: 20px; margin-bottom: 6px; display: block;"></i>
+              No notifications in this category.
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: EDIT PROJECT DETAILS -->
+  @if (activeModal === 'modal-project-edit') {
+    <div class="modal-overlay show" (click)="closeModal('modal-project-edit')">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-pen-to-square" style="color: var(--indigo-600);"></i> Edit Project Details</h3>
+          <button class="modal-close" (click)="closeModal('modal-project-edit')">&times;</button>
+        </div>
+        <div class="form-group">
+          <label>Project Name</label>
+          <input type="text" class="form-control" [(ngModel)]="editProjectForm.name">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label>Region</label>
+            <input type="text" class="form-control" [(ngModel)]="editProjectForm.region" style="font-weight: 600;">
+          </div>
+          <div class="form-group">
+            <label>Project Status</label>
+            <select class="form-control" [(ngModel)]="editProjectForm.status">
+              <option value="ACTIVE">ACTIVE</option>
+              <option value="INACTIVE">INACTIVE</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary" style="height: 40px;" (click)="saveProjectDetails()">Save Project Changes</button>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: PROJECT FILE ATTACHMENTS -->
+  @if (activeModal === 'modal-project-attachments') {
+    <div class="modal-overlay show" (click)="closeModal('modal-project-attachments')">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-paperclip" style="color: var(--emerald-600);"></i> Project File Attachments</h3>
+          <button class="modal-close" (click)="closeModal('modal-project-attachments')">&times;</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto;">
+          @for (file of projectAttachments; track file.name) {
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12px;">
+              <div>
+                <i class="fa-solid" [ngClass]="file.icon" [style.color]="file.color"></i>
+                <strong style="margin-left: 6px;">{{ file.name }}</strong> ({{ file.size }})
+              </div>
+              <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 10px;" (click)="downloadMockFile(file.name)">
+                <i class="fa-solid fa-download"></i>
+              </button>
+            </div>
+          } @empty {
+            <div style="text-align: center; padding: 14px; color: var(--text-muted); font-size: 12px;">
+              No attachments uploaded for this project.
+            </div>
+          }
+        </div>
+
+        <div
+          style="border: 2px dashed #cbd5e1; background: #f8fafc; border-radius: var(--radius-md); padding: 18px; text-align: center; cursor: pointer;"
+          (click)="uploadProjectFile()"
+        >
+          <i class="fa-solid fa-cloud-arrow-up" style="color: var(--emerald-600); font-size: 20px; margin-bottom: 4px;"></i>
+          <div style="font-size: 12px; font-weight: 600;">Click to upload project files (.pdf, .docx, .zip)</div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: EDIT FEATURE DETAILS -->
+  @if (activeModal === 'modal-feature-edit') {
+    <div class="modal-overlay show" (click)="closeModal('modal-feature-edit')">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-pen-to-square" style="color: var(--indigo-600);"></i> Edit Feature Details</h3>
+          <button class="modal-close" (click)="closeModal('modal-feature-edit')">&times;</button>
+        </div>
+        <div class="form-group">
+          <label>Feature Name</label>
+          <input type="text" class="form-control" [(ngModel)]="editFeatureForm.name">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label>Sprint</label>
+            <input type="number" class="form-control" [(ngModel)]="editFeatureForm.sprint">
+          </div>
+          <div class="form-group">
+            <label>Feature Version</label>
+            <input type="text" class="form-control" [(ngModel)]="editFeatureForm.version">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select class="form-control" [(ngModel)]="editFeatureForm.status">
+            <option value="ACTIVE">ACTIVE</option>
+            <option value="IN_PROGRESS">IN_PROGRESS</option>
+            <option value="COMPLETED">COMPLETED</option>
+            <option value="ON_HOLD">ON_HOLD</option>
+          </select>
+        </div>
+        <button class="btn btn-primary" style="height: 40px;" (click)="saveFeatureDetails()">Save Feature Changes</button>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: FEATURE FILE ATTACHMENTS -->
+  @if (activeModal === 'modal-feature-attachments') {
+    <div class="modal-overlay show" (click)="closeModal('modal-feature-attachments')">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-paperclip" style="color: var(--indigo-600);"></i> Feature Documentation</h3>
+          <button class="modal-close" (click)="closeModal('modal-feature-attachments')">&times;</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto;">
+          @for (file of featureAttachments; track file.name) {
+            <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12px;">
+              <div>
+                <i class="fa-solid" [ngClass]="file.icon" [style.color]="file.color"></i>
+                <strong style="margin-left: 6px;">{{ file.name }}</strong> ({{ file.size }})
+              </div>
+              <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 10px;" (click)="downloadMockFile(file.name)">
+                <i class="fa-solid fa-download"></i>
+              </button>
+            </div>
+          } @empty {
+            <div style="text-align: center; padding: 14px; color: var(--text-muted); font-size: 12px;">
+              No documentation uploaded for this feature.
+            </div>
+          }
+        </div>
+
+        <div
+          style="border: 2px dashed #cbd5e1; background: #f8fafc; border-radius: var(--radius-md); padding: 18px; text-align: center; cursor: pointer;"
+          (click)="uploadFeatureFile()"
+        >
+          <i class="fa-solid fa-cloud-arrow-up" style="color: var(--indigo-600); font-size: 20px; margin-bottom: 4px;"></i>
+          <div style="font-size: 12px; font-weight: 600;">Click to upload feature docs or wireframes</div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: DEDICATED BUG CHAT -->
+  @if (activeModal === 'modal-bug-chat') {
+    <div class="modal-overlay show" (click)="closeModal('modal-bug-chat')">
+      <div class="chat-modal-box" (click)="$event.stopPropagation()">
+        <div class="chat-modal-header">
+          <div>
+            <h3 style="font-size: 14px; font-weight: 700; color: var(--text-main);">
+              <i class="fa-solid fa-comments" style="color: var(--emerald-600);"></i> Discussion: {{ activeChatBug?.id }}
+            </h3>
+            <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">
+              Linked Test Case: {{ activeChatBug?.originTestCaseId }} • Assignee: {{ activeChatBug?.assignee }} • Severity: {{ activeChatBug?.severity }}
+            </p>
+          </div>
+          <button class="modal-close" (click)="closeModal('modal-bug-chat')">&times;</button>
+        </div>
+
+        <div class="chat-modal-body">
+          @for (msg of chatMessages; track $index) {
+            <div class="chat-bubble" [ngClass]="msg.sender">
+              <strong>{{ msg.senderName }}:</strong>
+              <div>{{ msg.text }}</div>
+              <span style="font-size: 9px; opacity: 0.6; display: block; margin-top: 4px;">{{ msg.timestamp }}</span>
+            </div>
+          } @empty {
+            <div style="text-align: center; padding: 24px; color: var(--text-muted); font-size: 12px;">
+              <i class="fa-regular fa-comments" style="font-size: 24px; margin-bottom: 6px; display: block;"></i>
+              No messages yet. Send a note to the developer below.
+            </div>
+          }
+        </div>
+
+        <div class="chat-modal-footer">
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="newChatMessage"
+            placeholder="Type reply to developer..."
+            style="flex: 1;"
+            (keyup.enter)="sendChatMessage()"
+          />
+          <button class="btn btn-secondary" style="padding: 0 10px;" title="Attach Screenshot" (click)="showToast('Screenshot attached', 'info')">
+            <i class="fa-solid fa-paperclip"></i>
+          </button>
+          <button class="btn btn-primary" style="padding: 0 16px;" (click)="sendChatMessage()">
+            <i class="fa-solid fa-paper-plane"></i> Send
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: CREATE PROJECT -->
+  @if (activeModal === 'modal-project-create') {
+    <div class="modal-overlay show" (click)="closeModal('modal-project-create')">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-folder-plus" style="color: var(--emerald-600);"></i> Create Project in Region</h3>
+          <button class="modal-close" (click)="closeModal('modal-project-create')">&times;</button>
+        </div>
+        <div class="form-group">
+          <label>Project Region</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="createProjectForm.region"
+            placeholder="e.g. India, US-East, Singapore, Europe"
+            style="font-weight: 600;"
+          />
+        </div>
+        <div class="form-group">
+          <label>Project Name</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="createProjectForm.name"
+            placeholder="e.g. Wealth Management Platform"
+          />
+        </div>
+        <button class="btn btn-primary" style="height: 40px;" (click)="createProjectAction()">Save Project</button>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: ADD FEATURE -->
+  @if (activeModal === 'modal-feature-create') {
+    <div class="modal-overlay show" (click)="closeModal('modal-feature-create')">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-layer-group" style="color: var(--indigo-600);"></i> Add Feature to Project</h3>
+          <button class="modal-close" (click)="closeModal('modal-feature-create')">&times;</button>
+        </div>
+        <div class="form-group">
+          <label>Feature Name</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="createFeatureForm.name"
+            placeholder="e.g. Card Freeze Toggle"
+          />
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label>Sprint Number</label>
+            <input type="number" class="form-control" [(ngModel)]="createFeatureForm.sprint">
+          </div>
+          <div class="form-group">
+            <label>Version</label>
+            <input type="text" class="form-control" [(ngModel)]="createFeatureForm.version">
+          </div>
+        </div>
+        <button class="btn btn-primary" style="height: 40px;" (click)="createFeatureAction()">Save Feature</button>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: ADD TEST CASE -->
+  @if (activeModal === 'modal-testcase') {
+    <div class="modal-overlay show" (click)="closeModal('modal-testcase')">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-vial" style="color: var(--emerald-600);"></i> Add Test Case to Feature</h3>
+          <button class="modal-close" (click)="closeModal('modal-testcase')">&times;</button>
+        </div>
+        <div class="form-group">
+          <label>Feature Context</label>
+          <input
+            type="text"
+            class="form-control"
+            [value]="activeFeature?.name"
+            readonly
+            style="font-weight: 700; color: var(--indigo-600);"
+          />
+        </div>
+        <div class="form-group">
+          <label>Test Case Title</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="newTc.title"
+            placeholder="e.g. Verify lockout after 5 incorrect password attempts"
+          />
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label>Type</label>
+            <select class="form-control" [(ngModel)]="newTc.type">
+              <option value="FUNCTIONAL">FUNCTIONAL</option>
+              <option value="SECURITY">SECURITY</option>
+              <option value="REGRESSION">REGRESSION</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Priority</label>
+            <select class="form-control" [(ngModel)]="newTc.priority">
+              <option value="CRITICAL">P1 - CRITICAL</option>
+              <option value="HIGH">P2 - HIGH</option>
+              <option value="MEDIUM">P3 - MEDIUM</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>UI Validation</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="newTc.uiValidation"
+            placeholder="Expected visual behavior or toast"
+          />
+        </div>
+        <div class="form-group">
+          <label>DB Validation</label>
+          <input
+            type="text"
+            class="form-control"
+            [(ngModel)]="newTc.dbValidation"
+            placeholder="Expected table row check"
+          />
+        </div>
+        <button class="btn btn-primary" style="height: 40px;" (click)="saveNewTestCase()">Save Test Case</button>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: EXCEL IMPORT -->
+  @if (activeModal === 'modal-excel') {
+    <div class="modal-overlay show" (click)="closeModal('modal-excel')">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3><i class="fa-solid fa-file-excel" style="color: var(--emerald-600);"></i> Bulk Import into Feature</h3>
+          <button class="modal-close" (click)="closeModal('modal-excel')">&times;</button>
+        </div>
+        <div
+          style="border: 2px dashed #cbd5e1; background: #f8fafc; border-radius: var(--radius-md); padding: 26px; text-align: center; cursor: pointer;"
+          (click)="handleExcelImport()"
+        >
+          <i class="fa-solid fa-cloud-arrow-up" style="font-size: 28px; color: var(--emerald-600); margin-bottom: 6px;"></i>
+          <div style="font-weight: 700; font-size: 13px;">Drop your .xlsx test suite spreadsheet here</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">
+            Target: <strong style="color: var(--emerald-600);">{{ activeFeature?.name }}</strong> (Must contain <code>TCFormat</code> sheet)
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL: CREATE BUG (ONLY ACCESSED VIA FAILED TEST CASES) -->
+  @if (activeModal === 'modal-bug') {
+    <div class="modal-overlay show" (click)="closeModal('modal-bug')">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <h3 style="color: var(--rose-600);"><i class="fa-solid fa-bug"></i> Log Defect (Auto-Mapped from TC)</h3>
+          <button class="modal-close" (click)="closeModal('modal-bug')">&times;</button>
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label>Mapped Feature</label>
+            <input type="text" class="form-control" [value]="bugForm.featureName" readonly style="font-weight: 700; color: var(--indigo-600);">
+          </div>
+          <div class="form-group">
+            <label>Origin Test Case</label>
+            <input type="text" class="form-control" [value]="bugForm.originTestCaseId" readonly style="font-weight: 700; color: var(--indigo-600);">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Format ID (Auto-Generated)</label>
+          <input
+            type="text"
+            class="form-control"
+            [value]="bugForm.id"
+            readonly
+            style="color: var(--rose-600); font-weight: 800; font-family: var(--font-mono);"
+          />
+        </div>
+        <div class="form-group">
+          <label>Defect Title</label>
+          <input type="text" class="form-control" [(ngModel)]="bugForm.title">
+        </div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+          <div class="form-group">
+            <label>Severity</label>
+            <select class="form-control" [(ngModel)]="bugForm.severity">
+              <option value="CRITICAL">CRITICAL</option>
+              <option value="HIGH">HIGH</option>
+              <option value="MEDIUM">MEDIUM</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Assign Developer</label>
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="bugForm.assignee"
+              placeholder="e.g. Lead Developer"
+            />
+          </div>
+        </div>
+        <button
+          class="btn btn-primary"
+          style="height: 40px; background: var(--rose-600);"
+          (click)="saveDefect()"
+        >
+          <i class="fa-solid fa-paper-plane"></i> Log Defect & Notify Developer
+        </button>
+      </div>
+    </div>
+  }
+
+  <!-- TOAST NOTIFICATION CONTAINER -->
+  @if (toastMessage) {
+    <div
+      class="app-toast-banner"
+      [ngClass]="toastType"
+    >
+      <i
+        class="fa-solid"
+        [ngClass]="{
+          'fa-circle-check': toastType === 'success',
+          'fa-circle-info': toastType === 'info',
+          'fa-triangle-exclamation': toastType === 'error'
+        }"
+      ></i>
+      <span>{{ toastMessage }}</span>
+    </div>
+  }
+
+</div>

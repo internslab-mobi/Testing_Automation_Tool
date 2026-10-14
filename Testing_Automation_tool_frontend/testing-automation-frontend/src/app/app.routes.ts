@@ -4,6 +4,7 @@ import { Register } from './pages/register/register';
 import { ForgotPassword } from './pages/forgot-password/forgot-password';
 import { VerifyOtp } from './pages/verify-otp/verify-otp';
 import { ResetPassword } from './pages/reset-password/reset-password';
+import { TesterWorkspace } from './pages/tester-workspace/tester-workspace';
 
 export const routes: Routes = [
   {
@@ -35,5 +36,14 @@ export const routes: Routes = [
   {
     path: 'reset-password',
     component: ResetPassword
+  },
+  {
+    path: 'tester-workspace',
+    component: TesterWorkspace
+  },
+  {
+    path: 'tester',
+    redirectTo: 'tester-workspace',
+    pathMatch: 'full'
   }
 ];

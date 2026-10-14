@@ -8,11 +8,12 @@ import {
 
 import { AuthService } from '../../core/services/authService';
 import { LoginRequest } from '../../model/auth/loginRequest';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
+import { ChangeDetectorRef } from '@angular/core';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule,RouterLink],
+  imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './login.html',
   styleUrl: './login.css'
 })
@@ -20,6 +21,9 @@ export class Login {
 
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
+  private readonly router = inject(Router);
+  private readonly cd = inject(ChangeDetectorRef);
+
 
   readonly loginForm: FormGroup = this.fb.group({
     usernameOrEmail: ['', [Validators.required]],
@@ -48,10 +52,26 @@ export class Login {
       next: (response) => {
         this.isLoading = false;
         console.log('Login successful:', response);
+        const authData = response?.data;
+        if (authData) {
+          if (authData.token) localStorage.setItem('token', authData.token);
+          if (authData.refreshToken) localStorage.setItem('refreshToken', authData.refreshToken);
+          if (authData.role) localStorage.setItem('role', authData.role);
+          if (authData.username) localStorage.setItem('username', authData.username);
+          if (authData.fullName) localStorage.setItem('fullName', authData.fullName);
+          if (authData.designation) localStorage.setItem('designation', authData.designation);
+        }
 
+        const role = (authData?.role || '').toUpperCase();
+        if (role.includes('TESTER')) {
+          this.router.navigate(['/tester-workspace']);
+        } else {
+          this.router.navigate(['/tester-workspace']);
+        }
       },
 
       error: (error) => {
+        this.cd.markForCheck()
         this.isLoading = false;
         console.error('Login failed:', error);
         this.loginError =

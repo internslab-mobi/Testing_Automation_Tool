@@ -14,7 +14,7 @@ import { ApiResponse } from "../../model/auth/commonApiResponse/apiResponse";
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly authUrl = 'http://localhost:8080/auth';
+  private readonly authUrl = 'http://localhost:8082/auth';
 
   login(request: LoginRequest): Observable<ApiResponse<AuthResponse>> {
     return this.http.post<ApiResponse<AuthResponse>>(`${this.authUrl}/login`, request);
@@ -36,3 +36,4 @@ export class AuthService {
     return this.http.post<ApiResponse<AuthResponse>>(`${this.authUrl}/reset-password`, request);
   }
 }
+  
