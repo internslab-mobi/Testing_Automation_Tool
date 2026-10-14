@@ -17,6 +17,8 @@ public interface FeatureService {
 
     FeatureResponse getFeatureById(Integer featureId);
 
+    List<FeatureResponse> getAllFeatures();
+
     List<FeatureResponse> getFeaturesByProjectId(Integer projectId);
 
     Page<FeatureResponse> searchFeatures(

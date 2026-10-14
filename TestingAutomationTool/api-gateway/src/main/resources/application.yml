@@ -41,15 +41,15 @@ spring:
           routes:
             # Route 1: Authentication Microservice (port 8081)
             - id: auth-service
-              uri: ${services.auth-service.url:http://localhost:8081}
+              uri: ${services.auth-service.url}
               predicates:
                 - Path=/auth/**
 
             # Route 2: Main Business Microservice (port 8090)
             - id: main-service-business
-              uri: ${services.main-service.url:http://localhost:8090}
+              uri: ${services.main-service.url}
               predicates:
-                - Path=/manager/**, /project/**, /feature/**, /testcases/**, /testcase/**, /bugs/**, /comments/**, /attachments/**, /in-app-notifications/**, /admin/**
+                - Path=/manager/**, /project/**, /projects/**, /feature/**, /features/**, /testcases/**, /testcase/**, /bugs/**, /bug/**, /comments/**, /attachments/**, /in-app-notifications/**, /notifications/**, /admin/**
 
             # Route 3: Notification Microservice (port 8091)
             - id: notification-service

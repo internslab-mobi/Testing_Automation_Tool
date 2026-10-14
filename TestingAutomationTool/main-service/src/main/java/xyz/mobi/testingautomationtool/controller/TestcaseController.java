@@ -25,7 +25,7 @@ import xyz.mobi.testingautomationtool.enums.TestType;
 import xyz.mobi.testingautomationtool.service.TestCaseService;
 
 @RestController
-@RequestMapping("/testcases")
+@RequestMapping({"/testcases", "/testcase"})
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
@@ -47,8 +47,8 @@ public class TestcaseController {
         return ResponseEntity.ok(ApiResponse.success("Excel uploaded successfully", testCaseService.createTestCaseByUpload(file, featureId)));
     }
 
-    @GetMapping("/{featureId}/template")
-    public ResponseEntity<byte[]> downloadTemplate(@PathVariable Integer featureId) {
+    @GetMapping("/{featureId:\\d+}/template")
+    public ResponseEntity<byte[]> downloadTemplate(@PathVariable("featureId") Integer featureId) {
         byte[] excelBytes = testCaseService.downloadTemplate(featureId);
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"testcase_template_" + featureId + ".xlsx\"")
@@ -71,9 +71,9 @@ public class TestcaseController {
         );
     }
 
-    @GetMapping("/{id}")
+    @GetMapping("/{id:\\d+}")
     public ResponseEntity<ApiResponse<TestCaseResponse>> getTestCaseById(
-            @PathVariable Integer id,
+            @PathVariable("id") Integer id,
             @RequestParam(defaultValue = "false") boolean includeInactive) {
         return ResponseEntity.ok(ApiResponse.success("Test case retrieved successfully", testCaseService.getById(id, includeInactive)));
     }

@@ -36,31 +36,31 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-//    @Bean
-//    public CorsConfigurationSource corsConfigurationSource() {
-//        CorsConfiguration configuration = new CorsConfiguration();
-//        configuration.setAllowedOriginPatterns(List.of("*"));
-//        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-//        configuration.setAllowedHeaders(Arrays.asList(
-//                "Authorization",
-//                "Content-Type",
-//                "X-Requested-With",
-//                "Accept",
-//                "Origin",
-//                "Access-Control-Request-Method",
-//                "Access-Control-Request-Headers",
-//                "Cookie",
-//                "X-XSRF-TOKEN",
-//                "X-CSRF-TOKEN"
-//        ));
-//        configuration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie", "XSRF-TOKEN"));
-//        configuration.setAllowCredentials(true);
-//        configuration.setMaxAge(3600L);
-//
-//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        source.registerCorsConfiguration("/**", configuration);
-//        return source;
-//    }
+//     @Bean
+//     public CorsConfigurationSource corsConfigurationSource() {
+//         CorsConfiguration configuration = new CorsConfiguration();
+//         configuration.setAllowedOriginPatterns(List.of("*"));
+//         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
+//         configuration.setAllowedHeaders(Arrays.asList(
+//                 "Authorization",
+//                 "Content-Type",
+//                 "X-Requested-With",
+//                 "Accept",
+//                 "Origin",
+//                 "Access-Control-Request-Method",
+//                 "Access-Control-Request-Headers",
+//                 "Cookie",
+//                 "X-XSRF-TOKEN",
+//                 "X-CSRF-TOKEN"
+//         ));
+//         configuration.setExposedHeaders(Arrays.asList("Authorization", "Set-Cookie", "XSRF-TOKEN"));
+//         configuration.setAllowCredentials(true);
+//         configuration.setMaxAge(3600L);
+
+//         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+//         source.registerCorsConfiguration("/**", configuration);
+//         return source;
+//     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
@@ -97,17 +97,18 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
 
                         // Manager & Admin endpoints: Dashboard & Project status toggle
+                        .requestMatchers("/manager/users/active").hasAnyRole("MANAGER", "ADMIN", "TESTER")
                         .requestMatchers("/manager/**").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/project/*/status", "/project/active", "/project/inactive").hasAnyRole("MANAGER", "ADMIN")
 
                         // Authenticated application endpoints (MANAGER, TESTER, ADMIN)
-                        .requestMatchers("/bugs/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
-                        .requestMatchers("/feature/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
-                        .requestMatchers("/project/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
+                        .requestMatchers("/bugs/**", "/bug/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
+                        .requestMatchers("/feature/**", "/features/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
+                        .requestMatchers("/project/**", "/projects/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
                         .requestMatchers("/testcases/**", "/testcase/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
                         .requestMatchers("/comments/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
                         .requestMatchers("/attachments/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
-                        .requestMatchers("/notifications/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
+                        .requestMatchers("/notifications/**", "/in-app-notifications/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
 
                         // Any other request
                         .anyRequest().authenticated()

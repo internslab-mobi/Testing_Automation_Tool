@@ -22,15 +22,17 @@ import xyz.mobi.testingautomationtool.enums.BugCategory;
 import xyz.mobi.testingautomationtool.enums.BugPriority;
 import xyz.mobi.testingautomationtool.enums.BugSeverity;
 import xyz.mobi.testingautomationtool.enums.BugStatus;
+import xyz.mobi.testingautomationtool.dto.DashboardDTO.MangerGetResponseOfUserEntity;
 import xyz.mobi.testingautomationtool.service.AttachmentService;
 import xyz.mobi.testingautomationtool.service.BugService;
+import xyz.mobi.testingautomationtool.service.DashboardService;
 
 import java.io.IOException;
 import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping("/bugs")
+@RequestMapping({"/bugs", "/bug"})
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
@@ -38,6 +40,12 @@ public class BugController {
 
     private final BugService bugService;
     private final AttachmentService attachmentService;
+    private final DashboardService dashboardService;
+
+    @GetMapping("/developers")
+    public ResponseEntity<ApiResponse<List<MangerGetResponseOfUserEntity>>> getDevelopers() {
+        return ResponseEntity.ok(ApiResponse.success("Developers retrieved successfully", dashboardService.getAllUsers()));
+    }
 
     @PostMapping
     public ResponseEntity<ApiResponse<BugResponse>> createBug(
@@ -48,15 +56,19 @@ public class BugController {
                 .body(ApiResponse.success("Bug created successfully", response));
     }
 
-    @GetMapping("/{bugId}")
-    public ResponseEntity<ApiResponse<BugResponse>> getById(@PathVariable Integer bugId) {
+    @GetMapping("/{bugId:\\d+}")
+    public ResponseEntity<ApiResponse<BugResponse>> getById(@PathVariable("bugId") Integer bugId) {
         return ResponseEntity.ok(ApiResponse.success("Bug retrieved successfully", bugService.getById(bugId)));
     }
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<BugResponse>>> getAllBugs(
+            @RequestParam(required = false) Integer featureId,
             @RequestParam(defaultValue = "0") Integer page,
-            @RequestParam(defaultValue = "10") Integer size) {
+            @RequestParam(defaultValue = "20") Integer size) {
+        if (featureId != null) {
+            return ResponseEntity.ok(ApiResponse.success("Bugs retrieved successfully", bugService.getBugsByFeature(featureId, page, size)));
+        }
         return ResponseEntity.ok(ApiResponse.success("Bugs retrieved successfully", bugService.getAllBugs(page, size)));
     }
 
@@ -154,9 +166,9 @@ public class BugController {
         );
     }
 
-    @GetMapping("/{bugId}/attachments")
+    @GetMapping("/{bugId:\\d+}/attachments")
     public ResponseEntity<List<AttachmentResponse>> getBugAttachments(
-            @PathVariable Integer bugId) {
+            @PathVariable("bugId") Integer bugId) {
 
         return ResponseEntity.ok(
                 attachmentService.getAttachments(
@@ -166,9 +178,9 @@ public class BugController {
         );
     }
 
-    @GetMapping("/{bugId}/attachments/download")
+    @GetMapping("/{bugId:\\d+}/attachments/download")
     public ResponseEntity<ByteArrayResource> downloadBugAttachments(
-            @PathVariable Integer bugId) {
+            @PathVariable("bugId") Integer bugId) {
 
         AttachmentDownloadResponse response =
                 attachmentService.downloadAttachments(

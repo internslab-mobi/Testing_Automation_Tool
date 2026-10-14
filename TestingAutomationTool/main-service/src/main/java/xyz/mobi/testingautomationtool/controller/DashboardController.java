@@ -56,6 +56,7 @@ public class DashboardController {
 
     @Operation(summary = "Get active users", description = "Returns list of all active users.")
     @GetMapping("/users/active")
+    @PreAuthorize("hasAnyRole('MANAGER', 'ADMIN', 'TESTER')")
     public ResponseEntity<ApiResponse<List<MangerGetResponseOfUserEntity>>> getActiveUsers() {
         return ResponseEntity.ok(ApiResponse.success("Active users retrieved successfully", dashboardService.getAllUsers()));
     }

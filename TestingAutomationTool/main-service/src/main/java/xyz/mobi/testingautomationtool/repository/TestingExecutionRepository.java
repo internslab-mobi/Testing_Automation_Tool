@@ -1,5 +1,6 @@
 package xyz.mobi.testingautomationtool.repository;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -22,6 +23,7 @@ public interface TestingExecutionRepository
     int deleteByProjectId(@Param("projectId") Integer projectId);
 
 
+    @EntityGraph(attributePaths = {"testCase"})
     List<TestingExecution> findByTestCaseTestcaseIdIn(List<Integer> testcaseIds);
 
     Optional<TestingExecution> findByTestCase_TestcaseId(Integer testCaseId);

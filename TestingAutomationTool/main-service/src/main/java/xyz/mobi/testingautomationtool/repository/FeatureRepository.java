@@ -1,6 +1,7 @@
 package xyz.mobi.testingautomationtool.repository;
 
 import jakarta.persistence.LockModeType;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Lock;
@@ -17,14 +18,17 @@ import java.util.Optional;
 @Repository
 public interface FeatureRepository extends JpaRepository<Feature, Integer>, JpaSpecificationExecutor<Feature> {
 
+    @EntityGraph(attributePaths = {"project", "createdBy", "updatedBy"})
     Optional<Feature> findByFeatureIdAndIsDeletedFalse(Integer featureId);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT f FROM Feature f WHERE f.featureId = :featureId AND f.isDeleted = false")
     Optional<Feature> findByFeatureIdForUpdate(@Param("featureId") Integer featureId);
 
+    @EntityGraph(attributePaths = {"project", "createdBy", "updatedBy"})
     List<Feature> findByProject_ProjectIdAndIsDeletedFalse(Integer projectId);
 
+    @EntityGraph(attributePaths = {"project", "createdBy", "updatedBy"})
     List<Feature> findByIsDeletedFalse();
 
     boolean existsByProject_ProjectIdAndFeatureName(Integer projectId, String featureName);
@@ -49,6 +53,7 @@ public interface FeatureRepository extends JpaRepository<Feature, Integer>, JpaS
             ProjectStatus status
     );
 
+    @EntityGraph(attributePaths = {"project", "createdBy", "updatedBy"})
     List<Feature> findByProject_ProjectIdAndIsDeletedFalseAndIsActiveTrueAndProject_Status(Integer projectId, ProjectStatus projectStatus);
 
 }

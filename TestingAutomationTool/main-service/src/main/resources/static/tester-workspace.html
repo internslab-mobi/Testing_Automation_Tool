@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Testing Automation Tool — QA Cockpit</title>
+  <title>Testing Automation Tool — QA Tester Cockpit</title>
   
   <!-- Modern Typography (Inter + JetBrains Mono) -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -31,7 +31,7 @@
       --text-muted: #64748b;
       --text-light: #94a3b8;
 
-      /* Brand QA Accents */
+      /* QA Status & Brand Accents */
       --emerald-600: #059669;
       --emerald-500: #10b981;
       --emerald-50: #ecfdf5;
@@ -39,6 +39,7 @@
       --emerald-border: #a7f3d0;
 
       --indigo-600: #4f46e5;
+      --indigo-500: #6366f1;
       --indigo-50: #eef2ff;
       --indigo-100: #e0e7ff;
       --indigo-border: #c7d2fe;
@@ -53,6 +54,10 @@
       --amber-100: #fef3c7;
       --amber-border: #fde68a;
 
+      --sky-600: #0284c7;
+      --sky-50: #f0f9ff;
+      --sky-border: #bae6fd;
+
       --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
       --font-mono: 'JetBrains Mono', monospace;
 
@@ -66,6 +71,7 @@
       --shadow-sm: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
       --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
       --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.03);
+      --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -80,9 +86,9 @@
       -webkit-font-smoothing: antialiased;
     }
 
-    /* 1. SIDEBAR (Region ➔ Projects ➔ Features with Search & Filters) */
+    /* 1. SIDEBAR (Region from DB ➔ Projects ➔ Features with Search & Filters) */
     .sidebar {
-      width: 290px;
+      width: 295px;
       background: var(--bg-surface);
       border-right: 1px solid var(--border-default);
       display: flex;
@@ -99,6 +105,7 @@
       align-items: center;
       justify-content: space-between;
       gap: 10px;
+      background: #ffffff;
     }
 
     .brand-group {
@@ -110,22 +117,22 @@
     }
 
     .brand-logo {
-      width: 32px;
-      height: 32px;
+      width: 34px;
+      height: 34px;
       border-radius: var(--radius-md);
       background: linear-gradient(135deg, #10b981, #059669);
       color: white;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 15px;
-      box-shadow: 0 2px 6px rgba(16, 185, 129, 0.3);
+      font-size: 16px;
+      box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
       flex-shrink: 0;
     }
 
     .brand-meta h1 {
       font-size: 14px;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: -0.2px;
       color: var(--text-main);
       white-space: nowrap;
@@ -138,10 +145,15 @@
       white-space: nowrap;
     }
 
-    /* In-App Notification Bell next to TAT Cockpit */
+    .sidebar-actions-group {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
     .sidebar-notif-btn {
-      width: 34px;
-      height: 34px;
+      width: 32px;
+      height: 32px;
       border-radius: var(--radius-md);
       background: #ffffff;
       border: 1px solid var(--border-default);
@@ -150,7 +162,7 @@
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      font-size: 15px;
+      font-size: 14px;
       transition: all 0.15s ease;
       position: relative;
       box-shadow: var(--shadow-xs);
@@ -185,7 +197,47 @@
 
     @keyframes pulseNotif {
       0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
+      50% { transform: scale(1.12); }
+    }
+
+    /* Live API Connection Indicator Pill */
+    .api-status-banner {
+      padding: 6px 12px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border-default);
+      font-size: 11px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .api-status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 600;
+      font-size: 11px;
+    }
+
+    .status-dot-pulse {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--emerald-500);
+      box-shadow: 0 0 0 rgba(16, 185, 129, 0.4);
+      animation: pulseDot 2s infinite;
+    }
+
+    .status-dot-pulse.offline {
+      background: var(--slate-400, #94a3b8);
+      animation: none;
+    }
+
+    @keyframes pulseDot {
+      0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+      70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
     }
 
     .sidebar-body {
@@ -272,6 +324,7 @@
       gap: 4px;
       margin-bottom: 6px;
       overflow-x: auto;
+      padding-bottom: 2px;
     }
 
     .pill-filter-btn {
@@ -317,7 +370,7 @@
       background: var(--emerald-50);
     }
 
-    /* Project Action Strip */
+    /* Project Action Strip (Excel Export Removed) */
     .proj-strip {
       display: flex;
       gap: 6px;
@@ -329,7 +382,7 @@
       background: #ffffff;
       border: 1px solid var(--border-default);
       border-radius: var(--radius-sm);
-      padding: 5px 8px;
+      padding: 6px 8px;
       font-size: 11px;
       font-weight: 600;
       color: var(--text-secondary);
@@ -339,6 +392,7 @@
       justify-content: center;
       gap: 5px;
       transition: all 0.15s;
+      white-space: nowrap;
     }
 
     .strip-btn:hover {
@@ -351,8 +405,8 @@
     .feature-nav-list {
       display: flex;
       flex-direction: column;
-      gap: 3px;
-      max-height: 280px;
+      gap: 4px;
+      max-height: 270px;
       overflow-y: auto;
     }
 
@@ -399,25 +453,36 @@
     }
 
     .sidebar-footer {
-      padding: 12px 16px;
+      padding: 12px 14px;
       border-top: 1px solid var(--border-default);
       display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: space-between;
+      gap: 8px;
       background: #ffffff;
+    }
+
+    .user-profile-info {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      overflow: hidden;
+      flex: 1;
     }
 
     .avatar-sm {
       width: 32px;
       height: 32px;
       border-radius: 50%;
-      background: #e2e8f0;
-      color: var(--text-secondary);
+      background: linear-gradient(135deg, #10b981, #059669);
+      color: #ffffff;
       font-weight: 700;
       font-size: 12px;
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
     /* 2. MAIN WORKSPACE CONTAINER */
@@ -429,7 +494,7 @@
       background: var(--bg-body);
     }
 
-    /* TOPBAR: CLEAN SINGLE-ROW ALIGNMENT */
+    /* TOPBAR: CLEAN SINGLE-ROW ALIGNMENT (QA Report Excel Removed) */
     .topbar {
       height: 64px;
       background: var(--bg-surface);
@@ -443,7 +508,6 @@
       box-shadow: var(--shadow-xs);
     }
 
-    /* Left: Feature Title & Badges */
     .topbar-left {
       display: flex;
       align-items: center;
@@ -453,7 +517,7 @@
 
     .feature-title-text {
       font-size: 18px;
-      font-weight: 700;
+      font-weight: 800;
       letter-spacing: -0.3px;
       color: var(--text-main);
       white-space: nowrap;
@@ -502,7 +566,6 @@
       background: var(--emerald-600);
     }
 
-    /* Right: Toolbar Buttons (Edit Details & Docs) */
     .topbar-toolbar {
       display: flex;
       align-items: center;
@@ -512,8 +575,8 @@
 
     /* Unified Button Styles */
     .btn {
-      height: 36px;
-      padding: 0 14px;
+      height: 34px;
+      padding: 0 13px;
       border-radius: var(--radius-md);
       font-size: 12px;
       font-weight: 600;
@@ -545,11 +608,21 @@
     .btn-primary {
       background: var(--emerald-600);
       color: #ffffff;
-      box-shadow: 0 1px 2px 0 rgba(5, 150, 105, 0.2);
+      box-shadow: 0 1px 3px 0 rgba(5, 150, 105, 0.25);
     }
 
     .btn-primary:hover {
       background: #047857;
+    }
+
+    .btn-indigo {
+      background: var(--indigo-600);
+      color: #ffffff;
+      box-shadow: 0 1px 3px 0 rgba(79, 70, 229, 0.25);
+    }
+
+    .btn-indigo:hover {
+      background: #4338ca;
     }
 
     .btn-danger-outline {
@@ -563,10 +636,16 @@
       color: white;
     }
 
+    .btn-sm {
+      height: 28px;
+      padding: 0 9px;
+      font-size: 11px;
+    }
+
     /* 3. MAIN CONTENT BODY */
     .content-body {
       flex: 1;
-      padding: 24px 28px;
+      padding: 20px 28px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -629,6 +708,50 @@
       color: var(--rose-600);
     }
 
+    /* KPI Summary Row */
+    .kpi-summary-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .kpi-card {
+      background: #ffffff;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-xs);
+    }
+
+    .kpi-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .kpi-value {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--text-main);
+      font-family: var(--font-mono);
+      margin-top: 2px;
+    }
+
+    .kpi-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+    }
+
     /* Clean Card Container */
     .panel-card {
       background: var(--bg-surface);
@@ -641,13 +764,14 @@
     }
 
     .panel-card-header {
-      padding: 16px 20px;
+      padding: 14px 20px;
       background: #ffffff;
       border-bottom: 1px solid var(--border-default);
       display: flex;
       justify-content: space-between;
       align-items: center;
       gap: 16px;
+      flex-wrap: wrap;
     }
 
     .panel-card-header h3 {
@@ -680,6 +804,7 @@
       gap: 10px;
       flex: 1;
       min-width: 320px;
+      flex-wrap: wrap;
     }
 
     .filter-input-search {
@@ -690,14 +815,14 @@
       font-size: 12px;
       color: var(--text-main);
       outline: none;
-      width: 240px;
+      width: 220px;
       transition: all 0.15s;
     }
 
     .filter-input-search:focus {
       border-color: var(--emerald-600);
       box-shadow: 0 0 0 2px var(--emerald-100);
-      width: 280px;
+      width: 260px;
     }
 
     .filter-search-wrapper {
@@ -756,7 +881,7 @@
     }
 
     .app-table td {
-      padding: 16px 18px;
+      padding: 14px 18px;
       border-bottom: 1px solid var(--border-default);
       vertical-align: top;
       color: var(--text-secondary);
@@ -782,6 +907,7 @@
       font-weight: 700;
       color: var(--text-main);
       margin-top: 2px;
+      line-height: 1.35;
     }
 
     .tc-pre {
@@ -795,9 +921,9 @@
       background: #f8fafc;
       border: 1px solid var(--border-default);
       border-radius: var(--radius-sm);
-      padding: 7px 10px;
+      padding: 6px 9px;
       font-size: 11px;
-      margin-top: 6px;
+      margin-top: 4px;
       line-height: 1.4;
       color: var(--text-secondary);
     }
@@ -813,24 +939,114 @@
     .badge-tag {
       display: inline-flex;
       align-items: center;
+      gap: 4px;
       padding: 3px 8px;
       border-radius: var(--radius-xs);
       font-size: 11px;
       font-weight: 700;
       font-family: var(--font-mono);
       text-transform: uppercase;
+      letter-spacing: 0.3px;
     }
 
     .badge-pass { background: var(--emerald-50); color: var(--emerald-600); border: 1px solid var(--emerald-border); }
     .badge-fail { background: var(--rose-50); color: var(--rose-600); border: 1px solid var(--rose-border); }
     .badge-info { background: var(--indigo-50); color: var(--indigo-600); border: 1px solid var(--indigo-border); }
     .badge-amber { background: var(--amber-50); color: var(--amber-600); border: 1px solid var(--amber-border); }
+    .badge-gray { background: #f1f5f9; color: var(--text-muted); border: 1px solid var(--border-default); }
+
+    /* Execution Control Strip in Test Cases Table */
+    .execution-pill-group {
+      display: inline-flex;
+      background: #f1f5f9;
+      padding: 2px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-default);
+      margin-bottom: 6px;
+    }
+
+    .exec-btn {
+      padding: 3px 8px;
+      border: none;
+      background: transparent;
+      font-size: 10px;
+      font-weight: 700;
+      border-radius: var(--radius-xs);
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.15s;
+    }
+
+    .exec-btn.pass.active {
+      background: var(--emerald-600);
+      color: #ffffff;
+      box-shadow: 0 1px 2px rgba(5, 150, 105, 0.3);
+    }
+
+    .exec-btn.fail.active {
+      background: var(--rose-600);
+      color: #ffffff;
+      box-shadow: 0 1px 2px rgba(225, 29, 72, 0.3);
+    }
+
+    .exec-btn.norun.active {
+      background: var(--text-muted);
+      color: #ffffff;
+    }
+
+    /* Bug Status Dropdown with All Statuses Clearly Formatted */
+    .bug-status-select {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 5px 8px;
+      border-radius: var(--radius-xs);
+      cursor: pointer;
+      outline: none;
+      border: 1px solid var(--border-default);
+      background-color: #ffffff;
+      width: 100%;
+      max-width: 140px;
+      transition: all 0.15s;
+    }
+
+    .bug-status-select.status-open {
+      background: var(--amber-50);
+      color: var(--amber-600);
+      border-color: var(--amber-border);
+    }
+
+    .bug-status-select.status-in_progress {
+      background: var(--indigo-50);
+      color: var(--indigo-600);
+      border-color: var(--indigo-border);
+    }
+
+    .bug-status-select.status-fixed,
+    .bug-status-select.status-resolved {
+      background: var(--emerald-50);
+      color: var(--emerald-600);
+      border-color: var(--emerald-border);
+    }
+
+    .bug-status-select.status-closed {
+      background: #f1f5f9;
+      color: var(--text-muted);
+      border-color: var(--border-default);
+    }
+
+    .bug-status-select.status-reopened {
+      background: var(--rose-50);
+      color: var(--rose-600);
+      border-color: var(--rose-border);
+    }
 
     /* Modals */
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.45);
+      background: rgba(15, 23, 42, 0.5);
       backdrop-filter: blur(4px);
       display: none;
       align-items: center;
@@ -845,25 +1061,32 @@
       background: #ffffff;
       border: 1px solid var(--border-default);
       border-radius: var(--radius-xl);
-      padding: 24px;
+      padding: 22px 24px;
       width: 100%;
-      max-width: 520px;
+      max-width: 540px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
-      box-shadow: var(--shadow-lg);
+      gap: 15px;
+      box-shadow: var(--shadow-xl);
+      max-height: 90vh;
+      overflow-y: auto;
     }
 
     .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      border-bottom: 1px solid var(--border-default);
+      padding-bottom: 12px;
     }
 
     .modal-header h3 {
       font-size: 16px;
       font-weight: 700;
       color: var(--text-main);
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .modal-close {
@@ -888,7 +1111,7 @@
     .form-group {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 5px;
     }
 
     .form-group label {
@@ -908,6 +1131,7 @@
       font-size: 13px;
       color: var(--text-main);
       outline: none;
+      transition: all 0.15s;
     }
 
     .form-control:focus {
@@ -916,17 +1140,22 @@
       box-shadow: 0 0 0 2px var(--emerald-100);
     }
 
+    textarea.form-control {
+      resize: vertical;
+      min-height: 60px;
+    }
+
     /* Bug Chat Modal */
     .chat-modal-box {
       background: #ffffff;
       border: 1px solid var(--border-default);
       border-radius: var(--radius-xl);
       width: 100%;
-      max-width: 600px;
-      height: 540px;
+      max-width: 620px;
+      height: 580px;
       display: flex;
       flex-direction: column;
-      box-shadow: var(--shadow-lg);
+      box-shadow: var(--shadow-xl);
       overflow: hidden;
     }
 
@@ -941,7 +1170,7 @@
 
     .chat-modal-body {
       flex: 1;
-      padding: 20px;
+      padding: 18px;
       overflow-y: auto;
       display: flex;
       flex-direction: column;
@@ -950,7 +1179,7 @@
     }
 
     .chat-bubble {
-      max-width: 78%;
+      max-width: 80%;
       padding: 10px 14px;
       border-radius: var(--radius-lg);
       font-size: 13px;
@@ -966,9 +1195,10 @@
 
     .chat-bubble.tester strong {
       color: var(--emerald-600);
-      display: block;
+      display: flex;
+      justify-content: space-between;
       font-size: 11px;
-      margin-bottom: 2px;
+      margin-bottom: 3px;
     }
 
     .chat-bubble.dev {
@@ -979,9 +1209,10 @@
 
     .chat-bubble.dev strong {
       color: var(--indigo-600);
-      display: block;
+      display: flex;
+      justify-content: space-between;
       font-size: 11px;
-      margin-bottom: 2px;
+      margin-bottom: 3px;
     }
 
     .chat-modal-footer {
@@ -999,10 +1230,10 @@
       border-radius: var(--radius-xl);
       width: 100%;
       max-width: 580px;
-      max-height: 620px;
+      max-height: 640px;
       display: flex;
       flex-direction: column;
-      box-shadow: var(--shadow-lg);
+      box-shadow: var(--shadow-xl);
       overflow: hidden;
     }
 
@@ -1121,48 +1352,115 @@
       gap: 6px;
       margin-top: 6px;
     }
+
+    /* Floating Toasts */
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 10000;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .toast-card {
+      pointer-events: auto;
+      background: #0f172a;
+      color: #ffffff;
+      border-radius: var(--radius-md);
+      padding: 10px 16px;
+      font-size: 12px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: var(--shadow-lg);
+      border-left: 4px solid var(--emerald-500);
+      min-width: 280px;
+      max-width: 420px;
+      animation: slideInRight 0.25s ease forwards;
+    }
+
+    .toast-card.error { border-left-color: var(--rose-600); }
+    .toast-card.warning { border-left-color: var(--amber-600); }
+    .toast-card.info { border-left-color: var(--indigo-600); }
+
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    /* File upload drag drop zone */
+    .dropzone-box {
+      border: 2px dashed #cbd5e1;
+      background: #f8fafc;
+      border-radius: var(--radius-md);
+      padding: 24px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+
+    .dropzone-box:hover {
+      border-color: var(--emerald-500);
+      background: var(--emerald-50);
+    }
   </style>
 </head>
 <body>
 
-  <!-- 1. LEFT SIDEBAR: REGION ➔ PROJECT (with search) ➔ FEATURES (with search & filters) -->
+  <!-- 1. LEFT SIDEBAR: REGION (FROM DB) ➔ PROJECTS ➔ FEATURES -->
   <aside class="sidebar">
     
-    <!-- Sidebar Header: TAT Cockpit + In-App Notification Bell -->
+    <!-- Sidebar Header: TAT Cockpit + Notifications -->
     <div class="sidebar-header">
       <div class="brand-group">
-        <div class="brand-logo"><i class="fa-solid fa-flask"></i></div>
+        <div class="brand-logo"><i class="fa-solid fa-flask-vial"></i></div>
         <div class="brand-meta">
           <h1>TAT Cockpit</h1>
-          <span>Quality Assurance Hub</span>
+          <span>Tester Workspace</span>
         </div>
       </div>
 
-      <!-- Bell Button next to TAT Cockpit -->
-      <button class="sidebar-notif-btn" onclick="openInAppNotificationsModal()" title="In-App Notifications">
-        <i class="fa-regular fa-bell"></i>
-        <span class="notif-badge-dot" id="in-app-notif-count">3</span>
+      <div class="sidebar-actions-group">
+        <!-- In-App Notification Bell -->
+        <button class="sidebar-notif-btn" onclick="openInAppNotificationsModal()" title="In-App Notifications" id="btn-sidebar-notif">
+          <i class="fa-regular fa-bell"></i>
+          <span class="notif-badge-dot" id="in-app-notif-count">0</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Live API Status & Auth Indicator -->
+    <div class="api-status-banner">
+      <div class="api-status-pill" id="api-status-pill">
+        <span class="status-dot-pulse" id="status-dot"></span>
+        <span id="api-status-label">Checking APIs...</span>
+      </div>
+      <button class="btn-icon-link" onclick="openModal('modal-auth-config')" title="Manage JWT Token & API Settings">
+        <i class="fa-solid fa-key"></i> <span id="auth-btn-label">JWT</span>
       </button>
     </div>
 
     <div class="sidebar-body">
       
-      <!-- Region Selector -->
+      <!-- Region Selector: Dynamically Populated from DB Projects -->
       <div>
         <div class="nav-label">
           <span><i class="fa-solid fa-earth-americas"></i> Region</span>
+          <button class="btn-icon-link" onclick="fetchProjectsFromApi()" title="Sync projects and regions with backend"><i class="fa-solid fa-arrows-rotate"></i> Sync</button>
         </div>
         <select class="sidebar-select" id="sidebar-region-select" onchange="onRegionChange(this.value)">
-          <option value="US-EAST" selected>US-EAST (Main)</option>
-          <option value="EU-CENTRAL">EU-CENTRAL</option>
-          <option value="APAC">APAC</option>
+          <option value="ALL">All Regions</option>
         </select>
       </div>
 
-      <!-- Project Selector & Project Search/Filter -->
+      <!-- Project Selector & Actions -->
       <div>
         <div class="nav-label">
-          <span><i class="fa-solid fa-folder"></i> Project (<span id="sidebar-proj-count">3</span>)</span>
+          <span><i class="fa-solid fa-folder"></i> Project (<span id="sidebar-proj-count">0</span>)</span>
           <button class="btn-icon-link" onclick="openModal('modal-project-create')">+ New</button>
         </div>
 
@@ -1174,17 +1472,16 @@
 
         <!-- Project Select Dropdown -->
         <select class="sidebar-select" id="sidebar-project-select" onchange="onProjectChange(this.value)">
-          <option value="PROJ-1" selected>Core Banking Platform</option>
-          <option value="PROJ-2">Retail Banking Portal</option>
-          <option value="PROJ-3">Wealth Management Suite</option>
+          <option value="">Loading projects...</option>
         </select>
 
+        <!-- Project Action Strip (Excel Export Removed) -->
         <div class="proj-strip">
           <button class="strip-btn" onclick="openEditProjectModal()">
             <i class="fa-solid fa-pen-to-square"></i> Edit
           </button>
           <button class="strip-btn" onclick="openProjectAttachmentsModal()">
-            <i class="fa-solid fa-paperclip"></i> Files (<span id="proj-files-count">2</span>)
+            <i class="fa-solid fa-paperclip"></i> Files (<span id="proj-files-count">0</span>)
           </button>
         </div>
       </div>
@@ -1192,7 +1489,7 @@
       <!-- Features Section with Search & Category Filter Pills -->
       <div style="margin-top: 4px;">
         <div class="nav-label">
-          <span><i class="fa-solid fa-layer-group"></i> Features (<span id="sidebar-feat-count">3</span>)</span>
+          <span><i class="fa-solid fa-layer-group"></i> Features (<span id="sidebar-feat-count">0</span>)</span>
           <button class="btn-icon-link" onclick="openModal('modal-feature-create')">+ Add</button>
         </div>
 
@@ -1211,31 +1508,9 @@
 
         <!-- Dynamic Feature Nav List -->
         <div class="feature-nav-list" id="sidebar-feature-list">
-          
-          <div class="feature-nav-item active" data-status="BUGS" data-sprint="12" onclick="selectFeature('FEAT-1', 'User Auth & OTP', 'Sprint 12 • v2.4.0', this)">
-            <div>
-              <div class="f-name">User Auth & OTP</div>
-              <div class="f-sprint">Sprint 12 • v2.4.0</div>
-            </div>
-            <span class="badge-tag badge-fail" style="font-size: 10px;">1 Bug</span>
+          <div style="padding:16px 8px; font-size:11px; color:var(--text-muted); text-align:center;">
+            <i class="fa-solid fa-spinner fa-spin"></i> Loading features...
           </div>
-
-          <div class="feature-nav-item" data-status="PASSED" data-sprint="12" onclick="selectFeature('FEAT-2', 'Fund Transfer & UPI', 'Sprint 12 • v2.4.1', this)">
-            <div>
-              <div class="f-name">Fund Transfer & UPI</div>
-              <div class="f-sprint">Sprint 12 • v2.4.1</div>
-            </div>
-            <span class="badge-tag badge-pass" style="font-size: 10px;">Passed</span>
-          </div>
-
-          <div class="feature-nav-item" data-status="PASSED" data-sprint="11" onclick="selectFeature('FEAT-3', 'Account Statements POI', 'Sprint 11 • v2.3.0', this)">
-            <div>
-              <div class="f-name">Statements POI</div>
-              <div class="f-sprint">Sprint 11 • v2.3.0</div>
-            </div>
-            <span class="badge-tag badge-pass" style="font-size: 10px;">Passed</span>
-          </div>
-
         </div>
       </div>
 
@@ -1243,25 +1518,30 @@
 
     <!-- User Profile Footer -->
     <div class="sidebar-footer">
-      <div class="avatar-sm">RS</div>
-      <div style="flex: 1; overflow: hidden;">
-        <div style="font-size: 13px; font-weight: 700; color: var(--text-main); white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">Rahul Sharma</div>
-        <div style="font-size: 11px; color: var(--emerald-600); font-weight: 600;">QA Lead (Tester)</div>
+      <div class="user-profile-info">
+        <div class="avatar-sm" id="user-avatar-initials">TS</div>
+        <div style="overflow: hidden;">
+          <div id="user-display-name" style="font-size: 13px; font-weight: 700; color: var(--text-main); white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">Tester Profile</div>
+          <div id="user-display-role" style="font-size: 11px; color: var(--emerald-600); font-weight: 600;">QA Lead (Tester)</div>
+        </div>
       </div>
+      <button class="btn-icon-link" onclick="openModal('modal-auth-config')" title="Switch User / Token">
+        <i class="fa-solid fa-gear"></i>
+      </button>
     </div>
   </aside>
 
   <!-- 2. MAIN WORKSPACE -->
   <main class="main-workspace">
     
-    <!-- TOPBAR: DIRECT FEATURE NAME + EDIT & DOCS ONLY -->
+    <!-- TOPBAR: DIRECT FEATURE NAME + EDIT & DOCS ONLY (QA Report Excel Removed) -->
     <header class="topbar">
       
       <!-- Left Side: Feature Name + Sprint Chip + Status -->
       <div class="topbar-left">
-        <h2 class="feature-title-text" id="topbar-feature-title">User Auth & OTP</h2>
+        <h2 class="feature-title-text" id="topbar-feature-title">Feature Name</h2>
         <div class="meta-badges-group">
-          <span class="chip-sprint" id="topbar-feature-sprint">Sprint 12 • v2.4.0</span>
+          <span class="chip-sprint" id="topbar-feature-sprint">Sprint -- • v--</span>
           <span class="chip-status" id="topbar-feature-status">Active</span>
         </div>
       </div>
@@ -1272,7 +1552,7 @@
           <i class="fa-solid fa-pen-to-square"></i> Edit Details
         </button>
         <button class="btn btn-secondary" onclick="openFeatureAttachmentsModal()">
-          <i class="fa-solid fa-paperclip"></i> Docs (<span id="feat-docs-count">2</span>)
+          <i class="fa-solid fa-paperclip"></i> Docs (<span id="feat-docs-count">0</span>)
         </button>
       </div>
 
@@ -1281,16 +1561,51 @@
     <!-- CONTENT BODY -->
     <div class="content-body">
       
+      <!-- KPI Metrics Strip for Active Feature -->
+      <div class="kpi-summary-strip">
+        <div class="kpi-card">
+          <div>
+            <div class="kpi-label">Test Cases</div>
+            <div class="kpi-value" id="kpi-tc-total">0</div>
+          </div>
+          <div class="kpi-icon" style="background: var(--indigo-50); color: var(--indigo-600);"><i class="fa-solid fa-vial"></i></div>
+        </div>
+
+        <div class="kpi-card">
+          <div>
+            <div class="kpi-label">Passed</div>
+            <div class="kpi-value" style="color: var(--emerald-600);" id="kpi-tc-passed">0</div>
+          </div>
+          <div class="kpi-icon" style="background: var(--emerald-50); color: var(--emerald-600);"><i class="fa-solid fa-circle-check"></i></div>
+        </div>
+
+        <div class="kpi-card">
+          <div>
+            <div class="kpi-label">Failed</div>
+            <div class="kpi-value" style="color: var(--rose-600);" id="kpi-tc-failed">0</div>
+          </div>
+          <div class="kpi-icon" style="background: var(--rose-50); color: var(--rose-600);"><i class="fa-solid fa-triangle-exclamation"></i></div>
+        </div>
+
+        <div class="kpi-card">
+          <div>
+            <div class="kpi-label">Defects Mapped</div>
+            <div class="kpi-value" style="color: var(--amber-600);" id="kpi-bugs-total">0</div>
+          </div>
+          <div class="kpi-icon" style="background: var(--amber-50); color: var(--amber-600);"><i class="fa-solid fa-bug"></i></div>
+        </div>
+      </div>
+
       <!-- Sub-Tabs: Test Cases vs Defects -->
       <div class="subtabs-bar">
         <button class="subtab-btn active" id="btn-tab-tc" onclick="switchFeatureTab('tc')">
           <i class="fa-solid fa-list-check"></i> Test Cases Suite
-          <span class="tab-badge" id="tab-tc-count">2</span>
+          <span class="tab-badge" id="tab-tc-count">0</span>
         </button>
 
         <button class="subtab-btn" id="btn-tab-bugs" onclick="switchFeatureTab('bugs')">
           <i class="fa-solid fa-bug"></i> Defects / Bugs
-          <span class="tab-badge alert" id="tab-bugs-count">1</span>
+          <span class="tab-badge alert" id="tab-bugs-count">0</span>
         </button>
       </div>
 
@@ -1304,13 +1619,13 @@
             <p>Execute manual validations. Test failures trigger auto-mapped defect creation.</p>
           </div>
           <div style="display: flex; gap: 8px;">
-            <button class="btn btn-secondary" style="height: 32px; font-size: 11px;" onclick="alert('Downloading dynamic blank Excel template (.xlsx) for this feature...')">
+            <button class="btn btn-secondary btn-sm" onclick="downloadTestCaseTemplate()">
               <i class="fa-solid fa-file-excel" style="color: var(--emerald-600);"></i> Template (.xlsx)
             </button>
-            <button class="btn btn-secondary" style="height: 32px; font-size: 11px;" onclick="openModal('modal-excel')">
+            <button class="btn btn-secondary btn-sm" onclick="openModal('modal-excel')">
               <i class="fa-solid fa-cloud-arrow-up" style="color: var(--indigo-600);"></i> Bulk Excel Upload
             </button>
-            <button class="btn btn-primary" style="height: 32px; font-size: 11px;" onclick="openModal('modal-testcase')">
+            <button class="btn btn-primary btn-sm" onclick="openModal('modal-testcase')">
               <i class="fa-solid fa-plus"></i> Add Test Case
             </button>
           </div>
@@ -1326,92 +1641,47 @@
             
             <select class="filter-select" id="tc-type-filter" onchange="filterTestCases()">
               <option value="ALL">All Types</option>
-              <option value="FUNCTIONAL">Functional</option>
-              <option value="SECURITY">Security</option>
-              <option value="REGRESSION">Regression</option>
+              <option value="UI">UI</option>
+              <option value="API">API</option>
+              <option value="DB">DB</option>
+              <option value="E2E">E2E</option>
             </select>
 
             <select class="filter-select" id="tc-status-filter" onchange="filterTestCases()">
               <option value="ALL">All Statuses</option>
-              <option value="FAILED">Failed</option>
               <option value="PASSED">Passed</option>
+              <option value="FAILED">Failed</option>
+              <option value="NO_RUN">No Run</option>
+              <option value="DESCOPE">Descoped</option>
             </select>
           </div>
 
-          <div class="filter-stats-text" id="tc-filter-count-text">Showing 2 test cases in feature</div>
+          <div class="filter-stats-text" id="tc-filter-count-text">Showing 0 test cases</div>
         </div>
 
         <table class="app-table">
           <thead>
             <tr>
-              <th style="width: 38%;">Test Case ID & Title</th>
+              <th style="width: 36%;">Test Case ID & Title</th>
               <th style="width: 16%;">Type & Priority</th>
-              <th style="width: 32%;">Validations (UI & DB)</th>
-              <th style="width: 14%;">Status & Action</th>
+              <th style="width: 30%;">Validations (UI & DB)</th>
+              <th style="width: 18%;">Status & Live Execution</th>
             </tr>
           </thead>
           <tbody id="feature-tc-table-body">
-            
-            <!-- TC 1: FAILED -->
-            <tr data-type="FUNCTIONAL" data-status="FAILED">
-              <td>
-                <span class="tc-id">TC_AUTH_001</span>
-                <div class="tc-name">Verify 6-digit OTP input auto-focus & paste handling</div>
-                <div class="tc-pre"><strong>Precondition:</strong> User initiated password reset via email</div>
-              </td>
-              <td>
-                <span class="badge-tag badge-info">FUNCTIONAL</span>
-                <div style="color: var(--rose-600); font-size: 11px; font-weight: 700; margin-top: 4px;">P1 - CRITICAL</div>
-              </td>
-              <td>
-                <div class="val-chip"><strong>UI:</strong> Auto-advance focus on digit entry; backspace moves left.</div>
-                <div class="val-chip"><strong>DB:</strong> Verify <code>testing_password_reset_otp</code> table with 10m TTL.</div>
-              </td>
-              <td>
-                <span class="badge-tag badge-fail">FAILED</span>
-                <div style="margin-top: 8px;">
-                  <button class="btn btn-danger-outline" style="height: 28px; padding: 0 10px; font-size: 11px;" onclick="triggerCreateBugFromTest('TC_AUTH_001', 'Verify 6-digit OTP input auto-focus & paste handling')">
-                    <i class="fa-solid fa-bug"></i> Create Bug
-                  </button>
-                </div>
-              </td>
-            </tr>
-
-            <!-- TC 2: PASSED -->
-            <tr data-type="SECURITY" data-status="PASSED">
-              <td>
-                <span class="tc-id">TC_AUTH_002</span>
-                <div class="tc-name">Verify Dual-Token JWT issuance upon credentials validation</div>
-                <div class="tc-pre"><strong>Precondition:</strong> Active manager-approved account</div>
-              </td>
-              <td>
-                <span class="badge-tag badge-info">SECURITY</span>
-                <div style="color: var(--amber-600); font-size: 11px; font-weight: 700; margin-top: 4px;">P2 - HIGH</div>
-              </td>
-              <td>
-                <div class="val-chip"><strong>UI:</strong> Access token (15m) & refresh token (24h) stored.</div>
-                <div class="val-chip"><strong>DB:</strong> Token record saved in <code>testing_refresh_tokens</code>.</div>
-              </td>
-              <td>
-                <span class="badge-tag badge-pass">PASSED</span>
-                <div style="margin-top: 8px; font-size: 11px; color: var(--emerald-600); font-weight: 700;">
-                  <i class="fa-solid fa-circle-check"></i> No action
-                </div>
-              </td>
-            </tr>
-
+            <!-- Dynamic test case rows will render here -->
           </tbody>
         </table>
       </div>
 
-      <!-- SUB-VIEW 2: DEFECTS TABLE (NO +REPORT BUG BUTTON; DEFECTS AUTO-MAPPED ONLY) -->
+      <!-- SUB-VIEW 2: DEFECTS TABLE (MAPPED ONLY FROM TEST CASES) -->
       <div id="subview-bugs" class="panel-card" style="display: none;">
         
-        <!-- Header (Strictly NO +Report Bug button) -->
+        <!-- Header (Strictly NO standalone +Report Bug button; defects are mapped from TC) -->
         <div class="panel-card-header">
           <div>
             <h3>Mapped Feature Defects</h3>
-            <p>Defects generated strictly from test case failures. Open individual chat discussions per bug.</p>
+            <p>Defects generated strictly from test case failures. Manage status and open attachments/discussion chat.</p>
           </div>
           <div style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 6px;">
             <i class="fa-solid fa-circle-info" style="color: var(--indigo-600);"></i> Mapped to Active Feature
@@ -1431,53 +1701,38 @@
               <option value="CRITICAL">Critical</option>
               <option value="HIGH">High</option>
               <option value="MEDIUM">Medium</option>
+              <option value="LOW">Low</option>
             </select>
 
             <select class="filter-select" id="bug-status-filter" onchange="filterDefects()">
               <option value="ALL">All Statuses</option>
               <option value="OPEN">Open</option>
               <option value="IN_PROGRESS">In Progress</option>
-              <option value="RESOLVED">Resolved</option>
               <option value="FIXED">Fixed</option>
+              <option value="RESOLVED">Resolved</option>
               <option value="CLOSED">Closed</option>
+              <option value="REOPENED">Reopened</option>
+              <option value="NOT_A_BUG">Not a Bug</option>
+              <option value="DEFERRED">Deferred</option>
             </select>
           </div>
 
-          <div class="filter-stats-text" id="bug-filter-count-text">Showing 1 defect</div>
+          <div class="filter-stats-text" id="bug-filter-count-text">Showing 0 defects</div>
         </div>
 
         <table class="app-table">
           <thead>
             <tr>
-              <th>Bug Format ID</th>
-              <th>Defect Title</th>
-              <th>Origin Test Case</th>
-              <th>Severity</th>
-              <th>Assignee</th>
-              <th>Status</th>
-              <th>Actions & Chat</th>
+              <th style="width: 18%;">Bug Format ID</th>
+              <th style="width: 28%;">Defect Title</th>
+              <th style="width: 12%;">Origin Test Case</th>
+              <th style="width: 12%;">Severity</th>
+              <th style="width: 12%;">Assignee</th>
+              <th style="width: 18%;">Status & Actions</th>
             </tr>
           </thead>
           <tbody id="feature-bugs-table-body">
-            <tr data-sev="CRITICAL" data-status="OPEN">
-              <td><strong style="color: var(--rose-600); font-family: var(--font-mono);">BUG-AUTH_MODULE-001</strong></td>
-              <td>
-                <strong style="color: var(--text-main);">OTP auto-focus fails on Safari iOS clipboard paste</strong>
-                <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Precondition: In forgot-password modal</div>
-              </td>
-              <td><span class="badge-tag badge-info">TC_AUTH_001</span></td>
-              <td><span class="badge-tag badge-fail">CRITICAL</span></td>
-              <td>Devon (Developer)</td>
-              <td><span class="badge-tag badge-info" id="bug-state-val">OPEN</span></td>
-              <td>
-                <div style="display: flex; gap: 6px;">
-                  <button class="btn btn-secondary" style="height: 28px; padding: 0 8px; font-size: 11px;" onclick="advanceBugState()">Advance ➔</button>
-                  <button class="btn btn-secondary" style="height: 28px; padding: 0 10px; font-size: 11px; color: var(--indigo-600); font-weight:700;" onclick="openSpecificBugChat('BUG-AUTH_MODULE-001', 'OTP auto-focus fails on Safari iOS clipboard paste', 'TC_AUTH_001', 'Devon (Developer)', 'CRITICAL')">
-                    <i class="fa-solid fa-comments"></i> 💬 Chat
-                  </button>
-                </div>
-              </td>
-            </tr>
+            <!-- Dynamic defect rows render here -->
           </tbody>
         </table>
       </div>
@@ -1493,7 +1748,7 @@
           <h3 style="font-size: 15px; font-weight: 700; color: var(--text-main);">
             <i class="fa-solid fa-bell" style="color: var(--emerald-600);"></i> In-App Notifications
           </h3>
-          <span class="badge-tag badge-fail" id="notif-modal-unread-count" style="font-size: 10px;">3 Unread</span>
+          <span class="badge-tag badge-fail" id="notif-modal-unread-count" style="font-size: 10px;">0 Unread</span>
         </div>
         <div style="display: flex; align-items: center; gap: 10px;">
           <button class="btn-icon-link" onclick="markAllNotificationsAsRead()" title="Mark all as read">
@@ -1513,104 +1768,87 @@
 
       <!-- Notification Items Body -->
       <div class="notif-list-body" id="in-app-notif-list">
-        
-        <!-- Notification 1: Bug Fixed -->
-        <div class="notif-card-item unread" id="notif-item-1" data-type="FIXED" data-read="false">
-          <div class="notif-icon-bubble notif-icon-fixed">
-            <i class="fa-solid fa-circle-check"></i>
-          </div>
-          <div class="notif-card-content">
-            <div class="notif-card-title">
-              <span>Defect Marked as FIXED — <strong style="color: var(--emerald-600); font-family: var(--font-mono);">BUG-AUTH_MODULE-001</strong></span>
-              <span style="font-size: 10px; color: var(--rose-600); font-weight: 700;">● NEW</span>
-            </div>
-            <div class="notif-card-msg">
-              <strong>Devon (Developer)</strong> resolved "OTP auto-focus fails on Safari iOS clipboard paste". Staging build deployed for re-verification.
-            </div>
-            <div class="notif-card-meta">
-              <span><i class="fa-solid fa-layer-group"></i> User Auth & OTP</span>
-              <span>•</span>
-              <span><i class="fa-regular fa-clock"></i> 10 mins ago</span>
-            </div>
-            <div class="notif-card-actions">
-              <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 11px; color: var(--indigo-600); font-weight:700;" onclick="viewBugFromNotification('BUG-AUTH_MODULE-001', 'User Auth & OTP', 'TC_AUTH_001')">
-                <i class="fa-solid fa-comments"></i> View Bug & Chat
-              </button>
-              <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 10px;" onclick="toggleNotifRead('notif-item-1')">
-                <i class="fa-solid fa-check"></i> Mark read
-              </button>
-              <button class="btn btn-secondary" style="height: 24px; padding: 0 6px; font-size: 10px;" onclick="dismissNotification('notif-item-1')">
-                <i class="fa-solid fa-trash-can"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Notification 2: New Comment -->
-        <div class="notif-card-item unread" id="notif-item-2" data-type="COMMENT" data-read="false">
-          <div class="notif-icon-bubble notif-icon-chat">
-            <i class="fa-solid fa-comment-dots"></i>
-          </div>
-          <div class="notif-card-content">
-            <div class="notif-card-title">
-              <span>New Developer Comment — <strong style="color: var(--indigo-600); font-family: var(--font-mono);">BUG-AUTH_MODULE-001</strong></span>
-              <span style="font-size: 10px; color: var(--rose-600); font-weight: 700;">● NEW</span>
-            </div>
-            <div class="notif-card-msg">
-              <strong>Devon:</strong> "I checked the paste handler for Feature User Auth & OTP. Pushing fix to staging shortly!"
-            </div>
-            <div class="notif-card-meta">
-              <span><i class="fa-solid fa-layer-group"></i> User Auth & OTP</span>
-              <span>•</span>
-              <span><i class="fa-regular fa-clock"></i> 25 mins ago</span>
-            </div>
-            <div class="notif-card-actions">
-              <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 11px; color: var(--indigo-600); font-weight:700;" onclick="viewBugFromNotification('BUG-AUTH_MODULE-001', 'User Auth & OTP', 'TC_AUTH_001')">
-                <i class="fa-solid fa-reply"></i> Reply in Chat
-              </button>
-              <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 10px;" onclick="toggleNotifRead('notif-item-2')">
-                <i class="fa-solid fa-check"></i> Mark read
-              </button>
-              <button class="btn btn-secondary" style="height: 24px; padding: 0 6px; font-size: 10px;" onclick="dismissNotification('notif-item-2')">
-                <i class="fa-solid fa-trash-can"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Notification 3: Test Suite Update -->
-        <div class="notif-card-item unread" id="notif-item-3" data-type="TC" data-read="false">
-          <div class="notif-icon-bubble notif-icon-tc">
-            <i class="fa-solid fa-vial"></i>
-          </div>
-          <div class="notif-card-content">
-            <div class="notif-card-title">
-              <span>Test Suite Updated — <strong>Account Statements POI</strong></span>
-              <span style="font-size: 10px; color: var(--rose-600); font-weight: 700;">● NEW</span>
-            </div>
-            <div class="notif-card-msg">
-              Bulk Excel parser imported 3 new test cases for Account Statements POI export verification.
-            </div>
-            <div class="notif-card-meta">
-              <span><i class="fa-solid fa-layer-group"></i> Account Statements POI</span>
-              <span>•</span>
-              <span><i class="fa-regular fa-clock"></i> 1 hour ago</span>
-            </div>
-            <div class="notif-card-actions">
-              <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 11px; color: var(--emerald-600); font-weight:700;" onclick="selectFeature('FEAT-3', 'Account Statements POI', 'Sprint 11 • v2.3.0'); closeModal('modal-in-app-notifications');">
-                <i class="fa-solid fa-arrow-right"></i> Open Feature
-              </button>
-              <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 10px;" onclick="toggleNotifRead('notif-item-3')">
-                <i class="fa-solid fa-check"></i> Mark read
-              </button>
-              <button class="btn btn-secondary" style="height: 24px; padding: 0 6px; font-size: 10px;" onclick="dismissNotification('notif-item-3')">
-                <i class="fa-solid fa-trash-can"></i>
-              </button>
-            </div>
-          </div>
-        </div>
-
+        <!-- Rendered dynamically -->
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DEDICATED BUG CHAT & COMMENTS -->
+  <div class="modal-overlay" id="modal-bug-chat">
+    <div class="chat-modal-box">
+      <div class="chat-modal-header">
+        <div>
+          <h3 style="font-size: 14px; font-weight: 700; color: var(--text-main);" id="specific-bug-chat-title">
+            <i class="fa-solid fa-comments" style="color: var(--emerald-600);"></i> Discussion: BUG-001
+          </h3>
+          <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;" id="specific-bug-chat-sub">
+            Linked Test Case: TC_001 • Severity: CRITICAL
+          </p>
+        </div>
+        <button class="modal-close" onclick="closeModal('modal-bug-chat')">&times;</button>
+      </div>
+
+      <div class="chat-modal-body" id="specific-chat-stream">
+        <!-- Live comments stream rendered here -->
+      </div>
+
+      <div class="chat-modal-footer">
+        <input type="text" class="form-control" id="specific-chat-input" placeholder="Type reply in bug discussion thread..." style="flex:1;" onkeypress="if(event.key==='Enter') sendSpecificChat()">
+        <button class="btn btn-primary" style="padding: 0 16px;" onclick="sendSpecificChat()"><i class="fa-solid fa-paper-plane"></i> Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: BUG ATTACHMENTS & EVIDENCE -->
+  <div class="modal-overlay" id="modal-bug-attachments">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-paperclip" style="color: var(--rose-600);"></i> Defect Attachments & Evidence</h3>
+        <button class="modal-close" onclick="closeModal('modal-bug-attachments')">&times;</button>
+      </div>
+
+      <div style="font-size: 12px; color: var(--text-muted);">
+        Defect: <strong id="bug-attach-format-id" style="color: var(--rose-600); font-family: var(--font-mono);"></strong>
+      </div>
+
+      <div style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;" id="bug-attachments-list">
+        <!-- Attachments rendered dynamically -->
+      </div>
+
+      <div class="dropzone-box" onclick="document.getElementById('input-bug-file-upload').click()">
+        <input type="file" id="input-bug-file-upload" style="display:none;" multiple onchange="handleBugFileUpload(this.files)">
+        <i class="fa-solid fa-cloud-arrow-up" style="color: var(--rose-600); font-size: 22px; margin-bottom: 4px;"></i>
+        <div style="font-size: 12px; font-weight: 700;">Click to upload defect evidence (logs, screenshots, videos)</div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Supported: .png, .jpg, .log, .txt, .pdf, .zip</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: CREATE PROJECT -->
+  <div class="modal-overlay" id="modal-project-create">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-folder-plus" style="color: var(--emerald-600);"></i> Create Project</h3>
+        <button class="modal-close" onclick="closeModal('modal-project-create')">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Region *</label>
+        <input type="text" class="form-control" id="create-proj-region-input" placeholder="e.g. US-EAST or APAC" list="datalist-regions">
+        <datalist id="datalist-regions"></datalist>
+      </div>
+      <div class="form-group">
+        <label>Project Name *</label>
+        <input type="text" class="form-control" id="create-proj-name-input" placeholder="e.g. Wealth Management Platform">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea class="form-control" id="create-proj-desc-input" placeholder="Project goals and testing scope..."></textarea>
+      </div>
+      <div class="form-group">
+        <label>Comments</label>
+        <input type="text" class="form-control" id="create-proj-comments-input" placeholder="Optional notes">
+      </div>
+      <button class="btn btn-primary" style="height: 38px;" onclick="createProjectAction()">Save Project</button>
     </div>
   </div>
 
@@ -1623,26 +1861,26 @@
       </div>
       <div class="form-group">
         <label>Project Name</label>
-        <input type="text" class="form-control" id="edit-proj-name" value="Core Banking Platform">
+        <input type="text" class="form-control" id="edit-proj-name" value="">
       </div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div class="form-group">
           <label>Region</label>
-          <select class="form-control" id="edit-proj-region">
-            <option value="US-EAST" selected>US-EAST</option>
-            <option value="EU-CENTRAL">EU-CENTRAL</option>
-            <option value="APAC">APAC</option>
-          </select>
+          <input type="text" class="form-control" id="edit-proj-region" list="datalist-regions">
         </div>
         <div class="form-group">
           <label>Project Status</label>
           <select class="form-control" id="edit-proj-status">
-            <option value="ACTIVE" selected>ACTIVE</option>
+            <option value="ACTIVE">ACTIVE</option>
             <option value="INACTIVE">INACTIVE</option>
           </select>
         </div>
       </div>
-      <button class="btn btn-primary" style="height: 40px;" onclick="saveProjectDetails()">Save Project Changes</button>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea class="form-control" id="edit-proj-desc" placeholder="Scope description"></textarea>
+      </div>
+      <button class="btn btn-primary" style="height: 38px;" onclick="saveProjectDetails()">Save Project Changes</button>
     </div>
   </div>
 
@@ -1650,25 +1888,53 @@
   <div class="modal-overlay" id="modal-project-attachments">
     <div class="modal-card">
       <div class="modal-header">
-        <h3><i class="fa-solid fa-paperclip" style="color: var(--emerald-600);"></i> Project File Attachments</h3>
+        <h3><i class="fa-solid fa-paperclip" style="color: var(--emerald-600);"></i> Project Attachments</h3>
         <button class="modal-close" onclick="closeModal('modal-project-attachments')">&times;</button>
       </div>
 
-      <div style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto;" id="project-attachments-list">
-        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12px;">
-          <div><i class="fa-solid fa-file-pdf" style="color:var(--rose-600);"></i> <strong>Architecture_Design.pdf</strong> (1.4 MB)</div>
-          <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 10px;" onclick="alert('Downloading...')"><i class="fa-solid fa-download"></i></button>
-        </div>
-        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12px;">
-          <div><i class="fa-solid fa-file-zipper" style="color:var(--amber-600);"></i> <strong>API_Specifications.zip</strong> (3.2 MB)</div>
-          <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 10px;" onclick="alert('Downloading ZIP...')"><i class="fa-solid fa-download"></i></button>
-        </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;" id="project-attachments-list">
+        <!-- Attachments rendered dynamically -->
       </div>
 
-      <div style="border: 2px dashed #cbd5e1; background: #f8fafc; border-radius: var(--radius-md); padding: 18px; text-align: center; cursor: pointer;" onclick="uploadProjectFile()">
-        <i class="fa-solid fa-cloud-arrow-up" style="color: var(--emerald-600); font-size: 20px; margin-bottom: 4px;"></i>
-        <div style="font-size: 12px; font-weight: 600;">Click to upload project files (.pdf, .docx, .zip)</div>
+      <div class="dropzone-box" onclick="document.getElementById('input-proj-file-upload').click()">
+        <input type="file" id="input-proj-file-upload" style="display:none;" multiple onchange="handleProjectFileUpload(this.files)">
+        <i class="fa-solid fa-cloud-arrow-up" style="color: var(--emerald-600); font-size: 22px; margin-bottom: 4px;"></i>
+        <div style="font-size: 12px; font-weight: 700;">Click to upload project files (.pdf, .docx, .zip)</div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Files saved directly to project attachment service</div>
       </div>
+    </div>
+  </div>
+
+  <!-- MODAL: ADD FEATURE -->
+  <div class="modal-overlay" id="modal-feature-create">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-layer-group" style="color: var(--indigo-600);"></i> Add Feature to Project</h3>
+        <button class="modal-close" onclick="closeModal('modal-feature-create')">&times;</button>
+      </div>
+      <div class="form-group">
+        <label>Target Project</label>
+        <input type="text" class="form-control" id="create-feat-proj-display" readonly style="font-weight:700;">
+      </div>
+      <div class="form-group">
+        <label>Feature Name *</label>
+        <input type="text" class="form-control" id="create-feat-name-input" placeholder="e.g. Card Freeze & Security Control">
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+          <label>Sprint Number</label>
+          <input type="number" class="form-control" id="create-feat-sprint-input" value="12">
+        </div>
+        <div class="form-group">
+          <label>Version</label>
+          <input type="text" class="form-control" id="create-feat-version-input" value="v2.5.0">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea class="form-control" id="create-feat-desc-input" placeholder="Feature scope & QA verification details"></textarea>
+      </div>
+      <button class="btn btn-primary" style="height: 38px;" onclick="createFeatureAction()">Save Feature</button>
     </div>
   </div>
 
@@ -1681,7 +1947,7 @@
       </div>
       <div class="form-group">
         <label>Feature Name</label>
-        <input type="text" class="form-control" id="edit-feat-name" value="User Auth & OTP">
+        <input type="text" class="form-control" id="edit-feat-name" value="">
       </div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div class="form-group">
@@ -1696,121 +1962,42 @@
       <div class="form-group">
         <label>Status</label>
         <select class="form-control" id="edit-feat-status">
-          <option value="ACTIVE" selected>ACTIVE</option>
+          <option value="ACTIVE">ACTIVE</option>
           <option value="IN_PROGRESS">IN_PROGRESS</option>
           <option value="COMPLETED">COMPLETED</option>
           <option value="ON_HOLD">ON_HOLD</option>
         </select>
       </div>
-      <button class="btn btn-primary" style="height: 40px;" onclick="saveFeatureDetails()">Save Feature Changes</button>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea class="form-control" id="edit-feat-desc"></textarea>
+      </div>
+      <button class="btn btn-primary" style="height: 38px;" onclick="saveFeatureDetails()">Save Feature Changes</button>
     </div>
   </div>
 
-  <!-- MODAL: FEATURE FILE ATTACHMENTS -->
+  <!-- MODAL: FEATURE FILE ATTACHMENTS (DOCS) -->
   <div class="modal-overlay" id="modal-feature-attachments">
     <div class="modal-card">
       <div class="modal-header">
-        <h3><i class="fa-solid fa-paperclip" style="color: var(--indigo-600);"></i> Feature Documentation</h3>
+        <h3><i class="fa-solid fa-paperclip" style="color: var(--indigo-600);"></i> Feature Documentation & Attachments</h3>
         <button class="modal-close" onclick="closeModal('modal-feature-attachments')">&times;</button>
       </div>
 
-      <div style="display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto;" id="feature-attachments-list">
-        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12px;">
-          <div><i class="fa-solid fa-file-lines" style="color:var(--indigo-600);"></i> <strong>BRD_Auth_Requirements_v2.docx</strong> (840 KB)</div>
-          <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 10px;" onclick="alert('Downloading doc...')"><i class="fa-solid fa-download"></i></button>
-        </div>
-        <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; border: 1px solid var(--border-default); border-radius: var(--radius-sm); padding: 8px 12px; font-size: 12px;">
-          <div><i class="fa-solid fa-image" style="color:var(--emerald-600);"></i> <strong>UI_Wireframe_OTP_Flow.png</strong> (1.1 MB)</div>
-          <button class="btn btn-secondary" style="height: 24px; padding: 0 8px; font-size: 10px;" onclick="alert('Downloading image...')"><i class="fa-solid fa-download"></i></button>
-        </div>
+      <div style="display: flex; flex-direction: column; gap: 8px; max-height: 200px; overflow-y: auto;" id="feature-attachments-list">
+        <!-- Rendered dynamically -->
       </div>
 
-      <div style="border: 2px dashed #cbd5e1; background: #f8fafc; border-radius: var(--radius-md); padding: 18px; text-align: center; cursor: pointer;" onclick="uploadFeatureFile()">
-        <i class="fa-solid fa-cloud-arrow-up" style="color: var(--indigo-600); font-size: 20px; margin-bottom: 4px;"></i>
-        <div style="font-size: 12px; font-weight: 600;">Click to upload feature docs or wireframes</div>
+      <div class="dropzone-box" onclick="document.getElementById('input-feat-file-upload').click()">
+        <input type="file" id="input-feat-file-upload" style="display:none;" multiple onchange="handleFeatureFileUpload(this.files)">
+        <i class="fa-solid fa-cloud-arrow-up" style="color: var(--indigo-600); font-size: 22px; margin-bottom: 4px;"></i>
+        <div style="font-size: 12px; font-weight: 700;">Click to upload feature docs or wireframes</div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Supported: .pdf, .docx, .png, .jpg, .zip</div>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: DEDICATED BUG CHAT -->
-  <div class="modal-overlay" id="modal-bug-chat">
-    <div class="chat-modal-box">
-      <div class="chat-modal-header">
-        <div>
-          <h3 style="font-size: 14px; font-weight: 700; color: var(--text-main);" id="specific-bug-chat-title">
-            <i class="fa-solid fa-comments" style="color: var(--emerald-600);"></i> Discussion: BUG-AUTH_MODULE-001
-          </h3>
-          <p style="font-size: 11px; color: var(--text-muted); margin-top: 2px;" id="specific-bug-chat-sub">
-            Linked Test Case: TC_AUTH_001 • Assignee: Devon (Developer) • Severity: CRITICAL
-          </p>
-        </div>
-        <button class="modal-close" onclick="closeModal('modal-bug-chat')">&times;</button>
-      </div>
-
-      <div class="chat-modal-body" id="specific-chat-stream">
-        <div class="chat-bubble tester">
-          <strong>Rahul (Tester):</strong>
-          Hi Devon, on iOS Safari, pasting the 6-digit OTP only fills the first input box and doesn't advance focus. (Logged from TC_AUTH_001).
-        </div>
-        <div class="chat-bubble dev">
-          <strong>Devon (Developer):</strong>
-          Thanks for the bug report! I checked the paste handler for Feature User Auth & OTP. Pushing fix to staging shortly!
-        </div>
-      </div>
-
-      <div class="chat-modal-footer">
-        <input type="text" class="form-control" id="specific-chat-input" placeholder="Type reply to developer..." style="flex:1;" onkeypress="if(event.key==='Enter') sendSpecificChat()">
-        <button class="btn btn-secondary" style="padding: 0 10px;" title="Attach Screenshot"><i class="fa-solid fa-paperclip"></i></button>
-        <button class="btn btn-primary" style="padding: 0 16px;" onclick="sendSpecificChat()"><i class="fa-solid fa-paper-plane"></i> Send</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- MODAL: CREATE PROJECT -->
-  <div class="modal-overlay" id="modal-project-create">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3><i class="fa-solid fa-folder-plus" style="color: var(--emerald-600);"></i> Create Project in Region</h3>
-        <button class="modal-close" onclick="closeModal('modal-project-create')">&times;</button>
-      </div>
-      <div class="form-group">
-        <label>Selected Region</label>
-        <input type="text" class="form-control" id="modal-proj-region" value="US-EAST" readonly style="font-weight:700;">
-      </div>
-      <div class="form-group">
-        <label>Project Name</label>
-        <input type="text" class="form-control" id="create-proj-name-input" placeholder="e.g. Wealth Management Platform">
-      </div>
-      <button class="btn btn-primary" style="height: 40px;" onclick="createProjectAction()">Save Project</button>
-    </div>
-  </div>
-
-  <!-- MODAL: ADD FEATURE -->
-  <div class="modal-overlay" id="modal-feature-create">
-    <div class="modal-card">
-      <div class="modal-header">
-        <h3><i class="fa-solid fa-layer-group" style="color: var(--indigo-600);"></i> Add Feature to Project</h3>
-        <button class="modal-close" onclick="closeModal('modal-feature-create')">&times;</button>
-      </div>
-      <div class="form-group">
-        <label>Feature Name</label>
-        <input type="text" class="form-control" id="create-feat-name-input" placeholder="e.g. Card Freeze Toggle">
-      </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div class="form-group">
-          <label>Sprint Number</label>
-          <input type="number" class="form-control" id="create-feat-sprint-input" value="12">
-        </div>
-        <div class="form-group">
-          <label>Version</label>
-          <input type="text" class="form-control" id="create-feat-version-input" value="v2.5.0">
-        </div>
-      </div>
-      <button class="btn btn-primary" style="height: 40px;" onclick="createFeatureAction()">Save Feature</button>
-    </div>
-  </div>
-
-  <!-- MODAL: ADD TEST CASE -->
+  <!-- MODAL: ADD MANUAL TEST CASE -->
   <div class="modal-overlay" id="modal-testcase">
     <div class="modal-card">
       <div class="modal-header">
@@ -1819,19 +2006,20 @@
       </div>
       <div class="form-group">
         <label>Feature Context</label>
-        <input type="text" class="form-control" id="tc-modal-feat" value="User Auth & OTP" readonly style="font-weight:700; color:var(--indigo-600);">
+        <input type="text" class="form-control" id="tc-modal-feat" value="" readonly style="font-weight:700; color:var(--indigo-600);">
       </div>
       <div class="form-group">
-        <label>Test Case Title</label>
+        <label>Test Case Title *</label>
         <input type="text" class="form-control" id="new-tc-title" placeholder="e.g. Verify lockout after 5 incorrect password attempts">
       </div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div class="form-group">
-          <label>Type</label>
+          <label>Test Type</label>
           <select class="form-control" id="new-tc-type">
-            <option value="FUNCTIONAL">FUNCTIONAL</option>
-            <option value="SECURITY">SECURITY</option>
-            <option value="REGRESSION">REGRESSION</option>
+            <option value="UI">UI</option>
+            <option value="API">API</option>
+            <option value="DB">DB</option>
+            <option value="E2E">E2E</option>
           </select>
         </div>
         <div class="form-group">
@@ -1840,208 +2028,885 @@
             <option value="CRITICAL">P1 - CRITICAL</option>
             <option value="HIGH">P2 - HIGH</option>
             <option value="MEDIUM">P3 - MEDIUM</option>
+            <option value="LOW">P4 - LOW</option>
           </select>
         </div>
       </div>
       <div class="form-group">
-        <label>UI Validation</label>
-        <input type="text" class="form-control" id="new-tc-ui" placeholder="Expected visual behavior or toast">
+        <label>Precondition</label>
+        <input type="text" class="form-control" id="new-tc-pre" placeholder="e.g. User initiated password reset via email">
       </div>
       <div class="form-group">
-        <label>DB Validation</label>
-        <input type="text" class="form-control" id="new-tc-db" placeholder="Expected table row check">
+        <label>Execution Steps</label>
+        <textarea class="form-control" id="new-tc-steps" placeholder="1. Navigate to URL&#10;2. Enter credentials..."></textarea>
       </div>
-      <button class="btn btn-primary" style="height: 40px;" onclick="saveNewTestCase()">Save Test Case</button>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+        <div class="form-group">
+          <label>UI Validation</label>
+          <input type="text" class="form-control" id="new-tc-ui" placeholder="e.g. Toast alert display">
+        </div>
+        <div class="form-group">
+          <label>DB Validation</label>
+          <input type="text" class="form-control" id="new-tc-db" placeholder="e.g. User status updated in table">
+        </div>
+      </div>
+      <button class="btn btn-primary" style="height: 38px;" onclick="saveNewTestCase()">Save Test Case</button>
     </div>
   </div>
 
-  <!-- MODAL: EXCEL IMPORT -->
+  <!-- MODAL: EXCEL IMPORT FOR TESTCASES -->
   <div class="modal-overlay" id="modal-excel">
     <div class="modal-card">
       <div class="modal-header">
         <h3><i class="fa-solid fa-file-excel" style="color: var(--emerald-600);"></i> Bulk Import into Feature</h3>
         <button class="modal-close" onclick="closeModal('modal-excel')">&times;</button>
       </div>
-      <div style="border: 2px dashed #cbd5e1; background: #f8fafc; border-radius: var(--radius-md); padding: 26px; text-align: center; cursor: pointer;" onclick="alert('Spreadsheet parsed into active Feature!'); closeModal('modal-excel');">
+      <div class="dropzone-box" onclick="document.getElementById('input-excel-file').click()">
+        <input type="file" id="input-excel-file" style="display:none;" accept=".xlsx, .xls" onchange="uploadBulkExcel(this.files[0])">
         <i class="fa-solid fa-cloud-arrow-up" style="font-size: 28px; color: var(--emerald-600); margin-bottom: 6px;"></i>
-        <div style="font-weight: 700; font-size: 13px;">Drop your .xlsx test suite spreadsheet here</div>
-        <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">Target: <strong id="excel-target-feat">User Auth & OTP</strong> (Must contain <code>TCFormat</code> sheet)</div>
+        <div style="font-weight: 700; font-size: 13px;">Drop or click to select .xlsx spreadsheet</div>
+        <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">Target Feature: <strong id="excel-target-feat">Feature</strong></div>
+      </div>
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+        <span style="font-size: 11px; color: var(--text-muted);">Standardized format template:</span>
+        <button class="btn-icon-link" onclick="downloadTestCaseTemplate()"><i class="fa-solid fa-download"></i> Get Template (.xlsx)</button>
       </div>
     </div>
   </div>
 
-  <!-- MODAL: CREATE BUG (ONLY ACCESSED VIA FAILED TEST CASES) -->
+  <!-- MODAL: CREATE BUG (NO DEVELOPER ASSIGNMENT REQUIRED) -->
   <div class="modal-overlay" id="modal-bug">
     <div class="modal-card">
       <div class="modal-header">
-        <h3 style="color: var(--rose-600);"><i class="fa-solid fa-bug"></i> Log Defect (Auto-Mapped from TC)</h3>
+        <h3 style="color: var(--rose-600);"><i class="fa-solid fa-bug"></i> Log Defect (Auto-Mapped from Test Case)</h3>
         <button class="modal-close" onclick="closeModal('modal-bug')">&times;</button>
       </div>
       <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
         <div class="form-group">
           <label>Mapped Feature</label>
-          <input type="text" class="form-control" id="bug-map-feat" value="User Auth & OTP" readonly style="font-weight:700; color:var(--indigo-600);">
+          <input type="text" class="form-control" id="bug-map-feat" value="" readonly style="font-weight:700; color:var(--indigo-600);">
         </div>
         <div class="form-group">
           <label>Origin Test Case</label>
-          <input type="text" class="form-control" id="bug-map-tc" value="TC_AUTH_001" readonly style="font-weight:700; color:var(--indigo-600);">
+          <input type="text" class="form-control" id="bug-map-tc" value="" readonly style="font-weight:700; color:var(--indigo-600);">
         </div>
       </div>
+      <input type="hidden" id="bug-map-tcid-numeric" value="">
       <div class="form-group">
         <label>Format ID (Auto-Generated)</label>
-        <input type="text" class="form-control" id="bug-map-id" value="BUG-USER_AUTH_&_OTP-002" readonly style="color: var(--rose-600); font-weight: 800; font-family: var(--font-mono);">
+        <input type="text" class="form-control" id="bug-map-id" value="" readonly style="color: var(--rose-600); font-weight: 800; font-family: var(--font-mono);">
       </div>
       <div class="form-group">
-        <label>Defect Title</label>
+        <label>Defect Title *</label>
         <input type="text" class="form-control" id="bug-title-input" value="">
       </div>
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
-        <div class="form-group">
-          <label>Severity</label>
-          <select class="form-control" id="bug-sev-input">
-            <option value="CRITICAL">CRITICAL</option>
-            <option value="HIGH">HIGH</option>
-            <option value="MEDIUM">MEDIUM</option>
-          </select>
-        </div>
-        <div class="form-group">
-          <label>Assign Developer</label>
-          <select class="form-control" id="bug-assign-input">
-            <option>Devon (Developer)</option>
-            <option>Alex (Developer)</option>
-            <option>David (Developer)</option>
-          </select>
-        </div>
+      <div class="form-group">
+        <label>Defect Description & Steps to Reproduce</label>
+        <textarea class="form-control" id="bug-desc-input" placeholder="Observed failure vs expected behavior"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Severity</label>
+        <select class="form-control" id="bug-sev-input">
+          <option value="CRITICAL">CRITICAL</option>
+          <option value="HIGH">HIGH</option>
+          <option value="MEDIUM">MEDIUM</option>
+          <option value="LOW">LOW</option>
+        </select>
       </div>
       <button class="btn btn-primary" style="height: 40px; background: var(--rose-600);" onclick="saveDefect()">
-        <i class="fa-solid fa-paper-plane"></i> Log Defect & Notify Developer
+        <i class="fa-solid fa-paper-plane"></i> Log Defect
       </button>
     </div>
   </div>
 
+  <!-- MODAL: AUTHENTICATION & JWT CONFIG (DEMO LOGIN REMOVED) -->
+  <div class="modal-overlay" id="modal-auth-config">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-shield-halved" style="color: var(--emerald-600);"></i> Authentication & API Settings</h3>
+        <button class="modal-close" onclick="closeModal('modal-auth-config')">&times;</button>
+      </div>
+
+      <!-- Real User Sign In Form -->
+      <div style="background: #f8fafc; border: 1px solid var(--border-default); border-radius: var(--radius-md); padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+        <div style="font-size: 12px; font-weight: 700; color: var(--text-main);"><i class="fa-solid fa-user-lock" style="color:var(--emerald-600);"></i> Account Sign In (/auth/login)</div>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+          <input type="text" class="form-control" id="login-username" placeholder="Username or Email">
+          <input type="password" class="form-control" id="login-password" placeholder="Password" onkeypress="if(event.key==='Enter') performRealLogin()">
+        </div>
+        <button class="btn btn-primary" style="height: 34px;" onclick="performRealLogin()" id="btn-real-login">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+        </button>
+      </div>
+
+      <div class="form-group">
+        <label>Or Paste JWT Access Token</label>
+        <textarea class="form-control" id="input-jwt-token" style="font-family: var(--font-mono); font-size: 11px; height: 75px;" placeholder="Bearer eyJhbGciOi..."></textarea>
+      </div>
+
+      <div class="form-group">
+        <label>API Gateway Target URL</label>
+        <input type="text" class="form-control" id="input-api-base" value="http://localhost:8082" placeholder="http://localhost:8082">
+        <span style="font-size: 10px; color: var(--text-muted);">Unified Gateway (8082), Auth Service (8081), or Main Service (8090)</span>
+      </div>
+
+      <div style="display: flex; gap: 8px; justify-content: space-between; align-items: center;">
+        <button class="btn btn-danger-outline btn-sm" onclick="performLogout()"><i class="fa-solid fa-right-from-bracket"></i> Sign Out</button>
+        <div style="display: flex; gap: 8px;">
+          <button class="btn btn-secondary" onclick="clearJwtToken()">Clear Token</button>
+          <button class="btn btn-primary" onclick="saveAuthConfig()">Save & Connect</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Stack Container -->
+  <div class="toast-container" id="toast-container"></div>
+
   <script>
-    let activeRegion = 'US-EAST';
-    let activeProject = 'Core Banking Platform';
-    let activeFeature = 'User Auth & OTP';
-    let activeSprint = 'Sprint 12 • v2.4.0';
+    // ==========================================
+    // 1. CONFIGURATION & RUNTIME STATE
+    // ==========================================
+    function getApiBase() {
+      const configured = localStorage.getItem('tat_api_base');
+      if (configured && configured.trim()) return configured.trim().replace(/\/$/, '');
+      if (window.location.port === '8090') return window.location.origin;
+      return 'http://localhost:8082';
+    }
+
+    let API_BASE = getApiBase();
+    let isLiveApiConnected = false;
+
+    let activeRegion = 'ALL';
+    let availableRegions = [];
+    let currentProjects = [];
+    let activeProject = null;
+    let currentFeatures = [];
+    let activeFeature = null;
     let activeFeatureFilterCategory = 'ALL';
 
-    const projectData = {
-      'US-EAST': [
-        { 
-          id: 'PROJ-1', 
-          name: 'Core Banking Platform', 
-          version: 'v2.1', 
-          status: 'ACTIVE', 
-          features: [
-            { id: 'FEAT-1', name: 'User Auth & OTP', sprint: 'Sprint 12 • v2.4.0', sprintNum: 12, bugs: 1, tcCount: 2, status: 'BUGS' },
-            { id: 'FEAT-2', name: 'Fund Transfer & UPI', sprint: 'Sprint 12 • v2.4.1', sprintNum: 12, bugs: 0, tcCount: 4, status: 'PASSED' },
-            { id: 'FEAT-3', name: 'Account Statements POI', sprint: 'Sprint 11 • v2.3.0', sprintNum: 11, bugs: 0, tcCount: 3, status: 'PASSED' }
-          ]
-        },
-        { 
-          id: 'PROJ-2', 
-          name: 'Retail Banking Portal', 
-          version: 'v1.4', 
-          status: 'ACTIVE', 
-          features: [
-            { id: 'FEAT-R1', name: 'Customer Onboarding', sprint: 'Sprint 5 • v1.2', sprintNum: 5, bugs: 0, tcCount: 5, status: 'PASSED' },
-            { id: 'FEAT-R2', name: 'KYC Verification Flow', sprint: 'Sprint 6 • v1.3', sprintNum: 6, bugs: 1, tcCount: 3, status: 'BUGS' }
-          ]
-        },
-        { 
-          id: 'PROJ-3', 
-          name: 'Wealth Management Suite', 
-          version: 'v1.0', 
-          status: 'ACTIVE', 
-          features: [
-            { id: 'FEAT-W1', name: 'Portfolio Rebalancing', sprint: 'Sprint 8 • v1.0', sprintNum: 8, bugs: 1, tcCount: 4, status: 'BUGS' }
-          ]
-        }
-      ],
-      'EU-CENTRAL': [
-        { 
-          id: 'PROJ-EU1', 
-          name: 'Payment Gateway API', 
-          version: 'v1.8', 
-          status: 'ACTIVE', 
-          features: [
-            { id: 'FEAT-E1', name: 'Stripe 3DS Webhook', sprint: 'Sprint 10 • v1.8', sprintNum: 10, bugs: 0, tcCount: 3, status: 'PASSED' },
-            { id: 'FEAT-E2', name: 'SEPA Direct Debit Flow', sprint: 'Sprint 11 • v1.9', sprintNum: 11, bugs: 1, tcCount: 2, status: 'BUGS' }
-          ]
-        }
-      ],
-      'APAC': [
-        { 
-          id: 'PROJ-APAC1', 
-          name: 'Stock Portfolio Hub', 
-          version: 'v1.0', 
-          status: 'ACTIVE', 
-          features: [
-            { id: 'FEAT-A1', name: 'Stock Portfolio Sync', sprint: 'Sprint 1 • v0.9', sprintNum: 1, bugs: 0, tcCount: 2, status: 'PASSED' },
-            { id: 'FEAT-A2', name: 'Mutual Fund SIP Engine', sprint: 'Sprint 2 • v1.0', sprintNum: 2, bugs: 0, tcCount: 3, status: 'PASSED' }
-          ]
-        }
-      ]
-    };
+    let currentTestCases = [];
+    let currentDefects = [];
+    let currentNotifications = [];
+    let activeNotifFilter = 'ALL';
 
+    let activeBugAttachmentId = null;
+    let activeChatBugId = null;
+
+    // Helper: Dynamic API URL Routing
+    function getApiUrl(path) {
+      const base = getApiBase();
+      const normalizedPath = path.startsWith('/') ? path : '/' + path;
+
+      // When connected directly to 8090, auth endpoints need to go through Gateway (8082) or Auth Service (8081)
+      if (normalizedPath.startsWith('/auth') && base.includes(':8090')) {
+        return `http://localhost:8082${normalizedPath}`;
+      }
+
+      return `${base}${normalizedPath}`;
+    }
+
+    // Helper: Cookie Reader for CSRF Protection
+    function getCookie(name) {
+      const match = document.cookie.match(new RegExp('(^|;\\s*)(' + name + ')=([^;]*)'));
+      return match ? decodeURIComponent(match[3]) : null;
+    }
+
+    // Helper: Auth & CSRF Headers
+    function getAuthHeaders() {
+      const token = localStorage.getItem('token') || localStorage.getItem('jwt') || '';
+      const headers = {
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+      };
+      const csrf = getCookie('XSRF-TOKEN') || getCookie('CSRF-TOKEN');
+      if (csrf) {
+        headers['X-XSRF-TOKEN'] = csrf;
+      }
+      return headers;
+    }
+
+    // Helper: Standard Fetch Wrapper with automatic 401 handling
+    async function apiFetch(path, options = {}) {
+      const url = getApiUrl(path);
+      const isFormData = (options.body instanceof FormData);
+      const headers = {
+        'Accept': 'application/json',
+        ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+        ...getAuthHeaders(),
+        ...(options.headers || {})
+      };
+
+      if (isFormData) {
+        delete headers['Content-Type'];
+      }
+
+      try {
+        const res = await fetch(url, { ...options, headers, credentials: 'include' });
+        if (res.status === 401) {
+          updateApiStatusIndicator(false, 'Unauthorized');
+          showToast('Authentication required or session expired. Please sign in.', 'error');
+          openModal('modal-auth-config');
+        }
+        return res;
+      } catch (err) {
+        console.warn(`apiFetch network error [${path}]:`, err);
+        throw err;
+      }
+    }
+
+    // Helper: Authenticated File Download via Blob
+    async function downloadFileWithAuth(url, defaultFileName) {
+      try {
+        showToast('Initiating file download...', 'info');
+        const token = localStorage.getItem('token') || '';
+        const csrf = getCookie('XSRF-TOKEN') || getCookie('CSRF-TOKEN');
+        const headers = {
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          ...(csrf ? { 'X-XSRF-TOKEN': csrf } : {})
+        };
+
+        const res = await fetch(url, { headers, credentials: 'include' });
+        if (!res.ok) {
+          throw new Error(`Download failed with status ${res.status}`);
+        }
+
+        const blob = await res.blob();
+        let fileName = defaultFileName;
+        const disposition = res.headers.get('content-disposition');
+        if (disposition) {
+          const match = disposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
+          if (match && match[1]) {
+            fileName = match[1].replace(/['"]/g, '').trim();
+          }
+        }
+
+        const blobUrl = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = blobUrl;
+        a.download = fileName;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(blobUrl);
+        showToast(`Downloaded: ${fileName}`, 'success');
+      } catch (err) {
+        console.error('File download error:', err);
+        showToast(err.message || 'Error downloading file', 'error');
+      }
+    }
+
+    // Helper: Toast Notifications
+    function showToast(message, type = 'info') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast-card ${type}`;
+      let icon = 'fa-circle-info';
+      if (type === 'success') icon = 'fa-circle-check';
+      if (type === 'error') icon = 'fa-triangle-exclamation';
+      if (type === 'warning') icon = 'fa-bell';
+
+      toast.innerHTML = `
+        <i class="fa-solid ${icon}"></i>
+        <div style="flex:1;">${escapeHtml(message)}</div>
+        <button onclick="this.parentElement.remove()" style="background:none;border:none;color:#94a3b8;cursor:pointer;"><i class="fa-solid fa-xmark"></i></button>
+      `;
+      container.appendChild(toast);
+      setTimeout(() => toast.remove(), 4500);
+    }
+
+    // Modal Helpers
     function openModal(id) { 
-      document.getElementById(id).classList.add('show'); 
+      const el = document.getElementById(id);
+      if (el) el.classList.add('show'); 
     }
     
     function closeModal(id) { 
-      document.getElementById(id).classList.remove('show'); 
+      const el = document.getElementById(id);
+      if (el) el.classList.remove('show'); 
     }
 
-    // REGION CHANGE
-    function onRegionChange(reg) {
-      activeRegion = reg;
-      document.getElementById('modal-proj-region').value = reg;
-      document.getElementById('sidebar-proj-search').value = '';
+    function updateApiStatusIndicator(connected, customLabel) {
+      isLiveApiConnected = connected;
+      const statusPill = document.getElementById('api-status-label');
+      const statusDot = document.getElementById('status-dot');
+      if (connected) {
+        statusDot.className = 'status-dot-pulse';
+        statusPill.innerText = customLabel || 'API Connected';
+      } else {
+        statusDot.className = 'status-dot-pulse offline';
+        statusPill.innerText = customLabel || 'Offline / Set JWT';
+      }
+    }
+
+    // ==========================================
+    // 2. APP INITIALIZATION & AUTHENTICATION
+    // ==========================================
+    window.addEventListener('DOMContentLoaded', async () => {
+      // Set saved API base in modal input
+      const inputBase = document.getElementById('input-api-base');
+      if (inputBase) inputBase.value = getApiBase();
+
+      const inputJwt = document.getElementById('input-jwt-token');
+      if (inputJwt) inputJwt.value = localStorage.getItem('token') || '';
+
+      checkLocalAuth();
+      await fetchProjectsFromApi();
+      await fetchInAppNotifications();
+    });
+
+    function checkLocalAuth() {
+      const token = localStorage.getItem('token') || '';
+      const authLabel = document.getElementById('auth-btn-label');
+      const userDisplay = localStorage.getItem('tat_user_fullname');
+      const userRole = localStorage.getItem('tat_user_role');
+
+      if (userDisplay) {
+        document.getElementById('user-display-name').innerText = userDisplay;
+        const initials = userDisplay.split(' ').map(n => n[0]).join('').substring(0, 2).toUpperCase();
+        document.getElementById('user-avatar-initials').innerText = initials || 'TS';
+      }
+      if (userRole) {
+        const roleEl = document.getElementById('user-display-role');
+        if (roleEl) roleEl.innerText = `${userRole} (Tester)`;
+      }
+
+      if (token) {
+        authLabel.innerText = 'Token Active';
+        authLabel.style.color = 'var(--emerald-600)';
+      } else {
+        authLabel.innerText = 'JWT';
+        authLabel.style.color = '';
+      }
+    }
+
+    async function performRealLogin() {
+      const u = document.getElementById('login-username').value.trim();
+      const p = document.getElementById('login-password').value.trim();
+      if (!u || !p) {
+        showToast('Please enter your username and password', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btn-real-login');
+      const oldHtml = btn ? btn.innerHTML : '';
+      if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Authenticating...';
+      }
+
+      try {
+        let authUrl = getApiUrl('/auth/login');
+        let res;
+        try {
+          res = await fetch(authUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ username: u, password: p })
+          });
+        } catch (initialErr) {
+          // Direct fallback to Auth service port 8081 if Gateway route failed
+          authUrl = 'http://localhost:8081/auth/login';
+          res = await fetch(authUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: JSON.stringify({ username: u, password: p })
+          });
+        }
+
+        if (res && res.ok) {
+          const json = await res.json();
+          const authData = json.data || json;
+          const token = authData.token || '';
+          if (token) {
+            localStorage.setItem('token', token);
+            if (authData.refreshToken) localStorage.setItem('refresh_token', authData.refreshToken);
+            const displayName = authData.fullName || authData.name || authData.username || u;
+            const roleName = authData.role || (authData.roles && authData.roles[0]) || 'TESTER';
+
+            localStorage.setItem('tat_user_fullname', displayName);
+            localStorage.setItem('tat_user_role', roleName);
+
+            document.getElementById('input-jwt-token').value = token;
+            closeModal('modal-auth-config');
+            checkLocalAuth();
+            showToast(`Sign in successful! Welcome ${displayName}`, 'success');
+            await fetchProjectsFromApi();
+            await fetchInAppNotifications();
+            return;
+          }
+        }
+
+        const errJson = await res.json().catch(() => ({}));
+        showToast(errJson.message || 'Invalid username or password', 'error');
+      } catch (err) {
+        console.error('Login error:', err);
+        showToast('Could not reach Auth service. Check server status.', 'error');
+      } finally {
+        if (btn) {
+          btn.disabled = false;
+          btn.innerHTML = oldHtml;
+        }
+      }
+    }
+
+    async function performLogout() {
+      try {
+        await apiFetch('/auth/logout', {
+          method: 'POST',
+          body: JSON.stringify({ refreshToken: localStorage.getItem('refresh_token') || '' })
+        });
+      } catch (e) {}
+
+      localStorage.removeItem('token');
+      localStorage.removeItem('jwt');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('tat_user_fullname');
+      localStorage.removeItem('tat_user_role');
+
+      document.getElementById('input-jwt-token').value = '';
+      document.getElementById('user-display-name').innerText = 'Signed Out';
+      document.getElementById('user-display-role').innerText = 'Please Sign In';
+      document.getElementById('user-avatar-initials').innerText = '--';
+
+      checkLocalAuth();
+      updateApiStatusIndicator(false, 'Signed Out');
+      closeModal('modal-auth-config');
+      showToast('Logged out successfully', 'info');
+    }
+
+    function saveAuthConfig() {
+      const token = document.getElementById('input-jwt-token').value.trim();
+      const base = document.getElementById('input-api-base').value.trim();
+
+      if (token) localStorage.setItem('token', token);
+      if (base) {
+        API_BASE = base;
+        localStorage.setItem('tat_api_base', base);
+      }
+
+      closeModal('modal-auth-config');
+      checkLocalAuth();
+      showToast('API Configuration saved. Re-connecting...', 'success');
+      fetchProjectsFromApi();
+      fetchInAppNotifications();
+    }
+
+    function clearJwtToken() {
+      localStorage.removeItem('token');
+      localStorage.removeItem('jwt');
+      document.getElementById('input-jwt-token').value = '';
+      checkLocalAuth();
+      updateApiStatusIndicator(false, 'Token Cleared');
+      showToast('JWT token cleared.', 'info');
+    }
+
+    // ==========================================
+    // 3. PROJECTS & DYNAMIC REGIONS (FROM DB)
+    // ==========================================
+    async function fetchProjectsFromApi() {
+      const statusPill = document.getElementById('api-status-label');
+      statusPill.innerText = 'Connecting...';
+
+      try {
+        const res = await apiFetch('/project');
+        if (res.ok) {
+          const json = await res.json();
+          const rawList = json.data || json || [];
+          const apiProjects = rawList.map(item => {
+            const p = item.project || item;
+            return {
+              projectId: p.projectId,
+              projectName: p.projectName,
+              region: (p.region && p.region.trim()) ? p.region.trim() : 'DEFAULT',
+              description: p.description || '',
+              status: p.status || 'ACTIVE'
+            };
+          });
+
+          if (apiProjects.length > 0) {
+            currentProjects = apiProjects;
+            updateApiStatusIndicator(true, 'API Connected');
+            updateDynamicRegionsFromProjects();
+            filterProjects();
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Backend API request failed:', err);
+      }
+
+      updateApiStatusIndicator(false, 'Offline / Set JWT');
+      currentProjects = [];
+      updateDynamicRegionsFromProjects();
       filterProjects();
     }
 
-    // PROJECT FILTER & SELECTION
-    function filterProjects() {
-      const search = (document.getElementById('sidebar-proj-search').value || '').toLowerCase();
-      const projSelect = document.getElementById('sidebar-project-select');
-      projSelect.innerHTML = '';
-      
-      const allProjects = projectData[activeRegion] || [];
-      const filtered = allProjects.filter(p => p.name.toLowerCase().includes(search));
+    function updateDynamicRegionsFromProjects() {
+      const regionsSet = new Set();
+      currentProjects.forEach(p => {
+        if (p.region && p.region.trim()) {
+          regionsSet.add(p.region.trim());
+        }
+      });
+      availableRegions = Array.from(regionsSet);
 
-      document.getElementById('sidebar-proj-count').innerText = filtered.length;
+      const regionSelect = document.getElementById('sidebar-region-select');
+      const datalist = document.getElementById('datalist-regions');
+      if (regionSelect) {
+        regionSelect.innerHTML = '<option value="ALL">All Regions</option>';
+      }
+      if (datalist) datalist.innerHTML = '';
+
+      availableRegions.forEach(r => {
+        if (regionSelect) {
+          const opt = document.createElement('option');
+          opt.value = r;
+          opt.text = r;
+          regionSelect.appendChild(opt);
+        }
+        if (datalist) {
+          const dOpt = document.createElement('option');
+          dOpt.value = r;
+          datalist.appendChild(dOpt);
+        }
+      });
+
+      if (regionSelect) {
+        if (activeRegion && (activeRegion === 'ALL' || availableRegions.includes(activeRegion))) {
+          regionSelect.value = activeRegion;
+        } else if (availableRegions.length > 0) {
+          activeRegion = availableRegions[0];
+          regionSelect.value = activeRegion;
+        } else {
+          activeRegion = 'ALL';
+          regionSelect.value = 'ALL';
+        }
+      }
+    }
+
+    function onRegionChange(reg) {
+      activeRegion = reg;
+      const searchBox = document.getElementById('sidebar-proj-search');
+      if (searchBox) searchBox.value = '';
+      filterProjects();
+    }
+
+    function filterProjects() {
+      const search = (document.getElementById('sidebar-proj-search')?.value || '').toLowerCase();
+      const projSelect = document.getElementById('sidebar-project-select');
+      if (!projSelect) return;
+      projSelect.innerHTML = '';
+
+      const filtered = currentProjects.filter(p => {
+        const matchesRegion = (activeRegion === 'ALL') || !p.region || p.region === activeRegion;
+        const matchesSearch = !search || (p.projectName || '').toLowerCase().includes(search);
+        return matchesRegion && matchesSearch;
+      });
+
+      const countEl = document.getElementById('sidebar-proj-count');
+      if (countEl) countEl.innerText = filtered.length;
+
+      if (filtered.length === 0) {
+        projSelect.innerHTML = `<option value="">No projects found</option>`;
+        document.getElementById('sidebar-feature-list').innerHTML = `<div style="padding:16px 8px; font-size:11px; color:var(--text-muted); text-align:center;"><i class="fa-solid fa-folder-open"></i> No projects in region</div>`;
+        document.getElementById('sidebar-feat-count').innerText = '0';
+        activeProject = null;
+        renderFeaturesList([]);
+        return;
+      }
 
       filtered.forEach((p, idx) => {
         const opt = document.createElement('option');
-        opt.value = p.id;
-        opt.text = p.name;
+        opt.value = p.projectId;
+        opt.text = `${p.projectName} (${p.region || 'General'})`;
         if (idx === 0) opt.selected = true;
         projSelect.appendChild(opt);
       });
 
-      if (filtered.length > 0) {
-        onProjectChange(filtered[0].id);
-      } else {
-        document.getElementById('sidebar-feature-list').innerHTML = `<div style="padding:14px 8px; font-size:11px; color:var(--text-muted); text-align:center;"><i class="fa-solid fa-folder-open"></i> No projects match "${search}"</div>`;
-        document.getElementById('sidebar-feat-count').innerText = '0';
-      }
+      onProjectChange(filtered[0].projectId);
     }
 
-    function onProjectChange(projId) {
-      const list = projectData[activeRegion] || [];
-      const proj = list.find(p => p.id === projId) || list[0];
-      if (!proj) return;
+    async function onProjectChange(projId) {
+      if (!projId) return;
+      activeProject = currentProjects.find(p => String(p.projectId) === String(projId)) || currentProjects[0];
+      if (!activeProject) return;
 
-      activeProject = proj.name;
-      document.getElementById('sidebar-feat-search').value = '';
+      const featSearch = document.getElementById('sidebar-feat-search');
+      if (featSearch) featSearch.value = '';
       activeFeatureFilterCategory = 'ALL';
       resetFeaturePillsUI();
 
-      renderFeaturesList(proj.features);
+      // Update target project name in Add Feature modal
+      const featProjDisplay = document.getElementById('create-feat-proj-display');
+      if (featProjDisplay) featProjDisplay.value = activeProject.projectName;
+
+      await fetchFeaturesForProject(activeProject.projectId);
+      loadProjectAttachmentCount(activeProject.projectId);
     }
 
-    // FEATURE SEARCH & CATEGORY FILTER
+    async function loadProjectAttachmentCount(projectId) {
+      try {
+        const res = await apiFetch(`/project/${projectId}/attachments`);
+        if (res.ok) {
+          const list = await res.json();
+          const count = (list.data || list || []).length;
+          document.getElementById('proj-files-count').innerText = count;
+          return;
+        }
+      } catch (e) {}
+      document.getElementById('proj-files-count').innerText = '0';
+    }
+
+    // CREATE PROJECT ACTION
+    async function createProjectAction() {
+      const name = document.getElementById('create-proj-name-input').value.trim();
+      const reg = document.getElementById('create-proj-region-input').value.trim() || 'DEFAULT';
+      const desc = document.getElementById('create-proj-desc-input').value.trim();
+      const comments = document.getElementById('create-proj-comments-input').value.trim();
+
+      if (!name) {
+        showToast('Please enter project name', 'error');
+        return;
+      }
+
+      try {
+        const res = await apiFetch('/project', {
+          method: 'POST',
+          body: JSON.stringify({ projectName: name, region: reg, description: desc, comments: comments })
+        });
+
+        if (res.ok) {
+          closeModal('modal-project-create');
+          document.getElementById('create-proj-name-input').value = '';
+          document.getElementById('create-proj-desc-input').value = '';
+          document.getElementById('create-proj-comments-input').value = '';
+          showToast(`Project "${name}" created successfully!`, 'success');
+          await fetchProjectsFromApi();
+          return;
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Failed to create project on server', 'error');
+        }
+      } catch (e) {
+        console.warn('Could not create project:', e);
+        showToast('Network error while creating project', 'error');
+      }
+    }
+
+    // EDIT PROJECT DETAILS
+    function openEditProjectModal() {
+      if (!activeProject) return;
+      document.getElementById('edit-proj-name').value = activeProject.projectName || '';
+      document.getElementById('edit-proj-region').value = activeProject.region || 'DEFAULT';
+      document.getElementById('edit-proj-status').value = activeProject.status || 'ACTIVE';
+      document.getElementById('edit-proj-desc').value = activeProject.description || '';
+      openModal('modal-project-edit');
+    }
+
+    async function saveProjectDetails() {
+      if (!activeProject) return;
+      const name = document.getElementById('edit-proj-name').value.trim();
+      const reg = document.getElementById('edit-proj-region').value.trim() || 'DEFAULT';
+      const desc = document.getElementById('edit-proj-desc').value.trim();
+
+      if (!name) {
+        showToast('Please enter project name', 'error');
+        return;
+      }
+
+      try {
+        const res = await apiFetch(`/project/${activeProject.projectId}`, {
+          method: 'PUT',
+          body: JSON.stringify({ projectName: name, region: reg, description: desc, comments: '' })
+        });
+
+        if (res.ok) {
+          closeModal('modal-project-edit');
+          showToast(`Project "${name}" updated successfully!`, 'success');
+          await fetchProjectsFromApi();
+          return;
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Failed to update project', 'error');
+        }
+      } catch (e) {
+        console.warn('Could not update project on server:', e);
+        showToast('Network error while updating project', 'error');
+      }
+    }
+
+    // PROJECT ATTACHMENTS
+    function openProjectAttachmentsModal() {
+      renderProjectAttachments();
+      openModal('modal-project-attachments');
+    }
+
+    async function renderProjectAttachments() {
+      const list = document.getElementById('project-attachments-list');
+      list.innerHTML = `<div style="text-align:center; padding:12px; font-size:11px; color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Loading files...</div>`;
+
+      let files = [];
+      if (activeProject) {
+        try {
+          const res = await apiFetch(`/project/${activeProject.projectId}/attachments`);
+          if (res.ok) {
+            const json = await res.json();
+            files = json.data || json || [];
+          }
+        } catch (e) {}
+      }
+
+      list.innerHTML = '';
+      if (!files.length) {
+        list.innerHTML = `<div style="text-align:center; padding:16px; font-size:11px; color:var(--text-muted);"><i class="fa-solid fa-paperclip"></i> No files uploaded to project yet.</div>`;
+        return;
+      }
+
+      files.forEach(f => {
+        const item = document.createElement('div');
+        item.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid var(--border-default); border-radius:var(--radius-sm); padding:8px 12px; font-size:12px;";
+        const sizeStr = f.fileSize ? `(${Math.round(f.fileSize / 1024)} KB)` : '';
+        item.innerHTML = `
+          <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80%;">
+            <i class="fa-solid fa-file" style="color:var(--emerald-600); margin-right:6px;"></i> 
+            <strong>${escapeHtml(f.fileName)}</strong> 
+            <span style="font-size:10px; color:var(--text-muted);">${sizeStr}</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="downloadProjectAttachment(${activeProject.projectId})" title="Download"><i class="fa-solid fa-download"></i></button>
+        `;
+        list.appendChild(item);
+      });
+      document.getElementById('proj-files-count').innerText = files.length;
+    }
+
+    async function handleProjectFileUpload(files) {
+      if (!files || !files.length || !activeProject) return;
+      const fd = new FormData();
+      Array.from(files).forEach(f => fd.append('files', f));
+
+      try {
+        showToast('Uploading project attachments...', 'info');
+        const res = await apiFetch(`/project/${activeProject.projectId}/attachments`, {
+          method: 'POST',
+          body: fd
+        });
+        if (res.ok) {
+          showToast('Files uploaded to project successfully!', 'success');
+          await renderProjectAttachments();
+          return;
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Failed to upload project files', 'error');
+        }
+      } catch (e) {
+        showToast('Network error while uploading project files', 'error');
+      }
+    }
+
+    function downloadProjectAttachment(projectId) {
+      downloadFileWithAuth(getApiUrl(`/project/${projectId}/attachments/download`), `project_${projectId}_attachments.zip`);
+    }
+
+    // ==========================================
+    // 4. FEATURES MANAGEMENT
+    // ==========================================
+    async function fetchFeaturesForProject(projectId) {
+      const featList = document.getElementById('sidebar-feature-list');
+      featList.innerHTML = `<div style="padding:14px 8px; font-size:11px; color:var(--text-muted); text-align:center;"><i class="fa-solid fa-spinner fa-spin"></i> Loading features...</div>`;
+
+      try {
+        const res = await apiFetch(`/feature/project/${projectId}`);
+        if (res.ok) {
+          const json = await res.json();
+          const rawFeatures = json.data || json || [];
+          currentFeatures = rawFeatures.map(item => {
+            const f = item.feature || item;
+            return {
+              featureId: f.featureId,
+              featureName: f.featureName,
+              sprint: f.sprint || 1,
+              featureVersion: f.featureVersion || 'v1.0',
+              status: f.status || 'ACTIVE',
+              description: f.description || ''
+            };
+          });
+          renderFeaturesList(currentFeatures);
+          return;
+        }
+      } catch (e) {
+        console.warn('Error fetching features:', e);
+      }
+
+      currentFeatures = [];
+      renderFeaturesList(currentFeatures);
+    }
+
+    function renderFeaturesList(features) {
+      const featList = document.getElementById('sidebar-feature-list');
+      featList.innerHTML = '';
+      document.getElementById('sidebar-feat-count').innerText = features.length;
+
+      if (features.length === 0) {
+        featList.innerHTML = `<div style="padding:16px 8px; font-size:11px; color:var(--text-muted); text-align:center;"><i class="fa-solid fa-layer-group"></i> No features in project</div>`;
+        document.getElementById('topbar-feature-title').innerText = 'No Features';
+        document.getElementById('topbar-feature-sprint').innerText = '--';
+        document.getElementById('feature-tc-table-body').innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 32px; color: var(--text-muted);">Select or add a feature to view test cases.</td></tr>`;
+        document.getElementById('feature-bugs-table-body').innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 32px; color: var(--text-muted);">No defects to display.</td></tr>`;
+        activeFeature = null;
+        updateFeatureKpis();
+        return;
+      }
+
+      features.forEach((f, idx) => {
+        const item = document.createElement('div');
+        item.className = `feature-nav-item ${idx === 0 ? 'active' : ''}`;
+        item.onclick = () => selectFeature(f, item);
+        item.innerHTML = `
+          <div style="overflow:hidden;">
+            <div class="f-name" title="${escapeHtml(f.featureName)}">${escapeHtml(f.featureName)}</div>
+            <div class="f-sprint">Sprint ${f.sprint} • ${escapeHtml(f.featureVersion)}</div>
+          </div>
+          <span class="badge-tag badge-pass" id="feat-badge-${f.featureId}" style="font-size: 10px;">Active</span>
+        `;
+        featList.appendChild(item);
+      });
+
+      if (features.length > 0) {
+        selectFeature(features[0], featList.children[0]);
+      }
+    }
+
+    async function selectFeature(feature, el) {
+      activeFeature = feature;
+
+      document.querySelectorAll('.feature-nav-item').forEach(i => i.classList.remove('active'));
+      if (el) el.classList.add('active');
+
+      document.getElementById('topbar-feature-title').innerText = feature.featureName;
+      document.getElementById('topbar-feature-sprint').innerText = `Sprint ${feature.sprint} • ${feature.featureVersion}`;
+      document.getElementById('topbar-feature-status').innerText = feature.status || 'ACTIVE';
+      document.getElementById('tc-modal-feat').value = feature.featureName;
+      document.getElementById('excel-target-feat').innerText = feature.featureName;
+
+      await loadFeatureTestCases(feature.featureId);
+      await loadFeatureDefects(feature.featureId);
+      loadFeatureDocsCount(feature.featureId);
+    }
+
+    async function loadFeatureDocsCount(featureId) {
+      try {
+        const res = await apiFetch(`/feature/${featureId}/attachments`);
+        if (res.ok) {
+          const list = await res.json();
+          document.getElementById('feat-docs-count').innerText = (list.data || list || []).length;
+          return;
+        }
+      } catch (e) {}
+      document.getElementById('feat-docs-count').innerText = '0';
+    }
+
     function setFeatureCategoryFilter(cat, btn) {
       activeFeatureFilterCategory = cat;
       document.querySelectorAll('.pill-filter-btn').forEach(b => b.classList.remove('active'));
@@ -2056,73 +2921,984 @@
     }
 
     function filterFeatures() {
-      const list = projectData[activeRegion] || [];
-      const currentProjId = document.getElementById('sidebar-project-select').value;
-      const proj = list.find(p => p.id === currentProjId) || list[0];
-      if (!proj) return;
-
-      const search = (document.getElementById('sidebar-feat-search').value || '').toLowerCase();
-      
-      const filtered = proj.features.filter(f => {
-        const matchesSearch = !search || f.name.toLowerCase().includes(search) || f.sprint.toLowerCase().includes(search);
-        let matchesCat = true;
-        if (activeFeatureFilterCategory === 'BUGS') {
-          matchesCat = f.bugs > 0;
-        } else if (activeFeatureFilterCategory === 'PASSED') {
-          matchesCat = f.bugs === 0;
-        }
-        return matchesSearch && matchesCat;
+      const search = (document.getElementById('sidebar-feat-search')?.value || '').toLowerCase();
+      const filtered = currentFeatures.filter(f => {
+        const matchesSearch = !search || f.featureName.toLowerCase().includes(search) || `sprint ${f.sprint}`.includes(search);
+        return matchesSearch;
       });
-
       renderFeaturesList(filtered);
     }
 
-    function renderFeaturesList(features) {
-      const featList = document.getElementById('sidebar-feature-list');
-      featList.innerHTML = '';
-      document.getElementById('sidebar-feat-count').innerText = features.length;
+    // CREATE FEATURE ACTION
+    async function createFeatureAction() {
+      const name = document.getElementById('create-feat-name-input').value.trim();
+      const sprint = parseInt(document.getElementById('create-feat-sprint-input').value) || 1;
+      const ver = document.getElementById('create-feat-version-input').value.trim() || 'v1.0';
+      const desc = document.getElementById('create-feat-desc-input').value.trim();
 
-      if (features.length === 0) {
-        featList.innerHTML = `<div style="padding:14px 8px; font-size:11px; color:var(--text-muted); text-align:center;"><i class="fa-solid fa-magnifying-glass"></i> No features match filter</div>`;
+      if (!name) {
+        showToast('Please enter feature name', 'error');
         return;
       }
+      const projId = activeProject ? activeProject.projectId : 1;
 
-      features.forEach((f, idx) => {
-        const item = document.createElement('div');
-        item.className = `feature-nav-item ${idx === 0 ? 'active' : ''}`;
-        item.setAttribute('data-status', f.bugs > 0 ? 'BUGS' : 'PASSED');
-        item.setAttribute('data-sprint', f.sprintNum || 12);
-        item.onclick = function() { selectFeature(f.id, f.name, f.sprint, item); };
-        item.innerHTML = `
-          <div>
-            <div class="f-name" title="${f.name}">${f.name}</div>
-            <div class="f-sprint">${f.sprint}</div>
-          </div>
-          ${f.bugs > 0 ? `<span class="badge-tag badge-fail" style="font-size:10px;">${f.bugs} Bug</span>` : `<span class="badge-tag badge-pass" style="font-size:10px;">Passed</span>`}
-        `;
-        featList.appendChild(item);
-      });
+      try {
+        const res = await apiFetch('/feature', {
+          method: 'POST',
+          body: JSON.stringify({ projectId: projId, featureName: name, sprint: sprint, featureVersion: ver, description: desc })
+        });
 
-      if (features.length > 0) {
-        selectFeature(features[0].id, features[0].name, features[0].sprint, featList.children[0]);
+        if (res.ok) {
+          closeModal('modal-feature-create');
+          document.getElementById('create-feat-name-input').value = '';
+          document.getElementById('create-feat-desc-input').value = '';
+          showToast(`Feature "${name}" added to project!`, 'success');
+          await fetchFeaturesForProject(projId);
+          return;
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Failed to create feature', 'error');
+        }
+      } catch (e) {
+        console.warn('Could not create feature:', e);
+        showToast('Network error while creating feature', 'error');
       }
     }
 
-    function selectFeature(featId, featName, sprint, el) {
-      activeFeature = featName;
-      activeSprint = sprint;
+    // EDIT FEATURE DETAILS
+    function openEditFeatureModal() {
+      if (!activeFeature) return;
+      document.getElementById('edit-feat-name').value = activeFeature.featureName || '';
+      document.getElementById('edit-feat-sprint').value = activeFeature.sprint || 1;
+      document.getElementById('edit-feat-version').value = activeFeature.featureVersion || 'v1.0';
+      document.getElementById('edit-feat-status').value = activeFeature.status || 'ACTIVE';
+      document.getElementById('edit-feat-desc').value = activeFeature.description || '';
+      openModal('modal-feature-edit');
+    }
 
-      document.querySelectorAll('.feature-nav-item').forEach(i => i.classList.remove('active'));
-      if (el) el.classList.add('active');
+    async function saveFeatureDetails() {
+      if (!activeFeature) return;
+      const name = document.getElementById('edit-feat-name').value.trim();
+      const sprint = parseInt(document.getElementById('edit-feat-sprint').value) || 1;
+      const ver = document.getElementById('edit-feat-version').value.trim() || 'v1.0';
+      const desc = document.getElementById('edit-feat-desc').value.trim();
 
-      document.getElementById('topbar-feature-title').innerText = featName;
-      document.getElementById('topbar-feature-sprint').innerText = sprint;
-      document.getElementById('tc-modal-feat').value = featName;
-      document.getElementById('excel-target-feat').innerText = featName;
+      if (!name) {
+        showToast('Please enter feature name', 'error');
+        return;
+      }
 
-      switchFeatureTab('tc');
-      filterTestCases();
-      filterDefects();
+      try {
+        const res = await apiFetch(`/feature/${activeFeature.featureId}`, {
+          method: 'PUT',
+          body: JSON.stringify({ featureName: name, sprint: sprint, featureVersion: ver, description: desc })
+        });
+
+        if (res.ok) {
+          closeModal('modal-feature-edit');
+          showToast(`Feature "${name}" updated!`, 'success');
+          await fetchFeaturesForProject(activeProject.projectId);
+          return;
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Failed to update feature', 'error');
+        }
+      } catch (e) {
+        console.warn('Could not update feature on server:', e);
+        showToast('Network error while updating feature', 'error');
+      }
+    }
+
+    // FEATURE ATTACHMENTS (DOCS)
+    function openFeatureAttachmentsModal() {
+      renderFeatureAttachments();
+      openModal('modal-feature-attachments');
+    }
+
+    async function renderFeatureAttachments() {
+      const list = document.getElementById('feature-attachments-list');
+      list.innerHTML = `<div style="text-align:center; padding:12px; font-size:11px; color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Loading docs...</div>`;
+
+      let files = [];
+      if (activeFeature) {
+        try {
+          const res = await apiFetch(`/feature/${activeFeature.featureId}/attachments`);
+          if (res.ok) {
+            const json = await res.json();
+            files = json.data || json || [];
+          }
+        } catch (e) {}
+      }
+
+      list.innerHTML = '';
+      if (!files.length) {
+        list.innerHTML = `<div style="text-align:center; padding:16px; font-size:11px; color:var(--text-muted);"><i class="fa-solid fa-file-lines"></i> No documentation uploaded yet for this feature.</div>`;
+        return;
+      }
+
+      files.forEach(f => {
+        const item = document.createElement('div');
+        item.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid var(--border-default); border-radius:var(--radius-sm); padding:8px 12px; font-size:12px;";
+        const sizeStr = f.fileSize ? `(${Math.round(f.fileSize / 1024)} KB)` : '';
+        item.innerHTML = `
+          <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80%;">
+            <i class="fa-solid fa-file-lines" style="color:var(--indigo-600); margin-right:6px;"></i> 
+            <strong>${escapeHtml(f.fileName)}</strong> 
+            <span style="font-size:10px; color:var(--text-muted);">${sizeStr}</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="downloadFeatureAttachment(${activeFeature.featureId})" title="Download"><i class="fa-solid fa-download"></i></button>
+        `;
+        list.appendChild(item);
+      });
+      document.getElementById('feat-docs-count').innerText = files.length;
+    }
+
+    async function handleFeatureFileUpload(files) {
+      if (!files || !files.length || !activeFeature) return;
+      const fd = new FormData();
+      Array.from(files).forEach(f => fd.append('files', f));
+
+      try {
+        showToast('Uploading feature documentation...', 'info');
+        const res = await apiFetch(`/feature/${activeFeature.featureId}/attachments`, {
+          method: 'POST',
+          body: fd
+        });
+        if (res.ok) {
+          showToast('Feature documentation uploaded successfully!', 'success');
+          await renderFeatureAttachments();
+          return;
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Failed to upload feature docs', 'error');
+        }
+      } catch (e) {
+        showToast('Network error while uploading documentation', 'error');
+      }
+    }
+
+    function downloadFeatureAttachment(featureId) {
+      downloadFileWithAuth(getApiUrl(`/feature/${featureId}/attachments/download`), `feature_${featureId}_docs.zip`);
+    }
+
+    // ==========================================
+    // 5. TEST CASES SUITE & LIVE EXECUTION
+    // ==========================================
+    async function loadFeatureTestCases(featureId) {
+      const tbody = document.getElementById('feature-tc-table-body');
+      tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 24px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading test cases...</td></tr>`;
+
+      try {
+        const res = await apiFetch(`/testcases?featureId=${featureId}&page=0&size=100`);
+        if (res.ok) {
+          const json = await res.json();
+          const pageData = json.data || json;
+          const content = pageData.content || pageData || [];
+          currentTestCases = content.map(item => {
+            const tc = item.testCase || item;
+            const ex = item.execution || {};
+            const val = item.validations || {};
+            return {
+              testcaseId: tc.testcaseId,
+              testcaseFormatId: tc.testcaseFormatId || `TC_${tc.testcaseId}`,
+              featureId: tc.featureId,
+              title: tc.title,
+              testType: tc.testType || 'UI',
+              testPriority: tc.testPriority || 'MEDIUM',
+              testcaseStatus: tc.testcaseStatus || ex.executionStatus || 'PASSED',
+              executionStatus: ex.executionStatus || tc.testcaseStatus || 'PASS',
+              execution: {
+                precondition: ex.precondition || 'Verified prerequisites',
+                uiValidations: val.uiValidations || 'Expected visual layout verified',
+                dbValidations: val.dbValidations || 'Expected data records persisted',
+                executionSteps: ex.executionSteps || ''
+              }
+            };
+          });
+          renderTestCasesTable(currentTestCases);
+          updateFeatureKpis();
+          return;
+        }
+      } catch (e) {
+        console.warn('Error fetching test cases:', e);
+      }
+
+      currentTestCases = [];
+      renderTestCasesTable(currentTestCases);
+      updateFeatureKpis();
+    }
+
+    function renderTestCasesTable(testcases) {
+      const tbody = document.getElementById('feature-tc-table-body');
+      tbody.innerHTML = '';
+      document.getElementById('tab-tc-count').innerText = testcases.length;
+      document.getElementById('tc-filter-count-text').innerText = `Showing ${testcases.length} test cases in feature`;
+
+      if (testcases.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding: 32px; color: var(--text-muted);"><i class="fa-solid fa-vial" style="font-size:24px; margin-bottom:8px; display:block;"></i>No test cases found for this feature. Click "+ Add Test Case" or "Bulk Excel Upload".</td></tr>`;
+        return;
+      }
+
+      testcases.forEach(tc => {
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-id', tc.testcaseId);
+        tr.setAttribute('data-type', tc.testType);
+        tr.setAttribute('data-status', tc.testcaseStatus);
+
+        const isFailed = (tc.testcaseStatus === 'FAILED' || tc.testcaseStatus === 'FAIL');
+        const isPassed = (tc.testcaseStatus === 'PASSED' || tc.testcaseStatus === 'PASS');
+        const isDescope = (tc.testcaseStatus === 'DESCOPE' || tc.testcaseStatus === 'NO_RUN');
+
+        tr.innerHTML = `
+          <td>
+            <span class="tc-id">${escapeHtml(tc.testcaseFormatId)}</span>
+            <div class="tc-name">${escapeHtml(tc.title)}</div>
+            <div class="tc-pre"><strong>Precondition:</strong> ${escapeHtml(tc.execution?.precondition || 'None')}</div>
+          </td>
+          <td>
+            <span class="badge-tag badge-info">${escapeHtml(tc.testType || 'UI')}</span>
+            <div style="font-size: 11px; font-weight: 700; margin-top: 4px; color: ${tc.testPriority === 'CRITICAL' ? 'var(--rose-600)' : tc.testPriority === 'HIGH' ? 'var(--amber-600)' : 'var(--indigo-600)'};">
+              ${escapeHtml(tc.testPriority || 'MEDIUM')}
+            </div>
+          </td>
+          <td>
+            <div class="val-chip"><strong>UI:</strong> ${escapeHtml(tc.execution?.uiValidations || 'Visual validation')}</div>
+            <div class="val-chip"><strong>DB:</strong> ${escapeHtml(tc.execution?.dbValidations || 'Database check')}</div>
+          </td>
+          <td>
+            <div class="execution-pill-group">
+              <button class="exec-btn pass ${isPassed ? 'active' : ''}" onclick="executeTestCase(${tc.testcaseId}, 'PASS')">PASS</button>
+              <button class="exec-btn fail ${isFailed ? 'active' : ''}" onclick="executeTestCase(${tc.testcaseId}, 'FAIL')">FAIL</button>
+              <button class="exec-btn norun ${isDescope ? 'active' : ''}" onclick="executeTestCase(${tc.testcaseId}, 'DESCOPE')">DESCOPE</button>
+            </div>
+            <div>
+              ${isFailed ? `
+                <button class="btn btn-danger-outline btn-sm" style="width: 100%; margin-top: 4px;" onclick="triggerCreateBugFromTest('${tc.testcaseId}', '${escapeHtml(tc.testcaseFormatId)}', '${escapeHtml(tc.title)}')">
+                  <i class="fa-solid fa-bug"></i> Log Defect
+                </button>
+              ` : isPassed ? `
+                <div style="font-size: 11px; color: var(--emerald-600); font-weight: 700; margin-top: 4px;">
+                  <i class="fa-solid fa-circle-check"></i> Verified Passing
+                </div>
+              ` : `
+                <div style="font-size: 11px; color: var(--text-muted); font-weight: 600; margin-top: 4px;">
+                  <i class="fa-regular fa-clock"></i> Descoped / Not Run
+                </div>
+              `}
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // LIVE TEST EXECUTION (Connected to PATCH /testcases/{id})
+    async function executeTestCase(tcId, execStatus) {
+      const tc = currentTestCases.find(t => t.testcaseId === tcId);
+      if (!tc) return;
+
+      const previousStatus = tc.testcaseStatus;
+      tc.testcaseStatus = execStatus === 'PASS' ? 'PASSED' : execStatus === 'FAIL' ? 'FAILED' : 'DESCOPE';
+      tc.executionStatus = execStatus;
+
+      try {
+        const res = await apiFetch(`/testcases/${tcId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ executionStatus: execStatus })
+        });
+
+        if (res.ok) {
+          showToast(`Test Case [${tc.testcaseFormatId}] executed: ${execStatus}`, execStatus === 'PASS' ? 'success' : execStatus === 'FAIL' ? 'error' : 'info');
+        } else {
+          const err = await res.json().catch(() => ({}));
+          tc.testcaseStatus = previousStatus;
+          showToast(err.message || `Failed to update status on server (${res.status})`, 'error');
+        }
+      } catch (e) {
+        console.warn('Could not patch testcase status on server:', e);
+        tc.testcaseStatus = previousStatus;
+        showToast('Network error while executing test case', 'error');
+      }
+
+      renderTestCasesTable(currentTestCases);
+      updateFeatureKpis();
+
+      if (execStatus === 'FAIL') {
+        triggerCreateBugFromTest(tc.testcaseId, tc.testcaseFormatId, tc.title);
+      }
+    }
+
+    function filterTestCases() {
+      const search = (document.getElementById('tc-search-input')?.value || '').toLowerCase();
+      const typeFilter = document.getElementById('tc-type-filter')?.value || 'ALL';
+      const statusFilter = document.getElementById('tc-status-filter')?.value || 'ALL';
+
+      const filtered = currentTestCases.filter(tc => {
+        const text = `${tc.testcaseFormatId} ${tc.title} ${tc.execution?.precondition || ''}`.toLowerCase();
+        const matchesSearch = !search || text.includes(search);
+        const matchesType = (typeFilter === 'ALL') || (tc.testType === typeFilter);
+        const matchesStatus = (statusFilter === 'ALL') || (tc.testcaseStatus === statusFilter);
+        return matchesSearch && matchesType && matchesStatus;
+      });
+
+      renderTestCasesTable(filtered);
+    }
+
+    // ADD TEST CASE ACTION
+    async function saveNewTestCase() {
+      const title = document.getElementById('new-tc-title').value.trim();
+      if (!title) {
+        showToast('Please enter test case title', 'error');
+        return;
+      }
+
+      const type = document.getElementById('new-tc-type').value; // UI, API, DB, E2E
+      const prio = document.getElementById('new-tc-priority').value; // CRITICAL, HIGH, MEDIUM, LOW
+      const pre = document.getElementById('new-tc-pre').value.trim() || 'Verified system pre-state';
+      const steps = document.getElementById('new-tc-steps').value.trim() || '1. Perform action\n2. Validate outcome';
+      const ui = document.getElementById('new-tc-ui').value.trim() || 'Visual UI layout verified';
+      const db = document.getElementById('new-tc-db').value.trim() || 'Database table record updated';
+      const featId = activeFeature ? activeFeature.featureId : 1;
+
+      const payload = {
+        testCase: {
+          featureId: featId,
+          title: title,
+          testType: type,
+          testPriority: prio,
+          testcaseStatus: 'PASSED'
+        },
+        testingExecutionRequest: {
+          precondition: pre,
+          executionSteps: steps,
+          uiValidations: ui,
+          dbValidations: db
+        }
+      };
+
+      try {
+        const res = await apiFetch('/testcases', {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          closeModal('modal-testcase');
+          document.getElementById('new-tc-title').value = '';
+          document.getElementById('new-tc-pre').value = '';
+          document.getElementById('new-tc-steps').value = '';
+          document.getElementById('new-tc-ui').value = '';
+          document.getElementById('new-tc-db').value = '';
+          showToast('Test Case created successfully!', 'success');
+          await loadFeatureTestCases(featId);
+          return;
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || `Failed to create testcase (${res.status})`, 'error');
+        }
+      } catch (e) {
+        console.warn('Could not post testcase:', e);
+        showToast('Network error while creating testcase', 'error');
+      }
+    }
+
+    // BULK EXCEL UPLOAD & TEMPLATE DOWNLOAD
+    async function uploadBulkExcel(file) {
+      if (!file) return;
+      const featId = activeFeature ? activeFeature.featureId : 1;
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('featureId', featId);
+
+      try {
+        showToast('Uploading Excel test suite...', 'info');
+        const res = await apiFetch('/testcases/upload', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (res.ok) {
+          closeModal('modal-excel');
+          showToast('Excel suite parsed & imported successfully!', 'success');
+          await loadFeatureTestCases(featId);
+          return;
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Excel upload failed', 'error');
+        }
+      } catch (e) {
+        console.warn('Could not upload excel:', e);
+        showToast('Network error during Excel upload', 'error');
+      }
+    }
+
+    function downloadTestCaseTemplate() {
+      const featId = activeFeature ? activeFeature.featureId : 1;
+      downloadFileWithAuth(getApiUrl(`/testcases/${featId}/template`), `testcase_template_${featId}.xlsx`);
+    }
+
+    // ==========================================
+    // 6. DEFECTS / BUGS & ALL STATUSES
+    // ==========================================
+    async function loadFeatureDefects(featureId) {
+      const tbody = document.getElementById('feature-bugs-table-body');
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 24px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading defects...</td></tr>`;
+
+      try {
+        let res = await apiFetch(`/bugs/search?page=0&size=100`);
+        if (!res.ok) {
+          res = await apiFetch(`/bugs?page=0&size=100`);
+        }
+
+        if (res.ok) {
+          const json = await res.json();
+          const pageData = json.data || json;
+          const content = pageData.content || pageData || [];
+
+          // Map bugs and associate with active feature
+          const allBugs = content.map(item => {
+            const b = item.bug || item;
+            const tc = item.testCase || {};
+            const wf = item.workflow || {};
+            const feat = item.feature || {};
+            return {
+              bugId: b.bugId,
+              bugFormatId: b.bugFormatId || `BUG-${b.bugId}`,
+              testcaseId: tc.testcaseId,
+              testcaseFormatId: tc.testcaseFormatId || `TC_${tc.testcaseId}`,
+              featureId: feat.featureId || tc.featureId,
+              title: b.title,
+              description: b.description || '',
+              severity: b.severity || 'HIGH',
+              status: b.status || 'OPEN',
+              workflow: {
+                assignedTo: wf.assignedTo || 'Unassigned',
+                reportedBy: wf.reportedBy || 'Tester'
+              }
+            };
+          });
+
+          // Filter for current feature if feature ID matches
+          currentDefects = allBugs.filter(b => !featureId || !b.featureId || String(b.featureId) === String(featureId));
+          renderDefectsTable(currentDefects);
+          updateFeatureKpis();
+          return;
+        }
+      } catch (e) {
+        console.warn('Error fetching defects:', e);
+      }
+
+      currentDefects = [];
+      renderDefectsTable(currentDefects);
+      updateFeatureKpis();
+    }
+
+    function renderDefectsTable(defects) {
+      const tbody = document.getElementById('feature-bugs-table-body');
+      tbody.innerHTML = '';
+      document.getElementById('tab-bugs-count').innerText = defects.length;
+      document.getElementById('bug-filter-count-text').innerText = `Showing ${defects.length} defects in feature`;
+
+      if (defects.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 32px; color: var(--text-muted);"><i class="fa-solid fa-circle-check" style="font-size:24px; color:var(--emerald-500); margin-bottom:8px; display:block;"></i>No defects logged for this feature. All executing tests are verified healthy!</td></tr>`;
+        return;
+      }
+
+      defects.forEach(bug => {
+        const tr = document.createElement('tr');
+        tr.setAttribute('data-id', bug.bugId);
+        tr.setAttribute('data-sev', bug.severity);
+        tr.setAttribute('data-status', bug.status);
+
+        const sevClass = bug.severity === 'CRITICAL' ? 'badge-fail' : bug.severity === 'HIGH' ? 'badge-amber' : 'badge-info';
+        const statusLower = (bug.status || 'open').toLowerCase();
+
+        tr.innerHTML = `
+          <td><strong style="color: var(--rose-600); font-family: var(--font-mono);">${escapeHtml(bug.bugFormatId)}</strong></td>
+          <td>
+            <strong style="color: var(--text-main); font-size: 13px;">${escapeHtml(bug.title)}</strong>
+            <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">${escapeHtml(bug.description || 'Observed failure')}</div>
+          </td>
+          <td><span class="badge-tag badge-info">${escapeHtml(bug.testcaseFormatId || 'TC_EXEC')}</span></td>
+          <td><span class="badge-tag ${sevClass}">${escapeHtml(bug.severity)}</span></td>
+          <td><span style="font-size: 12px; color: var(--text-secondary);">${escapeHtml(bug.workflow?.assignedTo || 'Unassigned')}</span></td>
+          <td>
+            <!-- Interactive Status Dropdown with ALL 8 System Statuses -->
+            <select class="bug-status-select status-${statusLower}" onchange="changeBugStatus(${bug.bugId}, this.value)" title="Update Defect Status">
+              <option value="OPEN" ${bug.status === 'OPEN' ? 'selected' : ''}>🟡 OPEN</option>
+              <option value="IN_PROGRESS" ${bug.status === 'IN_PROGRESS' ? 'selected' : ''}>🔵 IN_PROGRESS</option>
+              <option value="RESOLVED" ${bug.status === 'RESOLVED' ? 'selected' : ''}>🟢 RESOLVED</option>
+              <option value="FIXED" ${bug.status === 'FIXED' ? 'selected' : ''}>🟢 FIXED</option>
+              <option value="CLOSED" ${bug.status === 'CLOSED' ? 'selected' : ''}>⚪ CLOSED</option>
+              <option value="REOPENED" ${bug.status === 'REOPENED' ? 'selected' : ''}>🔴 REOPENED</option>
+              <option value="NOT_A_BUG" ${bug.status === 'NOT_A_BUG' ? 'selected' : ''}>⚫ NOT_A_BUG</option>
+              <option value="DEFERRED" ${bug.status === 'DEFERRED' ? 'selected' : ''}>🟣 DEFERRED</option>
+            </select>
+
+            <div style="display: flex; gap: 4px; margin-top: 6px;">
+              <button class="btn btn-secondary btn-sm" onclick="openBugAttachmentsModal(${bug.bugId}, '${escapeHtml(bug.bugFormatId)}')">
+                <i class="fa-solid fa-paperclip"></i> Files
+              </button>
+              <button class="btn btn-secondary btn-sm" style="color: var(--indigo-600); font-weight:700;" onclick="openSpecificBugChat(${bug.bugId}, '${escapeHtml(bug.bugFormatId)}', '${escapeHtml(bug.title)}', '${escapeHtml(bug.testcaseFormatId)}', '${escapeHtml(bug.workflow?.assignedTo || 'Unassigned')}', '${escapeHtml(bug.severity)}')">
+                <i class="fa-solid fa-comments"></i> Chat
+              </button>
+            </div>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Direct Status Change (PATCH /bugs/{bugId})
+    async function changeBugStatus(bugId, newStatus) {
+      const bug = currentDefects.find(b => b.bugId === bugId);
+      const oldStatus = bug ? bug.status : 'OPEN';
+      if (bug) bug.status = newStatus;
+
+      try {
+        const res = await apiFetch(`/bugs/${bugId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status: newStatus })
+        });
+
+        if (res.ok) {
+          showToast(`Defect [${bug ? bug.bugFormatId : bugId}] status updated to: ${newStatus}`, 'success');
+          renderDefectsTable(currentDefects);
+          updateFeatureKpis();
+          return;
+        } else {
+          const err = await res.json().catch(() => ({}));
+          if (bug) bug.status = oldStatus;
+          renderDefectsTable(currentDefects);
+          showToast(err.message || `Failed to update bug status (${res.status})`, 'error');
+        }
+      } catch (e) {
+        console.warn('Could not patch bug status on server:', e);
+        if (bug) bug.status = oldStatus;
+        renderDefectsTable(currentDefects);
+        showToast('Network error while updating bug status', 'error');
+      }
+    }
+
+    function filterDefects() {
+      const search = (document.getElementById('bug-search-input')?.value || '').toLowerCase();
+      const sevFilter = document.getElementById('bug-sev-filter')?.value || 'ALL';
+      const statusFilter = document.getElementById('bug-status-filter')?.value || 'ALL';
+
+      const filtered = currentDefects.filter(bug => {
+        const text = `${bug.bugFormatId} ${bug.title} ${bug.description || ''}`.toLowerCase();
+        const matchesSearch = !search || text.includes(search);
+        const matchesSev = (sevFilter === 'ALL') || (bug.severity === sevFilter);
+        const matchesStatus = (statusFilter === 'ALL') || (bug.status === statusFilter);
+        return matchesSearch && matchesSev && matchesStatus;
+      });
+
+      renderDefectsTable(filtered);
+    }
+
+    // DEFECT CREATION FROM FAILED TESTCASE (NO DEVELOPER ASSIGNMENT REQUIRED)
+    function triggerCreateBugFromTest(tcId, tcFormatId, title) {
+      const featName = activeFeature ? activeFeature.featureName : 'Active Feature';
+      document.getElementById('bug-map-feat').value = featName;
+      document.getElementById('bug-map-tc').value = tcFormatId;
+      document.getElementById('bug-map-tcid-numeric').value = tcId;
+      
+      const cleanFeat = featName.toUpperCase().replace(/[^A-Z0-9]/g, '_').substring(0, 16);
+      document.getElementById('bug-map-id').value = `BUG-${cleanFeat}-${Math.floor(100 + Math.random() * 900)}`;
+      document.getElementById('bug-title-input').value = `[${tcFormatId}] ${title}`;
+      document.getElementById('bug-desc-input').value = `Defect identified during execution of ${tcFormatId} (${title}).`;
+      document.getElementById('bug-sev-input').value = 'HIGH';
+      
+      openModal('modal-bug');
+    }
+
+    async function saveDefect() {
+      const title = document.getElementById('bug-title-input').value.trim();
+      const tcFormatId = document.getElementById('bug-map-tc').value;
+      const tcId = document.getElementById('bug-map-tcid-numeric').value;
+      const sev = document.getElementById('bug-sev-input').value;
+      const desc = document.getElementById('bug-desc-input').value.trim();
+
+      if (!title) {
+        showToast('Please enter defect title', 'error');
+        return;
+      }
+
+      const payload = {
+        title: title,
+        description: desc || `Defect logged from test case ${tcFormatId}`,
+        severity: sev,
+        priority: 'HIGH',
+        category: 'PRE_PRODUCTION',
+        status: 'OPEN',
+        comments: `Logged by QA Tester from test case ${tcFormatId}`
+      };
+
+      try {
+        const res = await apiFetch(`/bugs?testcaseId=${encodeURIComponent(tcId || 1)}`, {
+          method: 'POST',
+          body: JSON.stringify(payload)
+        });
+
+        if (res.ok) {
+          const json = await res.json();
+          const createdBug = json.data || json;
+          const bugFormatId = createdBug.bug?.bugFormatId || createdBug.bugFormatId || `BUG-${createdBug.bug?.bugId || Date.now()}`;
+          closeModal('modal-bug');
+          showToast(`Defect [${bugFormatId}] created successfully!`, 'success');
+          
+          await loadFeatureDefects(activeFeature ? activeFeature.featureId : 1);
+          await loadFeatureTestCases(activeFeature ? activeFeature.featureId : 1);
+          switchFeatureTab('bugs');
+          return;
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || `Failed to create defect on server (${res.status})`, 'error');
+        }
+      } catch (e) {
+        console.warn('Could not save defect to backend:', e);
+        showToast('Network error while saving defect to backend', 'error');
+      }
+    }
+
+    // DEFECT ATTACHMENTS
+    function openBugAttachmentsModal(bugId, bugFormatId) {
+      activeBugAttachmentId = bugId;
+      document.getElementById('bug-attach-format-id').innerText = bugFormatId;
+      renderBugAttachments(bugId);
+      openModal('modal-bug-attachments');
+    }
+
+    async function renderBugAttachments(bugId) {
+      const list = document.getElementById('bug-attachments-list');
+      list.innerHTML = `<div style="text-align:center; padding:12px; font-size:11px; color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Loading evidence files...</div>`;
+
+      let files = [];
+      try {
+        const res = await apiFetch(`/bugs/${bugId}/attachments`);
+        if (res.ok) {
+          const json = await res.json();
+          files = json.data || json || [];
+        }
+      } catch (e) {
+        console.warn('Error loading bug attachments:', e);
+      }
+
+      list.innerHTML = '';
+      if (!files.length) {
+        list.innerHTML = `<div style="text-align:center; padding:16px; font-size:11px; color:var(--text-muted);"><i class="fa-solid fa-paperclip"></i> No attachments uploaded yet for this defect.</div>`;
+        return;
+      }
+
+      files.forEach(f => {
+        const item = document.createElement('div');
+        item.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid var(--border-default); border-radius:var(--radius-sm); padding:8px 12px; font-size:12px;";
+        const sizeStr = f.fileSize ? `(${Math.round(f.fileSize / 1024)} KB)` : '';
+        item.innerHTML = `
+          <div style="overflow:hidden; text-overflow:ellipsis; white-space:nowrap; max-width:80%;">
+            <i class="fa-solid fa-file-circle-exclamation" style="color:var(--rose-600); margin-right:6px;"></i> 
+            <strong>${escapeHtml(f.fileName)}</strong> 
+            <span style="font-size:10px; color:var(--text-muted);">${sizeStr}</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" onclick="downloadBugAttachment(${bugId})" title="Download Attachment"><i class="fa-solid fa-download"></i></button>
+        `;
+        list.appendChild(item);
+      });
+    }
+
+    async function handleBugFileUpload(files) {
+      if (!files || !files.length || !activeBugAttachmentId) return;
+      const fd = new FormData();
+      Array.from(files).forEach(f => fd.append('files', f));
+
+      try {
+        showToast('Uploading evidence files...', 'info');
+        const res = await apiFetch(`/bugs/${activeBugAttachmentId}/attachments`, {
+          method: 'POST',
+          body: fd
+        });
+        if (res.ok) {
+          showToast('Defect evidence files uploaded successfully!', 'success');
+          await renderBugAttachments(activeBugAttachmentId);
+          return;
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Upload failed', 'error');
+        }
+      } catch (e) {
+        console.warn('Could not upload bug attachments:', e);
+        showToast('Network error while uploading evidence files', 'error');
+      }
+    }
+
+    function downloadBugAttachment(bugId) {
+      downloadFileWithAuth(getApiUrl(`/bugs/${bugId}/attachments/download`), `bug_${bugId}_attachments.zip`);
+    }
+
+    // DEFECT DISCUSSION & COMMENTS
+    function openSpecificBugChat(bugId, bugFormatId, title, tcId, assignee, sev) {
+      activeChatBugId = bugId;
+      document.getElementById('specific-bug-chat-title').innerHTML = `<i class="fa-solid fa-comments" style="color: var(--emerald-600);"></i> Discussion: ${escapeHtml(bugFormatId)}`;
+      document.getElementById('specific-bug-chat-sub').innerText = `Linked: ${tcId} • Assignee: ${assignee} • Severity: ${sev}`;
+      openModal('modal-bug-chat');
+      loadBugComments(bugId);
+    }
+
+    async function loadBugComments(bugId) {
+      const stream = document.getElementById('specific-chat-stream');
+      stream.innerHTML = `<div style="text-align:center; padding: 20px; font-size:12px; color:var(--text-muted);"><i class="fa-solid fa-spinner fa-spin"></i> Loading comments thread...</div>`;
+
+      let comments = [];
+      try {
+        const res = await apiFetch(`/bugs/${bugId}/comments`);
+        if (res.ok) {
+          const json = await res.json();
+          comments = json.data || json || [];
+        }
+      } catch (e) {
+        console.warn('Error loading comments:', e);
+      }
+
+      stream.innerHTML = '';
+      if (!comments.length) {
+        stream.innerHTML = `<div style="text-align:center; padding: 24px; font-size:12px; color:var(--text-muted);"><i class="fa-regular fa-comment-dots" style="font-size:20px; margin-bottom:6px; display:block;"></i>No messages yet in this discussion. Send a message to start the thread.</div>`;
+        return;
+      }
+
+      comments.forEach(c => {
+        const sender = c.creatorName || c.createdByFullName || c.createdByUsername || 'Team Member';
+        const isTester = sender.toLowerCase().includes('tester') || sender.toLowerCase().includes('lead') || sender.toLowerCase().includes('qa');
+        const bubble = document.createElement('div');
+        bubble.className = `chat-bubble ${isTester ? 'tester' : 'dev'}`;
+        const timeStr = c.createdAt ? new Date(c.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+        bubble.innerHTML = `
+          <strong>
+            <span>${escapeHtml(sender)}</span>
+            <span style="font-size: 10px; font-weight: normal; color: var(--text-muted);">${timeStr}</span>
+          </strong>
+          <div>${escapeHtml(c.comment)}</div>
+        `;
+        stream.appendChild(bubble);
+      });
+
+      stream.scrollTop = stream.scrollHeight;
+    }
+
+    async function sendSpecificChat() {
+      const input = document.getElementById('specific-chat-input');
+      const text = input.value.trim();
+      if (!text || !activeChatBugId) return;
+
+      try {
+        const res = await apiFetch(`/bugs/${activeChatBugId}/comments`, {
+          method: 'POST',
+          body: JSON.stringify({ comment: text })
+        });
+        if (res.ok) {
+          input.value = '';
+          await loadBugComments(activeChatBugId);
+          showToast('Comment posted to bug discussion', 'success');
+          return;
+        } else {
+          const err = await res.json().catch(() => ({}));
+          showToast(err.message || 'Failed to post comment', 'error');
+        }
+      } catch (e) {
+        console.warn('Could not post comment to backend:', e);
+        showToast('Network error while posting comment', 'error');
+      }
+    }
+
+    // ==========================================
+    // 7. IN-APP NOTIFICATIONS
+    // ==========================================
+    async function fetchInAppNotifications() {
+      try {
+        const res = await apiFetch('/in-app-notifications');
+        if (res.ok) {
+          const json = await res.json();
+          currentNotifications = json.data || json || [];
+          updateNotificationCounts();
+          return;
+        }
+      } catch (e) {
+        console.warn('Could not fetch notifications:', e);
+      }
+      currentNotifications = [];
+      updateNotificationCounts();
+    }
+
+    function openInAppNotificationsModal() {
+      renderNotificationList(activeNotifFilter || 'ALL');
+      openModal('modal-in-app-notifications');
+    }
+
+    function renderNotificationList(filterType) {
+      activeNotifFilter = filterType;
+      const list = document.getElementById('in-app-notif-list');
+      list.innerHTML = '';
+
+      const items = currentNotifications.filter(n => {
+        if (filterType === 'UNREAD') return n.notificationStatus === 'UNREAD';
+        if (filterType === 'FIXED') return n.type === 'FIXED' || (n.message || '').toLowerCase().includes('fix') || (n.message || '').toLowerCase().includes('resolved');
+        if (filterType === 'COMMENT') return n.type === 'COMMENT' || (n.message || '').toLowerCase().includes('comment') || (n.message || '').toLowerCase().includes('replied');
+        return true;
+      });
+
+      if (!items.length) {
+        list.innerHTML = `<div style="text-align:center; padding:32px; font-size:12px; color:var(--text-muted);"><i class="fa-solid fa-bell-slash" style="font-size:24px; margin-bottom:8px; display:block;"></i>No notifications found in this filter.</div>`;
+        return;
+      }
+
+      items.forEach(n => {
+        const isUnread = n.notificationStatus === 'UNREAD';
+        const card = document.createElement('div');
+        card.className = `notif-card-item ${isUnread ? 'unread' : ''}`;
+        
+        let iconClass = 'notif-icon-chat';
+        let icon = 'fa-comment-dots';
+        if (n.type === 'FIXED' || (n.message || '').toLowerCase().includes('resolved') || (n.message || '').toLowerCase().includes('fixed')) {
+          iconClass = 'notif-icon-fixed';
+          icon = 'fa-circle-check';
+        } else if (n.type === 'TC') {
+          iconClass = 'notif-icon-tc';
+          icon = 'fa-vial';
+        }
+
+        card.innerHTML = `
+          <div class="notif-icon-bubble ${iconClass}"><i class="fa-solid ${icon}"></i></div>
+          <div class="notif-card-content">
+            <div class="notif-card-title">
+              <span>${escapeHtml(n.bugFormatId ? `Defect: ${n.bugFormatId}` : 'Automation Alert')}</span>
+              ${isUnread ? `<span style="font-size: 10px; color: var(--rose-600); font-weight: 700;">● NEW</span>` : ''}
+            </div>
+            <div class="notif-card-msg">${escapeHtml(n.message)}</div>
+            <div class="notif-card-meta">
+              <span><i class="fa-regular fa-clock"></i> ${n.createdAt ? new Date(n.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Recently'}</span>
+            </div>
+            <div class="notif-card-actions">
+              ${n.bugId ? `
+                <button class="btn btn-secondary btn-sm" style="color:var(--indigo-600); font-weight:700;" onclick="viewBugFromNotification(${n.bugId})">
+                  <i class="fa-solid fa-comments"></i> Chat
+                </button>
+              ` : ''}
+              <button class="btn btn-secondary btn-sm" onclick="toggleNotifRead(${n.notificationId})">
+                <i class="fa-solid fa-check"></i> ${isUnread ? 'Mark read' : 'Mark unread'}
+              </button>
+              <button class="btn btn-secondary btn-sm" onclick="dismissNotification(${n.notificationId})"><i class="fa-solid fa-trash-can"></i></button>
+            </div>
+          </div>
+        `;
+        list.appendChild(card);
+      });
+    }
+
+    function filterNotifList(type, btn) {
+      document.querySelectorAll('.notif-filter-tab').forEach(t => t.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      renderNotificationList(type);
+    }
+
+    async function toggleNotifRead(id) {
+      const item = currentNotifications.find(n => n.notificationId === id);
+      if (!item) return;
+      const isNowRead = item.notificationStatus === 'UNREAD';
+      const newStatus = isNowRead ? 'READ' : 'UNREAD';
+      item.notificationStatus = newStatus;
+
+      try {
+        await apiFetch(`/in-app-notifications/${id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ status: newStatus })
+        });
+      } catch (e) {}
+
+      updateNotificationCounts();
+      renderNotificationList(activeNotifFilter || 'ALL');
+    }
+
+    async function markAllNotificationsAsRead() {
+      const unreadItems = currentNotifications.filter(n => n.notificationStatus === 'UNREAD');
+      currentNotifications.forEach(n => n.notificationStatus = 'READ');
+      updateNotificationCounts();
+      renderNotificationList(activeNotifFilter || 'ALL');
+
+      for (const item of unreadItems) {
+        try {
+          await apiFetch(`/in-app-notifications/${item.notificationId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ status: 'READ' })
+          });
+        } catch (e) {}
+      }
+      showToast('All notifications marked as read', 'info');
+    }
+
+    async function dismissNotification(id) {
+      currentNotifications = currentNotifications.filter(n => n.notificationId !== id);
+      updateNotificationCounts();
+      renderNotificationList(activeNotifFilter || 'ALL');
+
+      try {
+        await apiFetch(`/in-app-notifications/${id}`, {
+          method: 'DELETE'
+        });
+      } catch (e) {}
+    }
+
+    function updateNotificationCounts() {
+      const unread = currentNotifications.filter(n => n.notificationStatus === 'UNREAD').length;
+      const badge = document.getElementById('in-app-notif-count');
+      const modalBadge = document.getElementById('notif-modal-unread-count');
+      if (badge) {
+        badge.innerText = unread;
+        badge.style.display = unread > 0 ? 'flex' : 'none';
+      }
+      if (modalBadge) {
+        modalBadge.innerText = `${unread} Unread`;
+      }
+    }
+
+    function viewBugFromNotification(bugId) {
+      closeModal('modal-in-app-notifications');
+      const bug = currentDefects.find(b => b.bugId === bugId) || {
+        bugId: bugId,
+        bugFormatId: `BUG-${bugId}`,
+        title: 'Reported Defect',
+        testcaseFormatId: 'TC_EXEC',
+        workflow: { assignedTo: 'Unassigned' },
+        severity: 'HIGH'
+      };
+      openSpecificBugChat(bug.bugId, bug.bugFormatId, bug.title, bug.testcaseFormatId, bug.workflow?.assignedTo || 'Unassigned', bug.severity);
+    }
+
+    // ==========================================
+    // 8. KPIS & VIEW TAB SWITCHING
+    // ==========================================
+    function updateFeatureKpis() {
+      const totalTc = currentTestCases.length;
+      const passed = currentTestCases.filter(t => t.testcaseStatus === 'PASSED' || t.testcaseStatus === 'PASS').length;
+      const failed = currentTestCases.filter(t => t.testcaseStatus === 'FAILED' || t.testcaseStatus === 'FAIL').length;
+      const bugsCount = currentDefects.length;
+
+      document.getElementById('kpi-tc-total').innerText = totalTc;
+      document.getElementById('kpi-tc-passed').innerText = passed;
+      document.getElementById('kpi-tc-failed').innerText = failed;
+      document.getElementById('kpi-bugs-total').innerText = bugsCount;
+
+      if (activeFeature) {
+        const badge = document.getElementById(`feat-badge-${activeFeature.featureId}`);
+        if (badge) {
+          if (bugsCount > 0) {
+            badge.className = 'badge-tag badge-fail';
+            badge.innerText = `${bugsCount} Bug${bugsCount > 1 ? 's' : ''}`;
+          } else {
+            badge.className = 'badge-tag badge-pass';
+            badge.innerText = 'Passed';
+          }
+        }
+      }
     }
 
     function switchFeatureTab(tabKey) {
@@ -2139,378 +3915,16 @@
       }
     }
 
-    // FILTER LOGIC FOR TEST CASES
-    function filterTestCases() {
-      const search = (document.getElementById('tc-search-input').value || '').toLowerCase();
-      const typeFilter = document.getElementById('tc-type-filter').value;
-      const statusFilter = document.getElementById('tc-status-filter').value;
-
-      const rows = document.querySelectorAll('#feature-tc-table-body tr');
-      let visible = 0;
-
-      rows.forEach(r => {
-        const text = r.innerText.toLowerCase();
-        const type = r.getAttribute('data-type') || '';
-        const status = r.getAttribute('data-status') || '';
-
-        const matchesSearch = !search || text.includes(search);
-        const matchesType = (typeFilter === 'ALL') || (type === typeFilter);
-        const matchesStatus = (statusFilter === 'ALL') || (status === statusFilter);
-
-        if (matchesSearch && matchesType && matchesStatus) {
-          r.style.display = '';
-          visible++;
-        } else {
-          r.style.display = 'none';
-        }
-      });
-
-      document.getElementById('tc-filter-count-text').innerText = `Showing ${visible} of ${rows.length} test cases in feature`;
+    // Helper: Safe HTML Escaping
+    function escapeHtml(text) {
+      if (text === null || text === undefined) return '';
+      return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
     }
-
-    // FILTER LOGIC FOR DEFECTS
-    function filterDefects() {
-      const search = (document.getElementById('bug-search-input').value || '').toLowerCase();
-      const sevFilter = document.getElementById('bug-sev-filter').value;
-      const statusFilter = document.getElementById('bug-status-filter').value;
-
-      const rows = document.querySelectorAll('#feature-bugs-table-body tr');
-      let visible = 0;
-
-      rows.forEach(r => {
-        const text = r.innerText.toLowerCase();
-        const sev = r.getAttribute('data-sev') || '';
-        const status = r.getAttribute('data-status') || '';
-
-        const matchesSearch = !search || text.includes(search);
-        const matchesSev = (sevFilter === 'ALL') || (sev === sevFilter);
-        const matchesStatus = (statusFilter === 'ALL') || (status === statusFilter);
-
-        if (matchesSearch && matchesSev && matchesStatus) {
-          r.style.display = '';
-          visible++;
-        } else {
-          r.style.display = 'none';
-        }
-      });
-
-      document.getElementById('bug-filter-count-text').innerText = `Showing ${visible} of ${rows.length} defects`;
-    }
-
-    // IN-APP NOTIFICATIONS
-    function openInAppNotificationsModal() {
-      openModal('modal-in-app-notifications');
-    }
-
-    function filterNotifList(type, btn) {
-      document.querySelectorAll('.notif-filter-tab').forEach(t => t.classList.remove('active'));
-      if (btn) btn.classList.add('active');
-
-      const items = document.querySelectorAll('#in-app-notif-list .notif-card-item');
-      items.forEach(item => {
-        const itemType = item.getAttribute('data-type');
-        const isUnread = item.getAttribute('data-read') === 'false';
-
-        if (type === 'ALL') {
-          item.style.display = 'flex';
-        } else if (type === 'UNREAD') {
-          item.style.display = isUnread ? 'flex' : 'none';
-        } else if (itemType === type) {
-          item.style.display = 'flex';
-        } else {
-          item.style.display = 'none';
-        }
-      });
-    }
-
-    function toggleNotifRead(itemId) {
-      const item = document.getElementById(itemId);
-      if (!item) return;
-
-      const wasUnread = item.getAttribute('data-read') === 'false';
-      if (wasUnread) {
-        item.setAttribute('data-read', 'true');
-        item.classList.remove('unread');
-      } else {
-        item.setAttribute('data-read', 'false');
-        item.classList.add('unread');
-      }
-      updateNotificationCounts();
-    }
-
-    function markAllNotificationsAsRead() {
-      const items = document.querySelectorAll('#in-app-notif-list .notif-card-item');
-      items.forEach(item => {
-        item.setAttribute('data-read', 'true');
-        item.classList.remove('unread');
-      });
-      updateNotificationCounts();
-    }
-
-    function dismissNotification(itemId) {
-      const item = document.getElementById(itemId);
-      if (item) {
-        item.remove();
-        updateNotificationCounts();
-      }
-    }
-
-    function updateNotificationCounts() {
-      const unread = document.querySelectorAll('#in-app-notif-list .notif-card-item[data-read="false"]').length;
-      const badge = document.getElementById('in-app-notif-count');
-      const modalBadge = document.getElementById('notif-modal-unread-count');
-
-      if (badge) {
-        badge.innerText = unread;
-        badge.style.display = unread > 0 ? 'flex' : 'none';
-      }
-      if (modalBadge) {
-        modalBadge.innerText = `${unread} Unread`;
-      }
-    }
-
-    function viewBugFromNotification(bugId, featName, tcId) {
-      closeModal('modal-in-app-notifications');
-      openSpecificBugChat(bugId, 'OTP auto-focus fails on Safari iOS clipboard paste', tcId, 'Devon (Developer)', 'CRITICAL');
-    }
-
-    // PROJECT DETAILS & ATTACHMENTS
-    function openEditProjectModal() {
-      document.getElementById('edit-proj-name').value = activeProject;
-      document.getElementById('edit-proj-region').value = activeRegion;
-      openModal('modal-project-edit');
-    }
-
-    function saveProjectDetails() {
-      const name = document.getElementById('edit-proj-name').value;
-      const reg = document.getElementById('edit-proj-region').value;
-      activeProject = name;
-      activeRegion = reg;
-      closeModal('modal-project-edit');
-      alert(`Project details updated successfully: "${name}" (${reg})`);
-    }
-
-    function createProjectAction() {
-      const name = document.getElementById('create-proj-name-input').value;
-      if (!name) return alert('Please enter project name');
-      
-      const newProj = {
-        id: `PROJ-${Math.floor(100 + Math.random() * 900)}`,
-        name: name,
-        version: 'v1.0',
-        status: 'ACTIVE',
-        features: []
-      };
-
-      if (!projectData[activeRegion]) projectData[activeRegion] = [];
-      projectData[activeRegion].unshift(newProj);
-
-      filterProjects();
-      closeModal('modal-project-create');
-      alert(`Project "${name}" created in ${activeRegion}!`);
-    }
-
-    function openProjectAttachmentsModal() {
-      openModal('modal-project-attachments');
-    }
-
-    function uploadProjectFile() {
-      const list = document.getElementById('project-attachments-list');
-      const item = document.createElement('div');
-      item.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid var(--border-default); border-radius:var(--radius-sm); padding:8px 12px; font-size:12px;";
-      item.innerHTML = `
-        <div><i class="fa-solid fa-file-pdf" style="color:var(--rose-600);"></i> <strong>Project_Scope_Update.pdf</strong> (620 KB)</div>
-        <button class="btn btn-secondary" style="height:24px; padding:0 8px; font-size:10px;" onclick="alert('Downloading...')"><i class="fa-solid fa-download"></i></button>
-      `;
-      list.appendChild(item);
-      const count = list.children.length;
-      document.getElementById('proj-files-count').innerText = count;
-      alert('File uploaded to project successfully!');
-    }
-
-    // FEATURE DETAILS & ATTACHMENTS
-    function openEditFeatureModal() {
-      document.getElementById('edit-feat-name').value = activeFeature;
-      openModal('modal-feature-edit');
-    }
-
-    function saveFeatureDetails() {
-      const name = document.getElementById('edit-feat-name').value;
-      const sprint = document.getElementById('edit-feat-sprint').value;
-      const ver = document.getElementById('edit-feat-version').value;
-      activeFeature = name;
-      activeSprint = `Sprint ${sprint} • ${ver}`;
-
-      document.getElementById('topbar-feature-title').innerText = name;
-      document.getElementById('topbar-feature-sprint').innerText = activeSprint;
-      closeModal('modal-feature-edit');
-      alert(`Feature updated: "${name}" (${activeSprint})`);
-    }
-
-    function createFeatureAction() {
-      const name = document.getElementById('create-feat-name-input').value;
-      const sprint = document.getElementById('create-feat-sprint-input').value || 12;
-      const ver = document.getElementById('create-feat-version-input').value || 'v1.0';
-
-      if (!name) return alert('Please enter feature name');
-
-      const list = projectData[activeRegion] || [];
-      const currentProjId = document.getElementById('sidebar-project-select').value;
-      const proj = list.find(p => p.id === currentProjId) || list[0];
-
-      if (proj) {
-        proj.features.unshift({
-          id: `FEAT-${Math.floor(100 + Math.random() * 900)}`,
-          name: name,
-          sprint: `Sprint ${sprint} • ${ver}`,
-          sprintNum: parseInt(sprint),
-          bugs: 0,
-          tcCount: 0,
-          status: 'PASSED'
-        });
-        filterFeatures();
-      }
-
-      alert(`Feature "${name}" added to project!`);
-      closeModal('modal-feature-create');
-    }
-
-    function openFeatureAttachmentsModal() {
-      openModal('modal-feature-attachments');
-    }
-
-    function uploadFeatureFile() {
-      const list = document.getElementById('feature-attachments-list');
-      const item = document.createElement('div');
-      item.style.cssText = "display:flex; justify-content:space-between; align-items:center; background:#f8fafc; border:1px solid var(--border-default); border-radius:var(--radius-sm); padding:8px 12px; font-size:12px;";
-      item.innerHTML = `
-        <div><i class="fa-solid fa-file-image" style="color:var(--emerald-600);"></i> <strong>Screen_Mockup_v3.png</strong> (1.8 MB)</div>
-        <button class="btn btn-secondary" style="height:24px; padding:0 8px; font-size:10px;" onclick="alert('Downloading...')"><i class="fa-solid fa-download"></i></button>
-      `;
-      list.appendChild(item);
-      const count = list.children.length;
-      document.getElementById('feat-docs-count').innerText = count;
-      alert('File uploaded to feature successfully!');
-    }
-
-    // ADD TEST CASE
-    function saveNewTestCase() {
-      const title = document.getElementById('new-tc-title').value || 'New Validation Test';
-      const type = document.getElementById('new-tc-type').value;
-      const prio = document.getElementById('new-tc-priority').value;
-      const ui = document.getElementById('new-tc-ui').value || 'Verify UI screen state';
-      const db = document.getElementById('new-tc-db').value || 'Verify DB table record state';
-
-      const tcId = `TC_AUTH_${Math.floor(100 + Math.random() * 900)}`;
-      const tbody = document.getElementById('feature-tc-table-body');
-      const tr = document.createElement('tr');
-      tr.setAttribute('data-type', type);
-      tr.setAttribute('data-status', 'PASSED');
-      tr.innerHTML = `
-        <td>
-          <span class="tc-id">${tcId}</span>
-          <div class="tc-name">${title}</div>
-          <div class="tc-pre"><strong>Precondition:</strong> User session verified</div>
-        </td>
-        <td>
-          <span class="badge-tag badge-info">${type}</span>
-          <div style="color: var(--indigo-600); font-size: 11px; font-weight: 700; margin-top: 4px;">${prio}</div>
-        </td>
-        <td>
-          <div class="val-chip"><strong>UI:</strong> ${ui}</div>
-          <div class="val-chip"><strong>DB:</strong> ${db}</div>
-        </td>
-        <td>
-          <span class="badge-tag badge-pass">PASSED</span>
-          <div style="margin-top: 8px; font-size: 11px; color: var(--emerald-600); font-weight: 700;">
-            <i class="fa-solid fa-circle-check"></i> Verified
-          </div>
-        </td>
-      `;
-      tbody.prepend(tr);
-      closeModal('modal-testcase');
-      filterTestCases();
-      alert(`Test Case [${tcId}] added to feature "${activeFeature}"!`);
-    }
-
-    // SPECIFIC BUG CHAT
-    function openSpecificBugChat(bugId, title, tcId, assignee, sev) {
-      document.getElementById('specific-bug-chat-title').innerHTML = `<i class="fa-solid fa-comments" style="color: var(--emerald-600);"></i> Discussion: ${bugId}`;
-      document.getElementById('specific-bug-chat-sub').innerText = `Linked Test Case: ${tcId} • Assignee: ${assignee} • Severity: ${sev}`;
-      openModal('modal-bug-chat');
-    }
-
-    function sendSpecificChat() {
-      const input = document.getElementById('specific-chat-input');
-      const text = input.value.trim();
-      if (!text) return;
-
-      const stream = document.getElementById('specific-chat-stream');
-      const bubble = document.createElement('div');
-      bubble.className = 'chat-bubble tester';
-      bubble.innerHTML = `<strong>Rahul (Tester):</strong> ${text}`;
-      stream.appendChild(bubble);
-      stream.scrollTop = stream.scrollHeight;
-      input.value = '';
-    }
-
-    // DEFECT CREATION (STRICTLY FROM FAILED TEST CASE)
-    function triggerCreateBugFromTest(tcId, title) {
-      document.getElementById('bug-map-feat').value = activeFeature;
-      document.getElementById('bug-map-tc').value = tcId;
-      document.getElementById('bug-map-id').value = `BUG-${activeFeature.toUpperCase().replace(/\s+/g, '_')}-002`;
-      document.getElementById('bug-title-input').value = `[${tcId}] ${title}`;
-      openModal('modal-bug');
-    }
-
-    function saveDefect() {
-      const title = document.getElementById('bug-title-input').value || 'New Defect';
-      const tc = document.getElementById('bug-map-tc').value;
-      const bugId = document.getElementById('bug-map-id').value;
-      const sev = document.getElementById('bug-sev-input').value;
-      const dev = document.getElementById('bug-assign-input').value;
-
-      const tbody = document.getElementById('feature-bugs-table-body');
-      const tr = document.createElement('tr');
-      tr.setAttribute('data-sev', sev);
-      tr.setAttribute('data-status', 'OPEN');
-      tr.innerHTML = `
-        <td><strong style="color: var(--rose-600); font-family: var(--font-mono);">${bugId}</strong></td>
-        <td>
-          <strong style="color: var(--text-main);">${title}</strong>
-          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Precondition: Logged from testcase execution ${tc}</div>
-        </td>
-        <td><span class="badge-tag badge-info">${tc}</span></td>
-        <td><span class="badge-tag badge-fail">${sev}</span></td>
-        <td>${dev}</td>
-        <td><span class="badge-tag badge-info">OPEN</span></td>
-        <td>
-          <div style="display: flex; gap: 6px;">
-            <button class="btn btn-secondary" style="height: 28px; padding: 0 8px; font-size: 11px;" onclick="advanceBugState()">Advance ➔</button>
-            <button class="btn btn-secondary" style="height: 28px; padding: 0 10px; font-size: 11px; color: var(--indigo-600); font-weight:700;" onclick="openSpecificBugChat('${bugId}', '${title}', '${tc}', '${dev}', '${sev}')">
-              <i class="fa-solid fa-comments"></i> 💬 Chat
-            </button>
-          </div>
-        </td>
-      `;
-      tbody.prepend(tr);
-      closeModal('modal-bug');
-      alert(`Defect ${bugId} auto-mapped to [${activeFeature}] from testcase [${tc}]!`);
-      switchFeatureTab('bugs');
-      filterDefects();
-    }
-
-    function advanceBugState() {
-      const badge = document.getElementById('bug-state-val');
-      const states = ['OPEN', 'IN_PROGRESS', 'RESOLVED', 'FIXED', 'CLOSED'];
-      let cur = badge.innerText;
-      let nextIdx = (states.indexOf(cur) + 1) % states.length;
-      badge.innerText = states[nextIdx];
-      alert(`Defect status transitioned to: ${states[nextIdx]}`);
-    }
-
-    // Initialize counts on load
-    updateNotificationCounts();
   </script>
 </body>
 </html>

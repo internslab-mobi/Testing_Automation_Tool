@@ -278,11 +278,22 @@ public class FeatureServiceImpl implements FeatureService {
 
     @Override
     @Transactional(readOnly = true)
+    public List<FeatureResponse> getAllFeatures() {
+        return featureRepository.findByIsDeletedFalse().stream()
+                .map(featureMapper::toResponse)
+                .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public List<FeatureResponse> getFeaturesByProjectId(Integer projectId) {
-        return featureRepository.findByProject_ProjectIdAndIsDeletedFalseAndIsActiveTrueAndProject_Status(
-                        projectId,
-                        ProjectStatus.ACTIVE)
-                .stream()
+        List<Feature> features = featureRepository.findByProject_ProjectIdAndIsDeletedFalseAndIsActiveTrueAndProject_Status(
+                projectId,
+                ProjectStatus.ACTIVE);
+        if (features == null || features.isEmpty()) {
+            features = featureRepository.findByProject_ProjectIdAndIsDeletedFalse(projectId);
+        }
+        return features.stream()
                 .map(featureMapper::toResponse)
                 .toList();
     }

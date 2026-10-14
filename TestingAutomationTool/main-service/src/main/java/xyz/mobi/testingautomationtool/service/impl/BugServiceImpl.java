@@ -222,8 +222,16 @@ public class BugServiceImpl implements BugService {
     @Override
     @Transactional(readOnly = true)
     public Page<BugResponse> getAllBugs(int page, int size) {
-        Pageable pageable = PageRequest.of(page, size);
+        Pageable pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
         return bugRepository.findByIsActiveTrue(pageable)
+                .map(bugMapper::toResponse);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BugResponse> getBugsByFeature(Integer featureId, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+        return bugRepository.findByFeature_FeatureIdAndIsDeletedFalse(featureId, pageable)
                 .map(bugMapper::toResponse);
     }
 
@@ -462,16 +470,17 @@ public class BugServiceImpl implements BugService {
         }
 
         if (request.getAssignedTo() != null) {
-
-            User newAssignee = userRepository.findById(
-                    request.getAssignedTo()
-            ).orElseThrow(() ->
-                    new ResourceNotFoundException(
-                            "User not found with ID: "
-                                    + request.getAssignedTo()));
-
-            bug.setAssignedTo(newAssignee);
-
+            if (request.getAssignedTo() <= 0) {
+                bug.setAssignedTo(null);
+            } else {
+                User newAssignee = userRepository.findById(
+                        request.getAssignedTo()
+                ).orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "User not found with ID: "
+                                        + request.getAssignedTo()));
+                bug.setAssignedTo(newAssignee);
+            }
             updatedFields.add("assignedTo");
         }
 

@@ -1,5 +1,6 @@
 package xyz.mobi.testingautomationtool.repository;
 
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.stereotype.Repository;
@@ -12,6 +13,7 @@ import java.util.Optional;
 @Repository
 public interface ProjectRepository extends JpaRepository<Project, Integer>, JpaSpecificationExecutor<Project> {
 
+    @EntityGraph(attributePaths = {"createdBy", "updatedBy"})
     List<Project> findByIsDeletedFalse();
 
     Optional<Project> findByProjectIdAndIsDeletedFalse(Integer projectId);

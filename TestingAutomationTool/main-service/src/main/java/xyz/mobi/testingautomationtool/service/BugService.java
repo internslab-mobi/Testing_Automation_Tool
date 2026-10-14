@@ -18,6 +18,8 @@ public interface BugService {
 
     Page<BugResponse> getAllBugs(int page, int size);
 
+    Page<BugResponse> getBugsByFeature(Integer featureId, int page, int size);
+
     BugResponse updateBug(Integer bugId, BugPutRequest request);
 
     String patchBug(Integer bugId, BugPatchRequest request);

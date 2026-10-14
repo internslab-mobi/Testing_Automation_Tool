@@ -21,7 +21,7 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/project")
+@RequestMapping({"/project", "/projects"})
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 public class ProjectController {
@@ -54,14 +54,14 @@ public class ProjectController {
     }
 
     @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
-    @GetMapping("/{projectId}")
-    public ResponseEntity<ApiResponse<ProjectResponse>> getProjectById(@PathVariable Integer projectId) {
+    @GetMapping("/{projectId:\\d+}")
+    public ResponseEntity<ApiResponse<ProjectResponse>> getProjectById(@PathVariable("projectId") Integer projectId) {
         return ResponseEntity.ok(ApiResponse.success("Project retrieved successfully", projectService.getProjectById(projectId)));
     }
 
     @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
-    @GetMapping("/{projectId}/export")
-    public ResponseEntity<byte[]> exportProjectSummary(@PathVariable Integer projectId) {
+    @GetMapping("/{projectId:\\d+}/export")
+    public ResponseEntity<byte[]> exportProjectSummary(@PathVariable("projectId") Integer projectId) {
         byte[] excelBytes = projectService.exportProjectSummary(projectId);
         String filename = "QA_Summary_Report_Project_" + projectId + ".xlsx";
         return ResponseEntity.ok()
@@ -157,9 +157,9 @@ public class ProjectController {
         );
     }
 
-    @GetMapping("/{projectId}/attachments")
+    @GetMapping("/{projectId:\\d+}/attachments")
     public ResponseEntity<List<AttachmentResponse>> getProjectAttachments(
-            @PathVariable Integer projectId) {
+            @PathVariable("projectId") Integer projectId) {
 
         return ResponseEntity.ok(
                 attachmentService.getAttachments(
@@ -169,9 +169,9 @@ public class ProjectController {
         );
     }
 
-    @GetMapping("/{projectId}/attachments/download")
+    @GetMapping("/{projectId:\\d+}/attachments/download")
     public ResponseEntity<ByteArrayResource> downloadProjectAttachments(
-            @PathVariable Integer projectId) {
+            @PathVariable("projectId") Integer projectId) {
 
         AttachmentDownloadResponse response =
                 attachmentService.downloadAttachments(

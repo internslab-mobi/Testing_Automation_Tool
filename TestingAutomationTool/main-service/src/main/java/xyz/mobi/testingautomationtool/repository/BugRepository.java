@@ -2,6 +2,7 @@ package xyz.mobi.testingautomationtool.repository;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -16,9 +17,14 @@ import java.util.Optional;
 @Repository
 public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecificationExecutor<Bug> {
 
+    @EntityGraph(attributePaths = {"testCase", "feature", "reportedBy", "assignedTo", "executedBy", "updatedBy"})
     Optional<List<Bug>> findByTestCase_TestcaseId(Integer id);
 
+    @EntityGraph(attributePaths = {"testCase", "feature", "reportedBy", "assignedTo", "executedBy", "updatedBy"})
     Page<Bug> findByIsActiveTrue(Pageable pageable);
+
+    @EntityGraph(attributePaths = {"testCase", "feature", "reportedBy", "assignedTo", "executedBy", "updatedBy"})
+    Page<Bug> findByFeature_FeatureIdAndIsDeletedFalse(Integer featureId, Pageable pageable);
 
     @Modifying
     @Query("UPDATE Bug b SET b.isDeleted=true, b.isActive=false WHERE b.testCase.testcaseId =:id")
@@ -60,14 +66,17 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
     );
 
 
+    @EntityGraph(attributePaths = {"testCase", "feature", "reportedBy", "assignedTo", "executedBy", "updatedBy"})
     List<Bug> findByFeature_FeatureIdAndIsDeletedFalse(Integer featureId);
 
     default List<Bug> findByFeatureFeatureIdAndIsDeletedFalse(Integer featureId) {
         return findByFeature_FeatureIdAndIsDeletedFalse(featureId);
     }
 
+    @EntityGraph(attributePaths = {"testCase", "feature", "reportedBy", "assignedTo", "executedBy", "updatedBy"})
     List<Bug> findByFeature_Project_ProjectIdAndIsDeletedFalse(Integer projectId);
 
+    @EntityGraph(attributePaths = {"testCase", "feature", "reportedBy", "assignedTo", "executedBy", "updatedBy"})
     List<Bug> findByIsDeletedFalse();
 
 }

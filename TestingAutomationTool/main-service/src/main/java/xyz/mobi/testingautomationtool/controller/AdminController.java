@@ -54,9 +54,9 @@ public class  AdminController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
-    @GetMapping("/users/{userId}")
+    @GetMapping("/users/{userId:\\d+}")
     public ResponseEntity<ApiResponse<ManagerResponse>> getUserById(
-            @PathVariable Integer userId) {
+            @PathVariable("userId") Integer userId) {
 
         ManagerResponse response =
                 adminService.getUserById(userId);
@@ -73,9 +73,9 @@ public class  AdminController {
         return ResponseEntity.ok(ApiResponse.success("Users retrieved successfully", response));
     }
 
-    @GetMapping("/users/{role}")
+    @GetMapping({"/users/role/{role}", "/users/by-role/{role}"})
     public ResponseEntity<ApiResponse<List<ManagerResponse>>> getUsersByRole(
-            @RequestParam UserRole role) {
+            @PathVariable("role") UserRole role) {
 
         List<ManagerResponse> response =
                 adminService.getUsersByRole(role);

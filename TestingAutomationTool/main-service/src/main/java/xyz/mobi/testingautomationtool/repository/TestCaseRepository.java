@@ -12,6 +12,7 @@ import xyz.mobi.testingautomationtool.entity.TestCase;
 import xyz.mobi.testingautomationtool.enums.TestCaseStatus;
 import xyz.mobi.testingautomationtool.enums.TestPriority;
 import xyz.mobi.testingautomationtool.enums.TestType;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.Modifying;
 import java.util.List;
 import java.util.Optional;
@@ -32,6 +33,7 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Integer>, Jp
     @Query("UPDATE TestCase t SET t.isActive = true WHERE t.feature.project.projectId = :projectId")
     int activateTestCasesByProjectId(@Param("projectId") Integer projectId);
 
+    @EntityGraph(attributePaths = {"feature", "createdBy", "updatedBy"})
     List<TestCase> findByFeature_FeatureIdAndIsDeletedFalse(Integer featureId);
 
     default List<TestCase> findByFeatureFeatureIdAndIsDeletedFalse(Integer featureId) {
@@ -39,7 +41,16 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Integer>, Jp
     }
 
 
-    @Query("SELECT tc FROM TestCase tc WHERE tc.isDeleted = false " +
+    @Query(value = "SELECT tc FROM TestCase tc " +
+           "LEFT JOIN FETCH tc.feature " +
+           "LEFT JOIN FETCH tc.createdBy " +
+           "LEFT JOIN FETCH tc.updatedBy " +
+           "WHERE tc.isDeleted = false " +
+           "AND (:featureId IS NULL OR tc.feature.featureId = :featureId) " +
+           "AND (:status IS NULL OR tc.testcaseStatus = :status) " +
+           "AND (:type IS NULL OR tc.testType = :type) " +
+           "AND (:priority IS NULL OR tc.testPriority = :priority)",
+           countQuery = "SELECT COUNT(tc) FROM TestCase tc WHERE tc.isDeleted = false " +
            "AND (:featureId IS NULL OR tc.feature.featureId = :featureId) " +
            "AND (:status IS NULL OR tc.testcaseStatus = :status) " +
            "AND (:type IS NULL OR tc.testType = :type) " +
@@ -53,8 +64,10 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Integer>, Jp
 
     boolean existsByFeatureFeatureIdAndTestcaseFormatId(Integer featureId, String testcaseFormatId);
 
+    @EntityGraph(attributePaths = {"feature", "createdBy", "updatedBy"})
     List<TestCase> findByFeature_Project_ProjectIdAndIsDeletedFalse(Integer projectId);
 
+    @EntityGraph(attributePaths = {"feature", "createdBy", "updatedBy"})
     List<TestCase> findByIsDeletedFalse();
 
     boolean existsByFeature_FeatureIdAndTestcaseFormatId(Integer featureId, String testcaseFormatId);

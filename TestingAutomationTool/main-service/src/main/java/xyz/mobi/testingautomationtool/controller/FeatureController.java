@@ -25,7 +25,7 @@ import java.io.IOException;
 import java.util.List;
 
 @RestController
-@RequestMapping("/feature")
+@RequestMapping({"/feature", "/features"})
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
@@ -42,15 +42,24 @@ public class FeatureController {
                 .body(ApiResponse.success("Feature created successfully", featureResponse));
     }
 
-    @GetMapping("/{featureId}")
+    @GetMapping
+    public ResponseEntity<ApiResponse<List<FeatureResponse>>> getAllFeatures(
+            @RequestParam(required = false) Integer projectId) {
+        if (projectId != null) {
+            return ResponseEntity.ok(ApiResponse.success("Features retrieved successfully", featureService.getFeaturesByProjectId(projectId)));
+        }
+        return ResponseEntity.ok(ApiResponse.success("Features retrieved successfully", featureService.getAllFeatures()));
+    }
+
+    @GetMapping("/{featureId:\\d+}")
     public ResponseEntity<ApiResponse<FeatureResponse>> getFeatureById(
-            @PathVariable Integer featureId) {
+            @PathVariable("featureId") Integer featureId) {
         return ResponseEntity.ok(ApiResponse.success("Feature retrieved successfully", featureService.getFeatureById(featureId)));
     }
 
     @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
-    @GetMapping("/{featureId}/export")
-    public ResponseEntity<byte[]> exportFeatureSummary(@PathVariable Integer featureId) {
+    @GetMapping("/{featureId:\\d+}/export")
+    public ResponseEntity<byte[]> exportFeatureSummary(@PathVariable("featureId") Integer featureId) {
         byte[] excelBytes = featureService.exportFeatureSummary(featureId);
         String filename = "QA_Summary_Report_Feature_" + featureId + ".xlsx";
         return ResponseEntity.ok()
@@ -59,9 +68,9 @@ public class FeatureController {
                 .body(excelBytes);
     }
 
-    @GetMapping("/project/{projectId}")
+    @GetMapping("/project/{projectId:\\d+}")
     public ResponseEntity<ApiResponse<List<FeatureResponse>>> getFeaturesByProjectId(
-            @PathVariable Integer projectId) {
+            @PathVariable("projectId") Integer projectId) {
         return ResponseEntity.ok(ApiResponse.success("Features retrieved successfully", featureService.getFeaturesByProjectId(projectId)));
     }
 
