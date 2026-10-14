@@ -1,32 +1,29 @@
 package xyz.mobi.testingautomationtool.service.impl;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.MailException;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
+import xyz.mobi.testingautomationtool.client.NotificationServiceClient;
+import xyz.mobi.testingautomationtool.dto.notification.EmailNotificationRequest;
 import xyz.mobi.testingautomationtool.entity.Bug;
 import xyz.mobi.testingautomationtool.entity.TestCase;
 import xyz.mobi.testingautomationtool.entity.TestingExecution;
 import xyz.mobi.testingautomationtool.repository.TestingExecutionRepository;
 import xyz.mobi.testingautomationtool.service.EmailService;
 
+import java.util.List;
+import java.util.Map;
+
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
 
-    private final JavaMailSender mailSender;
+    private final NotificationServiceClient notificationServiceClient;
 
     private final TestingExecutionRepository testingExecutionRepository;
-
-    @Value("${spring.mail.username}")
-    private String fromEmail;
 
 
     @Async
@@ -581,39 +578,15 @@ public class EmailServiceImpl implements EmailService {
             String subject,
             String content) {
 
-        try {
+        EmailNotificationRequest request = EmailNotificationRequest.builder()
+                .to(List.of(recipientEmail))
+                .subject(subject)
+                .body(content)
+                .isHtml(true)
+                .metadata(Map.of("sourceSystem", "main-service"))
+                .build();
 
-            MimeMessage mail =
-                    mailSender.createMimeMessage();
-
-            MimeMessageHelper helper =
-                    new MimeMessageHelper(
-                            mail,
-                            false,
-                            "UTF-8"
-                    );
-
-            helper.setFrom(fromEmail);
-
-            helper.setTo(recipientEmail);
-
-            helper.setSubject(subject);
-
-            // true = HTML email
-            helper.setText(
-                    content,
-                    true
-            );
-
-            mailSender.send(mail);
-
-        } catch (MessagingException | org.springframework.mail.MailException ex) {
-
-            throw new xyz.mobi.testingautomationtool.exception.EmailSendingException(
-                    "Failed to send email to " + recipientEmail + ": " + ex.getMessage(),
-                    ex
-            );
-        }
+        notificationServiceClient.sendEmail(request);
     }
 
 

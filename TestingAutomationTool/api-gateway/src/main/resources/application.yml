@@ -51,10 +51,18 @@ spring:
               predicates:
                 - Path=/manager/**, /project/**, /feature/**, /testcases/**, /testcase/**, /bugs/**, /comments/**, /attachments/**, /in-app-notifications/**, /admin/**
 
+            # Route 3: Notification Microservice (port 8091)
+            - id: notification-service
+              uri: ${services.notification-service.url:http://localhost:8091}
+              predicates:
+                - Path=/api/v1/notifications/**
+
 # Downstream Microservices target URLs
 services:
   auth-service:
     url: ${AUTH_SERVICE_URL:http://localhost:8081}
   main-service:
     url: ${MAIN_SERVICE_URL:http://localhost:8090}
+  notification-service:
+    url: ${NOTIFICATION_SERVICE_URL:http://localhost:8091}
 

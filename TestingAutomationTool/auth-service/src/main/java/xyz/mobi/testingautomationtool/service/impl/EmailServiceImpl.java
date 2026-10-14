@@ -1,26 +1,22 @@
 package xyz.mobi.testingautomationtool.service.impl;
 
-import jakarta.mail.MessagingException;
-import jakarta.mail.internet.MimeMessage;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
-import xyz.mobi.testingautomationtool.exception.EmailSendingException;
+import xyz.mobi.testingautomationtool.client.NotificationServiceClient;
+import xyz.mobi.testingautomationtool.dto.notification.EmailNotificationRequest;
 import xyz.mobi.testingautomationtool.service.EmailService;
+
+import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class EmailServiceImpl implements EmailService {
 
-    private final JavaMailSender mailSender;
-
-    @Value("${spring.mail.username}")
-    private String fromEmail;
+    private final NotificationServiceClient notificationServiceClient;
 
     @Async
     @Override
@@ -55,18 +51,15 @@ public class EmailServiceImpl implements EmailService {
     }
 
     private void sendHtmlEmail(String recipientEmail, String subject, String content) {
-        try {
-            MimeMessage mail = mailSender.createMimeMessage();
-            MimeMessageHelper helper = new MimeMessageHelper(mail, false, "UTF-8");
-            helper.setFrom(fromEmail);
-            helper.setTo(recipientEmail);
-            helper.setSubject(subject);
-            helper.setText(content, true);
-            mailSender.send(mail);
-        } catch (MessagingException | org.springframework.mail.MailException ex) {
-            log.error("Failed to send email to {}: {}", recipientEmail, ex.getMessage());
-            throw new EmailSendingException("Failed to send email to " + recipientEmail + ": " + ex.getMessage(), ex);
-        }
+        EmailNotificationRequest request = EmailNotificationRequest.builder()
+                .to(List.of(recipientEmail))
+                .subject(subject)
+                .body(content)
+                .isHtml(true)
+                .metadata(Map.of("sourceSystem", "auth-service", "purpose", "PASSWORD_RESET_OTP"))
+                .build();
+
+        notificationServiceClient.sendEmail(request);
     }
 
     private String escapeHtml(String value) {

@@ -112,7 +112,7 @@ The **Testing Automation Tool** addresses the complexities of modern software qu
 | **Data Mapping** | MapStruct | 1.6.3 + Lombok MapStruct Binding |
 | **Office Spreadsheet** | Apache POI | 5.4.1 (XSSF / OOXML) |
 | **Caching** | Caffeine Cache | In-memory caching with 1-hour TTL |
-| **Mail & Alerts** | Spring Starter Mail | JavaMailSender with Async SMTP / StartTLS |
+| **Mail & Alerts** | Dedicated Notification Microservice | REST Client to `notification-service` (:8091) |
 | **API Documentation** | SpringDoc OpenAPI | 3.0.0 (OpenAPI 3 / Swagger UI) |
 | **Code Generation** | Project Lombok | Boilerplate elimination (Getters, Setters, Builders) |
 
@@ -538,10 +538,7 @@ All configuration is centralized in [application.properties](file:///c:/Users/ha
 | `DB_PASSWORD` | *(Required in Prod)* | MySQL database password |
 | `JWT_SECRET` | `404E635266556A586E32...` | 256-bit secret key used to sign HMAC-SHA256 JWT tokens |
 | `JWT_EXPIRATION_MS` | `86400000` (24 Hours) | JWT token lifespan in milliseconds |
-| `spring.mail.host` | `smtp.gmail.com` | SMTP host for sending emails |
-| `spring.mail.port` | `587` | SMTP port (STARTTLS) |
-| `spring.mail.username` | `vikramraajak@gmail.com` | SMTP sender account username |
-| `spring.mail.password` | `pwnpavuwnjacbbdh` | SMTP App Password / Auth credential |
+| `notification.service.url` | `http://localhost:8091` | Dedicated Notification Microservice endpoint URL |
 
 ---
 
