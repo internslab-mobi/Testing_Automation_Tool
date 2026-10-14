@@ -103,11 +103,11 @@ public class SummaryExportClient {
 
         HttpServletRequest request = attributes.getRequest();
 
-        String authHeader = request.getHeader("Authorization");
-
-        if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader;
-        }
+//        String authHeader = request.getHeader("Authorization");
+//
+//        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+//            return authHeader;
+//        }
 
         Cookie[] cookies = request.getCookies();
 

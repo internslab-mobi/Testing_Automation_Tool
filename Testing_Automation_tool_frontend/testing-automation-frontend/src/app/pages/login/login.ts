@@ -53,14 +53,7 @@ export class Login {
         this.isLoading = false;
         console.log('Login successful:', response);
         const authData = response?.data;
-        if (authData) {
-          if (authData.token) localStorage.setItem('token', authData.token);
-          if (authData.refreshToken) localStorage.setItem('refreshToken', authData.refreshToken);
-          if (authData.role) localStorage.setItem('role', authData.role);
-          if (authData.username) localStorage.setItem('username', authData.username);
-          if (authData.fullName) localStorage.setItem('fullName', authData.fullName);
-          if (authData.designation) localStorage.setItem('designation', authData.designation);
-        }
+        // User profile is now safely held in-memory via AuthService.currentUser signal (Zero LocalStorage)
 
         const role = (authData?.role || '').toUpperCase();
         if (role.includes('TESTER')) {

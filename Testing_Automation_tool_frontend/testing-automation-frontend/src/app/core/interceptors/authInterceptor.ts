@@ -17,26 +17,9 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
     }
   }
 
-  // Dual auth strategy: Attach Bearer token header if present in localStorage.
-  // If no token exists, auto-provide a valid default tester session token so workspace data loads seamlessly.
-  let token: string | null = null;
-  if (typeof window !== 'undefined' && window.localStorage) {
-    token = localStorage.getItem('token');
-    if (!token) {
-      // Default valid session for priya_tester (ROLE_TESTER) in Interns_db
-      token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJwcml5YV90ZXN0ZXIiLCJ0b2tlblR5cGUiOiJBQ0NFU1MiLCJpYXQiOjE3OTE5NTEwODksImV4cCI6MjAwMDAwMDAwMH0.vjjVBWJPflf89LglVPZNUddtikqz59YGxoOa9TIk_No';
-      localStorage.setItem('token', token);
-      if (!localStorage.getItem('username')) localStorage.setItem('username', 'priya_tester');
-      if (!localStorage.getItem('fullName')) localStorage.setItem('fullName', 'Priya Tester');
-      if (!localStorage.getItem('role')) localStorage.setItem('role', 'ROLE_TESTER');
-      if (!localStorage.getItem('designation')) localStorage.setItem('designation', 'QA Automation Engineer');
-    }
-  }
-
-  if (token && !req.headers.has('Authorization')) {
-    headersConfig['Authorization'] = `Bearer ${token}`;
-  }
-
+  // Pure cookie-based authentication:
+  // Browser automatically sends the HttpOnly accessToken & refreshToken cookies with `withCredentials: true`.
+  // No tokens are stored in or retrieved from localStorage.
   const modifiedReq = req.clone({
     withCredentials: true,
     setHeaders: headersConfig
