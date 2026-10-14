@@ -3,7 +3,6 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { TesterService } from '../../core/services/testerService';
-import { AuthService } from '../../core/services/authService';
 
 export interface FeatureItem {
   id: string;
@@ -91,8 +90,7 @@ export interface FileAttachment {
 export class TesterWorkspace implements OnInit {
   private readonly router = inject(Router);
   private readonly testerService = inject(TesterService);
-  private readonly authService = inject(AuthService);
-
+  private readonly cd = inject
   // User Profile
   userName = 'Tester';
   userRole = 'QA Tester';
@@ -211,33 +209,19 @@ export class TesterWorkspace implements OnInit {
   }
 
   loadUserSession(): void {
-    const cachedUser = this.authService.currentUser();
-    if (cachedUser) {
-      this.applyUserProfile(cachedUser);
-    } else {
-      // On page reload (zero localStorage): Fetch profile using the HttpOnly accessToken cookie
-      this.authService.getProfile().subscribe({
-        next: (response) => {
-          if (response?.data) {
-            this.applyUserProfile(response.data);
-          }
-        },
-        error: (err) => {
-          console.warn('Could not fetch user profile session:', err?.message || err);
-        }
-      });
-    }
-  }
+    const fullName = localStorage.getItem('fullName');
+    const username = localStorage.getItem('username');
+    const role = localStorage.getItem('role');
+    const designation = localStorage.getItem('designation');
 
-  private applyUserProfile(user: { fullName?: string; username?: string; role?: string; designation?: string }): void {
-    if (user.fullName) {
-      this.userName = user.fullName;
-    } else if (user.username) {
-      this.userName = user.username;
+    if (fullName) {
+      this.userName = fullName;
+    } else if (username) {
+      this.userName = username;
     }
 
-    if (user.role) {
-      this.userRole = user.designation ? `${user.designation} (${user.role})` : `${user.role}`;
+    if (role) {
+      this.userRole = designation ? `${designation} (${role})` : `${role}`;
     }
 
     if (this.userName) {
@@ -1345,13 +1329,7 @@ export class TesterWorkspace implements OnInit {
 
   // Logout
   logout(): void {
-    this.authService.logout().subscribe({
-      next: () => {
-        this.router.navigate(['/login']);
-      },
-      error: () => {
-        this.router.navigate(['/login']);
-      }
-    });
+    localStorage.clear();
+    this.router.navigate(['/login']);
   }
 }
