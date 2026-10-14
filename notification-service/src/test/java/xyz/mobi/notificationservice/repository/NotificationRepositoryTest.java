@@ -12,7 +12,6 @@ import xyz.mobi.notificationservice.entity.Notification;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -34,7 +33,6 @@ class NotificationRepositoryTest {
         Instant now = Instant.now();
 
         notif1 = Notification.builder()
-                .id("notif-id-1")
                 .sender("billing@company.com")
                 .recipients("customer@example.com")
                 .ccRecipients("accounting@company.com")
@@ -45,7 +43,6 @@ class NotificationRepositoryTest {
                 .build();
 
         notif2 = Notification.builder()
-                .id("notif-id-2")
                 .sender("support@company.com")
                 .recipients("user@domain.org")
                 .bccRecipients("audit@company.com")
@@ -56,7 +53,6 @@ class NotificationRepositoryTest {
                 .build();
 
         notif3 = Notification.builder()
-                .id("notif-id-3")
                 .sender("alerts@company.com")
                 .recipients("devops@company.com, customer@example.com")
                 .subject("System Maintenance Notice")
@@ -71,9 +67,7 @@ class NotificationRepositoryTest {
 
     @Test
     void testSaveAndFindNotification() {
-        String id = UUID.randomUUID().toString();
         Notification notification = Notification.builder()
-                .id(id)
                 .sender("sender@example.com")
                 .recipients("recipient1@example.com, recipient2@example.com")
                 .subject("Welcome Email")
@@ -84,8 +78,9 @@ class NotificationRepositoryTest {
 
         Notification saved = notificationRepository.save(notification);
         assertNotNull(saved);
+        assertNotNull(saved.getId());
 
-        Optional<Notification> found = notificationRepository.findById(id);
+        Optional<Notification> found = notificationRepository.findById(saved.getId());
         assertTrue(found.isPresent());
         assertEquals("sender@example.com", found.get().getSender());
         assertEquals("Welcome Email", found.get().getSubject());
@@ -95,9 +90,7 @@ class NotificationRepositoryTest {
 
     @Test
     void testSaveFailureNotification() {
-        String id = UUID.randomUUID().toString();
         Notification notification = Notification.builder()
-                .id(id)
                 .sender("sender@example.com")
                 .recipients("recipient@example.com")
                 .subject("System Notification")
@@ -106,9 +99,10 @@ class NotificationRepositoryTest {
                 .createdAt(Instant.now())
                 .build();
 
-        notificationRepository.save(notification);
+        Notification saved = notificationRepository.save(notification);
+        assertNotNull(saved.getId());
 
-        Optional<Notification> found = notificationRepository.findById(id);
+        Optional<Notification> found = notificationRepository.findById(saved.getId());
         assertTrue(found.isPresent());
         assertEquals("FAILED", found.get().getStatus());
         assertEquals("SMTP connection timeout", found.get().getFailureReason());

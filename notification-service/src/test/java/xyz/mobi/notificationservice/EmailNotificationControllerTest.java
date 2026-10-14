@@ -24,7 +24,6 @@ import xyz.mobi.notificationservice.service.EmailNotificationService;
 
 import java.time.Instant;
 import java.util.List;
-import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -63,7 +62,7 @@ class EmailNotificationControllerTest {
                 .isHtml(true)
                 .build();
 
-        String notificationId = UUID.randomUUID().toString();
+        Long notificationId = 1001L;
         EmailNotificationResponse mockResponse = EmailNotificationResponse.builder()
                 .notificationId(notificationId)
                 .status("SUBMITTED")
@@ -125,7 +124,7 @@ class EmailNotificationControllerTest {
 
     @Test
     void testGetNotificationByIdSuccessReturns200() throws Exception {
-        String notificationId = "notif-998877";
+        Long notificationId = 998877L;
         NotificationHistoryDto historyDto = NotificationHistoryDto.builder()
                 .notificationId(notificationId)
                 .sender("sender@company.com")
@@ -148,7 +147,7 @@ class EmailNotificationControllerTest {
 
     @Test
     void testGetNotificationByIdNotFoundReturns404() throws Exception {
-        String unknownId = "unknown-uuid";
+        Long unknownId = 999999L;
         when(notificationService.getNotificationById(unknownId))
                 .thenThrow(new NotificationNotFoundException(unknownId));
 
@@ -156,13 +155,13 @@ class EmailNotificationControllerTest {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.success").value(false))
                 .andExpect(jsonPath("$.errorCode").value("NOTIFICATION_NOT_FOUND"))
-                .andExpect(jsonPath("$.message").value("Notification record with ID 'unknown-uuid' not found."));
+                .andExpect(jsonPath("$.message").value("Notification record with ID '999999' not found."));
     }
 
     @Test
     void testGetNotificationHistoryReturns200() throws Exception {
         NotificationHistoryDto historyDto = NotificationHistoryDto.builder()
-                .notificationId("notif-1")
+                .notificationId(1L)
                 .sender("sender@company.com")
                 .to(List.of("user@example.com"))
                 .subject("Billing Invoice")
@@ -183,7 +182,7 @@ class EmailNotificationControllerTest {
         mockMvc.perform(get("/api/v1/notifications?page=0&size=10"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.success").value(true))
-                .andExpect(jsonPath("$.data.items[0].notificationId").value("notif-1"))
+                .andExpect(jsonPath("$.data.items[0].notificationId").value(1))
                 .andExpect(jsonPath("$.data.items[0].status").value("SUBMITTED"));
     }
 }

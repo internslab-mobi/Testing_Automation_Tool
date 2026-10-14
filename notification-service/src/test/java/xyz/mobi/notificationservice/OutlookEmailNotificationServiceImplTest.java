@@ -64,7 +64,13 @@ class OutlookEmailNotificationServiceImplTest {
 
         MimeMessage mimeMessage = new MimeMessage(Session.getInstance(new Properties()));
         lenient().when(mailSender.createMimeMessage()).thenReturn(mimeMessage);
-        lenient().when(notificationRepository.save(any(Notification.class))).thenAnswer(inv -> inv.getArgument(0));
+        lenient().when(notificationRepository.save(any(Notification.class))).thenAnswer(inv -> {
+            Notification n = inv.getArgument(0);
+            if (n.getId() == null) {
+                n.setId(1L);
+            }
+            return n;
+        });
     }
 
     @Test
@@ -183,7 +189,7 @@ class OutlookEmailNotificationServiceImplTest {
 
     @Test
     void testGetNotificationByIdFound() {
-        String id = "notif-12345";
+        Long id = 12345L;
         Notification notification = Notification.builder()
                 .id(id)
                 .sender("sender@example.com")
@@ -209,17 +215,17 @@ class OutlookEmailNotificationServiceImplTest {
 
     @Test
     void testGetNotificationByIdNotFoundThrowsException() {
-        when(notificationRepository.findById("unknown-id")).thenReturn(Optional.empty());
+        when(notificationRepository.findById(99999L)).thenReturn(Optional.empty());
 
         assertThrows(NotificationNotFoundException.class,
-                () -> service.getNotificationById("unknown-id"));
+                () -> service.getNotificationById(99999L));
     }
 
     @Test
     void testGetNotificationHistoryPaginated() {
         Pageable pageable = PageRequest.of(0, 10);
         Notification notif = Notification.builder()
-                .id("notif-1")
+                .id(1L)
                 .sender("sender@example.com")
                 .recipients("user@example.com")
                 .subject("Notice")
@@ -233,6 +239,6 @@ class OutlookEmailNotificationServiceImplTest {
 
         assertNotNull(page);
         assertEquals(1, page.getTotalElements());
-        assertEquals("notif-1", page.getItems().get(0).getNotificationId());
+        assertEquals(1L, page.getItems().get(0).getNotificationId());
     }
 }

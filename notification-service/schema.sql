@@ -1,17 +1,10 @@
--- ===================================================================
--- Email Notification Microservice - Database Schema DDL
--- Target: Dedicated MySQL Database (e.g., notification_service_db)
--- Note: Do NOT execute in Interns_db or shared company databases.
--- ===================================================================
-
-CREATE DATABASE IF NOT EXISTS notification_service_db
-  CHARACTER SET utf8mb4
-  COLLATE utf8mb4_unicode_ci;
+-- Email Notification Microservice
+-- Target database: Interns_db
 
 USE Interns_db;
 
 CREATE TABLE IF NOT EXISTS notifications (
-    id VARCHAR(36) NOT NULL,
+    id BIGINT AUTO_INCREMENT NOT NULL,
     sender VARCHAR(255) NULL,
     recipients VARCHAR(2000) NOT NULL,
     cc_recipients VARCHAR(2000) NULL,
@@ -21,10 +14,26 @@ CREATE TABLE IF NOT EXISTS notifications (
     failure_reason VARCHAR(1000) NULL,
     created_at TIMESTAMP(6) NOT NULL,
     submitted_at TIMESTAMP(6) NULL,
+
     PRIMARY KEY (id),
+
     INDEX idx_notifications_status (status),
     INDEX idx_notifications_created_at (created_at)
+
     ) ENGINE=InnoDB
     DEFAULT CHARSET=utf8mb4
     COLLATE=utf8mb4_unicode_ci;
 
+-- ============================================================================
+-- Safe Migration Script for existing Interns_db database (Preserves records)
+-- ============================================================================
+-- If updating an existing table that contains UUID VARCHAR(36) records:
+--
+-- 1. Add new auto-increment ID column:
+--    ALTER TABLE notifications ADD COLUMN new_id BIGINT AUTO_INCREMENT UNIQUE FIRST;
+--
+-- 2. Switch primary key to new auto-increment column:
+--    ALTER TABLE notifications DROP PRIMARY KEY;
+--    ALTER TABLE notifications DROP COLUMN id;
+--    ALTER TABLE notifications CHANGE COLUMN new_id id BIGINT AUTO_INCREMENT PRIMARY KEY;
+-- ============================================================================

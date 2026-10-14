@@ -39,7 +39,7 @@ public class EmailNotificationController {
 
     @GetMapping("/{notificationId}")
     public ResponseEntity<ApiResponse<NotificationHistoryDto>> getNotificationById(
-            @PathVariable String notificationId) {
+            @PathVariable Long notificationId) {
 
         log.info("Received request for notification history: notificationId={}", notificationId);
         NotificationHistoryDto history = notificationService.getNotificationById(notificationId);

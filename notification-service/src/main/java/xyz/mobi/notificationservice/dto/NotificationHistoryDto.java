@@ -25,8 +25,8 @@ import java.util.List;
 @Schema(description = "Notification tracking details")
 public class NotificationHistoryDto {
 
-    @Schema(description = "Unique notification tracking identifier", example = "550e8400-e29b-41d4-a716-446655440000")
-    private String notificationId;
+    @Schema(description = "Unique notification tracking identifier", example = "1001")
+    private Long notificationId;
 
     @Schema(description = "Sender email address", example = "notifications@company.com")
     private String sender;

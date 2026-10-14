@@ -8,6 +8,6 @@ import xyz.mobi.notificationservice.entity.Notification;
  * Spring Data JPA repository for Notification tracking entities.
  */
 @Repository
-public interface NotificationRepository extends JpaRepository<Notification, String> {
+public interface NotificationRepository extends JpaRepository<Notification, Long> {
 }
 

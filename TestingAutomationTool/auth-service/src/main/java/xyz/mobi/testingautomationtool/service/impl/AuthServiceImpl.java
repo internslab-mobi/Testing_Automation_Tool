@@ -226,7 +226,7 @@ public class AuthServiceImpl implements AuthService {
                 .build();
         passwordResetOtpRepository.save(otpEntity);
 
-        emailService.sendPasswordResetOtpEmail(user.getEmail(), user.getUsername(), otpCode, 10);
+        emailService.sendPasswordResetOtpEmail(user.getEmail(), user.getUsername(), otpCode, 5);
 
         return AuthResponse.builder()
                 .email(email)

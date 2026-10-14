@@ -2,18 +2,13 @@
   "info": {
     "_postman_id": "f5819777-a16f-4c5c-9cb3-9118541e4577",
     "name": "Email Notification Microservice API",
-    "description": "Collection for testing the standalone Spring Boot Email Notification Service including SMTP submission, tracking persistence, history retrieval, and API Key authentication.",
+    "description": "Postman Collection for the streamlined Spring Boot Email Notification Service. Covers email submission via Outlook SMTP, attachment validation, notification tracking, paginated audit history, and error scenarios.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
     {
       "key": "baseUrl",
       "value": "http://localhost:8091",
-      "type": "string"
-    },
-    {
-      "key": "apiKey",
-      "value": "test-secret-api-key",
       "type": "string"
     },
     {
@@ -30,8 +25,13 @@
         "header": [],
         "url": {
           "raw": "{{baseUrl}}/actuator/health",
-          "host": ["{{baseUrl}}"],
-          "path": ["actuator", "health"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "actuator",
+            "health"
+          ]
         }
       },
       "response": []
@@ -60,10 +60,6 @@
           {
             "key": "Content-Type",
             "value": "application/json"
-          },
-          {
-            "key": "X-API-KEY",
-            "value": "{{apiKey}}"
           }
         ],
         "body": {
@@ -72,8 +68,15 @@
         },
         "url": {
           "raw": "{{baseUrl}}/api/v1/notifications/email",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "v1", "notifications", "email"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "notifications",
+            "email"
+          ]
         }
       },
       "response": []
@@ -86,20 +89,52 @@
           {
             "key": "Content-Type",
             "value": "application/json"
-          },
-          {
-            "key": "X-API-KEY",
-            "value": "{{apiKey}}"
           }
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"to\": [\"client@example.com\"],\n  \"subject\": \"Invoice #1024 Attached\",\n  \"isHtml\": false,\n  \"body\": \"Please find attached your invoice for services rendered.\",\n  \"attachments\": [\n    {\n      \"fileName\": \"invoice_1024.pdf\",\n      \"contentType\": \"application/pdf\",\n      \"contentBase64\": \"JVBERi0xLjQKJcTl8uXr...\n    }\n  ],\n  \"headers\": {\n    \"X-Priority\": \"1\",\n    \"X-Reference-ID\": \"INV-1024\"\n  }\n}"
+          "raw": "{\n  \"to\": [\"client@example.com\"],\n  \"subject\": \"Invoice #1024 Attached\",\n  \"isHtml\": false,\n  \"body\": \"Please find attached your invoice for services rendered.\",\n  \"attachments\": [\n    {\n      \"fileName\": \"invoice_1024.pdf\",\n      \"contentType\": \"application/pdf\",\n      \"contentBase64\": \"SGVsbG8gV29ybGQ=\"\n    }\n  ],\n  \"headers\": {\n    \"X-Priority\": \"1\",\n    \"X-Reference-ID\": \"INV-1024\"\n  }\n}"
         },
         "url": {
           "raw": "{{baseUrl}}/api/v1/notifications/email",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "v1", "notifications", "email"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "notifications",
+            "email"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Send Email - Custom Headers & Tracing Metadata",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"to\": [\"operations@example.com\"],\n  \"subject\": \"Server Utilization Alert - High Memory\",\n  \"isHtml\": false,\n  \"body\": \"System notice: Memory utilization on node-prod-02 reached 91% at 10:00 UTC.\",\n  \"headers\": {\n    \"X-Priority\": \"1\",\n    \"X-Entity-Ref-ID\": \"ALERT-994\"\n  },\n  \"metadata\": {\n    \"alertId\": \"alt-445\",\n    \"environment\": \"production\",\n    \"datacenter\": \"us-east\"\n  }\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/notifications/email",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "notifications",
+            "email"
+          ]
         }
       },
       "response": []
@@ -108,16 +143,18 @@
       "name": "Get Notification By ID",
       "request": {
         "method": "GET",
-        "header": [
-          {
-            "key": "X-API-KEY",
-            "value": "{{apiKey}}"
-          }
-        ],
+        "header": [],
         "url": {
           "raw": "{{baseUrl}}/api/v1/notifications/{{notificationId}}",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "v1", "notifications", "{{notificationId}}"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "notifications",
+            "{{notificationId}}"
+          ]
         }
       },
       "response": []
@@ -126,16 +163,17 @@
       "name": "Get Notification History (Paginated)",
       "request": {
         "method": "GET",
-        "header": [
-          {
-            "key": "X-API-KEY",
-            "value": "{{apiKey}}"
-          }
-        ],
+        "header": [],
         "url": {
           "raw": "{{baseUrl}}/api/v1/notifications?page=0&size=10&sort=createdAt,desc",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "v1", "notifications"],
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "notifications"
+          ],
           "query": [
             {
               "key": "page",
@@ -155,148 +193,6 @@
       "response": []
     },
     {
-      "name": "Search Notifications - Combined Filters",
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "X-API-KEY",
-            "value": "{{apiKey}}"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/notifications/search?recipient=customer&status=SUBMITTED&subject=Order&page=0&size=10",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "v1", "notifications", "search"],
-          "query": [
-            {
-              "key": "recipient",
-              "value": "customer"
-            },
-            {
-              "key": "status",
-              "value": "SUBMITTED"
-            },
-            {
-              "key": "subject",
-              "value": "Order"
-            },
-            {
-              "key": "page",
-              "value": "0"
-            },
-            {
-              "key": "size",
-              "value": "10"
-            }
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Search Notifications - Empty Filters (All Records)",
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "X-API-KEY",
-            "value": "{{apiKey}}"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/notifications/search?page=0&size=10",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "v1", "notifications", "search"],
-          "query": [
-            {
-              "key": "page",
-              "value": "0"
-            },
-            {
-              "key": "size",
-              "value": "10"
-            }
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Search Notifications - Date Range",
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "X-API-KEY",
-            "value": "{{apiKey}}"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/notifications/search?fromDate=2026-10-01T00:00:00Z&toDate=2026-10-31T23:59:59Z",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "v1", "notifications", "search"],
-          "query": [
-            {
-              "key": "fromDate",
-              "value": "2026-10-01T00:00:00Z"
-            },
-            {
-              "key": "toDate",
-              "value": "2026-10-31T23:59:59Z"
-            }
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Search Error - Invalid Date Range (400)",
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "X-API-KEY",
-            "value": "{{apiKey}}"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/notifications/search?fromDate=2026-10-25&toDate=2026-10-10",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "v1", "notifications", "search"],
-          "query": [
-            {
-              "key": "fromDate",
-              "value": "2026-10-25"
-            },
-            {
-              "key": "toDate",
-              "value": "2026-10-10"
-            }
-          ]
-        }
-      },
-      "response": []
-    },
-    {
-      "name": "Error - Missing or Invalid API Key (401)",
-      "request": {
-        "method": "GET",
-        "header": [
-          {
-            "key": "X-API-KEY",
-            "value": "invalid-or-missing-key"
-          }
-        ],
-        "url": {
-          "raw": "{{baseUrl}}/api/v1/notifications",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "v1", "notifications"]
-        }
-      },
-      "response": []
-    },
-    {
       "name": "Error - Validation Failure (400)",
       "request": {
         "method": "POST",
@@ -304,10 +200,6 @@
           {
             "key": "Content-Type",
             "value": "application/json"
-          },
-          {
-            "key": "X-API-KEY",
-            "value": "{{apiKey}}"
           }
         ],
         "body": {
@@ -316,8 +208,44 @@
         },
         "url": {
           "raw": "{{baseUrl}}/api/v1/notifications/email",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "v1", "notifications", "email"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "notifications",
+            "email"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Error - CRLF Injection in Subject (400)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"to\": [\"customer@example.com\"],\n  \"subject\": \"Security Test\\r\\nBcc: hacker@example.com\",\n  \"body\": \"Attempting header injection\"\n}"
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/notifications/email",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "notifications",
+            "email"
+          ]
         }
       },
       "response": []
@@ -330,10 +258,6 @@
           {
             "key": "Content-Type",
             "value": "application/json"
-          },
-          {
-            "key": "X-API-KEY",
-            "value": "{{apiKey}}"
           }
         ],
         "body": {
@@ -342,8 +266,35 @@
         },
         "url": {
           "raw": "{{baseUrl}}/api/v1/notifications/email",
-          "host": ["{{baseUrl}}"],
-          "path": ["api", "v1", "notifications", "email"]
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "notifications",
+            "email"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "Error - Notification Not Found (404)",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{baseUrl}}/api/v1/notifications/00000000-0000-0000-0000-000000000000",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "notifications",
+            "00000000-0000-0000-0000-000000000000"
+          ]
         }
       },
       "response": []

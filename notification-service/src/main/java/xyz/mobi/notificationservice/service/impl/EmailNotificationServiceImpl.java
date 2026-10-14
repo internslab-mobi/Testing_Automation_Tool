@@ -32,7 +32,6 @@ import java.io.UnsupportedEncodingException;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import static java.time.Duration.between;
 
@@ -48,19 +47,12 @@ public class EmailNotificationServiceImpl implements EmailNotificationService {
 
     @Override
     public EmailNotificationResponse sendEmail(EmailNotificationRequest request) {
-        String notificationId = UUID.randomUUID().toString();
         Instant startTime = Instant.now();
-
-        // Extract correlation ID if available for distributed tracing without logging sensitive data
-        String correlationId = extractCorrelationId(request.getMetadata());
 
         int totalRecipients = (request.getTo() != null ? request.getTo().size() : 0)
                 + (request.getCc() != null ? request.getCc().size() : 0)
                 + (request.getBcc() != null ? request.getBcc().size() : 0);
         int totalAttachments = request.getAttachments() != null ? request.getAttachments().size() : 0;
-
-        log.info("Processing email dispatch: notificationId={}, correlationId={}, recipients={}, attachments={}, isHtml={}",
-                notificationId, correlationId, totalRecipients, totalAttachments, request.getIsHtml());
 
         // 1. Validate request structure, headers, CRLF injection, domain policy
         validator.validateRequest(request);
@@ -74,7 +66,6 @@ public class EmailNotificationServiceImpl implements EmailNotificationService {
 
         // 4. Create and persist initial tracking record with PENDING status
         Notification notification = Notification.builder()
-                .id(notificationId)
                 .sender(resolvedSender)
                 .recipients(request.getTo() != null ? String.join(", ", request.getTo()) : "")
                 .ccRecipients(request.getCc() != null && !request.getCc().isEmpty() ? String.join(", ", request.getCc()) : null)
@@ -85,6 +76,10 @@ public class EmailNotificationServiceImpl implements EmailNotificationService {
                 .build();
 
         notification = notificationRepository.save(notification);
+        Long notificationId = notification.getId();
+
+        log.info("Processing email dispatch: notificationId={}, recipients={}, attachments={}, isHtml={}",
+                notificationId, totalRecipients, totalAttachments, request.getIsHtml());
 
         // 5. Construct MIME message and attempt submission via Outlook SMTP
         try {
@@ -131,7 +126,7 @@ public class EmailNotificationServiceImpl implements EmailNotificationService {
                 helper.addAttachment(att.getFileName(), resource, att.getContentType());
             }
 
-            // Apply Validated Custom Headers (e.g. X-Priority, X-Correlation-ID)
+            // Apply Validated Custom Headers (e.g. X-Priority)
             if (request.getHeaders() != null) {
                 for (Map.Entry<String, String> header : request.getHeaders().entrySet()) {
                     mimeMessage.setHeader(header.getKey(), header.getValue());
@@ -139,18 +134,15 @@ public class EmailNotificationServiceImpl implements EmailNotificationService {
             }
 
             // Always add internal tracking header
-            mimeMessage.setHeader("X-Notification-ID", notificationId);
-            if (correlationId != null) {
-                mimeMessage.setHeader("X-Correlation-ID", correlationId);
-            }
+            mimeMessage.setHeader("X-Notification-ID", String.valueOf(notificationId));
 
             // 6. Send Message via Microsoft Outlook SMTP
             mailSender.send(mimeMessage);
 
             Instant submissionTime = Instant.now();
             long elapsedMillis = between(startTime, submissionTime).toMillis();
-            log.info("Email submitted successfully to Outlook SMTP: notificationId={}, correlationId={}, elapsedMs={}",
-                    notificationId, correlationId, elapsedMillis);
+            log.info("Email submitted successfully to Outlook SMTP: notificationId={}, elapsedMs={}",
+                    notificationId, elapsedMillis);
 
             // 7. Update status to SUBMITTED
             notification.setStatus("SUBMITTED");
@@ -163,7 +155,6 @@ public class EmailNotificationServiceImpl implements EmailNotificationService {
                     .recipientCount(totalRecipients)
                     .attachmentCount(decodedAttachments.size())
                     .submittedAt(submissionTime)
-                    .metadata(request.getMetadata())
                     .build();
 
         } catch (Exception ex) {
@@ -204,7 +195,7 @@ public class EmailNotificationServiceImpl implements EmailNotificationService {
     }
 
     @Override
-    public NotificationHistoryDto getNotificationById(String notificationId) {
+    public NotificationHistoryDto getNotificationById(Long notificationId) {
         log.debug("Fetching notification tracking record for notificationId={}", notificationId);
         Notification notification = notificationRepository.findById(notificationId)
                 .orElseThrow(() -> new NotificationNotFoundException(notificationId));
@@ -257,14 +248,4 @@ public class EmailNotificationServiceImpl implements EmailNotificationService {
         }
     }
 
-    private String extractCorrelationId(Map<String, Object> metadata) {
-        if (metadata == null) {
-            return null;
-        }
-        Object corr = metadata.get("correlationId");
-        if (corr == null) {
-            corr = metadata.get("traceId");
-        }
-        return corr != null ? corr.toString() : null;
-    }
 }

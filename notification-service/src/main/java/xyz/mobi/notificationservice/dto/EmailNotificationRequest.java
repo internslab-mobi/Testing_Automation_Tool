@@ -55,6 +55,4 @@ public class EmailNotificationRequest {
     @Schema(description = "Optional custom email headers (e.g., X-Priority, X-Entity-Ref-ID). Strictly validated to prevent CRLF injection.", example = "{\"X-Priority\": \"1\"}")
     private Map<String, String> headers;
 
-    @Schema(description = "Optional application metadata for correlation and tracing (e.g., correlationId, externalReferenceId). Will not be logged with sensitive content.", example = "{\"correlationId\": \"corr-9988\", \"sourceSystem\": \"billing-app\"}")
-    private Map<String, Object> metadata;
 }

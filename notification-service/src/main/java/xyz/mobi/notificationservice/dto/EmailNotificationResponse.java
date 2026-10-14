@@ -17,8 +17,8 @@ import java.util.Map;
 @Schema(description = "Response payload after successful SMTP submission")
 public class EmailNotificationResponse {
 
-    @Schema(description = "Unique identifier generated for this notification request", example = "550e8400-e29b-41d4-a716-446655440000")
-    private String notificationId;
+    @Schema(description = "Unique identifier generated for this notification request", example = "1001")
+    private Long notificationId;
 
     @Builder.Default
     @Schema(description = "Status of the email dispatch", example = "SUBMITTED")
@@ -35,6 +35,4 @@ public class EmailNotificationResponse {
     @Schema(description = "UTC timestamp when the message was submitted to the SMTP server")
     private Instant submittedAt = Instant.now();
 
-    @Schema(description = "Echo of correlation metadata passed in the request", example = "{\"correlationId\": \"corr-9988\"}")
-    private Map<String, Object> metadata;
 }

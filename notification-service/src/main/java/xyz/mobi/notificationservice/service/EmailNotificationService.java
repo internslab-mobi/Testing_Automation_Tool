@@ -22,7 +22,7 @@ public interface EmailNotificationService {
      * @param notificationId unique identifier of the notification
      * @return tracking history details
      */
-    NotificationHistoryDto getNotificationById(String notificationId);
+    NotificationHistoryDto getNotificationById(Long notificationId);
 
     /**
      * Retrieves paginated notification tracking records.
