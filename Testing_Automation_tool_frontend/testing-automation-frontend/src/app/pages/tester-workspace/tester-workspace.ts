@@ -5,86 +5,53 @@ import { Router } from '@angular/router';
 import { TesterService } from '../../core/services/testerService';
 import { AuthService } from '../../core/services/authService';
 
-export interface FeatureItem {
-  id: string;
-  rawId?: number;
-  name: string;
-  sprint: string;
-  sprintNum: number;
-  bugs: number;
-  tcCount: number;
-  status: 'BUGS' | 'PASSED';
-}
+import {
+  FeatureItem,
+  ProjectItem,
+  TestCaseItem,
+  DefectItem,
+  NotificationItem,
+  ChatMessage,
+  FileAttachment
+} from './models/tester-workspace.model';
 
-export interface ProjectItem {
-  id: string;
-  rawId?: number;
-  name: string;
-  version: string;
-  status: 'ACTIVE' | 'INACTIVE';
-  region: string;
-  features: FeatureItem[];
-}
+export type {
+  FeatureItem,
+  ProjectItem,
+  TestCaseItem,
+  DefectItem,
+  NotificationItem,
+  ChatMessage,
+  FileAttachment
+};
 
-export interface TestCaseItem {
-  id: string;
-  rawId?: number;
-  title: string;
-  featureName: string;
-  featureId?: number;
-  precondition: string;
-  type: 'FUNCTIONAL' | 'SECURITY' | 'REGRESSION';
-  priority: 'CRITICAL' | 'HIGH' | 'MEDIUM';
-  uiValidation: string;
-  dbValidation: string;
-  status: 'PASSED' | 'FAILED';
-}
 
-export interface DefectItem {
-  id: string;
-  rawId?: number;
-  title: string;
-  featureName: string;
-  originTestCaseId: string;
-  originTestCaseRawId?: number;
-  precondition: string;
-  severity: 'CRITICAL' | 'HIGH' | 'MEDIUM';
-  assignee: string;
-  status: 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'FIXED' | 'CLOSED';
-}
-
-export interface NotificationItem {
-  id: string;
-  rawId?: number;
-  type: 'FIXED' | 'COMMENT' | 'TC';
-  title: string;
-  highlightId?: string;
-  isNew: boolean;
-  read: boolean;
-  message: string;
-  featureName: string;
-  timeAgo: string;
-  originTestCaseId?: string;
-}
-
-export interface ChatMessage {
-  sender: 'tester' | 'dev';
-  senderName: string;
-  text: string;
-  timestamp: string;
-}
-
-export interface FileAttachment {
-  name: string;
-  size: string;
-  icon: string;
-  color: string;
-}
+import { BugChatModalComponent } from './components/bug-chat-modal/bug-chat-modal.component';
+import { NotificationsModalComponent } from './components/notifications-modal/notifications-modal.component';
+import { ProjectEditModalComponent } from './components/project-edit-modal/project-edit-modal.component';
+import { ProjectCreateModalComponent } from './components/project-create-modal/project-create-modal.component';
+import { FeatureEditModalComponent } from './components/feature-edit-modal/feature-edit-modal.component';
+import { FeatureCreateModalComponent } from './components/feature-create-modal/feature-create-modal.component';
+import { TestcaseCreateModalComponent } from './components/testcase-create-modal/testcase-create-modal.component';
+import { BugCreateModalComponent } from './components/bug-create-modal/bug-create-modal.component';
+import { FileAttachmentsModalComponent } from './components/file-attachments-modal/file-attachments-modal.component';
 
 @Component({
   selector: 'app-tester-workspace',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [
+    CommonModule,
+    FormsModule,
+    BugChatModalComponent,
+    NotificationsModalComponent,
+    ProjectEditModalComponent,
+    ProjectCreateModalComponent,
+    FeatureEditModalComponent,
+    FeatureCreateModalComponent,
+    TestcaseCreateModalComponent,
+    BugCreateModalComponent,
+    FileAttachmentsModalComponent
+  ],
   templateUrl: './tester-workspace.html',
   styleUrl: './tester-workspace.css'
 })
@@ -930,12 +897,18 @@ export class TesterWorkspace implements OnInit {
 
   sendChatMessage(): void {
     if (!this.newChatMessage.trim() || !this.activeChatBug) return;
-    const text = this.newChatMessage.trim();
+    this.onChatMessageReceived(this.newChatMessage);
+    this.newChatMessage = '';
+  }
+
+  onChatMessageReceived(text: string): void {
+    if (!text || !text.trim() || !this.activeChatBug) return;
+    const cleanText = text.trim();
 
     this.chatMessages.push({
       sender: 'tester',
       senderName: `${this.userName} (Tester)`,
-      text: text,
+      text: cleanText,
       timestamp: 'Just now'
     });
     this.newChatMessage = '';

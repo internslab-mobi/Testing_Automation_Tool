@@ -34,7 +34,6 @@ export class Login {
   loginError = '';
 
   login(): void {
-
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       return;
@@ -52,17 +51,7 @@ export class Login {
       next: (response) => {
         this.isLoading = false;
         console.log('Login successful:', response);
-        const authData = response?.data;
-        if (authData) {
-          if (authData.token) localStorage.setItem('token', authData.token);
-          if (authData.refreshToken) localStorage.setItem('refreshToken', authData.refreshToken);
-          if (authData.role) localStorage.setItem('role', authData.role);
-          if (authData.username) localStorage.setItem('username', authData.username);
-          if (authData.fullName) localStorage.setItem('fullName', authData.fullName);
-          if (authData.designation) localStorage.setItem('designation', authData.designation);
-        }
-
-        const role = (authData?.role || '').toUpperCase();
+            const role = (response?.data.role || '').toUpperCase();
         if (role.includes('TESTER')) {
           this.router.navigate(['/tester-workspace']);
         } else {
