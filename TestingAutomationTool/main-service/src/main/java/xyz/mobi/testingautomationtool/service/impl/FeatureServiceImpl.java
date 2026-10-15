@@ -79,9 +79,11 @@ public class FeatureServiceImpl implements FeatureService {
     @Transactional
     @CacheEvict(value = "features", key = "#featureId")
     public String patchFeature(Integer featureId, FeaturePatchRequest request) {
+
         Feature feature = featureRepository.findById(featureId)
                 .orElseThrow(() -> new ResourceNotFoundException("Feature not found with ID: " + featureId));
         User currentUser = authService.getCurrentUser();
+
         if (feature.isDeleted()) {
             throw new ResourceNotFoundException("Feature not found with ID: " + featureId);
         }
@@ -98,18 +100,20 @@ public class FeatureServiceImpl implements FeatureService {
                     notAvailableTestCases.add(id);
                     continue;
                 }
+
                 TestCase testCase = optionalTestCase.get();
                 boolean isTestcaseAvailable = testCaseRepository.existsByFeature_FeatureIdAndTestcaseFormatId(featureId,testCase.getTestcaseFormatId());
                 if (isTestcaseAvailable) {
                     skippedTestCases.add(testCase.getTestcaseFormatId());
                     continue;
                 }
-                List<Bug> bug = bugRepository.findByTestCase_TestcaseId(id);
-                    for(Bug bug1:bug){
-                        if(bug1.isActive() && !bug1.isDeleted()) {
-                            bug1.setFeature(feature);
-                            bug1.setUpdatedBy(currentUser);
-                            bugRepository.save(bug1);
+
+                List<Bug> bugs = bugRepository.findByTestCase_TestcaseId(id);
+                    for(Bug bug:bugs){
+                        if(bug.isActive() && !bug.isDeleted()) {
+                            bug.setFeature(feature);
+                            bug.setUpdatedBy(currentUser);
+                            bugRepository.save(bug);
                         }
                     }
 
