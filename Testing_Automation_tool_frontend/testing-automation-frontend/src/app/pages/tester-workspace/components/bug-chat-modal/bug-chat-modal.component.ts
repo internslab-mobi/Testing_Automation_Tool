@@ -7,6 +7,7 @@ import { DefectItem, ChatMessage } from '../../models/tester-workspace.model';
   selector: 'app-bug-chat-modal',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  styleUrl: '../modal-shared.css',
   template: `
     @if (isOpen && activeChatBug) {
       <div class="modal-overlay show" (click)="close()">

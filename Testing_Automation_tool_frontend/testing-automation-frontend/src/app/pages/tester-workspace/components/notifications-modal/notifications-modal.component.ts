@@ -6,6 +6,7 @@ import { NotificationItem } from '../../models/tester-workspace.model';
   selector: 'app-notifications-modal',
   standalone: true,
   imports: [CommonModule],
+  styleUrl: '../modal-shared.css',
   template: `
     @if (isOpen) {
       <div class="modal-overlay show" (click)="close()">

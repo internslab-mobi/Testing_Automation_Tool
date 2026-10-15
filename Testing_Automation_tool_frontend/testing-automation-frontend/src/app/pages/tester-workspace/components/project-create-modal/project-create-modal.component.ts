@@ -6,6 +6,7 @@ import { FormsModule } from '@angular/forms';
   selector: 'app-project-create-modal',
   standalone: true,
   imports: [CommonModule, FormsModule],
+  styleUrl: '../modal-shared.css',
   template: `
     @if (isOpen) {
       <div class="modal-overlay show" (click)="close()">

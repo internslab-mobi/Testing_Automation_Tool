@@ -183,7 +183,6 @@ export class TesterWorkspace implements OnInit {
     if (cachedUser) {
       this.applyUserProfile(cachedUser);
     } else {
-      // On page reload (zero localStorage): Fetch profile using the HttpOnly accessToken cookie
       this.authService.getProfile().subscribe({
         next: (response) => {
           if (response?.data) {

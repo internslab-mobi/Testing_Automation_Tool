@@ -6,6 +6,7 @@ import { FileAttachment } from '../../models/tester-workspace.model';
   selector: 'app-file-attachments-modal',
   standalone: true,
   imports: [CommonModule],
+  styleUrl: '../modal-shared.css',
   template: `
     @if (isOpen) {
       <div class="modal-overlay show" (click)="close()">
