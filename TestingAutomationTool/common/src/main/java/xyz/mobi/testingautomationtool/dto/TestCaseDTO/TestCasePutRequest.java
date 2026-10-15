@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import xyz.mobi.testingautomationtool.enums.TestPriority;
 import xyz.mobi.testingautomationtool.enums.TestType;
 
+import java.util.List;
 import java.util.Map;
 
 @Data

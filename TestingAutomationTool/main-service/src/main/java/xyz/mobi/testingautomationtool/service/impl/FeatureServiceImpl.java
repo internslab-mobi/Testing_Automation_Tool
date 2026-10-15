@@ -10,11 +10,8 @@ import org.springframework.transaction.annotation.Transactional;
 import xyz.mobi.testingautomationtool.client.SummaryExportClient;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.FeatureDTO.*;
-import xyz.mobi.testingautomationtool.entity.Attachment;
+import xyz.mobi.testingautomationtool.entity.*;
 import xyz.mobi.testingautomationtool.dto.FeatureDTO.*;
-import xyz.mobi.testingautomationtool.entity.Feature;
-import xyz.mobi.testingautomationtool.entity.Project;
-import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.FeatureStatus;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
@@ -31,10 +28,7 @@ import java.io.IOException;
 import java.lang.Exception;
 import java.time.Duration;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -85,15 +79,46 @@ public class FeatureServiceImpl implements FeatureService {
     @Transactional
     @CacheEvict(value = "features", key = "#featureId")
     public String patchFeature(Integer featureId, FeaturePatchRequest request) {
-
         Feature feature = featureRepository.findById(featureId)
                 .orElseThrow(() -> new ResourceNotFoundException("Feature not found with ID: " + featureId));
-
+        User currentUser = authService.getCurrentUser();
         if (feature.isDeleted()) {
             throw new ResourceNotFoundException("Feature not found with ID: " + featureId);
         }
 
         List<String> updatedFields = new ArrayList<>();
+        List<String> skippedTestCases = new ArrayList<>();
+        List<Integer> notAvailableTestCases = new ArrayList<>();
+
+        if(request.getTestCaseId()!=null){
+
+            for(Integer id: request.getTestCaseId()) {
+                Optional<TestCase> optionalTestCase = testCaseRepository.findByIdAndIsActiveTrueAndIsDeletedFalse(id);
+                if (optionalTestCase.isEmpty()) {
+                    notAvailableTestCases.add(id);
+                    continue;
+                }
+                TestCase testCase = optionalTestCase.get();
+                boolean isTestcaseAvailable = testCaseRepository.existsByFeature_FeatureIdAndTestcaseFormatId(featureId,testCase.getTestcaseFormatId());
+                if (isTestcaseAvailable) {
+                    skippedTestCases.add(testCase.getTestcaseFormatId());
+                    continue;
+                }
+                List<Bug> bug = bugRepository.findByTestCase_TestcaseId(id);
+                    for(Bug bug1:bug){
+                        if(bug1.isActive() && !bug1.isDeleted()) {
+                            bug1.setFeature(feature);
+                            bug1.setUpdatedBy(currentUser);
+                            bugRepository.save(bug1);
+                        }
+                    }
+
+                testCase.setFeature(feature);
+                testCase.setUpdatedBy(currentUser);
+                testCaseRepository.save(testCase);
+                updatedFields.add(testCase.getTestcaseFormatId());
+            }
+        }
 
         if (request.getFeatureName() != null &&
                 !request.getFeatureName().isBlank() &&
@@ -210,7 +235,7 @@ public class FeatureServiceImpl implements FeatureService {
             updatedFields.add("isActive");
         }
 
-        User currentUser = authService.getCurrentUser();
+
         feature.setUpdatedBy(currentUser);
 
         if (updatedFields.isEmpty()) {
@@ -221,7 +246,7 @@ public class FeatureServiceImpl implements FeatureService {
 
         return "Feature with ID " + featureId +
                 " updated successfully. Changed fields: " +
-                String.join(", ", updatedFields);
+                String.join(", ", updatedFields)+(!skippedTestCases.isEmpty() ?". Skipped test cases: " + String.join(", ", skippedTestCases):"")+(!notAvailableTestCases.isEmpty() ?". Not available test cases: " + String.join(", ",String.valueOf(notAvailableTestCases)):"");
     }
 
     @Override

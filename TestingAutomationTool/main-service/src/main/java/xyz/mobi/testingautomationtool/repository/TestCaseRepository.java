@@ -40,6 +40,8 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Integer>, Jp
         return findByFeature_FeatureIdAndIsDeletedFalse(featureId);
     }
 
+    boolean findByFeature_featureIdAndTestcaseFormatId(Integer featureId, String testcaseFormatId);
+
 
     @Query(value = "SELECT tc FROM TestCase tc " +
            "LEFT JOIN FETCH tc.feature " +
@@ -69,6 +71,8 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Integer>, Jp
 
     @EntityGraph(attributePaths = {"feature", "createdBy", "updatedBy"})
     List<TestCase> findByIsDeletedFalse();
+
+    Optional<TestCase> findByIdAndIsActiveTrueAndIsDeletedFalse(Integer id);
 
     boolean existsByFeature_FeatureIdAndTestcaseFormatId(Integer featureId, String testcaseFormatId);
 }

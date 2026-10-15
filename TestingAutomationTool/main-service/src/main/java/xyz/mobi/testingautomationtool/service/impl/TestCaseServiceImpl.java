@@ -390,7 +390,6 @@ public class TestCaseServiceImpl implements TestCaseService {
         if (request == null) {
             throw new IllegalArgumentException("Patch request cannot be null");
         }
-
         TestCase testCase = testCaseRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Test case not found with ID: " + id));
 
@@ -604,8 +603,9 @@ public class TestCaseServiceImpl implements TestCaseService {
         testingExecutionRepository.findByTestCase(testCase)
                 .ifPresent(testingExecutionRepository::delete);
 
-        bugRepository.findByTestCase_TestcaseId(id)
-                .ifPresent(bugRepository::deleteAll);
+        bugRepository.deleteAll(
+                bugRepository.findByTestCase_TestcaseId(id)
+        );
 
         testCaseRepository.delete(testCase);
 

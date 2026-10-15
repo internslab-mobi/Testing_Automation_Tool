@@ -18,7 +18,9 @@ import java.util.Optional;
 public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecificationExecutor<Bug> {
 
     @EntityGraph(attributePaths = {"testCase", "feature", "reportedBy", "assignedTo", "executedBy", "updatedBy"})
-    Optional<List<Bug>> findByTestCase_TestcaseId(Integer id);
+    List<Bug> findByTestCase_TestcaseId(Integer id);
+
+
 
     @EntityGraph(attributePaths = {"testCase", "feature", "reportedBy", "assignedTo", "executedBy", "updatedBy"})
     Page<Bug> findByIsActiveTrue(Pageable pageable);
@@ -78,5 +80,7 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
 
     @EntityGraph(attributePaths = {"testCase", "feature", "reportedBy", "assignedTo", "executedBy", "updatedBy"})
     List<Bug> findByIsDeletedFalse();
+
+    Optional<Bug> findByIdAndIsActiveTrueAndIsDeletedFalse(Integer id);
 
 }

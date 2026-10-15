@@ -4,6 +4,8 @@ import lombok.*;
 import xyz.mobi.testingautomationtool.enums.FeatureStatus;
 
 import java.time.Instant;
+import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -26,4 +28,5 @@ public class FeaturePatchRequest {
     private Integer minutes;
     private String comments;
     private Boolean isActive;
+    private Set<Integer> testCaseId;
 }
