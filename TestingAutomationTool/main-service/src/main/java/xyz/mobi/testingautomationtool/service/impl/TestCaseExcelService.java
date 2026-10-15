@@ -18,8 +18,6 @@ import java.util.*;
 @Service
 public class TestCaseExcelService {
 
-    private static final String SHEET_NAME = "TCFormat";
-
     private static final List<String> EXPECTED_HEADERS = List.of(
             "TestcaseID",
             "Title",
@@ -38,103 +36,122 @@ public class TestCaseExcelService {
     );
 
 
-    public List<ExcelTestCaseRow> parseExcel(
-            MultipartFile file) throws ExcelValidationException, ExcelProcessingException {
+    public List<ExcelTestCaseRow> parseExcel(MultipartFile file)
+            throws ExcelValidationException, ExcelProcessingException {
 
         validateFile(file);
 
         try (InputStream inputStream = file.getInputStream();
              Workbook workbook = WorkbookFactory.create(inputStream)) {
 
-            Sheet sheet = workbook.getSheet(SHEET_NAME);
-
-            if (sheet == null) {
+            if (workbook.getNumberOfSheets() == 0) {
                 throw new ExcelValidationException(
-                        "Required sheet '" + SHEET_NAME
-                                + "' was not found in the uploaded Excel file."
+                        "Excel file does not contain any sheets."
                 );
             }
-
-            if (sheet.getPhysicalNumberOfRows() <= 1) {
-                throw new ExcelValidationException(
-                        "Excel file does not contain any testcase data rows."
-                );
-            }
-
-            Row headerRow = sheet.getRow(0);
-
-            if (headerRow == null) {
-                throw new ExcelValidationException(
-                        "Excel header row is missing."
-                );
-            }
-
-            validateHeaders(headerRow);
-
-            List<String> errors = new ArrayList<>();
 
             List<ExcelTestCaseRow> rows = new ArrayList<>();
+            List<String> errors = new ArrayList<>();
 
+            // Shared across every sheet.
             Set<String> testcaseIds = new HashSet<>();
 
-            for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+            for (int sheetIndex = 0;
+                 sheetIndex < workbook.getNumberOfSheets();
+                 sheetIndex++) {
 
-                Row row = sheet.getRow(i);
+                Sheet sheet = workbook.getSheetAt(sheetIndex);
+                String sheetName = sheet.getSheetName();
 
-                if (row == null || isBlankRow(row)) {
+                // Skip completely empty sheets.
+                if (sheet.getPhysicalNumberOfRows() == 0) {
                     continue;
                 }
 
-                int excelRowNumber = i + 1;
+                Row headerRow = sheet.getRow(0);
 
-                ExcelTestCaseRow excelRow = readRow(
-                        headerRow,
-                        row,
-                        excelRowNumber
-                );
+                if (headerRow == null) {
+                    errors.add(
+                            "Sheet '" + sheetName
+                                    + "': Header row is missing."
+                    );
+                    continue;
+                }
 
-                validateRow(
-                        excelRow,
-                        excelRowNumber,
-                        errors,
-                        testcaseIds
-                );
+                // Validate headers in the current sheet.
+                try {
+                    validateHeaders(headerRow);
+                } catch (ExcelValidationException exception) {
+                    errors.add(
+                            "Sheet '" + sheetName + "': "
+                                    + exception.getMessage()
+                    );
+                    continue;
+                }
 
-                rows.add(excelRow);
+                // Read every testcase row in this sheet.
+                for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+
+                    Row dataRow = sheet.getRow(i);
+
+                    if (dataRow == null || isBlankRow(dataRow)) {
+                        continue;
+                    }
+
+                    int excelRowNumber = i + 1;
+
+                    ExcelTestCaseRow excelRow = readRow(
+                            headerRow,
+                            dataRow,
+                            excelRowNumber
+                    );
+
+                    List<String> rowErrors = new ArrayList<>();
+
+                    validateRow(
+                            excelRow,
+                            excelRowNumber,
+                            rowErrors,
+                            testcaseIds
+                    );
+
+                    for (String error : rowErrors) {
+                        errors.add(
+                                "Sheet '" + sheetName + "': " + error
+                        );
+                    }
+
+                    rows.add(excelRow);
+                }
             }
 
+            // Reject the entire workbook if any validation fails.
             if (!errors.isEmpty()) {
-
                 throw new ExcelValidationException(
                         buildValidationMessage(errors)
                 );
             }
 
-
             if (rows.isEmpty()) {
-
                 throw new ExcelValidationException(
-                        "Excel file does not contain any valid testcase rows."
+                        "Excel file does not contain any testcase data rows."
                 );
             }
 
             return rows;
 
         } catch (ExcelValidationException exception) {
-
             throw exception;
 
         } catch (IOException exception) {
-
             throw new ExcelProcessingException(
-                    "Unable to read the uploaded Excel file. Details: "
-                            + exception.getMessage());
+                    "Unable to read the uploaded Excel file."
+            );
 
         } catch (Exception exception) {
-
             throw new ExcelProcessingException(
-                    "Unexpected error while processing the Excel file. Details: "
-                            + exception.getMessage());
+                    "Unexpected error while processing the Excel file."
+            );
         }
     }
 
@@ -142,7 +159,6 @@ public class TestCaseExcelService {
             throws ExcelValidationException {
 
         if (file == null || file.isEmpty()) {
-
             throw new ExcelValidationException(
                     "Uploaded Excel file is empty."
             );
@@ -151,14 +167,12 @@ public class TestCaseExcelService {
         String fileName = file.getOriginalFilename();
 
         if (fileName == null || fileName.isBlank()) {
-
             throw new ExcelValidationException(
                     "Uploaded Excel file name is missing."
             );
         }
 
-        String lowerCaseFileName =
-                fileName.toLowerCase(Locale.ROOT);
+        String lowerCaseFileName = fileName.toLowerCase(Locale.ROOT);
 
         if (!lowerCaseFileName.endsWith(".xlsx")
                 && !lowerCaseFileName.endsWith(".xls")) {
@@ -170,60 +184,45 @@ public class TestCaseExcelService {
         }
     }
 
+    private String normalizeHeader(String header) {
+
+        if (header == null) {
+            return "";
+        }
+
+        return header.replaceAll("[^a-zA-Z0-9]", "")
+                .toLowerCase(Locale.ROOT);
+    }
+
     private void validateHeaders(Row headerRow)
             throws ExcelValidationException {
 
         List<String> errors = new ArrayList<>();
-
-
-        for (int i = 0; i < EXPECTED_HEADERS.size(); i++) {
-
-            String actualHeader =
-                    getCellValue(headerRow.getCell(i)).trim();
-
-            String expectedHeader =
-                    EXPECTED_HEADERS.get(i);
-
-            if (actualHeader.isBlank()) {
-
-                errors.add(
-                        "Row 1, Column " + getColumnName(i)
-                                + ": Header is blank. "
-                                + "Expected '" + expectedHeader + "'."
-                );
-
-                continue;
-            }
-
-            if (!expectedHeader.equalsIgnoreCase(actualHeader)) {
-
-                errors.add(
-                        "Row 1, Column " + getColumnName(i)
-                                + ": Expected header '"
-                                + expectedHeader
-                                + "' but found '"
-                                + actualHeader
-                                + "'."
-                );
-            }
-        }
-
         Set<String> headers = new HashSet<>();
 
         int lastColumn = headerRow.getLastCellNum();
 
+        if (lastColumn < 0) {
+            throw new ExcelValidationException(
+                    "Header row is empty."
+            );
+        }
+
         for (int i = 0; i < lastColumn; i++) {
 
-            String header = getCellValue(headerRow.getCell(i)).trim();
+            String header = getCellValue(
+                    headerRow.getCell(i)
+            ).trim();
 
             if (header.isBlank()) {
                 continue;
             }
 
-            String normalizedHeader = header.toLowerCase(Locale.ROOT);
+            String normalizedHeader = normalizeHeader(header);
 
+            // Detect duplicates even when capitalization or
+            // spacing is different.
             if (!headers.add(normalizedHeader)) {
-
                 errors.add(
                         "Row 1, Column " + getColumnName(i)
                                 + ": Duplicate header '"
@@ -232,68 +231,139 @@ public class TestCaseExcelService {
             }
         }
 
-        if (!errors.isEmpty()) {
+        // Only TestcaseID is mandatory.
+        // Test Case ID, TESTCASEID and testcaseid are accepted.
+        if (!headers.contains(normalizeHeader("TestcaseID"))) {
+            errors.add(
+                    "Required column 'TestcaseID' is missing."
+            );
+        }
 
+        if (!errors.isEmpty()) {
             throw new ExcelValidationException(
                     buildValidationMessage(errors)
             );
         }
     }
 
+    private boolean isStandardHeader(String header) {
+
+        String normalizedHeader = normalizeHeader(header);
+
+        return EXPECTED_HEADERS.stream()
+                .anyMatch(expected ->
+                        normalizeHeader(expected)
+                                .equals(normalizedHeader)
+                );
+    }
+
+
     private ExcelTestCaseRow readRow(
             Row headerRow,
             Row dataRow,
             int rowNumber) {
 
-        return ExcelTestCaseRow.builder()
-                .rowNumber(rowNumber)
-                .testcaseFormatId(getCellValue(dataRow.getCell(0)))
-                .title(getCellValue(dataRow.getCell(1)))
-                .testType(getCellValue(dataRow.getCell(2)))
-                .testExecution(getCellValue(dataRow.getCell(3)))
-                .testValidation(getCellValue(dataRow.getCell(4)))
-                .automationPriority(getCellValue(dataRow.getCell(5)))
-                .preCondition(getCellValue(dataRow.getCell(6)))
-                .testData(getCellValue(dataRow.getCell(7)))
-                .executionSteps(getCellValue(dataRow.getCell(8)))
-                .uiValidations(getCellValue(dataRow.getCell(9)))
-                .dbValidations(getCellValue(dataRow.getCell(10)))
-                .automationStatus(getCellValue(dataRow.getCell(11)))
-                .actualStatus(getCellValue(dataRow.getCell(12)))
-                .comments(getCellValue(dataRow.getCell(13)))
-                .dynamicFields(readDynamicFields(headerRow, dataRow))
-                .build();
-    }
-
-    private Map<String, Object> readDynamicFields(
-            Row headerRow,
-            Row dataRow) {
+        Map<String, String> values = new HashMap<>();
 
         Map<String, Object> dynamicFields =
                 new LinkedHashMap<>();
 
         int lastColumn = headerRow.getLastCellNum();
 
-        if (lastColumn <= EXPECTED_HEADERS.size()) {
-            return dynamicFields;
-        }
+        for (int i = 0; i < lastColumn; i++) {
 
-        for (int i = EXPECTED_HEADERS.size();
-             i < lastColumn;
-             i++) {
-
-            String header = getCellValue(headerRow.getCell(i)).trim();
+            String header = getCellValue(
+                    headerRow.getCell(i)
+            ).trim();
 
             if (header.isBlank()) {
                 continue;
             }
 
-            String value = getCellValue(dataRow.getCell(i));
+            String value = getCellValue(
+                    dataRow.getCell(i)
+            );
 
-            dynamicFields.put(header, value);
+            // Blank cells become null.
+            if (value.isBlank()) {
+                value = null;
+            }
+
+            String normalizedHeader = normalizeHeader(header);
+
+            if (isStandardHeader(header)) {
+
+                values.put(normalizedHeader, value);
+
+            } else {
+
+                // Keep additional columns as dynamic fields.
+                dynamicFields.put(header, value);
+            }
         }
 
-        return dynamicFields;
+        return ExcelTestCaseRow.builder()
+                .rowNumber(rowNumber)
+
+                .testcaseFormatId(
+                        values.get("testcaseid")
+                )
+
+                .title(
+                        values.get("title")
+                )
+
+                .testType(
+                        values.get("testtype")
+                )
+
+                .testExecution(
+                        values.get("testexecution")
+                )
+
+                .testValidation(
+                        values.get("testvalidation")
+                )
+
+                .automationPriority(
+                        values.get("automationpriority")
+                )
+
+                .preCondition(
+                        values.get("precondition")
+                )
+
+                .testData(
+                        values.get("testdata")
+                )
+
+                .executionSteps(
+                        values.get("executionsteps")
+                )
+
+                .uiValidations(
+                        values.get("uivalidations")
+                )
+
+                .dbValidations(
+                        values.get("dbvalidations")
+                )
+
+                .automationStatus(
+                        values.get("automationstatus")
+                )
+
+                .actualStatus(
+                        values.get("actualstatus")
+                )
+
+                .comments(
+                        values.get("comments")
+                )
+
+                .dynamicFields(dynamicFields)
+
+                .build();
     }
 
     private void validateRow(
@@ -302,6 +372,7 @@ public class TestCaseExcelService {
             List<String> errors,
             Set<String> testcaseIds) {
 
+        // TestcaseID is mandatory.
         validateRequired(
                 row.getTestcaseFormatId(),
                 "TestcaseID",
@@ -309,7 +380,7 @@ public class TestCaseExcelService {
                 errors
         );
 
-
+        // Duplicate IDs are checked across all sheets.
         if (row.getTestcaseFormatId() != null
                 && !row.getTestcaseFormatId().isBlank()) {
 
@@ -317,7 +388,6 @@ public class TestCaseExcelService {
                     row.getTestcaseFormatId().trim();
 
             if (!testcaseIds.add(testcaseId)) {
-
                 errors.add(
                         "Row " + rowNumber
                                 + ", Column 'TestcaseID': "
@@ -328,6 +398,7 @@ public class TestCaseExcelService {
             }
         }
 
+        // Optional enum fields are validated only when supplied.
         validateEnum(
                 row.getTestType(),
                 "Test Type",
@@ -361,15 +432,13 @@ public class TestCaseExcelService {
         );
     }
 
-
     private void validateRequired(
             String value,
             String column,
             int rowNumber,
             List<String> errors) {
 
-        if (value == null || value.trim().isBlank()) {
-
+        if (value == null || value.isBlank()) {
             errors.add(
                     "Row " + rowNumber
                             + ", Column '" + column
@@ -386,15 +455,14 @@ public class TestCaseExcelService {
             List<String> errors,
             List<String> allowedValues) {
 
-
-        if (value == null || value.trim().isBlank()) {
+        if (value == null || value.isBlank()) {
             return;
         }
 
-        String normalizedValue = value.trim().toUpperCase(Locale.ROOT);
+        String normalizedValue =
+                value.trim().toUpperCase(Locale.ROOT);
 
         if (!allowedValues.contains(normalizedValue)) {
-
             errors.add(
                     "Row " + rowNumber
                             + ", Column '" + column
@@ -406,7 +474,6 @@ public class TestCaseExcelService {
             );
         }
     }
-
 
     private <T extends Enum<T>> List<String> getEnumValues(
             Class<T> enumClass) {
@@ -426,8 +493,7 @@ public class TestCaseExcelService {
 
         for (int i = 0; i < lastColumn; i++) {
 
-            String value =
-                    getCellValue(row.getCell(i));
+            String value = getCellValue(row.getCell(i));
 
             if (!value.isBlank()) {
                 return false;
@@ -445,9 +511,7 @@ public class TestCaseExcelService {
 
         DataFormatter formatter = new DataFormatter();
 
-        return formatter
-                .formatCellValue(cell)
-                .trim();
+        return formatter.formatCellValue(cell).trim();
     }
 
 
@@ -473,8 +537,7 @@ public class TestCaseExcelService {
     private String buildValidationMessage(
             List<String> errors) {
 
-        StringBuilder message =
-                new StringBuilder();
+        StringBuilder message = new StringBuilder();
 
         message.append("Excel validation failed. ")
                 .append("Total errors: ")

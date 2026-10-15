@@ -12,6 +12,8 @@ import xyz.mobi.testingautomationtool.dto.ApiResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.ProjectDTO.*;
+import xyz.mobi.testingautomationtool.entity.SubModule;
+import xyz.mobi.testingautomationtool.entity.Module;
 import xyz.mobi.testingautomationtool.enums.AttachmentType;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 import xyz.mobi.testingautomationtool.service.AttachmentService;
@@ -19,9 +21,10 @@ import xyz.mobi.testingautomationtool.service.ProjectService;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping({"/project", "/projects"})
+@RequestMapping("/project")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 public class ProjectController {
@@ -197,4 +200,32 @@ public class ProjectController {
                 .body(resource);
     }
 
+
+    @PostMapping("/module")
+    public ResponseEntity<Module> createModule(
+            @RequestBody Map<String, String> request) {
+
+        Module module = projectService.createModule(
+                request.get("moduleName")
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(module);
+    }
+
+    @PostMapping("/{moduleId}/sub-modules")
+    public ResponseEntity<SubModule> createSubModule(
+            @PathVariable Integer moduleId,
+            @RequestBody Map<String, String> request) {
+
+        SubModule subModule = projectService.createSubModule(
+                moduleId,
+                request.get("subModuleName")
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(subModule);
+    }
 }

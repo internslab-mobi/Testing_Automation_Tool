@@ -1,8 +1,11 @@
 package xyz.mobi.testingautomationtool.service;
 
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.ProjectDTO.*;
+import xyz.mobi.testingautomationtool.entity.Module;
+import xyz.mobi.testingautomationtool.entity.SubModule;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
 
@@ -32,6 +35,14 @@ public interface ProjectService {
     List<ProjectResponse> searchProjects(String keyword, ProjectStatus status);
 
     byte[] exportProjectSummary(Integer projectId);
+
+    @Transactional
+    Module createModule(String moduleName);
+
+    @Transactional
+    SubModule createSubModule(
+            Integer moduleId,
+            String subModuleName);
 
 //    AttachmentDownloadResponse downloadFiles(Integer projectId);
 }

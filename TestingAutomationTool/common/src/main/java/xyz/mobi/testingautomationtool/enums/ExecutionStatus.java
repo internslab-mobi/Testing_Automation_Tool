@@ -3,5 +3,7 @@ package xyz.mobi.testingautomationtool.enums;
 public enum ExecutionStatus {
     PASS,
     FAIL,
-    DESCOPE
+    DESCOPE,
+    IN_PROGRESS,
+    BLOCK
 }

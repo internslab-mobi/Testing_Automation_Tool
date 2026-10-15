@@ -32,7 +32,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 @RestController
-@RequestMapping({"/bugs", "/bug"})
+@RequestMapping("/bug")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")

@@ -23,5 +23,9 @@ public class ProjectRequest {
     @Size(max = 255, message = "Region must not exceed 255 characters")
     private String region;
 
+    private Integer module;
+
+    private Integer subModule;
+
     private String comments;
 }

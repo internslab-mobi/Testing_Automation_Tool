@@ -6,17 +6,13 @@ import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.client.SummaryExportClient;
-import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
-import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.ProjectDTO.*;
-import xyz.mobi.testingautomationtool.entity.Attachment;
 import xyz.mobi.testingautomationtool.entity.Project;
+import xyz.mobi.testingautomationtool.entity.SubModule;
+import xyz.mobi.testingautomationtool.entity.Module;
 import xyz.mobi.testingautomationtool.entity.User;
-import xyz.mobi.testingautomationtool.enums.AttachmentType;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
-import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
 import xyz.mobi.testingautomationtool.exception.DuplicateResourceException;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.mapper.ProjectMapper;
@@ -25,15 +21,8 @@ import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.ProjectService;
 import xyz.mobi.testingautomationtool.specification.ProjectSpecification;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.time.Instant;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -50,12 +39,28 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectMapper projectMapper;
     private final AuthService authService;
     private final SummaryExportClient summaryExportClient;
+    private final ModuleRepository moduleRepository;
+    private final SubModuleRepository subModuleRepository;
 
     @Override
     @Transactional
     public ProjectResponse createProject(ProjectRequest request) {
         if (projectRepository.existsByProjectNameAndRegion(request.getProjectName(), request.getRegion())) {
             throw new DuplicateResourceException("Project already exists with name: " + request.getProjectName() + " and region: " + request.getRegion());
+        }
+
+        Module module = moduleRepository.findById(request.getModule())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Module not found"));
+
+        SubModule subModule = subModuleRepository.findById(request.getSubModule())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Submodule not found"));
+
+        if (!subModule.getModule().getModuleId()
+                .equals(module.getModuleId())) {
+            throw new IllegalArgumentException(
+                    "Submodule does not belong to the selected module");
         }
 
         User user = authService.getCurrentUser();
@@ -65,6 +70,8 @@ public class ProjectServiceImpl implements ProjectService {
         project.setActive(true);
         project.setDeleted(false);
         project.setStatus(ProjectStatus.ACTIVE);
+        project.setModule(module);
+        project.setSubModule(subModule);
 
         Project saved = projectRepository.save(project);
         return projectMapper.toResponse(saved);
@@ -429,5 +436,67 @@ public class ProjectServiceImpl implements ProjectService {
             throw new ResourceNotFoundException("Project not found with ID: " + projectId);
         }
         return summaryExportClient.exportProjectSummary(projectId);
+    }
+
+
+    @Transactional
+    @Override
+    public Module createModule(String moduleName) {
+
+        if (moduleName == null || moduleName.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Module name is required"
+            );
+        }
+
+        moduleName = moduleName.trim();
+
+        if (moduleRepository.existsByModuleNameIgnoreCase(moduleName)) {
+            throw new DuplicateResourceException(
+                    "Module already exists"
+            );
+        }
+
+        Module module = Module.builder()
+                .moduleName(moduleName)
+                .build();
+
+        return moduleRepository.save(module);
+    }
+
+    @Transactional
+    @Override
+    public SubModule createSubModule(
+            Integer moduleId,
+            String subModuleName) {
+
+        if (subModuleName == null || subModuleName.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Submodule name is required"
+            );
+        }
+
+        subModuleName = subModuleName.trim();
+
+        Module module = moduleRepository.findById(moduleId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Module not found"
+                ));
+
+        if (subModuleRepository
+                .existsByModule_ModuleIdAndSubModuleNameIgnoreCase(
+                        moduleId, subModuleName)) {
+
+            throw new DuplicateResourceException(
+                    "Submodule already exists in this module"
+            );
+        }
+
+        SubModule subModule = SubModule.builder()
+                .subModuleName(subModuleName)
+                .module(module)
+                .build();
+
+        return subModuleRepository.save(subModule);
     }
 }

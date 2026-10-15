@@ -12,13 +12,13 @@ public interface NotificationService {
 
     void createReassignNotification(Integer oldAssignedId, Integer newAssignedId, Integer bugId);
 
-    void updateNotificationStatus(Integer notificationId, NotificationStatus status);
-
-    List<NotificationResponse> getMyNotifications(Integer employeeId);
-
-    NotificationResponse getById(Integer notificationId);
-
-    List<NotificationResponse> getByAll();
-
-    void deleteNotification(Integer notificationId);
+//    void updateNotificationStatus(Integer notificationId, NotificationStatus status);
+//
+//    List<NotificationResponse> getMyNotifications(Integer employeeId);
+//
+//    NotificationResponse getById(Integer notificationId);
+//
+//    List<NotificationResponse> getByAll();
+//
+//    void deleteNotification(Integer notificationId);
 }

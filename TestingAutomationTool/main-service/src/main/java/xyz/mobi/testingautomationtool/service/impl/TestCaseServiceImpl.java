@@ -505,6 +505,8 @@ public class TestCaseServiceImpl implements TestCaseService {
                             case PASS -> TestCaseStatus.PASSED;
                             case FAIL -> TestCaseStatus.FAILED;
                             case DESCOPE -> TestCaseStatus.DESCOPE;
+                            case IN_PROGRESS -> TestCaseStatus.IN_PROGRESS;
+                            case BLOCK -> TestCaseStatus.BLOCKED;
                             default -> throw new IllegalArgumentException(
                                     "Unsupported execution status: "
                                             + executionStatus);

@@ -12,8 +12,8 @@ import java.time.Instant;
         name = "testing_features",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "testing_features_project_id_feature_name_unique",
-                        columnNames = {"project_id", "feature_name"}
+                        name = "testing_features_project_id_sprint_unique",
+                        columnNames = {"project_id", "sprint"}
                 )
         }
 )

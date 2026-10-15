@@ -29,7 +29,20 @@ public final class SpaCsrfTokenRequestHandler extends CsrfTokenRequestAttributeH
 
     @Override
     public String resolveCsrfTokenValue(HttpServletRequest request, CsrfToken csrfToken) {
-        final boolean hasHeader = StringUtils.hasText(request.getHeader(csrfToken.getHeaderName()));
-        return hasHeader ? super.resolveCsrfTokenValue(request, csrfToken) : this.delegate.resolveCsrfTokenValue(request, csrfToken);
+
+        String headerValue =
+                request.getHeader(csrfToken.getHeaderName());
+
+
+        boolean hasHeader = StringUtils.hasText(headerValue);
+
+        if (hasHeader) {
+            return super.resolveCsrfTokenValue(request, csrfToken);
+        }
+//        final boolean hasHeader =
+//                StringUtils.hasText(request.getHeader(csrfToken.getHeaderName()));
+//        return hasHeader ? super.resolveCsrfTokenValue(request, csrfToken) : this.delegate.resolveCsrfTokenValue(request, csrfToken);
+
+        return this.delegate.resolveCsrfTokenValue(request, csrfToken);
     }
 }

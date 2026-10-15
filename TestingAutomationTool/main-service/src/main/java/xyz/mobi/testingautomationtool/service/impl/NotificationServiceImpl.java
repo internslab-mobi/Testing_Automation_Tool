@@ -173,47 +173,47 @@ public class NotificationServiceImpl implements NotificationService {
     }
 
 
-    @Override
-    @Transactional(readOnly = true)
-    public List<NotificationResponse> getByAll() {
-        return notificationRepository
-                .findAll()
-                .stream()
-                .map(notificationMapper::toResponse)
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public List<NotificationResponse> getMyNotifications(Integer employeeId) {
-        return notificationRepository
-                .findByEmployee_UserIdOrderByCreatedAtDesc(employeeId)
-                .stream()
-                .map(notificationMapper::toResponse)
-                .toList();
-    }
-
-    @Override
-    @Transactional(readOnly = true)
-    public NotificationResponse getById(Integer notificationId) {
-        Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Notification not found with ID: " + notificationId));
-        return notificationMapper.toResponse(notification);
-    }
-
-    @Override
-    @Transactional
-    public void updateNotificationStatus(Integer notificationId, NotificationStatus status) {
-        Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() ->
-                        new ResourceNotFoundException("Notification not found with ID: " + notificationId));
-        notification.setNotificationStatus(status);
-        notificationRepository.save(notification);
-    }
-
-    @Override
-    public void deleteNotification(Integer notificationId) {
-        notificationRepository.deleteById(notificationId);
-    }
+//    @Override
+//    @Transactional(readOnly = true)
+//    public List<NotificationResponse> getByAll() {
+//        return notificationRepository
+//                .findAll()
+//                .stream()
+//                .map(notificationMapper::toResponse)
+//                .toList();
+//    }
+//
+//    @Override
+//    @Transactional(readOnly = true)
+//    public List<NotificationResponse> getMyNotifications(Integer employeeId) {
+//        return notificationRepository
+//                .findByEmployee_UserIdOrderByCreatedAtDesc(employeeId)
+//                .stream()
+//                .map(notificationMapper::toResponse)
+//                .toList();
+//    }
+//
+//    @Override
+//    @Transactional(readOnly = true)
+//    public NotificationResponse getById(Integer notificationId) {
+//        Notification notification = notificationRepository.findById(notificationId)
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException("Notification not found with ID: " + notificationId));
+//        return notificationMapper.toResponse(notification);
+//    }
+//
+//    @Override
+//    @Transactional
+//    public void updateNotificationStatus(Integer notificationId, NotificationStatus status) {
+//        Notification notification = notificationRepository.findById(notificationId)
+//                .orElseThrow(() ->
+//                        new ResourceNotFoundException("Notification not found with ID: " + notificationId));
+//        notification.setNotificationStatus(status);
+//        notificationRepository.save(notification);
+//    }
+//
+//    @Override
+//    public void deleteNotification(Integer notificationId) {
+//        notificationRepository.deleteById(notificationId);
+//    }
 }

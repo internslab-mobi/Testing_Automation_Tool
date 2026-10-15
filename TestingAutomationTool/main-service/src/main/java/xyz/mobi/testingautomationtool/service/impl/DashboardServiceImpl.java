@@ -583,12 +583,12 @@ public class DashboardServiceImpl implements DashboardService {
 
     private boolean isPassed(TestCase tc) {
         if (tc == null || tc.getTestcaseStatus() == null) return false;
-        return tc.getTestcaseStatus() == TestCaseStatus.PASS || tc.getTestcaseStatus() == TestCaseStatus.PASSED;
+        return tc.getTestcaseStatus() == TestCaseStatus.PASSED;
     }
 
     private boolean isFailed(TestCase tc) {
         if (tc == null || tc.getTestcaseStatus() == null) return false;
-        return tc.getTestcaseStatus() == TestCaseStatus.FAIL || tc.getTestcaseStatus() == TestCaseStatus.FAILED;
+        return tc.getTestcaseStatus() == TestCaseStatus.FAILED;
     }
 
     private boolean isNoRun(TestCase tc) {

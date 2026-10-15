@@ -12,8 +12,6 @@ public interface EmailService {
 
     void rejectEmail(String toEmail, String username);
 
-  //  void sendPasswordResetOtpEmail(String toEmail, String username, String otpCode, int expiryMinutes);
-
     void sendManagerCredentials(
             String email,
             String username,

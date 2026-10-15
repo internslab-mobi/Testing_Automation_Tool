@@ -14,6 +14,8 @@ public interface ProjectMapper {
     @Mapping(target = "isDeleted", ignore = true)
     @Mapping(target = "version", ignore = true)
     @Mapping(target = "status", ignore = true)
+    @Mapping(target = "module", ignore = true)
+    @Mapping(target = "subModule", ignore = true)
     Project toEntity(ProjectRequest request);
 
     default ProjectResponse toResponse(Project project) {
@@ -25,6 +27,8 @@ public interface ProjectMapper {
                 .projectId(project.getProjectId())
                 .projectName(project.getProjectName())
                 .description(project.getDescription())
+                .module(project.getModule() != null ? project.getModule().getModuleName() : null)
+                .subModule(project.getSubModule() != null ? project.getSubModule().getSubModuleName() : null)
                 .status(project.getStatus())
                 .region(project.getRegion())
                 .comments(project.getComments())

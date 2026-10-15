@@ -25,7 +25,7 @@ import xyz.mobi.testingautomationtool.enums.TestType;
 import xyz.mobi.testingautomationtool.service.TestCaseService;
 
 @RestController
-@RequestMapping({"/testcases", "/testcase"})
+@RequestMapping("/testcase")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
 @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")

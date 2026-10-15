@@ -16,21 +16,6 @@ import java.time.Instant;
 @Builder
 public class ProjectResponse {
 
-    // --- Legacy Flat Fields (Commented to prevent duplicate keys in JSON response) ---
-    // private Integer projectId;
-    // private String projectName;
-    // private String description;
-    // private ProjectStatus status;
-    // private String region;
-    // private String comments;
-    // private Integer createdBy;
-    // private String createdByName;
-    // private String updatedByName;
-    // private Boolean isActive;
-    // private Boolean isDeleted;
-    // private Long version;
-    // private Instant createdAt;
-    // private Instant updatedAt;
 
     // Structured inner JSON fields (using static inner classes)
     private ProjectDetails project;
@@ -45,6 +30,8 @@ public class ProjectResponse {
         private Integer projectId;
         private String projectName;
         private String description;
+        private String module;
+        private String subModule;
         private ProjectStatus status;
         private String region;
         private String comments;
