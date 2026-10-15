@@ -72,7 +72,7 @@ public interface TestCaseRepository extends JpaRepository<TestCase, Integer>, Jp
     @EntityGraph(attributePaths = {"feature", "createdBy", "updatedBy"})
     List<TestCase> findByIsDeletedFalse();
 
-    Optional<TestCase> findByIdAndIsActiveTrueAndIsDeletedFalse(Integer id);
+    Optional<TestCase> findByTestcaseIdAndIsActiveTrueAndIsDeletedFalse(Integer id);
 
     boolean existsByFeature_FeatureIdAndTestcaseFormatId(Integer featureId, String testcaseFormatId);
 }

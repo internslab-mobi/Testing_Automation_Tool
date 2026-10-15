@@ -8,13 +8,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.mobi.testingautomationtool.client.SummaryExportClient;
-import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.FeatureDTO.*;
 import xyz.mobi.testingautomationtool.entity.*;
 import xyz.mobi.testingautomationtool.dto.FeatureDTO.*;
 import xyz.mobi.testingautomationtool.enums.FeatureStatus;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
-import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
 import xyz.mobi.testingautomationtool.exception.DuplicateResourceException;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.mapper.FeatureMapper;
@@ -22,15 +20,9 @@ import xyz.mobi.testingautomationtool.repository.*;
 import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.FeatureService;
 import xyz.mobi.testingautomationtool.specification.FeatureSpecification;
-
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.lang.Exception;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -38,7 +30,6 @@ import java.util.zip.ZipOutputStream;
 public class FeatureServiceImpl implements FeatureService {
 
     private final ProjectRepository projectRepository;
-    private final UserRepository userRepository;
     private final FeatureMapper featureMapper;
     private final FeatureRepository featureRepository;
     private final AttachmentRepository attachmentRepository;
@@ -95,7 +86,7 @@ public class FeatureServiceImpl implements FeatureService {
         if(request.getTestCaseId()!=null){
 
             for(Integer id: request.getTestCaseId()) {
-                Optional<TestCase> optionalTestCase = testCaseRepository.findByIdAndIsActiveTrueAndIsDeletedFalse(id);
+                Optional<TestCase> optionalTestCase = testCaseRepository.findByTestcaseIdAndIsActiveTrueAndIsDeletedFalse(id);
                 if (optionalTestCase.isEmpty()) {
                     notAvailableTestCases.add(id);
                     continue;

@@ -80,7 +80,8 @@ public class SecurityConfig {
                                 "/bug-chat.html",
                                 "/manager-dashboard.html",
                                 "/favicon.ico",
-                                "/error"
+                                "/error",
+                                "/feature/*"
                         )
                 )
                 .exceptionHandling(exception -> exception

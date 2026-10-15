@@ -81,6 +81,5 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
     @EntityGraph(attributePaths = {"testCase", "feature", "reportedBy", "assignedTo", "executedBy", "updatedBy"})
     List<Bug> findByIsDeletedFalse();
 
-    Optional<Bug> findByIdAndIsActiveTrueAndIsDeletedFalse(Integer id);
 
 }
