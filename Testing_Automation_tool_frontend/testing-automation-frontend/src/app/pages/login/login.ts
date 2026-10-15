@@ -34,7 +34,6 @@ export class Login {
   loginError = '';
 
   login(): void {
-
     if (this.loginForm.invalid) {
       this.loginForm.markAllAsTouched();
       return;
@@ -53,7 +52,7 @@ export class Login {
         this.isLoading = false;
         console.log('Login successful:', response);
         const cachedUser = this.authService.currentUser();
-        const role = (cachedUser?.role || '').toUpperCase();
+        const role = (cachedUser?.role || "").toUpperCase();
         if (role.includes('TESTER')) {
           this.router.navigate(['/tester-workspace']);
         } else {

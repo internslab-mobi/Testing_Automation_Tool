@@ -80,19 +80,11 @@ export class VerifyOtp implements OnInit, AfterViewInit, OnDestroy {
    * Ensures the full email is never displayed.
    */
 
+
 get maskedEmail(): string {
-  if (!this.email || !this.email.includes('@')) {
-    return '';
-  }
-
-  const [user, domain] = this.email.split('@');
-
-  if (!user || !domain) {
-    return '';
-  }
-
-  return `${user.substring(0, 5)}@${domain}`;
+  return this.email || '';
 }
+
 
   startTimer(seconds: number = this.expirySeconds): void {
     this.timer = seconds;
