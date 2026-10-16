@@ -9,7 +9,7 @@ spring:
     gateway:
       server:
         webflux:
-      # Global CORS for web browsers / SPAs
+          # Global CORS for web browsers / SPAs
           globalcors:
             add-to-simple-url-handler-mapping: true
             cors-configurations:
@@ -78,5 +78,5 @@ services:
 app:
   jwt:
     cookie:
-      secure: true
-      same-site: None
+      secure: false
+      same-site: Lax
