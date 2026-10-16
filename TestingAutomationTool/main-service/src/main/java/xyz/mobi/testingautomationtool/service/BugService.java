@@ -9,8 +9,12 @@ import xyz.mobi.testingautomationtool.enums.BugSeverity;
 import xyz.mobi.testingautomationtool.enums.BugStatus;
 
 import java.time.LocalDate;
+import java.util.List;
 
 public interface BugService {
+
+
+    List<DeveloperOptionResponse> getDeveloperOptions();
 
     BugResponse createBug(Integer testcaseId,BugRequest request);
 

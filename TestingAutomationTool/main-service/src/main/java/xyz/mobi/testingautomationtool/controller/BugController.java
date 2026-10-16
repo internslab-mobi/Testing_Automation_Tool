@@ -22,8 +22,10 @@ import xyz.mobi.testingautomationtool.enums.BugCategory;
 import xyz.mobi.testingautomationtool.enums.BugPriority;
 import xyz.mobi.testingautomationtool.enums.BugSeverity;
 import xyz.mobi.testingautomationtool.enums.BugStatus;
+import xyz.mobi.testingautomationtool.dto.DashboardDTO.MangerGetResponseOfUserEntity;
 import xyz.mobi.testingautomationtool.service.AttachmentService;
 import xyz.mobi.testingautomationtool.service.BugService;
+import xyz.mobi.testingautomationtool.service.DashboardService;
 
 import java.io.IOException;
 import java.time.LocalDate;
@@ -38,6 +40,12 @@ public class BugController {
 
     private final BugService bugService;
     private final AttachmentService attachmentService;
+    private final DashboardService dashboardService;
+
+    @GetMapping("/developers")
+    public ResponseEntity<ApiResponse<List<DeveloperOptionResponse>>> getDevelopers() {
+        return ResponseEntity.ok(ApiResponse.success("Developers retrieved successfully", bugService.getDeveloperOptions()));
+    }
 
     @PostMapping
     public ResponseEntity<ApiResponse<BugResponse>> createBug(

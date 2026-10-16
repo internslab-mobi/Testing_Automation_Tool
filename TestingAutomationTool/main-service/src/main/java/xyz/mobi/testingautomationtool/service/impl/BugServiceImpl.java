@@ -50,6 +50,7 @@ public class BugServiceImpl implements BugService {
     private final AuthService authService;
     private final AttachmentRepository attachmentRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final RoleRepository roleRepository;
 
     @Override
     @Transactional
@@ -756,5 +757,12 @@ public class BugServiceImpl implements BugService {
 //            );
 //        }
 //    }
-
+    @Override
+    @Transactional
+    public List<DeveloperOptionResponse> getDeveloperOptions() {
+       List<User> users = userRepository.findAllByRoleRoleAndIsActiveTrue(UserRole.DEVELOPER.name());
+        return users.stream()
+                .map(user->new DeveloperOptionResponse(user.getUserId(),user.getFullName(),user.getUsername()))
+                .toList();
+    }
 }
