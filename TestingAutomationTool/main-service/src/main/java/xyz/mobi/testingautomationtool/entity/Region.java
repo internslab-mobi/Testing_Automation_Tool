@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "countries",
+@Table(name = "testing_countries",
     uniqueConstraints = {
             @UniqueConstraint(columnNames = {"country_name"})
     })
