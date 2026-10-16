@@ -46,7 +46,9 @@ public class Project extends Auditable {
     @Builder.Default
     private ProjectStatus status = ProjectStatus.ACTIVE;
 
-    @Column(name = "region", nullable = false, length = 255)
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @JoinColumn(name = "region", nullable = false)
     private Region region;
 
     @ManyToOne(fetch = FetchType.LAZY)

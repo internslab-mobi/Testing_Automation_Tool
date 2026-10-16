@@ -15,9 +15,5 @@ public interface DashboardService {
 
     List<MangerGetResponseOfUserEntity> getUsers();
 
-    ManagerDashboardOverviewResponse getManagerOverview();
 
-    ManagerProjectDashboardResponse getProjectDashboard(Integer projectId);
-
-    ManagerFeatureDetailMetrics getFeatureDashboard(Integer featureId);
 }

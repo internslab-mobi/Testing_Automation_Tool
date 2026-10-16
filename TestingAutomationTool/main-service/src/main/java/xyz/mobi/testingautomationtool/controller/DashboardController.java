@@ -24,24 +24,6 @@ public class DashboardController {
 
     private final DashboardService dashboardService;
 
-    @Operation(summary = "Get Manager Dashboard Overview", description = "Returns high-level KPI cards, project summary list, defect trends, and failing features across all projects.")
-    @GetMapping("/dashboard/overview")
-    public ResponseEntity<ApiResponse<ManagerDashboardOverviewResponse>> getManagerOverview() {
-        return ResponseEntity.ok(ApiResponse.success("Manager overview retrieved successfully", dashboardService.getManagerOverview()));
-    }
-
-    @Operation(summary = "Get Project Specific Dashboard", description = "Returns professional project details, testcase pass/fail/norun/descope statistics, bug severity breakdown, and per-feature analytics.")
-    @GetMapping("/dashboard/project/{projectId}")
-    public ResponseEntity<ApiResponse<ManagerProjectDashboardResponse>> getProjectDashboard(@PathVariable("projectId") Integer projectId) {
-        return ResponseEntity.ok(ApiResponse.success("Project dashboard retrieved successfully", dashboardService.getProjectDashboard(projectId)));
-    }
-
-    @Operation(summary = "Get Feature Specific Dashboard", description = "Returns detailed testcase pass/fail counts, execution rate, and defect metrics for a specific feature.")
-    @GetMapping("/dashboard/feature/{featureId}")
-    public ResponseEntity<ApiResponse<ManagerFeatureDetailMetrics>> getFeatureDashboard(@PathVariable("featureId") Integer featureId) {
-        return ResponseEntity.ok(ApiResponse.success("Feature dashboard retrieved successfully", dashboardService.getFeatureDashboard(featureId)));
-    }
-
     @Operation(summary = "Confirm pending user", description = "Activates a registered user and assigns their role.")
     @PutMapping("/userConfirmation")
     public ResponseEntity<ApiResponse<PatchResponseForManager>> userConfirmation(@Valid @RequestBody PatchRequestOfManager request) {

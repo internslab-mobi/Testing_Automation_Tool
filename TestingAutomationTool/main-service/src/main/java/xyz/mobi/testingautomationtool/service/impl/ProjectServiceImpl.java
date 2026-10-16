@@ -575,7 +575,7 @@ public class ProjectServiceImpl implements ProjectService {
 
         regionName = regionName.trim();
 
-        if (regionRepository.existsByRegionNameIgnoreCase(regionName)) {
+        if (regionRepository.existsByCountryNameIgnoreCase(regionName)) {
             throw new DuplicateResourceException(
                     "Region already exists"
             );

@@ -5,6 +5,6 @@ import xyz.mobi.testingautomationtool.entity.Region;
 
 public interface RegionRepository extends JpaRepository<Region, Integer> {
 
-    boolean existsByRegionNameIgnoreCase(String regionName);
+    boolean existsByCountryNameIgnoreCase(String countryName);
 
 }
