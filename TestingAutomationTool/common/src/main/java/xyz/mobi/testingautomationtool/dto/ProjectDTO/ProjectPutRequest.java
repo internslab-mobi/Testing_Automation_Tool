@@ -20,8 +20,11 @@ public class ProjectPutRequest {
 
     @NotBlank(message = "Region is required")
     @Size(max = 255, message = "Region cannot exceed 255 characters")
-    private String region;
+    private Integer region;
 
+    private Integer module;
+
+    private Integer subModule;
 
     private String comments;
 }

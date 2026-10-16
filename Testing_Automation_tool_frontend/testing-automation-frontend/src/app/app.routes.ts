@@ -17,6 +17,15 @@ export const routes: Routes = [
     component: Login
   },
   {
+    path: 'tester-workspace',
+    component: TesterWorkspace
+  },
+  {
+    path: 'tester',
+    redirectTo: 'tester-workspace',
+    pathMatch: 'full'
+  },
+  {
     path: 'register',
     component: Register
   },
@@ -36,14 +45,5 @@ export const routes: Routes = [
   {
     path: 'reset-password',
     component: ResetPassword
-  },
-  {
-    path: 'tester-workspace',
-    component: TesterWorkspace
-  },
-  {
-    path: 'tester',
-    redirectTo: 'tester-workspace',
-    pathMatch: 'full'
   }
 ];

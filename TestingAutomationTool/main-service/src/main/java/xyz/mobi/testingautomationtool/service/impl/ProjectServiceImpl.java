@@ -8,10 +8,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.mobi.testingautomationtool.client.SummaryExportClient;
 import xyz.mobi.testingautomationtool.dto.ProjectDTO.*;
-import xyz.mobi.testingautomationtool.entity.Project;
-import xyz.mobi.testingautomationtool.entity.SubModule;
+import xyz.mobi.testingautomationtool.entity.*;
 import xyz.mobi.testingautomationtool.entity.Module;
-import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 import xyz.mobi.testingautomationtool.exception.DuplicateResourceException;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
@@ -34,6 +32,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final TestCaseRepository testCaseRepository;
     private final BugRepository bugRepository;
     private final TestingExecutionRepository testingExecutionRepository;
+    private final RegionRepository regionRepository;
     private final CommentRepository commentRepository;
     private final AttachmentRepository attachmentRepository;
     private final ProjectMapper projectMapper;
@@ -45,8 +44,13 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public ProjectResponse createProject(ProjectRequest request) {
-        if (projectRepository.existsByProjectNameAndRegion(request.getProjectName(), request.getRegion())) {
-            throw new DuplicateResourceException("Project already exists with name: " + request.getProjectName() + " and region: " + request.getRegion());
+
+        Region region = regionRepository.findById(request.getRegion())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Region not found"));
+
+        if (projectRepository.existsByProjectNameAndRegion_CountryId(request.getProjectName(), request.getRegion())) {
+            throw new DuplicateResourceException("Project already exists with name: " + request.getProjectName() + " and region: " + region.getCountryName());
         }
 
         Module module = moduleRepository.findById(request.getModule())
@@ -72,6 +76,7 @@ public class ProjectServiceImpl implements ProjectService {
         project.setStatus(ProjectStatus.ACTIVE);
         project.setModule(module);
         project.setSubModule(subModule);
+        project.setRegion(region);
 
         Project saved = projectRepository.save(project);
         return projectMapper.toResponse(saved);
@@ -149,6 +154,32 @@ public class ProjectServiceImpl implements ProjectService {
             throw new IllegalStateException("Cannot update disabled/deleted project with ID: " + id);
         }
 
+        Module module = moduleRepository.findById(request.getModule())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Module not found"));
+
+        SubModule subModule = subModuleRepository.findById(request.getSubModule())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Submodule not found"));
+
+        if (!subModule.getModule().getModuleId()
+                .equals(module.getModuleId())) {
+            throw new IllegalArgumentException(
+                    "Submodule does not belong to the selected module");
+        }
+
+        Region region = regionRepository.findById(request.getRegion())
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Region not found"));
+
+        if (projectRepository.existsByProjectNameAndRegion_CountryId(request.getProjectName(), request.getRegion())) {
+            throw new DuplicateResourceException("Project already exists with name: " + request.getProjectName() + " and region: " + region.getCountryName());
+        }
+
+        project.setModule(module);
+        project.setSubModule(subModule);
+        project.setRegion(region);
+
         projectMapper.putMethodMapper(request, project);
         project.setUpdatedBy(authService.getCurrentUser());
 
@@ -192,8 +223,40 @@ public class ProjectServiceImpl implements ProjectService {
             updatedFields.add("description");
         }
 
+        if(request.getModule()!=null){
+            Module module = moduleRepository.findById(request.getModule())
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException("Module not found"));
+            project.setModule(module);
+            updatedFields.add("module");
+        }
+
+        if(request.getSubModule() != null){
+            SubModule subModule = subModuleRepository.findById(request.getSubModule())
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException("Submodule not found"));
+            Module module = moduleRepository.findById(request.getModule())
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException("Module not found"));
+            if (!subModule.getModule().getModuleId()
+                    .equals(module.getModuleId())) {
+                throw new IllegalArgumentException(
+                        "Submodule does not belong to the selected module");
+            }
+            project.setSubModule(subModule);
+            updatedFields.add("subModule");
+        }
+
         if (request.getRegion() != null) {
-            project.setRegion(request.getRegion());
+            Region region = regionRepository.findById(request.getRegion())
+                    .orElseThrow(() ->
+                            new ResourceNotFoundException("Country not found"));
+
+            if (projectRepository.existsByProjectNameAndRegion_CountryId(request.getProjectName(), request.getRegion())) {
+                throw new DuplicateResourceException("Project already exists with name: " + request.getProjectName() + " and region: " + region.getCountryName());
+            }
+
+            project.setRegion(region);
             updatedFields.add("region");
         }
 
@@ -498,5 +561,30 @@ public class ProjectServiceImpl implements ProjectService {
                 .build();
 
         return subModuleRepository.save(subModule);
+    }
+
+    @Transactional
+    @Override
+    public Region createRegion(String regionName) {
+
+        if (regionName == null || regionName.isBlank()) {
+            throw new IllegalArgumentException(
+                    "Region name is required"
+            );
+        }
+
+        regionName = regionName.trim();
+
+        if (regionRepository.existsByRegionNameIgnoreCase(regionName)) {
+            throw new DuplicateResourceException(
+                    "Region already exists"
+            );
+        }
+
+        Region region = Region.builder()
+                .countryName(regionName)
+                .build();
+
+        return regionRepository.save(region);
     }
 }

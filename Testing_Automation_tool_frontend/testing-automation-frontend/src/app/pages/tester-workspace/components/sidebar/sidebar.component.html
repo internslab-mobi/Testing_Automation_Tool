@@ -1,0 +1,132 @@
+<!-- Mobile Sidebar Backdrop -->
+<div class="sidebar-backdrop" *ngIf="isOpen" (click)="closeSidebar.emit()"></div>
+
+<aside class="sidebar" [class.open]="isOpen">
+  <!-- Mobile Close Header -->
+  <div class="sidebar-mobile-close-bar">
+    <span class="mobile-nav-title"><i class="fa-solid fa-layer-group text-emerald"></i> Navigation</span>
+    <button class="btn-close-sidebar" (click)="closeSidebar.emit()" title="Close Sidebar">&times;</button>
+  </div>
+
+  <!-- Dynamic Region Selection from DB -->
+  <div class="sidebar-section region-section">
+    <div class="section-label">
+      <span><i class="fa-solid fa-globe"></i> Database Region</span>
+    </div>
+    <select class="form-control select-region" [ngModel]="selectedRegion" (ngModelChange)="onRegionSelected($event)">
+      <option value="ALL">All Regions (Global)</option>
+      <option *ngFor="let reg of availableRegions" [value]="reg">{{ reg }}</option>
+    </select>
+  </div>
+
+  <!-- Projects Section -->
+  <div class="sidebar-section projects-section">
+    <div class="section-header">
+      <div class="section-title">
+        <span>Projects ({{ filteredProjects.length }})</span>
+      </div>
+      <button class="btn-add-icon" (click)="createProject.emit()" title="Create New Project">
+        <i class="fa-solid fa-plus"></i>
+      </button>
+    </div>
+
+    <div class="search-box">
+      <i class="fa-solid fa-magnifying-glass search-icon"></i>
+      <input type="text" placeholder="Search projects by name..." [(ngModel)]="projectSearch">
+      <button *ngIf="projectSearch" class="btn-clear-search" (click)="projectSearch = ''" title="Clear search">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="project-items-list">
+      <div *ngIf="filteredProjects.length === 0" class="empty-list-msg">
+        <i class="fa-solid fa-folder-open"></i>
+        <span>No projects found in region</span>
+      </div>
+
+      <div
+        *ngFor="let p of filteredProjects; trackBy: trackByProjectId"
+        class="project-item-card"
+        [class.active]="activeProject?.projectId === p.projectId"
+        (click)="onSelectProject(p)"
+      >
+        <div class="proj-main-row">
+          <span class="proj-name">{{ p.projectName }}</span>
+          <span class="proj-region-tag">{{ p.region || 'General' }}</span>
+        </div>
+        <div class="proj-comments-snippet" *ngIf="p.comments" [title]="p.comments">
+          <i class="fa-regular fa-comment-dots"></i> {{ p.comments }}
+        </div>
+        <div class="proj-sub-row">
+          <span class="proj-status">{{ p.status || 'ACTIVE' }}</span>
+          <div class="proj-actions" *ngIf="activeProject?.projectId === p.projectId">
+            <button class="btn-item-action" (click)="$event.stopPropagation(); editProject.emit(p)" title="Edit Project">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button class="btn-item-action" (click)="$event.stopPropagation(); openProjectAttachments.emit(p)" title="Project Attachments">
+              <i class="fa-solid fa-paperclip"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Features Section -->
+  <div class="sidebar-section features-section">
+    <div class="section-header">
+      <div class="section-title">
+        <span>Features ({{ filteredFeatures.length }})</span>
+      </div>
+      <button class="btn-add-icon" [disabled]="!activeProject" (click)="createFeature.emit()" title="Create New Feature">
+        <i class="fa-solid fa-plus"></i>
+      </button>
+    </div>
+
+    <div class="search-box">
+      <i class="fa-solid fa-magnifying-glass search-icon"></i>
+      <input type="text" placeholder="Search features..." [(ngModel)]="featureSearch">
+      <button *ngIf="featureSearch" class="btn-clear-search" (click)="featureSearch = ''" title="Clear search">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <div class="feature-items-list">
+      <div *ngIf="!activeProject" class="empty-list-msg">
+        <i class="fa-solid fa-arrow-up"></i>
+        <span>Select a project first</span>
+      </div>
+
+      <div *ngIf="activeProject && filteredFeatures.length === 0" class="empty-list-msg">
+        <i class="fa-solid fa-list-check"></i>
+        <span>No features configured</span>
+      </div>
+
+      <div
+        *ngFor="let f of filteredFeatures; trackBy: trackByFeatureId"
+        class="feature-item-card"
+        [class.active]="activeFeature?.featureId === f.featureId"
+        (click)="onSelectFeature(f)"
+      >
+        <div class="feat-main-row">
+          <span class="feat-name">{{ f.featureName }}</span>
+          <span class="feat-version-tag">{{ f.featureVersion || 'v1.0' }}</span>
+        </div>
+        <div class="feat-comments-snippet" *ngIf="f.comments" [title]="f.comments">
+          <i class="fa-regular fa-comment-dots"></i> {{ f.comments }}
+        </div>
+        <div class="feat-sub-row">
+          <span class="sprint-badge">Sprint {{ f.sprint || 1 }}</span>
+          <div class="feat-actions" *ngIf="activeFeature?.featureId === f.featureId">
+            <button class="btn-item-action" (click)="$event.stopPropagation(); editFeature.emit(f)" title="Edit Feature">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button class="btn-item-action" (click)="$event.stopPropagation(); openFeatureAttachments.emit(f)" title="Feature Documentation & Files">
+              <i class="fa-solid fa-paperclip"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</aside>

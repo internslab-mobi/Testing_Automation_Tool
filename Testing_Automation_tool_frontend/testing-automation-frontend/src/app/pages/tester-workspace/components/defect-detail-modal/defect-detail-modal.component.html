@@ -1,0 +1,210 @@
+<div class="modal-overlay" *ngIf="isOpen">
+  <div class="modal-card modal-detail-card">
+    <div class="modal-header">
+      <div class="header-titles">
+        <h3>
+          <i class="fa-solid fa-bug text-rose"></i>
+          Defect Card: {{ bug?.bugFormatId || ('BUG_' + bug?.bugId) }}
+        </h3>
+        <span class="sub-info">Origin Test Case: <strong>{{ bug?.testcaseFormatId || 'TC_GENERAL' }}</strong></span>
+      </div>
+      <div class="header-actions">
+        <button *ngIf="!isEditMode" class="btn btn-secondary btn-sm" (click)="startEdit()">
+          <i class="fa-solid fa-pen-to-square"></i> Edit Defect
+        </button>
+        <button *ngIf="!isEditMode" class="btn btn-danger-outline btn-sm" (click)="onSoftDelete()">
+          <i class="fa-solid fa-trash-can"></i> Soft Delete
+        </button>
+        <button class="modal-close" (click)="onClose()">&times;</button>
+      </div>
+    </div>
+
+    <!-- VIEW MODE -->
+    <div class="detail-body" *ngIf="!isEditMode">
+      <div class="detail-top-badges">
+        <!-- Reopened Count Requirement -->
+        <span *ngIf="bug?.status === 'REOPENED' || (bug?.bugOccurrence && bug!.bugOccurrence! >= 2)" class="badge-tag badge-reopened">
+          <i class="fa-solid fa-rotate-left"></i> Reopened (Count: {{ bug?.bugOccurrence || 2 }})
+        </span>
+
+        <span class="badge-tag" [ngClass]="'badge-sev-' + (bug?.severity?.toLowerCase() || 'high')">
+          {{ bug?.severity }} Severity
+        </span>
+
+        <span class="badge-tag badge-category">
+          {{ bug?.category || 'FUNCTIONAL' }}
+        </span>
+
+        <!-- Status Badge & Unlock Button -->
+        <div class="status-control-strip" *ngIf="!isStatusUnlocked">
+          <span class="badge-tag" [ngClass]="'badge-status-' + (bug?.status?.toLowerCase() || 'open')">
+            {{ bug?.status }}
+          </span>
+          <button class="btn-text-action" (click)="unlockStatus()">
+            <i class="fa-solid fa-pen"></i> Change Status
+          </button>
+        </div>
+
+        <div class="status-change-box" *ngIf="isStatusUnlocked">
+          <select class="form-control select-sm" [(ngModel)]="selectedNewStatus">
+            <option value="OPEN">OPEN</option>
+            <option value="IN_PROGRESS">IN_PROGRESS</option>
+            <option value="RESOLVED">RESOLVED</option>
+            <option value="FIXED">FIXED</option>
+            <option value="CLOSED">CLOSED</option>
+            <option value="REOPENED">REOPENED</option>
+            <option value="NOT_A_BUG">NOT_A_BUG</option>
+            <option value="DEFERRED">DEFERRED</option>
+          </select>
+          <button class="btn btn-primary btn-xs" (click)="confirmStatusChange()">Apply</button>
+          <button class="btn btn-secondary btn-xs" (click)="cancelStatusChange()">Cancel</button>
+        </div>
+      </div>
+
+      <div class="detail-section">
+        <label class="field-label">Defect Title</label>
+        <div class="field-value title-val">{{ bug?.title }}</div>
+      </div>
+
+      <div class="detail-section">
+        <label class="field-label">Description & Steps to Reproduce</label>
+        <div class="field-value box-val desc-val">{{ bug?.description || 'No description provided.' }}</div>
+      </div>
+
+      <!-- Assignee Section (Locked once assigned + Change Assignee) -->
+      <div class="detail-section assignee-lock-section">
+        <label class="field-label">
+          <i class="fa-solid fa-user-gear"></i> Assigned Developer
+        </label>
+
+        <!-- Locked Assignee View -->
+        <div class="assignee-display-row" *ngIf="!isAssigneeUnlocked">
+          <div class="assignee-chip" [class.unassigned]="!bug?.assignedTo || bug?.assignedTo === 'Unassigned'">
+            <i class="fa-solid" [ngClass]="bug?.assignedTo && bug?.assignedTo !== 'Unassigned' ? 'fa-lock text-emerald' : 'fa-lock-open text-muted'"></i>
+            <span class="assignee-name">{{ bug?.assignedTo && bug?.assignedTo !== 'Unassigned' ? bug?.assignedTo : 'Unassigned' }}</span>
+          </div>
+          <button class="btn btn-secondary btn-sm" (click)="unlockAssignee()">
+            <i class="fa-solid fa-user-pen"></i> Change Assignee
+          </button>
+        </div>
+
+        <!-- Unlocked Assignee Selector -->
+        <div class="assignee-edit-row" *ngIf="isAssigneeUnlocked">
+          <select class="form-control select-dev" [(ngModel)]="selectedDeveloperId">
+            <option [ngValue]="null">-- Select Developer --</option>
+            <option *ngFor="let dev of developerOptions" [ngValue]="dev.userId">
+              {{ dev.fullName || dev.username }} ({{ dev.role || 'DEV' }})
+            </option>
+          </select>
+          <button class="btn btn-primary btn-sm" [disabled]="!selectedDeveloperId" (click)="confirmAssigneeChange()">
+            Confirm Assignment
+          </button>
+          <button class="btn btn-secondary btn-sm" (click)="cancelAssigneeChange()">
+            Cancel
+          </button>
+        </div>
+      </div>
+
+      <div class="detail-section" *ngIf="bug?.comments">
+        <label class="field-label"><i class="fa-regular fa-comment-dots"></i> Defect Comments</label>
+        <div class="field-value box-val comments-val">{{ bug?.comments }}</div>
+      </div>
+
+      <div class="meta-info-grid">
+        <div class="meta-item">
+          <span class="meta-label">Reported By:</span>
+          <span class="meta-value">{{ bug?.reportedBy || 'QA Tester' }}</span>
+        </div>
+        <div class="meta-item" *ngIf="bug?.createdAt">
+          <span class="meta-label">Created At:</span>
+          <span class="meta-value">{{ bug?.createdAt | date:'medium' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- EDIT MODE (API: PUT /bugs/{bugId}) -->
+    <div class="detail-body edit-body" *ngIf="isEditMode">
+      <div class="form-group">
+        <label>Defect Title *</label>
+        <input type="text" class="form-control" [(ngModel)]="editForm.title">
+      </div>
+
+      <div class="form-group">
+        <label>Description & Steps to Reproduce</label>
+        <textarea class="form-control" [(ngModel)]="editForm.description" rows="3"></textarea>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>Severity</label>
+          <select class="form-control" [(ngModel)]="editForm.severity">
+            <option value="CRITICAL">CRITICAL</option>
+            <option value="HIGH">HIGH</option>
+            <option value="MEDIUM">MEDIUM</option>
+            <option value="LOW">LOW</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Priority</label>
+          <select class="form-control" [(ngModel)]="editForm.priority">
+            <option value="CRITICAL">CRITICAL</option>
+            <option value="HIGH">HIGH</option>
+            <option value="MEDIUM">MEDIUM</option>
+            <option value="LOW">LOW</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>Category</label>
+          <select class="form-control" [(ngModel)]="editForm.category">
+            <option value="FUNCTIONAL">FUNCTIONAL</option>
+            <option value="UI">UI</option>
+            <option value="API">API</option>
+            <option value="PERFORMANCE">PERFORMANCE</option>
+            <option value="SECURITY">SECURITY</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select class="form-control" [(ngModel)]="editForm.status">
+            <option value="OPEN">OPEN</option>
+            <option value="IN_PROGRESS">IN_PROGRESS</option>
+            <option value="RESOLVED">RESOLVED</option>
+            <option value="FIXED">FIXED</option>
+            <option value="CLOSED">CLOSED</option>
+            <option value="REOPENED">REOPENED</option>
+            <option value="NOT_A_BUG">NOT_A_BUG</option>
+            <option value="DEFERRED">DEFERRED</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Comments</label>
+        <textarea class="form-control" [(ngModel)]="editForm.comments" rows="2" placeholder="Comments or resolution details"></textarea>
+      </div>
+    </div>
+
+    <!-- MODAL FOOTER -->
+    <div class="modal-footer" *ngIf="!isEditMode">
+      <div class="quick-links">
+        <button class="btn btn-secondary btn-sm" (click)="openChat.emit(bug!)">
+          <i class="fa-solid fa-comments text-emerald"></i> Discussion
+        </button>
+        <button class="btn btn-secondary btn-sm" (click)="openAttachments.emit(bug!)">
+          <i class="fa-solid fa-paperclip text-indigo"></i> Evidence Files
+        </button>
+      </div>
+      <button class="btn btn-secondary" (click)="onClose()">Close</button>
+    </div>
+
+    <div class="modal-footer" *ngIf="isEditMode">
+      <button class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
+      <button class="btn btn-primary" (click)="saveEdit()">
+        <i class="fa-solid fa-floppy-disk"></i> Save Changes (PUT /bugs)
+      </button>
+    </div>
+  </div>
+</div>

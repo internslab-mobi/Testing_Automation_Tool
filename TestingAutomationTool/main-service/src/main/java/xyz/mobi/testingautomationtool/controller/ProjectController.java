@@ -12,6 +12,7 @@ import xyz.mobi.testingautomationtool.dto.ApiResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
 import xyz.mobi.testingautomationtool.dto.ProjectDTO.*;
+import xyz.mobi.testingautomationtool.entity.Region;
 import xyz.mobi.testingautomationtool.entity.SubModule;
 import xyz.mobi.testingautomationtool.entity.Module;
 import xyz.mobi.testingautomationtool.enums.AttachmentType;
@@ -227,5 +228,18 @@ public class ProjectController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(subModule);
+    }
+
+    @PostMapping("/region")
+    public ResponseEntity<Region> createRegion(
+            @RequestBody Map<String, String> request) {
+
+        Region region = projectService.createRegion(
+                request.get("regionName")
+        );
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(region);
     }
 }

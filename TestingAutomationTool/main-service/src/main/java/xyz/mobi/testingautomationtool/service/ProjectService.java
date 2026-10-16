@@ -5,6 +5,7 @@ import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentDownloadResponse;
 import xyz.mobi.testingautomationtool.dto.ProjectDTO.*;
 import xyz.mobi.testingautomationtool.entity.Module;
+import xyz.mobi.testingautomationtool.entity.Region;
 import xyz.mobi.testingautomationtool.entity.SubModule;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.AttachmentResponse;
@@ -43,6 +44,9 @@ public interface ProjectService {
     SubModule createSubModule(
             Integer moduleId,
             String subModuleName);
+
+    @Transactional
+    Region createRegion(String regionName);
 
 //    AttachmentDownloadResponse downloadFiles(Integer projectId);
 }

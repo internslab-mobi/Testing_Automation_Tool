@@ -69,7 +69,7 @@ body {
 }
 
 /* Auth Shared Utilities */
-.btn-primary {
+.btn-primary:not(.btn) {
   width: 100%;
   height: 46px;
   background-color: var(--primary);

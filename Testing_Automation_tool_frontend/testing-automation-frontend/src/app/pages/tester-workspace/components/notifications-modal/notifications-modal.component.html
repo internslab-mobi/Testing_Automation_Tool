@@ -1,0 +1,67 @@
+<div class="modal-overlay" *ngIf="isOpen">
+  <div class="modal-card modal-notif-card">
+    <div class="modal-header">
+      <div class="header-titles">
+        <h3>
+          <i class="fa-regular fa-bell text-emerald"></i>
+          System Notifications
+        </h3>
+        <span class="badge-unread" *ngIf="unreadCount > 0">{{ unreadCount }} Unread</span>
+      </div>
+      <button class="modal-close" (click)="onClose()">&times;</button>
+    </div>
+
+    <!-- Filter Tabs -->
+    <div class="notif-filter-tabs">
+      <button class="notif-tab" [class.active]="activeFilter === 'ALL'" (click)="setFilter('ALL')">All</button>
+      <button class="notif-tab" [class.active]="activeFilter === 'UNREAD'" (click)="setFilter('UNREAD')">Unread</button>
+      <button class="notif-tab" [class.active]="activeFilter === 'FIXED'" (click)="setFilter('FIXED')">Fixed</button>
+      <button class="notif-tab" [class.active]="activeFilter === 'COMMENT'" (click)="setFilter('COMMENT')">Comments</button>
+    </div>
+
+    <!-- Notification Cards List -->
+    <div class="notif-list-container">
+      <div *ngIf="filteredNotifications.length === 0" class="empty-list-msg">
+        <i class="fa-solid fa-bell-slash"></i>
+        <span>No notifications found in this view</span>
+      </div>
+
+      <div
+        *ngFor="let n of filteredNotifications; trackBy: trackByNotificationId"
+        class="notif-card"
+        [class.unread]="n.notificationStatus === 'UNREAD'"
+        (click)="onToggle(n)"
+      >
+        <div class="notif-icon-col">
+          <i
+            class="fa-solid"
+            [ngClass]="n.type === 'FIXED' ? 'fa-circle-check text-emerald' : n.type === 'COMMENT' ? 'fa-comment-dots text-indigo' : 'fa-bell text-rose'"
+          ></i>
+        </div>
+
+        <div class="notif-content-col">
+          <div class="notif-top-row">
+            <span class="notif-tag" *ngIf="n.bugFormatId">{{ n.bugFormatId }}</span>
+            <span class="new-dot" *ngIf="n.notificationStatus === 'UNREAD'">● NEW</span>
+            <span class="notif-time" *ngIf="n.createdAt">{{ n.createdAt | date:'short' }}</span>
+          </div>
+          <div class="notif-message">{{ n.message }}</div>
+        </div>
+
+        <div class="notif-action-col">
+          <button class="btn-dismiss" (click)="onDismiss(n, $event)" title="Dismiss notification">
+            <i class="fa-solid fa-xmark"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="modal-footer">
+      <button class="btn btn-secondary btn-sm" [disabled]="unreadCount === 0" (click)="onMarkAllRead()">
+        <i class="fa-solid fa-check-double"></i> Mark all as read
+      </button>
+      <button class="btn btn-secondary btn-sm" (click)="onClose()">Close</button>
+    </div>
+  </div>
+</div>

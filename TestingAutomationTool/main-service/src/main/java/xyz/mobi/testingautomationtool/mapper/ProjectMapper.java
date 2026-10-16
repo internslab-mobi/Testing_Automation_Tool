@@ -16,6 +16,7 @@ public interface ProjectMapper {
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "module", ignore = true)
     @Mapping(target = "subModule", ignore = true)
+    @Mapping(target = "region", ignore = true)
     Project toEntity(ProjectRequest request);
 
     default ProjectResponse toResponse(Project project) {
@@ -30,7 +31,7 @@ public interface ProjectMapper {
                 .module(project.getModule() != null ? project.getModule().getModuleName() : null)
                 .subModule(project.getSubModule() != null ? project.getSubModule().getSubModuleName() : null)
                 .status(project.getStatus())
-                .region(project.getRegion())
+                .region(project.getRegion() != null ? project.getRegion().getCountryName() : null)
                 .comments(project.getComments())
                 .isActive(project.isActive())
                 .isDeleted(project.isDeleted())
@@ -58,5 +59,9 @@ public interface ProjectMapper {
     @Mapping(target = "active", ignore = true)
     @Mapping(target = "deleted", ignore = true)
     @Mapping(target = "version", ignore = true)
+    @Mapping(target = "module", ignore = true)
+    @Mapping(target = "subModule", ignore = true)
+    @Mapping(target = "region", ignore = true)
+    @Mapping(target = "status", ignore = true)
     Project putMethodMapper(ProjectPutRequest projectPutRequest, @MappingTarget Project project);
 }

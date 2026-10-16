@@ -1,0 +1,69 @@
+<div class="modal-overlay" *ngIf="isOpen">
+  <div class="modal-card modal-attachments-card">
+    <div class="modal-header">
+      <div class="header-titles">
+        <h3>
+          <i class="fa-solid fa-paperclip text-indigo"></i>
+          {{ title }}
+        </h3>
+        <span class="sub-info" *ngIf="subTitle">{{ subTitle }}</span>
+      </div>
+      <button class="modal-close" (click)="onClose()">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Dropzone for File Uploads -->
+      <div class="dropzone-box" (click)="fileInput.click()">
+        <input #fileInput type="file" multiple style="display:none;" (change)="onFilesSelected($event)">
+        <i class="fa-solid" [ngClass]="isUploading ? 'fa-spinner fa-spin text-indigo' : 'fa-cloud-arrow-up text-indigo'"></i>
+        <div class="dropzone-title">
+          {{ isUploading ? 'Uploading files to server...' : 'Click or Drag files here to upload' }}
+        </div>
+        <div class="dropzone-sub">
+          Supports Screenshots, Logs, PDFs, and Docs (multi-file supported)
+        </div>
+      </div>
+
+      <!-- Attachments List -->
+      <div class="attachments-list-container">
+        <div class="list-header" *ngIf="attachments.length > 0">
+          <span>Uploaded Files ({{ attachments.length }})</span>
+        </div>
+
+        <div *ngIf="attachments.length === 0" class="empty-list-msg">
+          <i class="fa-solid fa-folder-open"></i>
+          <span>No attachments uploaded yet. Select files above to attach.</span>
+        </div>
+
+        <div *ngFor="let f of attachments" class="attachment-item-row">
+          <div class="attachment-file-info">
+            <i class="fa-solid fa-file text-indigo file-icon"></i>
+            <div class="file-text-col">
+              <strong class="file-name" [title]="f.fileName">{{ f.fileName }}</strong>
+              <div class="file-meta">
+                <span *ngIf="f.fileSize" class="file-size-tag">{{ (f.fileSize / 1024) | number:'1.0-1' }} KB</span>
+                <span *ngIf="f.uploaderName" class="file-uploader">• By {{ f.uploaderName }}</span>
+                <span *ngIf="f.uploadedAt || f.createdAt" class="file-time">• {{ (f.uploadedAt || f.createdAt) | date:'short' }}</span>
+              </div>
+            </div>
+          </div>
+          <div class="attachment-actions">
+            <button class="btn-download-file" (click)="onDownloadSingle(f)" title="Download this file">
+              <i class="fa-solid fa-download"></i>
+            </button>
+            <button class="btn-delete-file" (click)="onDelete(f.attachmentId || f.id)" title="Delete attachment">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary" (click)="onClose()">Close</button>
+      <button class="btn btn-primary" [disabled]="attachments.length === 0" (click)="downloadAll.emit()">
+        <i class="fa-solid fa-download"></i> Download All (.zip)
+      </button>
+    </div>
+  </div>
+</div>

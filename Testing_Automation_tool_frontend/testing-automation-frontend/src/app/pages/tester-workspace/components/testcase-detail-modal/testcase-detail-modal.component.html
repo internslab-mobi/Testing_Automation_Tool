@@ -1,0 +1,199 @@
+<div class="modal-overlay" *ngIf="isOpen">
+  <div class="modal-card modal-detail-card">
+    <div class="modal-header">
+      <div class="header-titles">
+        <h3>
+          <i class="fa-solid fa-file-lines text-indigo"></i>
+          Test Case Card: {{ testCase?.testcaseFormatId || ('TC_' + testCase?.testcaseId) }}
+        </h3>
+        <span class="sub-info">Feature: <strong>{{ activeFeature?.featureName }}</strong></span>
+      </div>
+      <div class="header-actions">
+        <button *ngIf="!isEditMode" class="btn btn-secondary btn-sm" (click)="startEdit()">
+          <i class="fa-solid fa-pen-to-square"></i> Edit Test Case
+        </button>
+        <button *ngIf="!isEditMode" class="btn btn-danger-outline btn-sm" (click)="onSoftDelete()">
+          <i class="fa-solid fa-trash-can"></i> Soft Delete
+        </button>
+        <button class="modal-close" (click)="onClose()">&times;</button>
+      </div>
+    </div>
+
+    <!-- VIEW MODE -->
+    <div class="detail-body" *ngIf="!isEditMode">
+      <div class="detail-top-badges">
+        <span class="badge-tag badge-id" title="System Test Case ID">TC ID: #{{ testCase?.testcaseId }}</span>
+        <span class="badge-tag badge-format">{{ testCase?.testcaseFormatId || ('TC_' + testCase?.testcaseId) }}</span>
+        <span class="badge-tag badge-type">{{ testCase?.testType }}</span>
+        <span class="badge-tag" [ngClass]="'badge-prio-' + (testCase?.testPriority?.toLowerCase() || 'medium')">
+          {{ testCase?.testPriority }} Priority
+        </span>
+        <span class="badge-tag" [ngClass]="testCase?.executionStatus === 'PASS' ? 'badge-pass' : testCase?.executionStatus === 'FAIL' ? 'badge-fail' : 'badge-idle'">
+          {{ testCase?.executionStatus || 'UNEXECUTED' }}
+        </span>
+        <span class="badge-tag badge-auto" *ngIf="testCase?.automationFeasibility">
+          <i class="fa-solid fa-robot"></i> {{ testCase?.automationFeasibility }}
+        </span>
+      </div>
+
+      <div class="detail-section">
+        <label class="field-label">Test Case Title</label>
+        <div class="field-value title-val">{{ testCase?.title }}</div>
+      </div>
+
+      <div class="detail-grid-2">
+        <div class="detail-section">
+          <label class="field-label">Precondition</label>
+          <div class="field-value box-val">{{ testCase?.execution?.precondition || 'No precondition specified' }}</div>
+        </div>
+        <div class="detail-section">
+          <label class="field-label">Execution Steps</label>
+          <div class="field-value box-val">{{ testCase?.execution?.executionSteps || 'No execution steps specified' }}</div>
+        </div>
+      </div>
+
+      <div class="detail-section" *ngIf="testCase?.testData">
+        <label class="field-label"><i class="fa-solid fa-database"></i> Test Data / Input Parameters</label>
+        <div class="field-value box-val">{{ testCase?.testData }}</div>
+      </div>
+
+      <div class="detail-grid-2">
+        <div class="detail-section">
+          <label class="field-label">UI Validation</label>
+          <div class="field-value box-val">{{ testCase?.execution?.uiValidations || 'No UI validation rule' }}</div>
+        </div>
+        <div class="detail-section">
+          <label class="field-label">DB Validation</label>
+          <div class="field-value box-val">{{ testCase?.execution?.dbValidations || 'No DB validation rule' }}</div>
+        </div>
+      </div>
+
+      <div class="detail-section" *ngIf="testCase?.comments || testCase?.execution?.comments">
+        <label class="field-label"><i class="fa-regular fa-comment-dots"></i> Comments</label>
+        <div class="field-value box-val comments-val">{{ testCase?.comments || testCase?.execution?.comments }}</div>
+      </div>
+
+      <div class="meta-info-grid" *ngIf="testCase?.createdBy || testCase?.updatedBy">
+        <div class="meta-item" *ngIf="testCase?.createdBy">
+          <span class="meta-label">Author:</span>
+          <span class="meta-val">{{ testCase?.createdBy }}</span>
+        </div>
+        <div class="meta-item" *ngIf="testCase?.updatedBy">
+          <span class="meta-label">Last Modified:</span>
+          <span class="meta-val">{{ testCase?.updatedBy }}</span>
+        </div>
+      </div>
+
+      <!-- Multiple Linked Bugs Section -->
+      <div class="detail-section linked-bugs-section">
+        <div class="section-sub-header">
+          <label class="field-label">
+            <i class="fa-solid fa-bug text-rose"></i>
+            Linked Defects ({{ linkedDefects.length }})
+          </label>
+          <button class="btn btn-rose-sm" (click)="onLogDefect()">
+            <i class="fa-solid fa-plus"></i> Log Another Defect
+          </button>
+        </div>
+
+        <div *ngIf="linkedDefects.length === 0" class="empty-bugs-hint">
+          <i class="fa-solid fa-shield-halved"></i> No defects currently linked to this test case.
+        </div>
+
+        <div class="linked-bugs-list" *ngIf="linkedDefects.length > 0">
+          <div
+            *ngFor="let b of linkedDefects"
+            class="linked-bug-chip"
+            (click)="openDefectDetail.emit(b)"
+          >
+            <span class="bug-id">{{ b.bugFormatId }}</span>
+            <span class="bug-title-clip">{{ b.title }}</span>
+            <span class="badge-tag" [ngClass]="'badge-status-' + b.status?.toLowerCase()">{{ b.status }}</span>
+            <span class="badge-tag" *ngIf="b.status === 'REOPENED' || (b.bugOccurrence && b.bugOccurrence >= 2)" style="background:#fef2f2; color:#b91c1c; font-weight:800;">
+              Count: {{ b.bugOccurrence || 2 }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- EDIT MODE (API: PUT /testcases/{id}) -->
+    <div class="detail-body edit-body" *ngIf="isEditMode">
+      <div class="form-group">
+        <label>Title *</label>
+        <input type="text" class="form-control" [(ngModel)]="editForm.title">
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>Test Type</label>
+          <select class="form-control" [(ngModel)]="editForm.testType">
+            <option value="UI">UI</option>
+            <option value="API">API</option>
+            <option value="DB">DB</option>
+            <option value="E2E">E2E</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Priority</label>
+          <select class="form-control" [(ngModel)]="editForm.testPriority">
+            <option value="CRITICAL">CRITICAL</option>
+            <option value="HIGH">HIGH</option>
+            <option value="MEDIUM">MEDIUM</option>
+            <option value="LOW">LOW</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Precondition</label>
+        <input type="text" class="form-control" [(ngModel)]="editForm.precondition">
+      </div>
+
+      <div class="form-group">
+        <label>Execution Steps</label>
+        <textarea class="form-control" [(ngModel)]="editForm.executionSteps" rows="3"></textarea>
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>UI Validation</label>
+          <input type="text" class="form-control" [(ngModel)]="editForm.uiValidations">
+        </div>
+        <div class="form-group">
+          <label>DB Validation</label>
+          <input type="text" class="form-control" [(ngModel)]="editForm.dbValidations">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label>Comments</label>
+        <textarea class="form-control" [(ngModel)]="editForm.comments" rows="2" placeholder="Tester comments, remarks, or notes"></textarea>
+      </div>
+    </div>
+
+    <!-- MODAL FOOTER -->
+    <div class="modal-footer" *ngIf="!isEditMode">
+      <div class="execution-actions">
+        <span class="action-label">Quick Run:</span>
+        <button class="btn btn-pass-sm" (click)="onExecute('PASS')">
+          <i class="fa-solid fa-check"></i> Pass
+        </button>
+        <button class="btn btn-fail-sm" (click)="onExecute('FAIL')">
+          <i class="fa-solid fa-xmark"></i> Fail
+        </button>
+        <button class="btn btn-descope-sm" (click)="onExecute('DESCOPE')">
+          <i class="fa-solid fa-ban"></i> Descope
+        </button>
+      </div>
+      <button class="btn btn-secondary" (click)="onClose()">Close</button>
+    </div>
+
+    <div class="modal-footer" *ngIf="isEditMode">
+      <button class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
+      <button class="btn btn-primary" (click)="saveEdit()">
+        <i class="fa-solid fa-floppy-disk"></i> Save Changes (PUT /testcases)
+      </button>
+    </div>
+  </div>
+</div>

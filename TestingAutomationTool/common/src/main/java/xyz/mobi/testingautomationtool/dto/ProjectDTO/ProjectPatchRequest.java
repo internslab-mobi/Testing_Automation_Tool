@@ -12,6 +12,8 @@ import lombok.NoArgsConstructor;
 public class ProjectPatchRequest {
     private String projectName;
     private String description;
-    private String region;
+    private Integer region;
+    private Integer module;
+    private Integer subModule;
     private String comments;
 }

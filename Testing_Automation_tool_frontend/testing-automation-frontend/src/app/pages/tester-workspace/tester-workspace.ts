@@ -1,40 +1,45 @@
-import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { TesterService } from '../../core/services/testerService';
-import { AuthService } from '../../core/services/authService';
 
-import {
-  FeatureItem,
-  ProjectItem,
-  TestCaseItem,
-  DefectItem,
-  NotificationItem,
-  ChatMessage,
-  FileAttachment
-} from './models/tester-workspace.model';
-
-export type {
-  FeatureItem,
-  ProjectItem,
-  TestCaseItem,
-  DefectItem,
-  NotificationItem,
-  ChatMessage,
-  FileAttachment
-};
-
-
+// Sub-components
+import { NavbarComponent } from './components/navbar/navbar.component';
+import { SidebarComponent } from './components/sidebar/sidebar.component';
 import { BugChatModalComponent } from './components/bug-chat-modal/bug-chat-modal.component';
+import { TestCaseDetailModalComponent } from './components/testcase-detail-modal/testcase-detail-modal.component';
+import { DefectDetailModalComponent } from './components/defect-detail-modal/defect-detail-modal.component';
+import { AttachmentsModalComponent } from './components/attachments-modal/attachments-modal.component';
 import { NotificationsModalComponent } from './components/notifications-modal/notifications-modal.component';
-import { ProjectEditModalComponent } from './components/project-edit-modal/project-edit-modal.component';
-import { ProjectCreateModalComponent } from './components/project-create-modal/project-create-modal.component';
-import { FeatureEditModalComponent } from './components/feature-edit-modal/feature-edit-modal.component';
-import { FeatureCreateModalComponent } from './components/feature-create-modal/feature-create-modal.component';
-import { TestcaseCreateModalComponent } from './components/testcase-create-modal/testcase-create-modal.component';
-import { BugCreateModalComponent } from './components/bug-create-modal/bug-create-modal.component';
-import { FileAttachmentsModalComponent } from './components/file-attachments-modal/file-attachments-modal.component';
+
+// Services & Models
+import { AuthService } from '../../core/services/authService';
+import { ProjectService } from '../../core/services/project.service';
+import { FeatureService } from '../../core/services/feature.service';
+import { TestCaseService } from '../../core/services/testcase.service';
+import { BugService, DeveloperUser } from '../../core/services/bug.service';
+import { NotificationService } from '../../core/services/notification.service';
+import {
+  Project,
+  Feature,
+  TestCase,
+  Bug,
+  AttachmentItem,
+  BugComment,
+  InAppNotification,
+  ProjectCreateRequest,
+  FeatureCreateRequest,
+  TestCaseCreatePayload,
+  TestCasePutRequest,
+  BugCreateRequest,
+  BugPutRequest
+} from '../../model/workspace/workspace.model';
+
+interface ToastAlert {
+  id: number;
+  message: string;
+  type: 'success' | 'error' | 'info' | 'warning';
+}
 
 @Component({
   selector: 'app-tester-workspace',
@@ -42,1292 +47,1444 @@ import { FileAttachmentsModalComponent } from './components/file-attachments-mod
   imports: [
     CommonModule,
     FormsModule,
+    NavbarComponent,
+    SidebarComponent,
     BugChatModalComponent,
-    NotificationsModalComponent,
-    ProjectEditModalComponent,
-    ProjectCreateModalComponent,
-    FeatureEditModalComponent,
-    FeatureCreateModalComponent,
-    TestcaseCreateModalComponent,
-    BugCreateModalComponent,
-    FileAttachmentsModalComponent
+    TestCaseDetailModalComponent,
+    DefectDetailModalComponent,
+    AttachmentsModalComponent,
+    NotificationsModalComponent
   ],
   templateUrl: './tester-workspace.html',
   styleUrl: './tester-workspace.css'
 })
 export class TesterWorkspace implements OnInit {
-  private readonly router = inject(Router);
-  private readonly testerService = inject(TesterService);
+  readonly cdr = inject(ChangeDetectorRef);
   private readonly authService = inject(AuthService);
-  private readonly cd = inject(ChangeDetectorRef);
+  private readonly projectService = inject(ProjectService);
+  private readonly featureService = inject(FeatureService);
+  private readonly testCaseService = inject(TestCaseService);
+  private readonly bugService = inject(BugService);
+  private readonly notificationService = inject(NotificationService);
+  private readonly router = inject(Router);
 
   // User Profile
+  isAuthenticated = false;
   userName = 'Tester';
-  userRole = 'QA Tester';
-  userInitials = 'QT';
+  userRole = 'TESTER';
+  userInitials = 'TS';
 
-  // Navigation State
-  activeRegion = 'ALL';
+  // Responsive Sidebar
+  isSidebarOpen = false;
+
+  // Projects & Dynamic Regions
+  projects: Project[] = [];
   availableRegions: string[] = [];
-  allProjects: ProjectItem[] = [];
-  activeProject: ProjectItem | null = null;
-  activeFeature: FeatureItem | null = null;
-  activeTab: 'tc' | 'bugs' = 'tc';
-  featureFilterCategory: 'ALL' | 'BUGS' | 'PASSED' = 'ALL';
+  selectedRegion = 'ALL';
+  activeProject: Project | null = null;
+  projectAttachmentCount = 0;
 
-  // Search & Filter Inputs
-  projectSearchQuery = '';
-  featureSearchQuery = '';
-  tcSearchQuery = '';
-  tcTypeFilter = 'ALL';
-  tcStatusFilter = 'ALL';
+  // Countries for Project Creation Region Selector
+  countryList: string[] = [];
+  countrySearchFilter = '';
 
-  bugSearchQuery = '';
-  bugSevFilter = 'ALL';
-  bugStatusFilter = 'ALL';
+  // Features
+  features: Feature[] = [];
+  activeFeature: Feature | null = null;
+  featureAttachmentCount = 0;
 
-  notifFilterCategory: 'ALL' | 'UNREAD' | 'FIXED' | 'COMMENT' = 'ALL';
+  // Active Workspace Sub-Tab ('testcases' | 'bugs')
+  activeSubTab: 'testcases' | 'bugs' = 'testcases';
 
-  // Pagination State for Test Cases & Defects
+  // Test Cases
+  testcases: TestCase[] = [];
+  filteredTestCases: TestCase[] = [];
+  tcSearch = '';
+  tcFilterType = 'ALL';
+  tcFilterPriority = 'ALL';
+  tcFilterStatus = 'ALL';
+
+  // Defects / Bugs
+  bugs: Bug[] = [];
+  filteredBugs: Bug[] = [];
+  bugSearch = '';
+  bugFilterSeverity = 'ALL';
+  bugFilterStatus = 'ALL';
+  developers: DeveloperUser[] = [];
+
+  // Pagination: Test Cases
   tcCurrentPage = 1;
-  tcPageSize = 5;
+  tcPageSize = 10;
+  readonly tcPageSizeOptions = [5, 10, 20, 50];
 
+  // Pagination: Defects
   bugCurrentPage = 1;
-  bugPageSize = 5;
+  bugPageSize = 10;
+  readonly bugPageSizeOptions = [5, 10, 20, 50];
 
-  // Modals state
-  activeModal: string | null = null;
+  // Summary Metrics
+  totalTestCasesCount = 0;
+  passedCount = 0;
+  failedCount = 0;
+  descopeCount = 0;
+  totalDefectsCount = 0;
+  openDefectsCount = 0;
 
-  // Toast feedback
-  toastMessage = '';
-  toastType: 'success' | 'info' | 'error' = 'info';
-  private toastTimer: any = null;
+  // In-Memory Performance Cache (Instant sub-10ms Switching)
+  private featureCache = new Map<number, Feature[]>();
+  private testcaseCache = new Map<number, TestCase[]>();
+  private bugCache = new Map<number, Bug[]>();
 
-  // Loading indicator for API calls
-  isApiLoading = false;
+  // Modals Visibility
+  isProjectCreateModalOpen = false;
+  isProjectEditModalOpen = false;
+  isFeatureCreateModalOpen = false;
+  isFeatureEditModalOpen = false;
+  isTestCaseCreateModalOpen = false;
+  isExcelModalOpen = false;
+  isBugCreateModalOpen = false;
+  isTestCaseDetailModalOpen = false;
+  isDefectDetailModalOpen = false;
+  isAttachmentsModalOpen = false;
+  isChatModalOpen = false;
+  isNotificationsModalOpen = false;
 
-  // Project data per region (populated dynamically from project regions)
-  projectData: Record<string, ProjectItem[]> = {};
+  // Modal State & Forms
+  activeTestCaseDetail: TestCase | null = null;
+  activeDefectDetail: Bug | null = null;
+  activeChatBug: Bug | null = null;
+  chatComments: BugComment[] = [];
+  isChatLoading = false;
 
-  // Test cases repository (populated from backend API)
-  testCases: TestCaseItem[] = [];
+  // Attachments Modal State
+  attachmentsModalTitle = 'Attachments';
+  attachmentsModalSubtitle = '';
+  attachmentsModalTargetType: 'project' | 'feature' | 'bug' = 'feature';
+  attachmentsModalTargetId: number | null = null;
+  attachmentsList: AttachmentItem[] = [];
+  isUploadingAttachments = false;
 
-  // Defects repository (populated from backend API)
-  defects: DefectItem[] = [];
+  // In-App Notifications
+  notifications: InAppNotification[] = [];
+  unreadNotificationCount = 0;
 
-  // Notifications repository (populated from backend API)
-  notifications: NotificationItem[] = [];
-
-  // Dedicated Chat state
-  activeChatBug: DefectItem | null = null;
-  chatMessages: ChatMessage[] = [];
-  newChatMessage = '';
-
-  // Project Attachments
-  projectAttachments: FileAttachment[] = [];
-
-  // Feature Attachments
-  featureAttachments: FileAttachment[] = [];
-
-  // Form Models for Modals
-  newTc = {
-    title: '',
-    type: 'FUNCTIONAL' as 'FUNCTIONAL' | 'SECURITY' | 'REGRESSION',
-    priority: 'CRITICAL' as 'CRITICAL' | 'HIGH' | 'MEDIUM',
-    uiValidation: '',
-    dbValidation: ''
-  };
-
-  bugForm = {
-    featureName: '',
-    originTestCaseId: '',
-    originTestCaseRawId: 1,
-    id: '',
-    title: '',
-    severity: 'CRITICAL' as 'CRITICAL' | 'HIGH' | 'MEDIUM',
-    assignee: 'Lead Developer'
-  };
-
-  editProjectForm = {
-    name: '',
-    region: 'US-EAST',
-    status: 'ACTIVE' as 'ACTIVE' | 'INACTIVE'
-  };
-
-  createProjectForm = {
-    region: 'US-EAST',
-    name: ''
-  };
-
-  editFeatureForm = {
-    name: '',
-    sprint: 1,
-    version: 'v1.0.0',
+  // Form Models
+  newProjectForm: ProjectCreateRequest = {
+    projectName: '',
+    region: 'United States',
+    description: '',
+    comments: '',
     status: 'ACTIVE'
   };
 
-  createFeatureForm = {
-    name: '',
+  editProjectForm: Partial<ProjectCreateRequest> = {};
+
+  newFeatureForm: FeatureCreateRequest = {
+    projectId: 0,
+    featureName: '',
     sprint: 1,
-    version: 'v1.0.0'
+    featureVersion: 'v1.0',
+    description: '',
+    comments: ''
   };
 
+  editFeatureForm: Partial<FeatureCreateRequest> = {};
+
+  newTcForm = {
+    title: '',
+    testType: 'UI',
+    testPriority: 'MEDIUM',
+    testcaseStatus: 'PASSED',
+    precondition: 'Verified environment state',
+    executionSteps: '',
+    uiValidations: '',
+    dbValidations: '',
+    comments: ''
+  };
+
+  newBugForm: BugCreateRequest = {
+    title: '',
+    description: '',
+    severity: 'HIGH',
+    priority: 'HIGH',
+    category: 'FUNCTIONAL',
+    status: 'OPEN',
+    comments: ''
+  };
+  newBugAssignedToUserId: number | null = null;
+  bugOriginTcId = 0;
+  bugOriginTcFormatId = '';
+  bugMappedFormatId = '';
+
+  // Toast Alerts
+  toasts: ToastAlert[] = [];
+  private toastCounter = 0;
+
   ngOnInit(): void {
-    this.loadUserSession();
-    this.initDefaultSelection();
-    this.fetchBackendData();
+    this.initUserProfile();
+    this.loadCountryList();
+    this.loadDevelopers();
+    this.loadProjects();
+    this.loadNotifications();
+    this.warmupCsrf();
   }
 
-  loadUserSession(): void {
-    const cachedUser = this.authService.currentUser();
-    if (cachedUser) {
-      this.applyUserProfile(cachedUser);
-    } else {
-      this.authService.getProfile().subscribe({
-        next: (response) => {
-          if (response?.data) {
-            this.applyUserProfile(response.data);
-            this.cd.detectChanges();
-          }
-        },
-        error: (err) => {
-          console.warn('Could not fetch user profile session:', err?.message || err);
-        }
-      });
+  // ==========================================
+  // INITIALIZATION & CSRF WARMUP (PREVENTS ACCESS DENIED FIRST CLICK)
+  // ==========================================
+  private initUserProfile(): void {
+    if (typeof localStorage !== 'undefined') {
+      const token = localStorage.getItem('token') || localStorage.getItem('jwt');
+      this.isAuthenticated = !!token;
+      this.userName = localStorage.getItem('tat_user_fullname') || localStorage.getItem('tat_user_name') || 'Arjun Kumar';
+      this.userRole = localStorage.getItem('tat_user_role') || 'TESTER';
+      this.userInitials = this.computeInitials(this.userName);
     }
   }
 
-  private applyUserProfile(user: { fullName?: string; username?: string; role?: string; designation?: string }): void {
-    if (user.fullName) {
-      this.userName = user.fullName;
-    } else if (user.username) {
-      this.userName = user.username;
+  private computeInitials(name: string): string {
+    const parts = name.trim().split(/\s+/);
+    if (parts.length >= 2) {
+      return (parts[0][0] + parts[1][0]).toUpperCase();
     }
+    return (name.substring(0, 2) || 'QA').toUpperCase();
+  }
 
-    if (user.role) {
-      this.userRole = user.designation ? `${user.designation} (${user.role})` : `${user.role}`;
-    }
+  private warmupCsrf(): void {
+    // A quick lightweight GET ensures Spring Security's DeferredCsrfToken is resolved
+    // and Set-Cookie: XSRF-TOKEN is placed in document.cookie before user mutates any entity
+    this.notificationService.getNotifications().subscribe({
+      next: () => this.cdr.markForCheck(),
+      error: () => {}
+    });
+  }
 
-    if (this.userName) {
-      const parts = this.userName.trim().split(/\s+/);
-      if (parts.length >= 2) {
-        this.userInitials = (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-      } else if (parts.length === 1 && parts[0].length > 0) {
-        this.userInitials = parts[0].substring(0, 2).toUpperCase();
+  loadCountryList(): void {
+    this.projectService.getCountryList().subscribe({
+      next: (countries) => {
+        this.countryList = countries;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.countryList = ['United States', 'United Kingdom', 'India', 'Germany', 'France', 'Canada', 'Australia', 'Japan', 'Singapore'];
+        this.cdr.markForCheck();
       }
-    }
+    });
   }
 
-  initDefaultSelection(): void {
-    const projects = this.filteredProjects;
-    if (projects.length > 0) {
-      this.selectProject(projects[0]);
-    }
+  get filteredCountries(): string[] {
+    const q = this.countrySearchFilter.toLowerCase().trim();
+    if (!q) return this.countryList;
+    return this.countryList.filter(c => c.toLowerCase().includes(q));
   }
 
-  fetchBackendData(): void {
-    this.isApiLoading = true;
-    this.testerService.getProjects().subscribe({
-      next: (response) => {
-        console.log('projects response',response);
-        this.isApiLoading = false;
-        const projectList = response?.data;
-        if (Array.isArray(projectList) && projectList.length > 0) {
-          this.mapBackendProjects(projectList);
-        } else {
-          this.allProjects = [];
-          this.availableRegions = [];
-          this.projectData = {};
-          this.activeProject = null;
-          this.activeFeature = null;
-          this.showToast('No projects found in database. Use "+ New" to create one.', 'info');
-        }
+  loadDevelopers(): void {
+    this.bugService.getDevelopers().subscribe({
+      next: (devs) => {
+        this.developers = devs || [];
+        this.cdr.markForCheck();
       },
       error: (err) => {
-        console.log(err)
-        this.isApiLoading = false;
-        console.warn('Backend API /project error:', err);
-        const status = err?.status;
-        const msg = err?.error?.message;
-        if (status === 401) {
-          this.showToast('Authentication required (401). Retrying with active tester session...', 'info');
-        } else if (status === 403) {
-          this.showToast('Access Denied (403): Your account requires TESTER or MANAGER privileges.', 'error');
-        } else if (status === 0) {
-          this.showToast('Cannot connect to API Gateway on port 8082. Please check backend services.', 'error');
-        } else {
-          this.showToast(`Error loading projects: ${msg || err?.message || 'Server error'}`, 'error');
-        }
-      }
-    });
-
-    this.fetchBackendNotifications();
-  }
-
-  mapBackendProjects(list: any[]): void {
-    const rawRegions = new Set<string>();
-
-    this.allProjects = list.map((item, index) => {
-      const proj = item.project || item;
-      const rawId = proj.projectId || (index + 1);
-      const name = proj.projectName || `Project ${rawId}`;
-      const region = (proj.region || 'General').trim();
-      if (region) {
-        rawRegions.add(region);
-      }
-
-      return {
-        id: `PROJ-${rawId}`,
-        rawId: rawId,
-        name: name,
-        version: proj.version ? `v${proj.version}` : 'v1.0',
-        status: proj.status || 'ACTIVE',
-        region: region,
-        features: []
-      };
-    });
-
-    this.availableRegions = Array.from(rawRegions).sort();
-
-    // Populate projectData by region for quick access
-    const newProjectData: Record<string, ProjectItem[]> = {};
-    this.availableRegions.forEach(reg => {
-      newProjectData[reg] = this.allProjects.filter(p => (p.region || '').toLowerCase() === reg.toLowerCase());
-    });
-    this.projectData = newProjectData;
-
-    // Automatically select the first project in current region filter
-    const currentList = this.filteredProjects;
-    if (currentList.length > 0) {
-      this.selectProject(currentList[0]);
-    } else if (this.allProjects.length > 0) {
-      this.activeRegion = 'ALL';
-      this.selectProject(this.allProjects[0]);
-    } else {
-      this.activeProject = null;
-      this.activeFeature = null;
-    }
-    this.cd.detectChanges();
-  }
-
-  fetchFeaturesForProject(project: ProjectItem): void {
-    if (!project.rawId) return;
-
-    this.testerService.getFeaturesByProject(project.rawId).subscribe({
-      next: (response) => {
-        const featureList = response?.data;
-        if (Array.isArray(featureList)) {
-          project.features = featureList.map((item, idx) => {
-            const feat = item.feature || item;
-            const featId = feat.featureId || (idx + 1);
-            return {
-              id: `FEAT-${featId}`,
-              rawId: featId,
-              name: feat.featureName || `Feature ${featId}`,
-              sprint: `Sprint ${feat.sprint || 1} • ${feat.featureVersion || 'v1.0'}`,
-              sprintNum: feat.sprint || 1,
-              bugs: 0,
-              tcCount: 0,
-              status: 'PASSED'
-            };
-          });
-
-          if (project.features.length > 0) {
-            this.selectFeature(project.features[0]);
-          } else {
-            this.activeFeature = null;
-          }
-        } else {
-          project.features = [];
-          this.activeFeature = null;
-        }
-        this.cd.detectChanges();
-      },
-      error: (err) => {
-        console.warn('Backend /feature/project error:', err?.message || err);
-        project.features = [];
-        this.activeFeature = null;
-        this.cd.detectChanges();
+        console.error('Failed to load developers:', err);
+        this.developers = [];
+        this.cdr.markForCheck();
       }
     });
   }
 
-  fetchTestCasesForFeature(feature: FeatureItem): void {
-    if (!feature.rawId) return;
-
-    this.testerService.getTestCases({ featureId: feature.rawId }).subscribe({
-      next: (response) => {
-        const pageData = response?.data;
-        console.log("size",pageData.size)
-        const tcList = pageData?.content || (Array.isArray(pageData) ? pageData : null);
-
-        if (Array.isArray(tcList)) {
-          const mappedCases: TestCaseItem[] = tcList.map((item, idx) => {
-            const tc = item.testCase || item;
-            const exec = item.execution || {};
-            const val = item.validations || {};
-            const rawId = tc.testcaseId || (idx + 1);
-
-            return {
-              id: tc.testcaseFormatId || `TC_${rawId}`,
-              rawId: rawId,
-              title: tc.title || `Test Case ${rawId}`,
-              featureName: feature.name,
-              featureId: feature.rawId,
-              precondition: exec.precondition || 'Precondition verified',
-              type: tc.testType || 'FUNCTIONAL',
-              priority: tc.testPriority || 'CRITICAL',
-              uiValidation: val.uiValidations || 'Verify UI screen state',
-              dbValidation: val.dbValidations || 'Verify DB table record state',
-              status: tc.testcaseStatus || 'PASSED'
-            };
-          });
-
-          this.testCases = [
-            ...mappedCases,
-            ...this.testCases.filter(t => t.featureName !== feature.name)
-          ];
-          feature.tcCount = mappedCases.length;
-        } else {
-          this.testCases = this.testCases.filter(t => t.featureName !== feature.name);
-          feature.tcCount = 0;
-        }
-        this.cd.detectChanges();
-      },
-      error: (err) => {
-        console.warn('Backend /testcases error:', err?.message || err);
-        this.testCases = this.testCases.filter(t => t.featureName !== feature.name);
-        feature.tcCount = 0;
-        this.cd.detectChanges();
-      }
-    });
-
-    this.fetchBugsForFeature(feature);
-  }
-
-  fetchBugsForFeature(feature: FeatureItem): void {
-
-    this.testerService.getBugs(0, 50).subscribe({
-      next: (response) => {
-        console.log('bugs response',response  )
-        const pageData = response?.data;
-        const bugList = pageData?.content || (Array.isArray(pageData) ? pageData : null);
-
-        if (Array.isArray(bugList)) {
-          const mappedBugs: DefectItem[] = bugList.map((item, idx) => {
-            const b = item.bug || item;
-            const rawId = b.bugId || (idx + 1);
-            return {
-              id: b.bugFormatId || `BUG-${rawId}`,
-              rawId: rawId,
-              title: b.title || `Bug ${rawId}`,
-              featureName: item.feature?.featureName || feature.name,
-              originTestCaseId: item.testCase?.testcaseFormatId || `TC_ORIGIN`,
-              originTestCaseRawId: item.testCase?.testcaseId || 1,
-              precondition: `Precondition: Logged from test case execution`,
-              severity: b.severity || 'CRITICAL',
-              assignee: b.assignedTo ? `Dev #${b.assignedTo}` : 'Lead Developer',
-              status: b.status || 'OPEN'
-            };
-          });
-
-          this.defects = mappedBugs;
-          const featBugs = this.defects.filter(b => b.featureName === feature.name);
-          feature.bugs = featBugs.length;
-          feature.status = featBugs.length > 0 ? 'BUGS' : 'PASSED';
-        } else {
-          this.defects = [];
-          feature.bugs = 0;
-          feature.status = 'PASSED';
-        }
-        this.cd.detectChanges();
-      },
-      error: (err) => {
-        console.warn('Backend /bugs error:', err?.message || err);
-        this.defects = [];
-        feature.bugs = 0;
-        feature.status = 'PASSED';
-        this.cd.detectChanges();
-      }
-    });
-  }
-
-  fetchBackendNotifications(): void {
-    this.testerService.getNotifications().subscribe({
-      next: (response) => {
-        const notifList = response?.data;
-        if (Array.isArray(notifList)) {
-          this.notifications = notifList.map((n, idx) => ({
-            id: `notif-${n.notificationId || idx}`,
-            rawId: n.notificationId,
-            type: 'COMMENT',
-            title: n.bugFormatId ? `Defect Update — ${n.bugFormatId}` : 'System Notification',
-            highlightId: n.bugFormatId,
-            isNew: n.notificationStatus !== 'READ',
-            read: n.notificationStatus === 'READ',
-            message: n.message || 'Notification received.',
-            featureName: this.activeFeature?.name || 'General',
-            timeAgo: 'Recently'
-          }));
-        } else {
-          this.notifications = [];
-        }
-      },
-      error: (err) => {
-        console.warn('Backend /in-app-notifications error:', err?.message || err);
-        this.notifications = [];
-      }
-    });
-  }
-
-  // Region Handlers
-  onRegionChange(newRegion: string): void {
-    this.activeRegion = newRegion;
-    this.createProjectForm.region = (newRegion === 'ALL' ? (this.availableRegions[0] || 'General') : newRegion);
-    this.projectSearchQuery = '';
-    const projects = this.filteredProjects;
-    if (projects.length > 0) {
-      this.selectProject(projects[0]);
-    } else {
-      this.activeProject = null;
-      this.activeFeature = null;
-      this.testCases = [];
-      this.defects = [];
-    }
-    this.showToast(newRegion === 'ALL' ? 'Showing all project regions' : `Region filtered: ${newRegion}`, 'info');
-  }
-
-  getRegionProjectCount(region: string): number {
-    if (region === 'ALL') return this.allProjects.length;
-    return this.allProjects.filter(p => (p.region || '').toLowerCase() === region.toLowerCase()).length;
-  }
-
-  // Project Filtering & Selection
-  get filteredProjects(): ProjectItem[] {
-    const query = this.projectSearchQuery.toLowerCase().trim();
-    return this.allProjects.filter(p => {
-      const matchesRegion = (this.activeRegion === 'ALL') || ((p.region || '').toLowerCase() === this.activeRegion.toLowerCase());
-      const matchesQuery = !query || p.name.toLowerCase().includes(query) || p.id.toLowerCase().includes(query);
-      return matchesRegion && matchesQuery;
-    });
-  }
-
-  selectProject(project: ProjectItem): void {
-    this.activeProject = project;
-    this.featureSearchQuery = '';
-    this.featureFilterCategory = 'ALL';
-    this.fetchFeaturesForProject(project);
-
-    if (project.features.length > 0) {
-      this.selectFeature(project.features[0]);
-    } else {
-      this.activeFeature = null;
-      this.testCases = [];
-      this.defects = [];
-    }
-  }
-
-  onProjectDropdownChange(event: Event): void {
-    const select = event.target as HTMLSelectElement;
-    const projId = select.value;
-    const found = this.filteredProjects.find(p => p.id === projId) || this.allProjects.find(p => p.id === projId);
-    if (found) {
-      this.selectProject(found);
-    }
-  }
-
-  // Feature Filtering & Selection
-  get filteredFeatures(): FeatureItem[] {
-    if (!this.activeProject) return [];
-    const query = this.featureSearchQuery.toLowerCase().trim();
-    return this.activeProject.features.filter(f => {
-      const matchesSearch = !query ||
-        f.name.toLowerCase().includes(query) ||
-        f.sprint.toLowerCase().includes(query);
-
-      let matchesCategory = true;
-      if (this.featureFilterCategory === 'BUGS') {
-        matchesCategory = f.bugs > 0;
-      } else if (this.featureFilterCategory === 'PASSED') {
-        matchesCategory = f.bugs === 0;
-      }
-
-      return matchesSearch && matchesCategory;
-    });
-  }
-
-  selectFeature(feature: FeatureItem): void {
-    this.activeFeature = feature;
-    this.activeTab = 'tc';
-    this.tcCurrentPage = 1;
-    this.bugCurrentPage = 1;
-    this.fetchTestCasesForFeature(feature);
-  }
-
-  setFeatureCategoryFilter(cat: 'ALL' | 'BUGS' | 'PASSED'): void {
-    this.featureFilterCategory = cat;
-  }
-
-  // Sub-Tab Switching
-  switchTab(tab: 'tc' | 'bugs'): void {
-    this.activeTab = tab;
-  }
-
-  // Test Case Filtering & Pagination
-  get currentFeatureTestCases(): TestCaseItem[] {
-    if (!this.activeFeature) return [];
-    return this.testCases.filter(tc => 
-      tc.featureId === this.activeFeature?.rawId ||
-      tc.featureName.toLowerCase() === this.activeFeature?.name.toLowerCase()
-    );
-  }
-
-  get filteredTestCases(): TestCaseItem[] {
-    const list = this.currentFeatureTestCases;
-    const query = this.tcSearchQuery.toLowerCase().trim();
-
-    return list.filter(tc => {
-      const matchesSearch = !query ||
-        tc.id.toLowerCase().includes(query) ||
-        tc.title.toLowerCase().includes(query) ||
-        tc.precondition.toLowerCase().includes(query);
-
-      const matchesType = (this.tcTypeFilter === 'ALL') || (tc.type === this.tcTypeFilter);
-      const matchesStatus = (this.tcStatusFilter === 'ALL') || (tc.status === this.tcStatusFilter);
-
-      return matchesSearch && matchesType && matchesStatus;
-    });
-  }
-
-  get tcTotalPages(): number {
-    return Math.max(1, Math.ceil(this.filteredTestCases.length / this.tcPageSize));
-  }
-
-  get paginatedTestCases(): TestCaseItem[] {
+  // ==========================================
+  // PAGINATION GETTERS & HELPERS
+  // ==========================================
+  get paginatedTestCases(): TestCase[] {
     const startIndex = (this.tcCurrentPage - 1) * this.tcPageSize;
     return this.filteredTestCases.slice(startIndex, startIndex + this.tcPageSize);
   }
 
-  setTcPage(page: number): void {
-    if (page >= 1 && page <= this.tcTotalPages) {
+  get totalTcPages(): number {
+    return Math.max(1, Math.ceil(this.filteredTestCases.length / this.tcPageSize));
+  }
+
+  get tcStartIndex(): number {
+    if (this.filteredTestCases.length === 0) return 0;
+    return (this.tcCurrentPage - 1) * this.tcPageSize + 1;
+  }
+
+  get tcEndIndex(): number {
+    return Math.min(this.tcCurrentPage * this.tcPageSize, this.filteredTestCases.length);
+  }
+
+  get tcPageNumbers(): number[] {
+    const total = this.totalTcPages;
+    const current = this.tcCurrentPage;
+    const pages: number[] = [];
+    const maxButtons = 5;
+    let start = Math.max(1, current - Math.floor(maxButtons / 2));
+    let end = Math.min(total, start + maxButtons - 1);
+    if (end - start + 1 < maxButtons) {
+      start = Math.max(1, end - maxButtons + 1);
+    }
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+  goToTcPage(page: number): void {
+    if (page >= 1 && page <= this.totalTcPages) {
       this.tcCurrentPage = page;
+      this.cdr.markForCheck();
     }
   }
 
-  nextTcPage(): void {
-    if (this.tcCurrentPage < this.tcTotalPages) {
-      this.tcCurrentPage++;
-    }
-  }
-
-  prevTcPage(): void {
-    if (this.tcCurrentPage > 1) {
-      this.tcCurrentPage--;
-    }
-  }
-
-  onTcPageSizeChange(newSize: number): void {
-    this.tcPageSize = Number(newSize);
+  onTcPageSizeChange(): void {
     this.tcCurrentPage = 1;
+    this.cdr.markForCheck();
   }
 
-  // Defect Filtering & Pagination
-  get currentFeatureDefects(): DefectItem[] {
-    if (!this.activeFeature) return [];
-    return this.defects.filter(b => 
-      b.featureName.toLowerCase() === this.activeFeature?.name.toLowerCase() ||
-      (this.activeFeature?.rawId === 1 && b.originTestCaseId.includes('LOGIN'))
-    );
-  }
-
-  get filteredDefects(): DefectItem[] {
-    const list = this.currentFeatureDefects;
-    const query = this.bugSearchQuery.toLowerCase().trim();
-
-    return list.filter(b => {
-      const matchesSearch = !query ||
-        b.id.toLowerCase().includes(query) ||
-        b.title.toLowerCase().includes(query) ||
-        b.assignee.toLowerCase().includes(query);
-
-      const matchesSev = (this.bugSevFilter === 'ALL') || (b.severity === this.bugSevFilter);
-      const matchesStatus = (this.bugStatusFilter === 'ALL') || (b.status === this.bugStatusFilter);
-
-      return matchesSearch && matchesSev && matchesStatus;
-    });
-  }
-
-  get bugTotalPages(): number {
-    return Math.max(1, Math.ceil(this.filteredDefects.length / this.bugPageSize));
-  }
-
-  get paginatedDefects(): DefectItem[] {
+  get paginatedBugs(): Bug[] {
     const startIndex = (this.bugCurrentPage - 1) * this.bugPageSize;
-    return this.filteredDefects.slice(startIndex, startIndex + this.bugPageSize);
+    return this.filteredBugs.slice(startIndex, startIndex + this.bugPageSize);
   }
 
-  setBugPage(page: number): void {
-    if (page >= 1 && page <= this.bugTotalPages) {
+  get totalBugPages(): number {
+    return Math.max(1, Math.ceil(this.filteredBugs.length / this.bugPageSize));
+  }
+
+  get bugStartIndex(): number {
+    if (this.filteredBugs.length === 0) return 0;
+    return (this.bugCurrentPage - 1) * this.bugPageSize + 1;
+  }
+
+  get bugEndIndex(): number {
+    return Math.min(this.bugCurrentPage * this.bugPageSize, this.filteredBugs.length);
+  }
+
+  get bugPageNumbers(): number[] {
+    const total = this.totalBugPages;
+    const current = this.bugCurrentPage;
+    const pages: number[] = [];
+    const maxButtons = 5;
+    let start = Math.max(1, current - Math.floor(maxButtons / 2));
+    let end = Math.min(total, start + maxButtons - 1);
+    if (end - start + 1 < maxButtons) {
+      start = Math.max(1, end - maxButtons + 1);
+    }
+    for (let i = start; i <= end; i++) {
+      pages.push(i);
+    }
+    return pages;
+  }
+
+  goToBugPage(page: number): void {
+    if (page >= 1 && page <= this.totalBugPages) {
       this.bugCurrentPage = page;
+      this.cdr.markForCheck();
     }
   }
 
-  nextBugPage(): void {
-    if (this.bugCurrentPage < this.bugTotalPages) {
-      this.bugCurrentPage++;
-    }
-  }
-
-  prevBugPage(): void {
-    if (this.bugCurrentPage > 1) {
-      this.bugCurrentPage--;
-    }
-  }
-
-  onBugPageSizeChange(newSize: number): void {
-    this.bugPageSize = Number(newSize);
+  onBugPageSizeChange(): void {
     this.bugCurrentPage = 1;
+    this.cdr.markForCheck();
   }
 
-  // Defect State Transition
-  advanceBugState(bug: DefectItem): void {
-    const states: ('OPEN' | 'IN_PROGRESS' | 'RESOLVED' | 'FIXED' | 'CLOSED')[] = [
-      'OPEN', 'IN_PROGRESS', 'RESOLVED', 'FIXED', 'CLOSED'
-    ];
-    const currentIndex = states.indexOf(bug.status);
-    const nextIndex = (currentIndex + 1) % states.length;
-    const nextState = states[nextIndex];
-    bug.status = nextState;
+  // ==========================================
+  // PROJECTS & REGIONS
+  // ==========================================
+  loadProjects(): void {
+    this.projectService.getProjects().subscribe({
+      next: (projs) => {
+        this.projects = projs || [];
+        this.updateDynamicRegions();
+        if (this.projects.length > 0 && !this.activeProject) {
+          this.selectProject(this.projects[0]);
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Failed to load projects:', err);
+        this.projects = [];
+        this.updateDynamicRegions();
+        this.cdr.markForCheck();
+      }
+    });
+  }
 
-    if (bug.rawId) {
-      this.testerService.patchBug(bug.rawId, { status: nextState }).subscribe({
-        next: () => this.showToast(`Defect [${bug.id}] status moved to: ${bug.status}`, 'info'),
-        error: () => this.showToast(`Defect [${bug.id}] updated locally to: ${bug.status}`, 'info')
-      });
+  updateDynamicRegions(): void {
+    const regionSet = new Set<string>();
+    this.projects.forEach(p => {
+      if (p.region && p.region.trim()) {
+        regionSet.add(p.region.trim());
+      }
+    });
+    this.availableRegions = Array.from(regionSet).sort();
+  }
+
+  onRegionChange(region: string): void {
+    this.selectedRegion = region;
+    const matching = this.projects.filter(p => region === 'ALL' || p.region === region);
+    if (matching.length > 0) {
+      this.selectProject(matching[0]);
     } else {
-      this.showToast(`Defect [${bug.id}] status moved to: ${bug.status}`, 'info');
+      this.activeProject = null;
+      this.features = [];
+      this.activeFeature = null;
+      this.testcases = [];
+      this.filteredTestCases = [];
+      this.bugs = [];
+      this.filteredBugs = [];
+      this.updateMetrics();
     }
+    this.cdr.markForCheck();
   }
 
-  // Defect Creation strictly from failed test case
-  triggerCreateBugFromTest(tc: TestCaseItem): void {
-    if (!this.activeFeature) return;
-    const count = this.defects.length + 1;
-    const cleanFeat = this.activeFeature.name.toUpperCase().replace(/[^A-Z0-9]+/g, '_');
-
-    this.bugForm = {
-      featureName: this.activeFeature.name,
-      originTestCaseId: tc.id,
-      originTestCaseRawId: tc.rawId || 1,
-      id: `BUG-${cleanFeat}-00${count}`,
-      title: `[${tc.id}] ${tc.title}`,
-      severity: 'CRITICAL',
-      assignee: 'Devon (Developer)'
-    };
-
-    this.openModal('modal-bug');
+  selectProject(p: Project): void {
+    this.activeProject = p;
+    this.loadProjectAttachmentCount(p.projectId);
+    this.loadFeatures(p.projectId);
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      this.isSidebarOpen = false;
+    }
+    this.cdr.markForCheck();
   }
 
-  saveDefect(): void {
-    if (!this.activeFeature) return;
-
-    const newDefect: DefectItem = {
-      id: this.bugForm.id,
-      title: this.bugForm.title || 'New Defect',
-      featureName: this.activeFeature.name,
-      originTestCaseId: this.bugForm.originTestCaseId,
-      precondition: `Precondition: Logged from test case execution ${this.bugForm.originTestCaseId}`,
-      severity: this.bugForm.severity,
-      assignee: this.bugForm.assignee,
-      status: 'OPEN'
-    };
-
-    // Call Backend API
-    const testcaseId = this.bugForm.originTestCaseRawId || 1;
-    const backendBugPayload = {
-      title: newDefect.title,
-      description: `Logged from ${newDefect.originTestCaseId}`,
-      severity: newDefect.severity,
-      priority: 'CRITICAL',
-      status: 'OPEN',
-      comments: `Auto-mapped from testcase ${newDefect.originTestCaseId}`
-    };
-
-    this.testerService.createBug(testcaseId, backendBugPayload).subscribe({
-      next: (res) => {
-        const createdBug = res?.data?.bug || res?.data;
-        if (createdBug?.bugId) {
-          newDefect.rawId = createdBug.bugId;
-          newDefect.id = createdBug.bugFormatId || newDefect.id;
-        }
-        this.finishDefectCreation(newDefect);
+  loadProjectAttachmentCount(projectId: number): void {
+    this.projectService.getProjectAttachments(projectId).subscribe({
+      next: (files) => {
+        this.projectAttachmentCount = files.length;
+        this.cdr.markForCheck();
       },
-      error: (err) => {
-        console.warn('Backend createBug returned fallback:', err?.message || err);
-        this.finishDefectCreation(newDefect);
+      error: () => {
+        this.projectAttachmentCount = 0;
+        this.cdr.markForCheck();
       }
     });
-  }
-
-  private finishDefectCreation(newDefect: DefectItem): void {
-    if (!this.activeFeature) return;
-    this.defects.unshift(newDefect);
-    this.activeFeature.bugs += 1;
-    this.activeFeature.status = 'BUGS';
-
-    this.notifications.unshift({
-      id: `notif-${Date.now()}`,
-      type: 'COMMENT',
-      title: 'Defect Logged to Developer',
-      highlightId: newDefect.id,
-      isNew: true,
-      read: false,
-      message: `QA logged ${newDefect.id}: "${newDefect.title}" assigned to ${newDefect.assignee}.`,
-      featureName: this.activeFeature.name,
-      timeAgo: 'Just now',
-      originTestCaseId: newDefect.originTestCaseId
-    });
-
-    this.closeModal('modal-bug');
-    this.activeTab = 'bugs';
-    this.showToast(`Defect ${newDefect.id} logged and developer notified!`, 'success');
-  }
-
-  // Add Manual Test Case
-  saveNewTestCase(): void {
-    if (!this.activeFeature) return;
-    if (!this.newTc.title.trim()) {
-      this.showToast('Please provide a Test Case title', 'error');
-      return;
-    }
-
-    const randomSuffix = Math.floor(100 + Math.random() * 900);
-    const tcFormatId = `TC_AUTH_${randomSuffix}`;
-
-    const newCase: TestCaseItem = {
-      id: tcFormatId,
-      title: this.newTc.title.trim(),
-      featureName: this.activeFeature.name,
-      featureId: this.activeFeature.rawId,
-      precondition: 'User session verified with valid test data',
-      type: this.newTc.type,
-      priority: this.newTc.priority,
-      uiValidation: this.newTc.uiValidation.trim() || 'Verify UI screen element state and toast behavior.',
-      dbValidation: this.newTc.dbValidation.trim() || 'Verify DB table record state and audit log.',
-      status: 'PASSED'
-    };
-
-    // Call Backend API
-    const payload = {
-      testCase: {
-        featureId: this.activeFeature.rawId || 1,
-        testcaseFormatId: tcFormatId,
-        title: newCase.title,
-        testType: newCase.type,
-        testPriority: newCase.priority,
-        testcaseStatus: 'PASSED'
-      },
-      testingExecutionRequest: {
-        precondition: newCase.precondition,
-        uiValidations: newCase.uiValidation,
-        dbValidations: newCase.dbValidation
-      }
-    };
-
-    this.testerService.createTestCase(payload).subscribe({
-      next: (res) => {
-        const createdTc = res?.data?.testCase || res?.data;
-        if (createdTc?.testcaseId) {
-          newCase.rawId = createdTc.testcaseId;
-          newCase.id = createdTc.testcaseFormatId || newCase.id;
-        }
-        this.finishTestCaseCreation(newCase);
-      },
-      error: (err) => {
-        console.warn('Backend createTestCase returned fallback:', err?.message || err);
-        this.finishTestCaseCreation(newCase);
-      }
-    });
-  }
-
-  private finishTestCaseCreation(newCase: TestCaseItem): void {
-    if (!this.activeFeature) return;
-    this.testCases.unshift(newCase);
-    this.activeFeature.tcCount += 1;
-
-    this.newTc = {
-      title: '',
-      type: 'FUNCTIONAL',
-      priority: 'CRITICAL',
-      uiValidation: '',
-      dbValidation: ''
-    };
-
-    this.closeModal('modal-testcase');
-    this.showToast(`Test Case [${newCase.id}] added to ${this.activeFeature.name}!`, 'success');
-  }
-
-  // Dedicated Bug Chat / Comments
-  openSpecificBugChat(bug: DefectItem): void {
-    this.activeChatBug = bug;
-    this.newChatMessage = '';
-    this.chatMessages = [];
-    this.openModal('modal-bug-chat');
-
-    if (bug.rawId) {
-      this.testerService.getBugComments(bug.rawId).subscribe({
-        next: (res) => {
-          const commentList = res?.data;
-          if (Array.isArray(commentList)) {
-            this.chatMessages = commentList.map(c => ({
-              sender: c.createdByName === this.userName ? 'tester' : 'dev',
-              senderName: c.createdByName || 'Developer',
-              text: c.comment || '',
-              timestamp: 'Recently'
-            }));
-          }
-        },
-        error: (err) => {
-          console.warn('Backend getBugComments error:', err?.message || err);
-        }
-      });
-    }
-  }
-
-  sendChatMessage(): void {
-    if (!this.newChatMessage.trim() || !this.activeChatBug) return;
-    this.onChatMessageReceived(this.newChatMessage);
-    this.newChatMessage = '';
-  }
-
-  onChatMessageReceived(text: string): void {
-    if (!text || !text.trim() || !this.activeChatBug) return;
-    const cleanText = text.trim();
-
-    this.chatMessages.push({
-      sender: 'tester',
-      senderName: `${this.userName} (Tester)`,
-      text: cleanText,
-      timestamp: 'Just now'
-    });
-    this.newChatMessage = '';
-
-    if (this.activeChatBug.rawId) {
-      this.testerService.addBugComment(this.activeChatBug.rawId, text).subscribe({
-        next: () => console.log('Comment saved to backend successfully'),
-        error: (err) => console.warn('Comment saved locally:', err?.message || err)
-      });
-    }
-  }
-
-  // In-App Notifications
-  get unreadNotificationCount(): number {
-    return this.notifications.filter(n => !n.read).length;
-  }
-
-  get filteredNotifications(): NotificationItem[] {
-    return this.notifications.filter(n => {
-      if (this.notifFilterCategory === 'ALL') return true;
-      if (this.notifFilterCategory === 'UNREAD') return !n.read;
-      return n.type === this.notifFilterCategory;
-    });
-  }
-
-  setNotifFilterCategory(category: 'ALL' | 'UNREAD' | 'FIXED' | 'COMMENT'): void {
-    this.notifFilterCategory = category;
-  }
-
-  toggleNotifRead(item: NotificationItem): void {
-    item.read = !item.read;
-    if (item.rawId) {
-      this.testerService.patchNotification(item.rawId, item.read ? 'READ' : 'UNREAD').subscribe();
-    }
-  }
-
-  markAllNotificationsAsRead(): void {
-    this.notifications.forEach(n => {
-      n.read = true;
-      if (n.rawId) {
-        this.testerService.patchNotification(n.rawId, 'READ').subscribe();
-      }
-    });
-    this.showToast('All notifications marked as read', 'info');
-  }
-
-  dismissNotification(item: NotificationItem): void {
-    this.notifications = this.notifications.filter(n => n.id !== item.id);
-    if (item.rawId) {
-      this.testerService.deleteNotification(item.rawId).subscribe();
-    }
-  }
-
-  viewBugFromNotification(notif: NotificationItem): void {
-    this.closeModal('modal-in-app-notifications');
-    let bug = this.defects.find(b => b.id === notif.highlightId);
-    if (!bug && this.defects.length > 0) {
-      bug = this.defects[0];
-    }
-    if (bug) {
-      this.openSpecificBugChat(bug);
-    }
-  }
-
-  openFeatureFromNotification(featureName: string): void {
-    this.closeModal('modal-in-app-notifications');
-    for (const proj of this.allProjects) {
-      const feat = proj.features.find(f => f.name === featureName);
-      if (feat) {
-        this.selectProject(proj);
-        this.selectFeature(feat);
-        return;
-      }
-    }
-  }
-
-  // Project Modals
-  openEditProjectModal(): void {
-    if (!this.activeProject) return;
-    this.editProjectForm = {
-      name: this.activeProject.name,
-      region: this.activeProject.region || 'General',
-      status: this.activeProject.status
-    };
-    this.openModal('modal-project-edit');
-  }
-
-  saveProjectDetails(): void {
-    if (!this.activeProject) return;
-    this.activeProject.name = this.editProjectForm.name;
-    this.activeProject.status = this.editProjectForm.status;
-    if (this.editProjectForm.region && this.editProjectForm.region.trim()) {
-      const reg = this.editProjectForm.region.trim();
-      this.activeProject.region = reg;
-      if (!this.availableRegions.includes(reg)) {
-        this.availableRegions.push(reg);
-        this.availableRegions.sort();
-      }
-    }
-    this.closeModal('modal-project-edit');
-    this.showToast(`Project details updated successfully: "${this.activeProject.name}"`, 'success');
   }
 
   openCreateProjectModal(): void {
-    this.createProjectForm = {
-      region: this.activeRegion === 'ALL' ? (this.availableRegions[0] || 'General') : this.activeRegion,
-      name: ''
+    const defaultRegion = this.selectedRegion !== 'ALL' ? this.selectedRegion : (this.countryList[0] || 'United States');
+    this.newProjectForm = {
+      projectName: '',
+      region: defaultRegion,
+      description: '',
+      comments: '',
+      status: 'ACTIVE'
     };
-    this.openModal('modal-project-create');
+    this.countrySearchFilter = '';
+    this.isProjectCreateModalOpen = true;
+    this.cdr.markForCheck();
   }
 
-  createProjectAction(): void {
-    if (!this.createProjectForm.name.trim()) {
+  saveNewProject(): void {
+    if (!this.newProjectForm.projectName.trim()) {
       this.showToast('Please enter a project name', 'error');
       return;
     }
-
-    const projectName = this.createProjectForm.name.trim();
-    const region = this.createProjectForm.region.trim() || 'General';
-
-    // Call Backend API
-    this.testerService.createProject({ projectName, region }).subscribe({
-      next: (res) => {
-        const created = res?.data?.project || res?.data;
-        const rawId = created?.projectId || Math.floor(100 + Math.random() * 900);
-        this.addCreatedProjectLocally(projectName, region, rawId);
+    this.projectService.createProject(this.newProjectForm).subscribe({
+      next: (created) => {
+        this.showToast(`Project "${created.projectName}" created successfully!`, 'success');
+        this.isProjectCreateModalOpen = false;
+        this.loadProjects();
+        this.selectProject(created);
+        this.cdr.markForCheck();
       },
       error: (err) => {
-        console.warn('Backend createProject returned fallback:', err?.message || err);
-        const rawId = Math.floor(100 + Math.random() * 900);
-        this.addCreatedProjectLocally(projectName, region, rawId);
+        console.error('Error creating project:', err);
+        this.showToast(err?.error?.message || 'Failed to create project', 'error');
+        this.cdr.markForCheck();
       }
     });
   }
 
-  private addCreatedProjectLocally(projectName: string, region: string, rawId: number): void {
-    const newProj: ProjectItem = {
-      id: `PROJ-${rawId}`,
-      rawId: rawId,
-      name: projectName,
-      version: 'v1.0',
-      status: 'ACTIVE',
-      region: region,
-      features: []
+  openEditProject(p: Project): void {
+    this.editProjectForm = {
+      projectName: p.projectName,
+      region: p.region,
+      description: p.description || '',
+      comments: p.comments || '',
+      status: p.status || 'ACTIVE'
     };
-
-    this.allProjects.push(newProj);
-    if (!this.availableRegions.includes(region)) {
-      this.availableRegions.push(region);
-      this.availableRegions.sort();
-    }
-    if (!this.projectData[region]) {
-      this.projectData[region] = [];
-    }
-    this.projectData[region].push(newProj);
-
-    this.selectProject(newProj);
-    this.closeModal('modal-project-create');
-    this.showToast(`New project created: "${newProj.name}" in region ${region}`, 'success');
+    this.isProjectEditModalOpen = true;
+    this.cdr.markForCheck();
   }
 
-  // Feature Modals
-  openEditFeatureModal(): void {
-    if (!this.activeFeature) return;
-    this.editFeatureForm = {
-      name: this.activeFeature.name,
-      sprint: this.activeFeature.sprintNum,
-      version: this.activeFeature.sprint.split('•')[1]?.trim() || 'v2.4.0',
-      status: 'ACTIVE'
-    };
-    this.openModal('modal-feature-edit');
+  saveProjectEdit(): void {
+    if (!this.activeProject) return;
+    this.projectService.updateProject(this.activeProject.projectId, this.editProjectForm).subscribe({
+      next: (updated) => {
+        this.showToast(`Project "${updated.projectName}" updated!`, 'success');
+        this.isProjectEditModalOpen = false;
+        this.loadProjects();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error updating project:', err);
+        this.showToast(err?.error?.message || 'Failed to update project', 'error');
+        this.cdr.markForCheck();
+      }
+    });
   }
 
-  saveFeatureDetails(): void {
-    if (!this.activeFeature) return;
-    this.activeFeature.name = this.editFeatureForm.name;
-    this.activeFeature.sprintNum = this.editFeatureForm.sprint;
-    this.activeFeature.sprint = `Sprint ${this.editFeatureForm.sprint} • ${this.editFeatureForm.version}`;
-
-    if (this.activeFeature.rawId) {
-      this.testerService.updateFeature(this.activeFeature.rawId, {
-        featureName: this.activeFeature.name,
-        sprint: this.activeFeature.sprintNum,
-        featureVersion: this.editFeatureForm.version
-      }).subscribe({
-        next: () => this.showToast(`Feature updated: "${this.activeFeature?.name}"`, 'success'),
-        error: () => this.showToast(`Feature updated locally: "${this.activeFeature?.name}"`, 'success')
-      });
-    } else {
-      this.showToast(`Feature updated: "${this.activeFeature.name}"`, 'success');
+  // ==========================================
+  // FEATURES
+  // ==========================================
+  loadFeatures(projectId: number): void {
+    if (this.featureCache.has(projectId)) {
+      this.features = this.featureCache.get(projectId)!;
+      if (this.features.length > 0) {
+        this.selectFeature(this.features[0]);
+      } else {
+        this.activeFeature = null;
+        this.testcases = [];
+        this.filteredTestCases = [];
+        this.bugs = [];
+        this.filteredBugs = [];
+        this.updateMetrics();
+      }
+      this.cdr.markForCheck();
+      return;
     }
 
-    this.closeModal('modal-feature-edit');
+    this.featureService.getFeaturesByProject(projectId).subscribe({
+      next: (feats) => {
+        const list = (feats && feats.length > 0) ? feats : [];
+        this.features = list;
+        this.featureCache.set(projectId, list);
+        if (this.features.length > 0) {
+          this.selectFeature(this.features[0]);
+        }
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        const list: Feature[] = [];
+        this.features = list;
+        this.featureCache.set(projectId, list);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  selectFeature(f: Feature): void {
+    this.activeFeature = f;
+    this.loadFeatureAttachmentCount(f.featureId);
+    this.loadTestCases(f.featureId);
+    this.loadBugs(f.featureId);
+    this.cdr.markForCheck();
+  }
+
+  loadFeatureAttachmentCount(featureId: number): void {
+    this.featureService.getFeatureAttachments(featureId).subscribe({
+      next: (files) => {
+        this.featureAttachmentCount = files.length;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.featureAttachmentCount = 0;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   openCreateFeatureModal(): void {
-    this.createFeatureForm = {
-      name: '',
+    if (!this.activeProject) return;
+    this.newFeatureForm = {
+      projectId: this.activeProject.projectId,
+      featureName: '',
       sprint: 1,
-      version: 'v1.0.0'
+      featureVersion: 'v1.0',
+      description: '',
+      comments: ''
     };
-    this.openModal('modal-feature-create');
+    this.isFeatureCreateModalOpen = true;
+    this.cdr.markForCheck();
   }
 
-  createFeatureAction(): void {
-    if (!this.activeProject) return;
-    if (!this.createFeatureForm.name.trim()) {
-      this.showToast('Please enter a feature name', 'error');
+  saveNewFeature(): void {
+    if (!this.newFeatureForm.featureName.trim() || !this.activeProject) {
+      this.showToast('Please enter feature name', 'error');
       return;
     }
-
-    const featureName = this.createFeatureForm.name.trim();
-    const sprint = this.createFeatureForm.sprint;
-    const version = this.createFeatureForm.version;
-    const projectId = this.activeProject.rawId || 1;
-
-    this.testerService.createFeature({
-      projectId,
-      featureName,
-      sprint,
-      featureVersion: version
-    }).subscribe({
-      next: (res) => {
-        const created = res?.data?.feature || res?.data;
-        const rawId = created?.featureId || Math.floor(100 + Math.random() * 900);
-        this.addCreatedFeatureLocally(featureName, sprint, version, rawId);
+    this.newFeatureForm.projectId = this.activeProject.projectId;
+    this.featureService.createFeature(this.newFeatureForm).subscribe({
+      next: (created) => {
+        this.showToast(`Feature "${created.featureName}" created!`, 'success');
+        this.isFeatureCreateModalOpen = false;
+        this.featureCache.delete(this.activeProject!.projectId);
+        this.loadFeatures(this.activeProject!.projectId);
+        this.cdr.markForCheck();
       },
       error: (err) => {
-        console.warn('Backend createFeature returned fallback:', err?.message || err);
-        const rawId = Math.floor(100 + Math.random() * 900);
-        this.addCreatedFeatureLocally(featureName, sprint, version, rawId);
+        console.error('Error creating feature:', err);
+        this.showToast(err?.error?.message || 'Failed to create feature', 'error');
+        this.cdr.markForCheck();
       }
     });
   }
 
-  private addCreatedFeatureLocally(name: string, sprint: number, version: string, rawId: number): void {
-    if (!this.activeProject) return;
-    const newFeature: FeatureItem = {
-      id: `FEAT-${rawId}`,
-      rawId: rawId,
-      name: name,
-      sprint: `Sprint ${sprint} • ${version}`,
-      sprintNum: sprint,
-      bugs: 0,
-      tcCount: 0,
-      status: 'PASSED'
+  openEditFeature(f: Feature): void {
+    this.editFeatureForm = {
+      featureName: f.featureName,
+      sprint: f.sprint,
+      featureVersion: f.featureVersion,
+      description: f.description || '',
+      comments: f.comments || ''
     };
-
-    this.activeProject.features.push(newFeature);
-    this.selectFeature(newFeature);
-    this.closeModal('modal-feature-create');
-    this.showToast(`Feature added: "${newFeature.name}"`, 'success');
+    this.isFeatureEditModalOpen = true;
+    this.cdr.markForCheck();
   }
 
-  // Attachments Actions
-  uploadProjectFile(): void {
-    if (!this.activeProject?.rawId) {
-      this.showToast('Please select a project first', 'error');
+  saveFeatureEdit(): void {
+    if (!this.activeFeature || !this.activeProject) return;
+    this.featureService.updateFeature(this.activeFeature.featureId, this.editFeatureForm).subscribe({
+      next: (updated) => {
+        this.showToast(`Feature "${updated.featureName}" updated!`, 'success');
+        this.isFeatureEditModalOpen = false;
+        this.featureCache.delete(this.activeProject!.projectId);
+        this.loadFeatures(this.activeProject!.projectId);
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error updating feature:', err);
+        this.showToast(err?.error?.message || 'Failed to update feature', 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // ==========================================
+  // TEST CASES
+  // ==========================================
+  loadTestCases(featureId: number): void {
+    if (this.testcaseCache.has(featureId)) {
+      this.testcases = this.testcaseCache.get(featureId)!;
+      this.applyTestCaseFilters();
+      this.updateMetrics();
+      this.cdr.markForCheck();
       return;
     }
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.multiple = true;
-    input.onchange = (e: any) => {
-      const files: FileList = e.target?.files;
-      if (files && files.length > 0 && this.activeProject?.rawId) {
-        const fileArray = Array.from(files);
-        this.testerService.uploadProjectAttachments(this.activeProject.rawId, fileArray).subscribe({
-          next: () => {
-            fileArray.forEach(f => {
-              this.projectAttachments.push({
-                name: f.name,
-                size: `${(f.size / 1024).toFixed(0)} KB`,
-                icon: f.name.endsWith('.pdf') ? 'fa-file-pdf' : f.name.endsWith('.zip') ? 'fa-file-zipper' : 'fa-file',
-                color: 'var(--indigo-600)'
-              });
-            });
-            this.showToast(`${fileArray.length} file(s) attached successfully!`, 'success');
-          },
-          error: (err) => {
-            console.warn('Backend upload error:', err);
-            fileArray.forEach(f => {
-              this.projectAttachments.push({
-                name: f.name,
-                size: `${(f.size / 1024).toFixed(0)} KB`,
-                icon: 'fa-file',
-                color: 'var(--indigo-600)'
-              });
-            });
-            this.showToast(`Attached ${fileArray.length} file(s)`, 'info');
-          }
-        });
+
+    this.testCaseService.getTestCases(featureId).subscribe({
+      next: (cases) => {
+        const list = (cases && cases.length > 0) ? cases : [];
+        this.testcases = list;
+        this.testcaseCache.set(featureId, list);
+        this.applyTestCaseFilters();
+        this.updateMetrics();
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        const list: TestCase[] = [];
+        this.testcases = list;
+        this.testcaseCache.set(featureId, list);
+        this.applyTestCaseFilters();
+        this.updateMetrics();
+        this.cdr.markForCheck();
       }
-    };
-    input.click();
+    });
   }
 
-  uploadFeatureFile(): void {
-    if (!this.activeFeature?.rawId) {
-      this.showToast('Please select a feature first', 'error');
+  applyTestCaseFilters(): void {
+    const s = this.tcSearch.toLowerCase().trim();
+    this.filteredTestCases = this.testcases.filter(tc => {
+      const matchSearch = !s || tc.title.toLowerCase().includes(s) || (tc.testcaseFormatId && tc.testcaseFormatId.toLowerCase().includes(s));
+      const matchType = this.tcFilterType === 'ALL' || tc.testType === this.tcFilterType;
+      const matchPrio = this.tcFilterPriority === 'ALL' || tc.testPriority === this.tcFilterPriority;
+      const matchStatus = this.tcFilterStatus === 'ALL' || tc.executionStatus === this.tcFilterStatus || tc.testcaseStatus === this.tcFilterStatus;
+      return matchSearch && matchType && matchPrio && matchStatus;
+    });
+  }
+
+  onTestCaseFilterChange(): void {
+    this.applyTestCaseFilters();
+    this.cdr.markForCheck();
+  }
+
+  openCreateTestCaseModal(): void {
+    if (!this.activeFeature) return;
+    this.newTcForm = {
+      title: '',
+      testType: 'UI',
+      testPriority: 'MEDIUM',
+      testcaseStatus: 'PASSED',
+      precondition: 'Verified environment state',
+      executionSteps: '',
+      uiValidations: '',
+      dbValidations: '',
+      comments: ''
+    };
+    this.isTestCaseCreateModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  saveNewTestCase(): void {
+    if (!this.newTcForm.title.trim() || !this.activeFeature) {
+      this.showToast('Please enter test case title', 'error');
       return;
     }
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.multiple = true;
-    input.onchange = (e: any) => {
-      const files: FileList = e.target?.files;
-      if (files && files.length > 0 && this.activeFeature?.rawId) {
-        const fileArray = Array.from(files);
-        this.testerService.uploadFeatureAttachments(this.activeFeature.rawId, fileArray).subscribe({
-          next: () => {
-            fileArray.forEach(f => {
-              this.featureAttachments.push({
-                name: f.name,
-                size: `${(f.size / 1024).toFixed(0)} KB`,
-                icon: f.name.endsWith('.pdf') ? 'fa-file-pdf' : 'fa-file-lines',
-                color: 'var(--emerald-600)'
-              });
-            });
-            this.showToast(`${fileArray.length} file(s) attached to feature!`, 'success');
-          },
-          error: (err) => {
-            console.warn('Backend upload error:', err);
-            fileArray.forEach(f => {
-              this.featureAttachments.push({
-                name: f.name,
-                size: `${(f.size / 1024).toFixed(0)} KB`,
-                icon: 'fa-file-lines',
-                color: 'var(--emerald-600)'
-              });
-            });
-            this.showToast(`Attached ${fileArray.length} file(s)`, 'info');
-          }
-        });
+
+    const payload: TestCaseCreatePayload = {
+      testCase: {
+        featureId: this.activeFeature.featureId,
+        title: this.newTcForm.title,
+        testType: this.newTcForm.testType,
+        testPriority: this.newTcForm.testPriority,
+        testcaseStatus: this.newTcForm.testcaseStatus,
+        comments: this.newTcForm.comments
+      },
+      testingExecutionRequest: {
+        precondition: this.newTcForm.precondition,
+        executionSteps: this.newTcForm.executionSteps,
+        uiValidations: this.newTcForm.uiValidations,
+        dbValidations: this.newTcForm.dbValidations
       }
     };
-    input.click();
+
+    this.testCaseService.createTestCase(payload).subscribe({
+      next: (created) => {
+        this.showToast(`Test case "${created.title}" created successfully!`, 'success');
+        this.isTestCaseCreateModalOpen = false;
+        if (this.activeFeature) {
+          this.testcaseCache.delete(this.activeFeature.featureId);
+          this.loadTestCases(this.activeFeature.featureId);
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error creating test case:', err);
+        this.showToast(err?.error?.message || 'Failed to create test case', 'error');
+        this.cdr.markForCheck();
+      }
+    });
   }
 
-  downloadMockFile(name: string): void {
-    this.showToast(`Downloading "${name}"...`, 'info');
+  // Click row to open Detail Card Modal
+  viewTestCaseDetail(tc: TestCase): void {
+    this.activeTestCaseDetail = tc;
+    this.isTestCaseDetailModalOpen = true;
+    this.cdr.markForCheck();
   }
 
-  downloadExcelTemplate(): void {
-    if (this.activeFeature?.rawId) {
-      this.testerService.downloadTestCaseTemplate(this.activeFeature.rawId).subscribe({
+  // API 1 on Testcase Card: Edit Testcase (PUT /testcases/{id})
+  handleUpdateTestCase(event: { testcaseId: number; data: TestCasePutRequest }): void {
+    this.testCaseService.updateTestCase(event.testcaseId, event.data).subscribe({
+      next: () => {
+        this.showToast('Test case details updated successfully!', 'success');
+        if (this.activeFeature) {
+          this.testcaseCache.delete(this.activeFeature.featureId);
+          this.loadTestCases(this.activeFeature.featureId);
+        }
+        this.isTestCaseDetailModalOpen = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error updating test case:', err);
+        this.showToast(err?.error?.message || 'Failed to update test case', 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // API 2 on Testcase Card: Soft Delete (DELETE /testcases/soft/{id})
+  handleSoftDeleteTestCase(testcaseId: number): void {
+    this.testCaseService.softDeleteTestCase(testcaseId).subscribe({
+      next: () => {
+        this.showToast('Test case soft deleted successfully!', 'success');
+        this.isTestCaseDetailModalOpen = false;
+        if (this.activeFeature) {
+          this.testcaseCache.delete(this.activeFeature.featureId);
+          this.loadTestCases(this.activeFeature.featureId);
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error deleting test case:', err);
+        this.showToast(err?.error?.message || 'Failed to soft delete test case', 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  handleExecuteTestCase(event: { testcaseId: number; status: 'PASS' | 'FAIL' | 'DESCOPE' }): void {
+    this.testCaseService.executeTestCase(event.testcaseId, event.status).subscribe({
+      next: () => {
+        this.showToast(`Test case marked as ${event.status}`, 'success');
+        if (this.activeFeature) {
+          this.testcaseCache.delete(this.activeFeature.featureId);
+          this.loadTestCases(this.activeFeature.featureId);
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Execution error:', err);
+        this.showToast('Execution update failed', 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // Export Test Cases via Summary Export Service
+  exportTestCasesSummary(): void {
+    if (!this.activeFeature) return;
+    this.showToast('Generating test cases summary export...', 'info');
+    this.testCaseService.exportTestCases(this.activeFeature.featureId).subscribe({
+      next: (blob) => {
+        this.triggerBlobDownload(blob, `Feature_${this.activeFeature!.featureId}_TestCases_Export.xlsx`);
+        this.showToast('Test cases Excel exported successfully!', 'success');
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Export error:', err);
+        this.showToast('Failed to export test cases summary', 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // Bulk Excel Upload Modal & Download Template
+  openExcelUploadModal(): void {
+    this.isExcelModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  onExcelFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || !input.files.length || !this.activeFeature) return;
+    const file = input.files[0];
+
+    this.showToast('Uploading Excel spreadsheet...', 'info');
+    this.testCaseService.uploadBulkExcel(this.activeFeature.featureId, file).subscribe({
+      next: () => {
+        this.showToast('Bulk test cases imported successfully!', 'success');
+        this.isExcelModalOpen = false;
+        input.value = '';
+        if (this.activeFeature) {
+          this.testcaseCache.delete(this.activeFeature.featureId);
+          this.loadTestCases(this.activeFeature.featureId);
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Excel upload error:', err);
+        this.showToast(err?.error?.message || 'Failed to parse Excel spreadsheet', 'error');
+        input.value = '';
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  downloadTestCaseTemplate(): void {
+    if (!this.activeFeature) return;
+    this.testCaseService.downloadTemplate(this.activeFeature.featureId).subscribe({
+      next: (blob) => {
+        this.triggerBlobDownload(blob, `testcase_template_${this.activeFeature!.featureId}.xlsx`);
+        this.showToast('Downloaded blank test case template', 'success');
+      },
+      error: () => {
+        this.showToast('Could not download template', 'error');
+      }
+    });
+  }
+
+  // Get multiple bugs linked to a testcase
+  getLinkedDefects(testcaseId: number): Bug[] {
+    return this.bugs.filter(b => b.testcaseId === testcaseId);
+  }
+
+  // ==========================================
+  // DEFECTS (BUGS)
+  // ==========================================
+  loadBugs(featureId: number): void {
+    if (this.bugCache.has(featureId)) {
+      this.bugs = this.bugCache.get(featureId)!;
+      this.applyBugFilters();
+      this.updateMetrics();
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.bugService.getBugsByFeature(featureId).subscribe({
+      next: (bList) => {
+        const list = (bList && bList.length > 0) ? bList : [];
+        this.bugs = list;
+        this.bugCache.set(featureId, list);
+        this.applyBugFilters();
+        this.updateMetrics();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.warn('Error loading defects:', err);
+        const list: Bug[] = [];
+        this.bugs = list;
+        this.bugCache.set(featureId, list);
+        this.applyBugFilters();
+        this.updateMetrics();
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  applyBugFilters(): void {
+    const s = this.bugSearch.toLowerCase().trim();
+    this.filteredBugs = this.bugs.filter(b => {
+      const matchSearch = !s || b.title.toLowerCase().includes(s) || (b.bugFormatId && b.bugFormatId.toLowerCase().includes(s));
+      const matchSev = this.bugFilterSeverity === 'ALL' || b.severity === this.bugFilterSeverity;
+      const matchStatus = this.bugFilterStatus === 'ALL' || b.status === this.bugFilterStatus;
+      return matchSearch && matchSev && matchStatus;
+    });
+  }
+
+  onBugFilterChange(): void {
+    this.applyBugFilters();
+    this.cdr.markForCheck();
+  }
+
+  // Log Defect (Multiple bugs per testcase supported!)
+  openLogDefectModal(originTc?: TestCase): void {
+    if (!this.activeFeature) return;
+    this.bugOriginTcId = originTc ? originTc.testcaseId : (this.testcases[0]?.testcaseId || 0);
+    this.bugOriginTcFormatId = originTc?.testcaseFormatId || (this.testcases[0]?.testcaseFormatId || 'TC_GENERAL');
+    this.bugMappedFormatId = `BUG_${this.bugOriginTcId}_${Date.now().toString().slice(-4)}`;
+
+    this.newBugForm = {
+      title: originTc ? `Defect: ${originTc.title}` : '',
+      description: originTc?.execution?.executionSteps ? `Observed failure during steps:\n${originTc.execution.executionSteps}` : '',
+      severity: 'HIGH',
+      priority: 'HIGH',
+      category: 'FUNCTIONAL',
+      status: 'OPEN',
+      comments: ''
+    };
+    this.newBugAssignedToUserId = null;
+    if (!this.developers || this.developers.length === 0) {
+      this.loadDevelopers();
+    }
+    this.isBugCreateModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  saveNewDefect(): void {
+    if (!this.newBugForm.title.trim()) {
+      this.showToast('Please enter defect title', 'error');
+      return;
+    }
+
+    const payload: BugCreateRequest = {
+      title: this.newBugForm.title,
+      description: this.newBugForm.description,
+      severity: this.newBugForm.severity,
+      priority: this.newBugForm.priority,
+      category: this.newBugForm.category,
+      status: this.newBugForm.status,
+      comments: this.newBugForm.comments
+    };
+
+    if (this.newBugAssignedToUserId) {
+      payload.assignedTo = this.newBugAssignedToUserId;
+    }
+
+    this.bugService.createBug(this.bugOriginTcId, payload).subscribe({
+      next: (created) => {
+        this.showToast(`Defect [${created?.bugFormatId || 'BUG'}] logged successfully!`, 'success');
+        this.isBugCreateModalOpen = false;
+        if (this.activeFeature) {
+          this.bugCache.delete(this.activeFeature.featureId);
+          this.loadBugs(this.activeFeature.featureId);
+        }
+        this.activeSubTab = 'bugs';
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error logging defect:', err);
+        this.showToast(err?.error?.message || 'Failed to log defect on server', 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // Click row to open Defect Detail Card Modal
+  viewDefectDetail(b: Bug): void {
+    if (!this.developers || this.developers.length === 0) {
+      this.loadDevelopers();
+    }
+    this.activeDefectDetail = b;
+    this.isDefectDetailModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  // API 1 on Defect Card: Edit Defect (PUT /bugs/{bugId})
+  handleUpdateBug(event: { bugId: number; data: BugPutRequest }): void {
+    this.bugService.updateBug(event.bugId, event.data).subscribe({
+      next: () => {
+        this.showToast('Defect details updated successfully!', 'success');
+        if (this.activeFeature) {
+          this.bugCache.delete(this.activeFeature.featureId);
+          this.loadBugs(this.activeFeature.featureId);
+        }
+        this.isDefectDetailModalOpen = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error updating defect:', err);
+        this.showToast(err?.error?.message || 'Failed to update defect', 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // API 2 on Defect Card: Soft Delete (DELETE /bugs/delete/{bugId})
+  handleSoftDeleteBug(bugId: number): void {
+    this.bugService.softDeleteBug(bugId).subscribe({
+      next: () => {
+        this.showToast('Defect soft deleted successfully!', 'success');
+        this.isDefectDetailModalOpen = false;
+        if (this.activeFeature) {
+          this.bugCache.delete(this.activeFeature.featureId);
+          this.loadBugs(this.activeFeature.featureId);
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error deleting bug:', err);
+        this.showToast(err?.error?.message || 'Failed to soft delete defect', 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  handleChangeBugStatus(event: { bugId: number; status: string }): void {
+    this.bugService.patchBugStatus(event.bugId, event.status).subscribe({
+      next: () => {
+        this.showToast(`Defect status updated to ${event.status}`, 'success');
+        if (this.activeFeature) {
+          this.bugCache.delete(this.activeFeature.featureId);
+          this.loadBugs(this.activeFeature.featureId);
+        }
+        if (this.activeDefectDetail) {
+          this.activeDefectDetail.status = event.status;
+          if (event.status === 'REOPENED') {
+            this.activeDefectDetail.bugOccurrence = (this.activeDefectDetail.bugOccurrence || 1) + 1;
+          }
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error changing bug status:', err);
+        this.showToast('Failed to change status', 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  handleChangeBugAssignee(event: { bugId: number; assignedTo: number }): void {
+    this.bugService.patchBugAssignee(event.bugId, event.assignedTo).subscribe({
+      next: () => {
+        this.showToast('Defect assignee successfully updated!', 'success');
+        if (this.activeFeature) {
+          this.bugCache.delete(this.activeFeature.featureId);
+          this.loadBugs(this.activeFeature.featureId);
+        }
+        const dev = this.developers.find(d => d.userId === event.assignedTo);
+        if (dev && this.activeDefectDetail) {
+          this.activeDefectDetail.assignedTo = dev.fullName || dev.username;
+          this.activeDefectDetail.assignedToId = dev.userId;
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error changing assignee:', err);
+        this.showToast('Failed to update assignee', 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // Export Bug Endpoint Calling (Summary Export Service)
+  exportBugsSummary(): void {
+    if (!this.activeFeature) return;
+    this.showToast('Invoking defect summary export endpoint...', 'info');
+    this.bugService.exportBugs(this.activeFeature.featureId).subscribe({
+      next: (blob) => {
+        this.triggerBlobDownload(blob, `Feature_${this.activeFeature!.featureId}_Defects_Export.xlsx`);
+        this.showToast('Defect summary exported successfully!', 'success');
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Export defect error:', err);
+        this.showToast('Failed to export defects summary', 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // ==========================================
+  // ATTACHMENTS (PROJECT / FEATURE / DEFECT)
+  // ==========================================
+  openAttachments(targetType: 'project' | 'feature' | 'bug', id: number, title: string): void {
+    this.attachmentsModalTargetType = targetType;
+    this.attachmentsModalTargetId = id;
+    this.attachmentsModalTitle = title;
+    this.attachmentsModalSubtitle = `Target ID: ${id}`;
+    this.attachmentsList = [];
+    this.isAttachmentsModalOpen = true;
+    this.loadAttachmentsList();
+    this.cdr.markForCheck();
+  }
+
+  loadAttachmentsList(): void {
+    if (!this.attachmentsModalTargetId) return;
+    const id = this.attachmentsModalTargetId;
+
+    let obs;
+    if (this.attachmentsModalTargetType === 'project') {
+      obs = this.projectService.getProjectAttachments(id);
+    } else if (this.attachmentsModalTargetType === 'feature') {
+      obs = this.featureService.getFeatureAttachments(id);
+    } else {
+      obs = this.bugService.getBugAttachments(id);
+    }
+
+    obs.subscribe({
+      next: (files) => {
+        this.attachmentsList = files;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.attachmentsList = [];
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  handleUploadFiles(files: File[]): void {
+    if (!this.attachmentsModalTargetId || !files.length) return;
+    this.isUploadingAttachments = true;
+    this.showToast('Uploading file attachments...', 'info');
+
+    let uploadObs;
+    if (this.attachmentsModalTargetType === 'project') {
+      uploadObs = this.projectService.uploadProjectAttachments(this.attachmentsModalTargetId, files);
+    } else if (this.attachmentsModalTargetType === 'feature') {
+      uploadObs = this.featureService.uploadFeatureAttachments(this.attachmentsModalTargetId, files);
+    } else {
+      uploadObs = this.bugService.uploadBugAttachments(this.attachmentsModalTargetId, files);
+    }
+
+    uploadObs.subscribe({
+      next: () => {
+        this.isUploadingAttachments = false;
+        this.showToast('Attachments uploaded successfully!', 'success');
+        this.loadAttachmentsList();
+        if (this.attachmentsModalTargetType === 'project' && this.activeProject) {
+          this.loadProjectAttachmentCount(this.activeProject.projectId);
+        } else if (this.attachmentsModalTargetType === 'feature' && this.activeFeature) {
+          this.loadFeatureAttachmentCount(this.activeFeature.featureId);
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.isUploadingAttachments = false;
+        console.error('Upload error:', err);
+        this.showToast(err?.error?.message || 'File upload failed', 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  handleDownloadAllAttachments(): void {
+    if (!this.attachmentsModalTargetId) return;
+    const defaultName = `${this.attachmentsModalTargetType}_${this.attachmentsModalTargetId}_attachments.zip`;
+
+    let downloadObs;
+    if (this.attachmentsModalTargetType === 'project') {
+      downloadObs = this.projectService.downloadProjectAttachments(this.attachmentsModalTargetId);
+    } else if (this.attachmentsModalTargetType === 'feature') {
+      downloadObs = this.featureService.downloadFeatureAttachments(this.attachmentsModalTargetId);
+    } else {
+      downloadObs = this.bugService.downloadBugAttachments(this.attachmentsModalTargetId);
+    }
+
+    downloadObs.subscribe({
+      next: (blob) => {
+        this.triggerBlobDownload(blob, defaultName);
+        this.showToast('Attachments archive downloaded', 'success');
+      },
+      error: () => {
+        this.showToast('Failed to download attachments archive', 'error');
+      }
+    });
+  }
+
+  handleDownloadSingleAttachment(file: AttachmentItem): void {
+    if (!file || !this.attachmentsModalTargetId) return;
+    const attachmentId = file.attachmentId || file.id;
+    const fileName = file.fileName || `attachment_${attachmentId || 'file'}.dat`;
+
+    // Direct single file download via endpoint
+    if (attachmentId) {
+      this.projectService.downloadSingleAttachment(attachmentId).subscribe({
         next: (blob) => {
-          const url = window.URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = `testcase_template_feature_${this.activeFeature?.rawId}.xlsx`;
-          a.click();
-          window.URL.revokeObjectURL(url);
-          this.showToast(`Template downloaded successfully!`, 'success');
+          this.triggerBlobDownload(blob, fileName);
+          this.showToast(`Downloaded "${fileName}"`, 'success');
         },
         error: () => {
-          this.showToast(`Downloading blank Excel template (.xlsx) for "${this.activeFeature?.name}"...`, 'info');
+          // Fallback: download entity archive and extract target file
+          this.downloadAndExtractSingleFile(fileName);
         }
       });
     } else {
-      this.showToast(`Downloading dynamic blank Excel template (.xlsx) for "${this.activeFeature?.name}"...`, 'info');
+      this.downloadAndExtractSingleFile(fileName);
     }
   }
 
-  handleExcelImport(): void {
-    if (!this.activeFeature?.rawId) {
-      this.showToast('Please select a feature first', 'error');
-      return;
+  private downloadAndExtractSingleFile(targetFileName: string): void {
+    if (!this.attachmentsModalTargetId) return;
+
+    let downloadObs;
+    if (this.attachmentsModalTargetType === 'project') {
+      downloadObs = this.projectService.downloadProjectAttachments(this.attachmentsModalTargetId);
+    } else if (this.attachmentsModalTargetType === 'feature') {
+      downloadObs = this.featureService.downloadFeatureAttachments(this.attachmentsModalTargetId);
+    } else {
+      downloadObs = this.bugService.downloadBugAttachments(this.attachmentsModalTargetId);
     }
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.xlsx, .xls';
-    input.onchange = (e: any) => {
-      const file = e.target?.files?.[0];
-      if (file && this.activeFeature?.rawId) {
-        this.isApiLoading = true;
-        this.testerService.uploadExcelTestCases(this.activeFeature.rawId, file).subscribe({
-          next: () => {
-            this.isApiLoading = false;
-            this.closeModal('modal-excel');
-            this.showToast(`Spreadsheet "${file.name}" uploaded successfully!`, 'success');
-            if (this.activeFeature) {
-              this.fetchTestCasesForFeature(this.activeFeature);
-            }
-          },
-          error: (err) => {
-            this.isApiLoading = false;
-            console.error('Excel upload error:', err);
-            this.showToast(err?.error?.message || 'Failed to upload test cases spreadsheet', 'error');
+
+    downloadObs.subscribe({
+      next: async (blob) => {
+        // If the returned blob is already a single file (not a zip)
+        if (blob.type !== 'application/zip' && !blob.type.includes('zip') && this.attachmentsList.length === 1) {
+          this.triggerBlobDownload(blob, targetFileName);
+          this.showToast(`Downloaded "${targetFileName}"`, 'success');
+          return;
+        }
+
+        // Extract the file from ZIP archive
+        try {
+          const singleBlob = await this.extractFileFromZip(blob, targetFileName);
+          if (singleBlob) {
+            this.triggerBlobDownload(singleBlob, targetFileName);
+            this.showToast(`Downloaded "${targetFileName}"`, 'success');
+            return;
           }
-        });
+        } catch (e) {
+          console.warn('ZIP extraction fallback:', e);
+        }
+
+        // Final fallback: download blob
+        this.triggerBlobDownload(blob, targetFileName);
+        this.showToast(`Downloaded "${targetFileName}"`, 'success');
+      },
+      error: () => {
+        this.showToast(`Failed to download "${targetFileName}"`, 'error');
       }
-    };
-    input.click();
+    });
   }
 
-  // Modal helpers
-  openModal(modalId: string): void {
-    this.activeModal = modalId;
-  }
+  private async extractFileFromZip(zipBlob: Blob, targetFileName: string): Promise<Blob | null> {
+    const arrayBuffer = await zipBlob.arrayBuffer();
+    const bytes = new Uint8Array(arrayBuffer);
+    const view = new DataView(arrayBuffer);
+    let offset = 0;
 
-  closeModal(modalId?: string): void {
-    if (!modalId || this.activeModal === modalId) {
-      this.activeModal = null;
+    while (offset + 30 <= bytes.length) {
+      if (view.getUint32(offset, true) !== 0x04034b50) {
+        break;
+      }
+
+      const method = view.getUint16(offset + 8, true);
+      const compSize = view.getUint32(offset + 18, true);
+      const nameLen = view.getUint16(offset + 26, true);
+      const extraLen = view.getUint16(offset + 28, true);
+
+      const nameBytes = bytes.subarray(offset + 30, offset + 30 + nameLen);
+      const entryName = new TextDecoder().decode(nameBytes);
+      const dataStart = offset + 30 + nameLen + extraLen;
+      const dataEnd = dataStart + compSize;
+
+      if (entryName === targetFileName || entryName.endsWith('/' + targetFileName) || targetFileName.includes(entryName)) {
+        const compressedData = bytes.subarray(dataStart, dataEnd);
+        if (method === 0) {
+          return new Blob([compressedData]);
+        } else if (method === 8) {
+          if (typeof DecompressionStream !== 'undefined') {
+            const ds = new DecompressionStream('deflate-raw');
+            const stream = new Response(compressedData).body!.pipeThrough(ds);
+            const decompressedBuf = await new Response(stream).arrayBuffer();
+            return new Blob([decompressedBuf]);
+          }
+        }
+        return new Blob([compressedData]);
+      }
+
+      offset = dataEnd;
     }
+    return null;
   }
 
-  // Toast feedback helper
-  showToast(msg: string, type: 'success' | 'info' | 'error' = 'info'): void {
-    this.toastMessage = msg;
-    this.toastType = type;
-    if (this.toastTimer) clearTimeout(this.toastTimer);
-    this.toastTimer = setTimeout(() => {
-      this.toastMessage = '';
-    }, 3200);
+  handleDeleteAttachment(attachmentId: number): void {
+    this.projectService.deleteAttachment(attachmentId).subscribe({
+      next: () => {
+        this.showToast('Attachment deleted successfully', 'success');
+        this.loadAttachmentsList();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Delete attachment error:', err);
+        this.showToast('Failed to delete attachment', 'error');
+      }
+    });
   }
 
-  // Logout
-  logout(): void {
-    localStorage.clear();
+  // ==========================================
+  // BUG CHAT / COMMENTS
+  // ==========================================
+  openBugChat(b: Bug): void {
+    this.activeChatBug = b;
+    this.chatComments = [];
+    this.isChatLoading = true;
+    this.isChatModalOpen = true;
+    this.cdr.markForCheck();
+
+    this.bugService.getBugComments(b.bugId).subscribe({
+      next: (comments) => {
+        this.chatComments = comments;
+        this.isChatLoading = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.chatComments = [];
+        this.isChatLoading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  handleSendChatMessage(msg: string): void {
+    if (!this.activeChatBug) return;
+    this.bugService.createBugComment(this.activeChatBug.bugId, msg).subscribe({
+      next: () => {
+        this.showToast('Comment posted to discussion', 'success');
+        if (this.activeChatBug) {
+          this.bugService.getBugComments(this.activeChatBug.bugId).subscribe({
+            next: (comments) => {
+              this.chatComments = comments;
+              this.cdr.markForCheck();
+            }
+          });
+        }
+      },
+      error: (err) => {
+        console.error('Comment error:', err);
+        this.showToast(err?.error?.message || 'Failed to post comment', 'error');
+      }
+    });
+  }
+
+  // ==========================================
+  // IN-APP NOTIFICATIONS
+  // ==========================================
+  loadNotifications(): void {
+    this.notificationService.getNotifications().subscribe({
+      next: (notifs) => {
+        this.notifications = notifs;
+        this.unreadNotificationCount = notifs.filter(n => n.notificationStatus === 'UNREAD').length;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.notifications = [];
+        this.unreadNotificationCount = 0;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  openNotificationsModal(): void {
+    this.isNotificationsModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  handleToggleNotificationRead(n: InAppNotification): void {
+    n.notificationStatus = n.notificationStatus === 'UNREAD' ? 'READ' : 'UNREAD';
+    this.unreadNotificationCount = this.notifications.filter(item => item.notificationStatus === 'UNREAD').length;
+    this.notificationService.markAsRead(n.notificationId).subscribe();
+    this.cdr.markForCheck();
+  }
+
+  handleDismissNotification(n: InAppNotification): void {
+    this.notifications = this.notifications.filter(item => item.notificationId !== n.notificationId);
+    this.unreadNotificationCount = this.notifications.filter(item => item.notificationStatus === 'UNREAD').length;
+    this.notificationService.deleteNotification(n.notificationId).subscribe();
+    this.cdr.markForCheck();
+  }
+
+  handleMarkAllNotificationsRead(): void {
+    this.notifications.forEach(n => {
+      if (n.notificationStatus === 'UNREAD') {
+        n.notificationStatus = 'READ';
+        this.notificationService.markAsRead(n.notificationId).subscribe();
+      }
+    });
+    this.unreadNotificationCount = 0;
+    this.showToast('All notifications marked as read', 'info');
+    this.cdr.markForCheck();
+  }
+
+  // ==========================================
+  // LOGOUT
+  // ==========================================
+  performLogout(): void {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem('token');
+      localStorage.removeItem('jwt');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('tat_user_fullname');
+      localStorage.removeItem('tat_user_role');
+    }
+    this.showToast('Signed out successfully', 'info');
     this.router.navigate(['/login']);
+  }
+
+  // ==========================================
+  // METRICS & HELPERS
+  // ==========================================
+  private updateMetrics(): void {
+    this.totalTestCasesCount = this.testcases.length;
+    this.passedCount = this.testcases.filter(tc => tc.executionStatus === 'PASS' || tc.testcaseStatus === 'PASSED').length;
+    this.failedCount = this.testcases.filter(tc => tc.executionStatus === 'FAIL' || tc.testcaseStatus === 'FAILED').length;
+    this.descopeCount = this.testcases.filter(tc => tc.executionStatus === 'DESCOPE' || tc.testcaseStatus === 'DESCOPE').length;
+    this.totalDefectsCount = this.bugs.length;
+    this.openDefectsCount = this.bugs.filter(b => b.status === 'OPEN' || b.status === 'IN_PROGRESS' || b.status === 'REOPENED').length;
+  }
+
+  showToast(message: string, type: 'success' | 'error' | 'info' | 'warning' = 'info'): void {
+    const id = ++this.toastCounter;
+    this.toasts.push({ id, message, type });
+    setTimeout(() => {
+      this.toasts = this.toasts.filter(t => t.id !== id);
+      this.cdr.markForCheck();
+    }, 4500);
+    this.cdr.markForCheck();
+  }
+
+  removeToast(id: number): void {
+    this.toasts = this.toasts.filter(t => t.id !== id);
+    this.cdr.markForCheck();
+  }
+
+  private triggerBlobDownload(blob: Blob, fileName: string): void {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    window.URL.revokeObjectURL(url);
+  }
+
+  trackByTestCaseId(_index: number, tc: TestCase): number {
+    return tc.testcaseId;
+  }
+
+  trackByBugId(_index: number, bug: Bug): number {
+    return bug.bugId;
   }
 }

@@ -21,7 +21,6 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
     List<Bug> findByTestCase_TestcaseId(Integer id);
 
 
-
     @EntityGraph(attributePaths = {"testCase", "feature", "reportedBy", "assignedTo", "executedBy", "updatedBy"})
     Page<Bug> findByIsActiveTrue(Pageable pageable);
 
@@ -71,15 +70,11 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
     @EntityGraph(attributePaths = {"testCase", "feature", "reportedBy", "assignedTo", "executedBy", "updatedBy"})
     List<Bug> findByFeature_FeatureIdAndIsDeletedFalse(Integer featureId);
 
-    default List<Bug> findByFeatureFeatureIdAndIsDeletedFalse(Integer featureId) {
-        return findByFeature_FeatureIdAndIsDeletedFalse(featureId);
-    }
 
     @EntityGraph(attributePaths = {"testCase", "feature", "reportedBy", "assignedTo", "executedBy", "updatedBy"})
     List<Bug> findByFeature_Project_ProjectIdAndIsDeletedFalse(Integer projectId);
 
     @EntityGraph(attributePaths = {"testCase", "feature", "reportedBy", "assignedTo", "executedBy", "updatedBy"})
     List<Bug> findByIsDeletedFalse();
-
 
 }
