@@ -33,9 +33,18 @@ export class SidebarComponent {
   @Output() editFeature = new EventEmitter<Feature>();
   @Output() openFeatureAttachments = new EventEmitter<Feature>();
   @Output() closeSidebar = new EventEmitter<void>();
+  @Output() openOverview = new EventEmitter<void>();
 
   projectSearch = '';
   featureSearch = '';
+
+  // Pagination for Projects in Sidebar (Default size 5)
+  projectPage = 1;
+  projectPageSize = 5;
+
+  // Pagination for Features in Sidebar (Default size 5)
+  featurePage = 1;
+  featurePageSize = 5;
 
   get filteredProjects(): Project[] {
     const s = this.projectSearch.toLowerCase().trim();
@@ -46,11 +55,57 @@ export class SidebarComponent {
     });
   }
 
+  get paginatedProjects(): Project[] {
+    const start = (this.projectPage - 1) * this.projectPageSize;
+    return this.filteredProjects.slice(start, start + this.projectPageSize);
+  }
+
+  get totalProjectPages(): number {
+    return Math.max(1, Math.ceil(this.filteredProjects.length / this.projectPageSize));
+  }
+
+  prevProjectPage(): void {
+    if (this.projectPage > 1) {
+      this.projectPage--;
+      this.cdr.markForCheck();
+    }
+  }
+
+  nextProjectPage(): void {
+    if (this.projectPage < this.totalProjectPages) {
+      this.projectPage++;
+      this.cdr.markForCheck();
+    }
+  }
+
   get filteredFeatures(): Feature[] {
     const s = this.featureSearch.toLowerCase().trim();
     return this.features.filter(f => {
       return !s || f.featureName.toLowerCase().includes(s) || (f.featureVersion && f.featureVersion.toLowerCase().includes(s));
     });
+  }
+
+  get paginatedFeatures(): Feature[] {
+    const start = (this.featurePage - 1) * this.featurePageSize;
+    return this.filteredFeatures.slice(start, start + this.featurePageSize);
+  }
+
+  get totalFeaturePages(): number {
+    return Math.max(1, Math.ceil(this.filteredFeatures.length / this.featurePageSize));
+  }
+
+  prevFeaturePage(): void {
+    if (this.featurePage > 1) {
+      this.featurePage--;
+      this.cdr.markForCheck();
+    }
+  }
+
+  nextFeaturePage(): void {
+    if (this.featurePage < this.totalFeaturePages) {
+      this.featurePage++;
+      this.cdr.markForCheck();
+    }
   }
 
   onRegionSelected(region: string): void {

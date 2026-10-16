@@ -1,11 +1,21 @@
-<!-- Mobile Sidebar Backdrop -->
-<div class="sidebar-backdrop" *ngIf="isOpen" (click)="closeSidebar.emit()"></div>
-
 <aside class="sidebar" [class.open]="isOpen">
-  <!-- Mobile Close Header -->
-  <div class="sidebar-mobile-close-bar">
-    <span class="mobile-nav-title"><i class="fa-solid fa-layer-group text-emerald"></i> Navigation</span>
-    <button class="btn-close-sidebar" (click)="closeSidebar.emit()" title="Close Sidebar">&times;</button>
+  <!-- Desktop / Mobile Sidebar Header with Hide Button -->
+  <div class="sidebar-top-bar">
+    <span class="sidebar-nav-heading">
+      <i class="fa-solid fa-layer-group text-emerald"></i> Workspace
+    </span>
+    <button class="btn-hide-sidebar" (click)="closeSidebar.emit()" title="Hide Sidebar">
+      <i class="fa-solid fa-angles-left"></i> Hide
+    </button>
+  </div>
+
+  <!-- Master Directory Button Section (Above Region) -->
+  <div class="sidebar-section overview-action-section">
+    <button class="btn-sidebar-overview" (click)="openOverview.emit()" title="Open Master Directory (View All Projects, Features, Test Cases, Bugs)">
+      <i class="fa-solid fa-layer-group text-emerald"></i>
+      <span>Master Directory</span>
+      <i class="fa-solid fa-arrow-up-right-from-square overview-arrow"></i>
+    </button>
   </div>
 
   <!-- Dynamic Region Selection from DB -->
@@ -45,7 +55,7 @@
       </div>
 
       <div
-        *ngFor="let p of filteredProjects; trackBy: trackByProjectId"
+        *ngFor="let p of paginatedProjects; trackBy: trackByProjectId"
         class="project-item-card"
         [class.active]="activeProject?.projectId === p.projectId"
         (click)="onSelectProject(p)"
@@ -68,6 +78,19 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Sidebar Mini Pagination for Projects (Size 5) -->
+    <div class="sidebar-pagination-bar" *ngIf="filteredProjects.length > projectPageSize">
+      <span class="sidebar-page-info">Pg {{ projectPage }}/{{ totalProjectPages }} ({{ filteredProjects.length }})</span>
+      <div class="sidebar-page-btns">
+        <button class="btn-sidebar-page" [disabled]="projectPage <= 1" (click)="prevProjectPage()" title="Previous Projects">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <button class="btn-sidebar-page" [disabled]="projectPage >= totalProjectPages" (click)="nextProjectPage()" title="Next Projects">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
       </div>
     </div>
   </div>
@@ -103,7 +126,7 @@
       </div>
 
       <div
-        *ngFor="let f of filteredFeatures; trackBy: trackByFeatureId"
+        *ngFor="let f of paginatedFeatures; trackBy: trackByFeatureId"
         class="feature-item-card"
         [class.active]="activeFeature?.featureId === f.featureId"
         (click)="onSelectFeature(f)"
@@ -126,6 +149,19 @@
             </button>
           </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Sidebar Mini Pagination for Features (Size 5) -->
+    <div class="sidebar-pagination-bar" *ngIf="filteredFeatures.length > featurePageSize">
+      <span class="sidebar-page-info">Pg {{ featurePage }}/{{ totalFeaturePages }} ({{ filteredFeatures.length }})</span>
+      <div class="sidebar-page-btns">
+        <button class="btn-sidebar-page" [disabled]="featurePage <= 1" (click)="prevFeaturePage()" title="Previous Features">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <button class="btn-sidebar-page" [disabled]="featurePage >= totalFeaturePages" (click)="nextFeaturePage()" title="Next Features">
+          <i class="fa-solid fa-chevron-right"></i>
+        </button>
       </div>
     </div>
   </div>

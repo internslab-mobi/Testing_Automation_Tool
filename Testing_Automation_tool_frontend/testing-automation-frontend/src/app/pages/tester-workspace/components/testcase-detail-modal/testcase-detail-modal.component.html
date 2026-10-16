@@ -73,14 +73,10 @@
         <div class="field-value box-val comments-val">{{ testCase?.comments || testCase?.execution?.comments }}</div>
       </div>
 
-      <div class="meta-info-grid" *ngIf="testCase?.createdBy || testCase?.updatedBy">
+      <div class="meta-info-grid" *ngIf="testCase?.createdBy">
         <div class="meta-item" *ngIf="testCase?.createdBy">
           <span class="meta-label">Author:</span>
           <span class="meta-val">{{ testCase?.createdBy }}</span>
-        </div>
-        <div class="meta-item" *ngIf="testCase?.updatedBy">
-          <span class="meta-label">Last Modified:</span>
-          <span class="meta-val">{{ testCase?.updatedBy }}</span>
         </div>
       </div>
 

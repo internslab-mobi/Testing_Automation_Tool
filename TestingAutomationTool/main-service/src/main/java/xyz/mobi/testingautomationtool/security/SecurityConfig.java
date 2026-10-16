@@ -81,7 +81,8 @@ public class SecurityConfig {
                                 "/manager-dashboard.html",
                                 "/favicon.ico",
                                 "/error",
-                                "/feature/*"
+                                "/feature/*",
+                                "/bug/*"
                         )
                 )
                 .exceptionHandling(exception -> exception

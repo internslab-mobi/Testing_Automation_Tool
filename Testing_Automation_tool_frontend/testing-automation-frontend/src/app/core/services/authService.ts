@@ -9,13 +9,14 @@ import { AuthResponse } from "../../model/auth/authResponse";
 import { UserProfile } from "../../model/auth/userProfile";
 import { Observable, tap } from 'rxjs';
 import { ApiResponse } from "../../model/auth/commonApiResponse/apiResponse";
+import { environment } from "../../../environments/environment";
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthService {
   private readonly http = inject(HttpClient);
-  private readonly authUrl = 'http://localhost:8082/auth';
+  private readonly authUrl = `${environment.apiGatewayUrl}/auth`;
 
   // In-Memory Signal for logged-in user profile (Zero LocalStorage)
   private readonly currentUserSignal = signal<UserProfile | null>(null);
@@ -81,4 +82,3 @@ export class AuthService {
     return this.http.post<ApiResponse<AuthResponse>>(`${this.authUrl}/reset-password`, request);
   }
 }
-  

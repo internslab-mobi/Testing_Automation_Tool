@@ -17,6 +17,8 @@ spring:
                 allowedOrigins:
                   - "http://localhost:4200"
                   - "http://127.0.0.1:4200"
+                  - "http://192.168.3.97:4200"
+                  - "http://192.168.3.130:4200"
                   - "http://localhost:8081"
                   - "http://127.0.0.1:8081"
                   - "http://localhost:8090"
@@ -37,6 +39,9 @@ spring:
                 allowCredentials: true
                 maxAge: 3600
 
+          default-filters:
+            - DedupeResponseHeader=Access-Control-Allow-Credentials Access-Control-Allow-Origin, RETAIN_FIRST
+
           # Reverse Proxy Routes
           routes:
             # Route 1: Authentication Microservice (port 8081)
@@ -44,12 +49,16 @@ spring:
               uri: ${services.auth-service.url}
               predicates:
                 - Path=/auth/**
+              metadata:
+                response-timeout: 10000
 
             # Route 2: Main Business Microservice (port 8090)
             - id: main-service-business
               uri: ${services.main-service.url}
               predicates:
                 - Path=/manager/**, /project/**, /projects/**, /feature/**, /features/**, /testcases/**, /testcase/**, /bugs/**, /bug/**, /comments/**, /attachments/**, /in-app-notifications/**, /notifications/**, /admin/**
+              metadata:
+                response-timeout: 30000
 
             # Route 3: Notification Microservice (port 8091)
             - id: notification-service
@@ -66,3 +75,8 @@ services:
   notification-service:
     url: ${NOTIFICATION_SERVICE_URL:http://localhost:8091}
 
+app:
+  jwt:
+    cookie:
+      secure: true
+      same-site: None

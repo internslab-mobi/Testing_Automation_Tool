@@ -1,13 +1,56 @@
 <header class="app-header">
   <div class="header-left">
-    <button class="btn-hamburger" (click)="onToggleSidebar()" title="Toggle Navigation Sidebar">
-      <i class="fa-solid fa-bars"></i>
-    </button>
-    <div class="brand-logo">
+    <div class="brand-logo" title="TAT QA Cockpit">
       <div class="brand-badge"><i class="fa-solid fa-vial-circle-check"></i></div>
       <div class="brand-titles">
-        <h1>TAT QA Cockpit</h1>
-        <span>Test Lifecycle Automation Suite</span>
+        <div class="app-title-line">
+          <h1>TAT QA Cockpit</h1>
+        </div>
+      </div>
+    </div>
+
+    <!-- 1. Feature Info Bar (When a Feature is Active) -->
+    <div class="navbar-feature-center" *ngIf="activeFeature">
+      <div class="navbar-feature-meta">
+        <div class="navbar-breadcrumb">
+          <span>{{ activeProject?.region || 'India' }}</span>
+          <i class="fa-solid fa-chevron-right"></i>
+          <span>{{ activeProject?.projectName || 'Project' }}</span>
+          <i class="fa-solid fa-chevron-right"></i>
+          <span class="active-crumb">{{ activeFeature.featureName }}</span>
+        </div>
+        <div class="navbar-feature-heading">
+          <h2 class="navbar-feat-title">{{ activeFeature.featureName }}</h2>
+          <span class="version-tag" *ngIf="activeFeature.featureVersion">{{ activeFeature.featureVersion }}</span>
+          <span class="sprint-tag" *ngIf="activeFeature.sprint">Sprint {{ activeFeature.sprint }}</span>
+        </div>
+        <div class="navbar-feat-desc" *ngIf="activeFeature.description" [title]="activeFeature.description">
+          {{ activeFeature.description }}
+        </div>
+      </div>
+    </div>
+
+    <!-- 2. Master Directory Overview Banner (When in Master Directory / No Feature is Selected) -->
+    <div class="navbar-overview-center" *ngIf="!activeFeature">
+      <div class="navbar-overview-meta">
+        <div class="navbar-breadcrumb">
+          <span class="text-emerald font-semibold">{{ selectedRegion === 'ALL' ? 'Global' : selectedRegion }}</span>
+          <i class="fa-solid fa-chevron-right"></i>
+          <span>QA Overview Directory</span>
+        </div>
+        <div class="navbar-feature-heading">
+          <h2 class="navbar-feat-title">Master Entities & Suites Directory</h2>
+          <span class="version-tag">Workspace Hub</span>
+        </div>
+       
+      </div>
+      <div class="navbar-overview-actions">
+        <button class="btn btn-primary btn-xs" (click)="refreshOverview.emit()" title="Refresh All Data">
+          <i class="fa-solid fa-rotate" [class.fa-spin]="isOverviewLoading"></i> Refresh All
+        </button>
+        <button class="btn btn-emerald btn-xs" (click)="createProject.emit()" title="Create New Project">
+          <i class="fa-solid fa-plus"></i> New Project
+        </button>
       </div>
     </div>
   </div>

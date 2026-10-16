@@ -74,8 +74,8 @@ export class TesterWorkspace implements OnInit {
   userRole = 'TESTER';
   userInitials = 'TS';
 
-  // Responsive Sidebar
-  isSidebarOpen = false;
+  // Responsive Sidebar (open by default on desktop)
+  isSidebarOpen = typeof window !== 'undefined' ? window.innerWidth > 1024 : true;
 
   // Projects & Dynamic Regions
   projects: Project[] = [];
@@ -96,6 +96,70 @@ export class TesterWorkspace implements OnInit {
   // Active Workspace Sub-Tab ('testcases' | 'bugs')
   activeSubTab: 'testcases' | 'bugs' = 'testcases';
 
+  // Global All-Entity Overview State (Active when no feature is selected or in All-Entities view)
+  activeOverviewTab: 'projects' | 'features' | 'testcases' | 'bugs' = 'projects';
+  allProjectsList: Project[] = [];
+  allFeaturesList: (Feature & { projectName?: string; region?: string })[] = [];
+  allTestCasesList: (TestCase & { featureName?: string; projectName?: string })[] = [];
+  allBugsList: (Bug & { featureName?: string; projectName?: string })[] = [];
+  isOverviewLoading = false;
+
+  // Search & Filter for All-Entity Lists
+  allProjSearch = '';
+  allProjStatusFilter = 'ALL';
+  allFeatSearch = '';
+  allFeatProjFilter = 'ALL';
+  allTcSearch = '';
+  allTcTypeFilter = 'ALL';
+  allTcPrioFilter = 'ALL';
+  allTcStatusFilter = 'ALL';
+  allBugSearch = '';
+  allBugSevFilter = 'ALL';
+  allBugStatusFilter = 'ALL';
+
+  // Pagination for All-Entity Lists (Default size 5)
+  readonly overviewPageSizeOptions = [5, 10, 20, 50];
+  overviewProjPage = 1;
+  overviewProjPageSize = 5;
+  overviewFeatPage = 1;
+  overviewFeatPageSize = 5;
+  overviewTcPage = 1;
+  overviewTcPageSize = 5;
+  overviewBugPage = 1;
+  overviewBugPageSize = 5;
+
+  get overviewProjStartIndex(): number {
+    if (this.filteredAllProjects.length === 0) return 0;
+    return (this.overviewProjPage - 1) * this.overviewProjPageSize + 1;
+  }
+  get overviewProjEndIndex(): number {
+    return Math.min(this.overviewProjPage * this.overviewProjPageSize, this.filteredAllProjects.length);
+  }
+
+  get overviewFeatStartIndex(): number {
+    if (this.filteredAllFeatures.length === 0) return 0;
+    return (this.overviewFeatPage - 1) * this.overviewFeatPageSize + 1;
+  }
+  get overviewFeatEndIndex(): number {
+    return Math.min(this.overviewFeatPage * this.overviewFeatPageSize, this.filteredAllFeatures.length);
+  }
+
+  get overviewTcStartIndex(): number {
+    if (this.filteredAllTestCases.length === 0) return 0;
+    return (this.overviewTcPage - 1) * this.overviewTcPageSize + 1;
+  }
+  get overviewTcEndIndex(): number {
+    return Math.min(this.overviewTcPage * this.overviewTcPageSize, this.filteredAllTestCases.length);
+  }
+
+  get overviewBugStartIndex(): number {
+    if (this.filteredAllBugs.length === 0) return 0;
+    return (this.overviewBugPage - 1) * this.overviewBugPageSize + 1;
+  }
+  get overviewBugEndIndex(): number {
+    return Math.min(this.overviewBugPage * this.overviewBugPageSize, this.filteredAllBugs.length);
+  }
+
   // Test Cases
   testcases: TestCase[] = [];
   filteredTestCases: TestCase[] = [];
@@ -114,12 +178,12 @@ export class TesterWorkspace implements OnInit {
 
   // Pagination: Test Cases
   tcCurrentPage = 1;
-  tcPageSize = 10;
+  tcPageSize = 5;
   readonly tcPageSizeOptions = [5, 10, 20, 50];
 
   // Pagination: Defects
   bugCurrentPage = 1;
-  bugPageSize = 10;
+  bugPageSize = 5;
   readonly bugPageSizeOptions = [5, 10, 20, 50];
 
   // Summary Metrics
@@ -255,7 +319,7 @@ export class TesterWorkspace implements OnInit {
     // and Set-Cookie: XSRF-TOKEN is placed in document.cookie before user mutates any entity
     this.notificationService.getNotifications().subscribe({
       next: () => this.cdr.markForCheck(),
-      error: () => {}
+      error: () => { }
     });
   }
 
@@ -1486,5 +1550,196 @@ export class TesterWorkspace implements OnInit {
 
   trackByBugId(_index: number, bug: Bug): number {
     return bug.bugId;
+  }
+
+  trackByFeatureId(_index: number, f: Feature): number {
+    return f.featureId;
+  }
+
+  trackByProjectId(_index: number, p: Project): number {
+    return p.projectId;
+  }
+
+  // ==========================================
+  // ALL-ENTITIES OVERVIEW METHODS & GETTERS
+  // ==========================================
+  clearActiveFeatureToOverview(tab: 'projects' | 'features' | 'testcases' | 'bugs' = 'projects'): void {
+    this.activeFeature = null;
+    this.activeOverviewTab = tab;
+    this.loadAllOverviewData();
+    this.cdr.markForCheck();
+  }
+
+  loadAllOverviewData(): void {
+    this.isOverviewLoading = true;
+    this.cdr.markForCheck();
+
+    this.projectService.getProjects().subscribe({
+      next: (projs) => {
+        this.allProjectsList = projs || [];
+        this.updateDynamicRegions();
+
+        // Load all bugs globally
+        this.bugService.getAllBugs().subscribe({
+          next: (allBugs) => {
+            this.allBugsList = allBugs || [];
+            this.cdr.markForCheck();
+          },
+          error: () => {
+            this.allBugsList = [];
+            this.cdr.markForCheck();
+          }
+        });
+
+        // Load features and test cases across projects
+        const featurePromises = this.allProjectsList.map(p =>
+          new Promise<{ project: Project; features: Feature[] }>((resolve) => {
+            this.featureService.getFeaturesByProject(p.projectId).subscribe({
+              next: (feats) => resolve({ project: p, features: feats || [] }),
+              error: () => resolve({ project: p, features: [] })
+            });
+          })
+        );
+
+        Promise.all(featurePromises).then(projectFeaturePairs => {
+          const flatFeatures: (Feature & { projectName?: string; region?: string })[] = [];
+          projectFeaturePairs.forEach(pair => {
+            pair.features.forEach(f => {
+              flatFeatures.push({
+                ...f,
+                projectName: pair.project.projectName,
+                region: pair.project.region
+              });
+            });
+          });
+          this.allFeaturesList = flatFeatures;
+
+          // Fetch test cases for these features
+          const testCasePromises = flatFeatures.map(f =>
+            new Promise<(TestCase & { featureName?: string; projectName?: string })[]>((resolve) => {
+              this.testCaseService.getTestCases(f.featureId).subscribe({
+                next: (cases) => {
+                  const mapped = (cases || []).map(c => ({
+                    ...c,
+                    featureName: f.featureName,
+                    projectName: f.projectName
+                  }));
+                  resolve(mapped);
+                },
+                error: () => resolve([])
+              });
+            })
+          );
+
+          Promise.all(testCasePromises).then(tcGroups => {
+            this.allTestCasesList = tcGroups.flat();
+            this.isOverviewLoading = false;
+            this.cdr.markForCheck();
+          });
+        });
+      },
+      error: () => {
+        this.isOverviewLoading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // Filtered All Projects
+  get filteredAllProjects(): Project[] {
+    const s = this.allProjSearch.toLowerCase().trim();
+    return this.allProjectsList.filter(p => {
+      const matchSearch = !s || p.projectName.toLowerCase().includes(s) || (p.region && p.region.toLowerCase().includes(s)) || (p.description && p.description.toLowerCase().includes(s));
+      const matchStatus = this.allProjStatusFilter === 'ALL' || (p.status || 'ACTIVE') === this.allProjStatusFilter;
+      const matchRegion = this.selectedRegion === 'ALL' || p.region === this.selectedRegion;
+      return matchSearch && matchStatus && matchRegion;
+    });
+  }
+
+  get paginatedAllProjects(): Project[] {
+    const start = (this.overviewProjPage - 1) * this.overviewProjPageSize;
+    return this.filteredAllProjects.slice(start, start + this.overviewProjPageSize);
+  }
+
+  get totalOverviewProjPages(): number {
+    return Math.max(1, Math.ceil(this.filteredAllProjects.length / this.overviewProjPageSize));
+  }
+
+  // Filtered All Features
+  get filteredAllFeatures(): (Feature & { projectName?: string; region?: string })[] {
+    const s = this.allFeatSearch.toLowerCase().trim();
+    return this.allFeaturesList.filter(f => {
+      const matchSearch = !s || f.featureName.toLowerCase().includes(s) || (f.projectName && f.projectName.toLowerCase().includes(s)) || (f.description && f.description.toLowerCase().includes(s));
+      const matchProj = this.allFeatProjFilter === 'ALL' || (f.projectName && f.projectName === this.allFeatProjFilter);
+      const matchRegion = this.selectedRegion === 'ALL' || f.region === this.selectedRegion;
+      return matchSearch && matchProj && matchRegion;
+    });
+  }
+
+  get paginatedAllFeatures(): (Feature & { projectName?: string; region?: string })[] {
+    const start = (this.overviewFeatPage - 1) * this.overviewFeatPageSize;
+    return this.filteredAllFeatures.slice(start, start + this.overviewFeatPageSize);
+  }
+
+  get totalOverviewFeatPages(): number {
+    return Math.max(1, Math.ceil(this.filteredAllFeatures.length / this.overviewFeatPageSize));
+  }
+
+  // Filtered All Test Cases
+  get filteredAllTestCases(): (TestCase & { featureName?: string; projectName?: string })[] {
+    const s = this.allTcSearch.toLowerCase().trim();
+    return this.allTestCasesList.filter(tc => {
+      const matchSearch = !s || tc.title.toLowerCase().includes(s) || (tc.testcaseFormatId && tc.testcaseFormatId.toLowerCase().includes(s)) || (tc.featureName && tc.featureName.toLowerCase().includes(s)) || (tc.projectName && tc.projectName.toLowerCase().includes(s));
+      const matchType = this.allTcTypeFilter === 'ALL' || tc.testType === this.allTcTypeFilter;
+      const matchPrio = this.allTcPrioFilter === 'ALL' || tc.testPriority === this.allTcPrioFilter;
+      const matchStatus = this.allTcStatusFilter === 'ALL' || tc.executionStatus === this.allTcStatusFilter || tc.testcaseStatus === this.allTcStatusFilter;
+      return matchSearch && matchType && matchPrio && matchStatus;
+    });
+  }
+
+  get paginatedAllTestCases(): (TestCase & { featureName?: string; projectName?: string })[] {
+    const start = (this.overviewTcPage - 1) * this.overviewTcPageSize;
+    return this.filteredAllTestCases.slice(start, start + this.overviewTcPageSize);
+  }
+
+  get totalOverviewTcPages(): number {
+    return Math.max(1, Math.ceil(this.filteredAllTestCases.length / this.overviewTcPageSize));
+  }
+
+  // Filtered All Bugs
+  get filteredAllBugs(): (Bug & { featureName?: string; projectName?: string })[] {
+    const s = this.allBugSearch.toLowerCase().trim();
+    return this.allBugsList.filter(b => {
+      const matchSearch = !s || b.title.toLowerCase().includes(s) || (b.bugFormatId && b.bugFormatId.toLowerCase().includes(s)) || (b.description && b.description.toLowerCase().includes(s)) || (b.testcaseFormatId && b.testcaseFormatId.toLowerCase().includes(s));
+      const matchSev = this.allBugSevFilter === 'ALL' || b.severity === this.allBugSevFilter;
+      const matchStatus = this.allBugStatusFilter === 'ALL' || b.status === this.allBugStatusFilter;
+      return matchSearch && matchSev && matchStatus;
+    });
+  }
+
+  get paginatedAllBugs(): (Bug & { featureName?: string; projectName?: string })[] {
+    const start = (this.overviewBugPage - 1) * this.overviewBugPageSize;
+    return this.filteredAllBugs.slice(start, start + this.overviewBugPageSize);
+  }
+
+  get totalOverviewBugPages(): number {
+    return Math.max(1, Math.ceil(this.filteredAllBugs.length / this.overviewBugPageSize));
+  }
+
+  // Quick navigation from all-entities view to a feature
+  navigateToFeature(featureId: number): void {
+    const foundFeat = this.allFeaturesList.find(f => f.featureId === featureId);
+    if (foundFeat) {
+      const foundProj = this.projects.find(p => p.projectId === foundFeat.projectId);
+      if (foundProj) {
+        this.activeProject = foundProj;
+      }
+      this.selectFeature(foundFeat);
+    }
+  }
+
+  // Quick navigation to project
+  navigateToProject(p: Project): void {
+    this.selectProject(p);
   }
 }
