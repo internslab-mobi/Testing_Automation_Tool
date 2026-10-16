@@ -64,7 +64,7 @@ public class TestcaseController {
             @RequestParam(required = false) TestPriority priority,
             @PageableDefault(page = 0, size = 10, sort = "testcaseId") Pageable pageable) {
         if (pageable.getPageSize() <= 0) {
-            pageable = PageRequest.of(pageable.getPageNumber(), 10, pageable.getSort());
+            pageable = PageRequest.of(pageable.getPageNumber(),pageable.getPageSize(), pageable.getSort());
         }
         return ResponseEntity.ok(
                 ApiResponse.success("Test cases retrieved successfully", testCaseService.getAll(featureId, status, type, priority, pageable))
