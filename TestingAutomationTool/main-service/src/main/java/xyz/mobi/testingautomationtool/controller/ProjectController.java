@@ -242,4 +242,22 @@ public class ProjectController {
                 .status(HttpStatus.CREATED)
                 .body(region);
     }
+
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+    @GetMapping("/modules")
+    public ResponseEntity<ApiResponse<List<Module>>> getAllModules() {
+        return ResponseEntity.ok(ApiResponse.success("Modules retrieved successfully", projectService.getAllModules()));
+    }
+
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+    @GetMapping("/modules/{moduleId}/sub-modules")
+    public ResponseEntity<ApiResponse<List<SubModule>>> getSubModulesByModuleId(@PathVariable Integer moduleId) {
+        return ResponseEntity.ok(ApiResponse.success("SubModules retrieved successfully", projectService.getSubModulesByModuleId(moduleId)));
+    }
+
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+    @GetMapping("/regions")
+    public ResponseEntity<ApiResponse<List<Region>>> getAllRegions() {
+        return ResponseEntity.ok(ApiResponse.success("Regions retrieved successfully", projectService.getAllRegions()));
+    }
 }

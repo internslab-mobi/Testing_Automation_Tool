@@ -40,13 +40,17 @@ public interface ProjectService {
     @Transactional
     Module createModule(String moduleName);
 
+    List<Module> getAllModules();
+
     @Transactional
     SubModule createSubModule(
             Integer moduleId,
             String subModuleName);
 
+    List<SubModule> getSubModulesByModuleId(Integer moduleId);
+
     @Transactional
     Region createRegion(String regionName);
 
-//    AttachmentDownloadResponse downloadFiles(Integer projectId);
+    List<Region> getAllRegions();
 }

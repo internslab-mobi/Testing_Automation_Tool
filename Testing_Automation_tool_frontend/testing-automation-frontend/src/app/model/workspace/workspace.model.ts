@@ -2,18 +2,52 @@ export interface Project {
   projectId: number;
   projectName: string;
   region: string;
+  regionId?: number;
+  module?: string;
+  moduleId?: number;
+  subModule?: string;
+  subModuleId?: number;
   description?: string;
   comments?: string;
   status?: string;
+  isActive?: boolean;
+  isDeleted?: boolean;
+  version?: number;
+  createdBy?: string;
+  createdByName?: string;
   createdDate?: string;
+  createdAt?: string;
+  updatedBy?: string;
+  updatedByName?: string;
+  updatedAt?: string;
 }
 
 export interface ProjectCreateRequest {
   projectName: string;
-  region: string;
+  region: number | string | null;
+  module: number | string | null;
+  subModule: number | string | null;
+  moduleId?: number;
+  subModuleId?: number;
   description?: string;
   comments?: string;
   status?: string;
+}
+
+export interface ModuleItem {
+  moduleId: number;
+  moduleName: string;
+}
+
+export interface SubModuleItem {
+  subModuleId: number;
+  subModuleName: string;
+  moduleId?: number;
+}
+
+export interface RegionItem {
+  countryId: number;
+  countryName: string;
 }
 
 export interface Feature {

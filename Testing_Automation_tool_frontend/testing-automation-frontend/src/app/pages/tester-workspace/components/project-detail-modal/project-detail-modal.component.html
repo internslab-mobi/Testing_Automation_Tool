@@ -1,0 +1,106 @@
+<div class="modal-overlay" *ngIf="isOpen && project">
+  <div class="modal-card modal-lg">
+    <div class="modal-header">
+      <div class="modal-title-wrap">
+        <div class="proj-badge-icon" [class.is-inactive]="project.status === 'INACTIVE'">
+          <i class="fa-solid" [class.fa-folder-closed]="project.status === 'INACTIVE'" [class.fa-folder-open]="project.status !== 'INACTIVE'"></i>
+        </div>
+        <div>
+          <h3>{{ project.projectName }}</h3>
+          <span class="modal-subtitle">Project Specifications & Access Controls</span>
+        </div>
+      </div>
+      <button class="modal-close" (click)="onClose()" title="Close details">&times;</button>
+    </div>
+
+    <div class="modal-body">
+      <!-- Status Access Banner -->
+      <div class="status-access-banner" [class.banner-inactive]="project.status === 'INACTIVE'" [class.banner-active]="project.status !== 'INACTIVE'">
+        <div class="banner-icon">
+          <i class="fa-solid" [class.fa-lock]="project.status === 'INACTIVE'" [class.fa-circle-check]="project.status !== 'INACTIVE'"></i>
+        </div>
+        <div class="banner-text">
+          <div class="banner-title">
+            Status: <strong>{{ project.status || 'ACTIVE' }}</strong>
+            <span class="access-pill" [class.pill-locked]="project.status === 'INACTIVE'">
+              {{ project.status === 'INACTIVE' ? 'Contents Inaccessible' : 'Contents Accessible' }}
+            </span>
+          </div>
+          <p class="banner-desc" *ngIf="project.status === 'INACTIVE'">
+            This project is set to INACTIVE. Features, test suites, execution runs, and defect logging cannot be accessed or modified until the project is reactivated.
+          </p>
+          <p class="banner-desc" *ngIf="project.status !== 'INACTIVE'">
+            This project is currently ACTIVE. All associated features, test suites, and defect reporting tools are accessible.
+          </p>
+        </div>
+      </div>
+
+      <!-- Core Project Properties Grid -->
+      <div class="details-grid">
+        <div class="detail-cell">
+          <span class="detail-label"><i class="fa-solid fa-location-dot text-emerald"></i> Location (Region)</span>
+          <span class="detail-val region-val">
+            <i class="fa-solid fa-globe"></i> {{ project.region || 'General' }}
+          </span>
+        </div>
+
+        <div class="detail-cell">
+          <span class="detail-label"><i class="fa-solid fa-layer-group text-emerald"></i> Module & Sub-Module</span>
+          <span class="detail-val module-hierarchy-val">
+            <span class="badge-module">{{ project.module || 'Default Module' }}</span>
+            <i class="fa-solid fa-angle-right sep" *ngIf="project.subModule"></i>
+            <span class="badge-submodule" *ngIf="project.subModule">{{ project.subModule }}</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Comments Field -->
+      <div class="detail-block">
+        <span class="detail-label"><i class="fa-regular fa-comment-dots text-emerald"></i> Project Comments</span>
+        <div class="comments-card" *ngIf="project.comments">
+          <i class="fa-solid fa-quote-left quote-icon"></i>
+          <span>{{ project.comments }}</span>
+        </div>
+        <div class="empty-field-card" *ngIf="!project.comments">
+          <span class="text-muted">No comments recorded for this project.</span>
+        </div>
+      </div>
+
+      <!-- Description Field -->
+      <div class="detail-block" *ngIf="project.description">
+        <span class="detail-label"><i class="fa-solid fa-align-left text-emerald"></i> Scope & Description</span>
+        <div class="description-card">
+          {{ project.description }}
+        </div>
+      </div>
+
+      <!-- Audit Metadata Footer Info -->
+      <div class="audit-meta-bar">
+        <div class="audit-chip" *ngIf="project.createdBy || project.createdByName">
+          <i class="fa-regular fa-user"></i>
+          <span>Created by: <strong>{{ project.createdByName || project.createdBy }}</strong></span>
+          <span *ngIf="project.createdAt || project.createdDate"> on {{ (project.createdAt || project.createdDate) | date:'mediumDate' }}</span>
+        </div>
+        <div class="audit-chip" *ngIf="project.updatedByName || project.updatedBy">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span>Last modified by: <strong>{{ project.updatedByName || project.updatedBy }}</strong></span>
+          <span *ngIf="project.updatedAt"> on {{ project.updatedAt | date:'mediumDate' }}</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal-footer">
+      <div class="footer-left">
+        <button type="button" class="btn btn-secondary btn-sm" (click)="onOpenAttachments()">
+          <i class="fa-solid fa-paperclip"></i> Files ({{ attachmentCount }})
+        </button>
+      </div>
+      <div class="footer-right">
+        <button type="button" class="btn btn-secondary" (click)="onClose()">Close</button>
+        <button type="button" class="btn btn-primary" (click)="onEdit()">
+          <i class="fa-solid fa-pen-to-square"></i> Edit Project
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

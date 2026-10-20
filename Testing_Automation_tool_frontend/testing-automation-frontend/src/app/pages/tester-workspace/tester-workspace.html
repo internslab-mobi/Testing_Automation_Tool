@@ -9,6 +9,8 @@
     (openFeatureAttachments)="openAttachments('feature', $event.featureId, 'Feature Documentation: ' + $event.featureName)"
     (refreshOverview)="loadAllOverviewData()"
     (createProject)="openCreateProjectModal()"
+    (viewProjectDetails)="openProjectDetailsModal($event)"
+    (editProject)="openEditProject($event)"
     (logout)="performLogout()"></app-workspace-navbar>
 
   <div class="workspace-body">
@@ -17,7 +19,7 @@
       [availableRegions]="availableRegions" [selectedRegion]="selectedRegion" [projects]="projects"
       [activeProject]="activeProject" [features]="features" [activeFeature]="activeFeature"
       [projectAttachmentCount]="projectAttachmentCount" [featureAttachmentCount]="featureAttachmentCount"
-      (regionChange)="onRegionChange($event)" (selectProject)="selectProject($event)"
+      (regionChange)="onRegionChange($event)" (selectProject)="selectProject($event, true)"
       (createProject)="openCreateProjectModal()" (editProject)="openEditProject($event)"
       (openProjectAttachments)="openAttachments('project', $event.projectId, 'Project Attachments: ' + $event.projectName)"
       (selectFeature)="selectFeature($event)" (createFeature)="openCreateFeatureModal()"
@@ -35,8 +37,27 @@
         <span>Show Sidebar</span>
       </button>
 
-      <!-- Quick Metrics Ribbon -->
-      <div class="metrics-ribbon" *ngIf="activeFeature">
+      <!-- INACTIVE PROJECT BARRIER (If project is INACTIVE, contents cannot be accessible) -->
+      <div class="project-inactive-barrier" *ngIf="activeProject?.status === 'INACTIVE'">
+        <div class="barrier-icon-wrap">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div class="barrier-content">
+          <h3>Project Contents Locked</h3>
+          <p>
+            The project <strong>{{ activeProject?.projectName }}</strong> is currently set to <strong>INACTIVE</strong>.
+            Features, test suites, executions, and defect logging cannot be accessed or modified while inactive.
+          </p>
+          <div class="barrier-actions">
+            <button class="btn btn-primary btn-sm" (click)="openEditProject(activeProject!)">
+              <i class="fa-solid fa-pen-to-square"></i> Edit Project Status
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics Ribbon (Only accessible when Project is ACTIVE) -->
+      <div class="metrics-ribbon" *ngIf="activeFeature && activeProject?.status !== 'INACTIVE'">
         <div class="metric-card total-metric"
           (click)="activeSubTab = 'testcases'; tcFilterStatus = 'ALL'; onTestCaseFilterChange()">
           <div class="metric-icon"><i class="fa-solid fa-vial"></i></div>
@@ -962,7 +983,17 @@
     (toggleRead)="handleToggleNotificationRead($event)" (dismiss)="handleDismissNotification($event)"
     (markAllRead)="handleMarkAllNotificationsRead()"></app-notifications-modal>
 
-  <!-- MODAL: PROJECT CREATION (WITH COUNTRIESNOW API REGION SELECTOR & COMMENTS) -->
+  <!-- SEPARATE COMPONENT MODAL: PROJECT DETAILS -->
+  <app-project-detail-modal
+    [isOpen]="isProjectDetailsModalOpen"
+    [project]="activeProject"
+    [attachmentCount]="projectAttachmentCount"
+    (close)="isProjectDetailsModalOpen = false"
+    (edit)="openEditProject($event)"
+    (openAttachments)="openAttachments('project', $event.projectId, 'Project Attachments: ' + $event.projectName); isProjectDetailsModalOpen = false">
+  </app-project-detail-modal>
+
+  <!-- MODAL: PROJECT CREATION -->
   <div class="modal-overlay" *ngIf="isProjectCreateModalOpen">
     <div class="modal-card">
       <div class="modal-header">
@@ -977,19 +1008,76 @@
             placeholder="e.g. Core Banking Platform">
         </div>
 
-        <!-- Dynamic Region Selector from countriesnow.space API -->
+        <!-- Module Dropdown with Add Option -->
         <div class="form-group">
-          <label>
-            <i class="fa-solid fa-earth-americas text-emerald"></i>
-            Region / Country (Fetched from Countries API) *
-          </label>
-          <input type="text" class="form-control" style="margin-bottom: 6px; font-size: 11px;"
-            placeholder="Search country..." [(ngModel)]="countrySearchFilter">
-          <select class="form-control" [(ngModel)]="newProjectForm.region">
-            <option *ngFor="let country of filteredCountries" [value]="country">
-              {{ country }}
-            </option>
+          <div class="label-row-with-action">
+            <label><i class="fa-solid fa-layer-group text-emerald"></i> Module *</label>
+            <button type="button" class="btn-link-action" *ngIf="!isAddingNewModule" (click)="isAddingNewModule = true; newModuleNameInput = ''">
+              <i class="fa-solid fa-plus"></i> Add Module
+            </button>
+          </div>
+          <select class="form-control" [ngModel]="selectedModuleId" (ngModelChange)="onModuleSelectChange($event)" *ngIf="!isAddingNewModule">
+            <option [ngValue]="null" disabled>-- Select Module --</option>
+            <option *ngFor="let m of dbModules" [ngValue]="m.moduleId">{{ m.moduleName }}</option>
+            <option [ngValue]="-1">+ Add New Module...</option>
           </select>
+          <div class="inline-create-row" *ngIf="isAddingNewModule">
+            <input type="text" class="form-control" placeholder="Enter new module name..." [(ngModel)]="newModuleNameInput" (keydown.enter)="saveNewModuleInline()">
+            <button type="button" class="btn btn-sm btn-primary" (click)="saveNewModuleInline()">
+              <i class="fa-solid fa-check"></i> Add
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" (click)="isAddingNewModule = false">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Sub-Module Dropdown with Add Option -->
+        <div class="form-group">
+          <div class="label-row-with-action">
+            <label><i class="fa-solid fa-cubes text-emerald"></i> Sub-Module *</label>
+            <button type="button" class="btn-link-action" *ngIf="!isAddingNewSubModule && selectedModuleId" (click)="isAddingNewSubModule = true; newSubModuleNameInput = ''">
+              <i class="fa-solid fa-plus"></i> Add Sub-Module
+            </button>
+          </div>
+          <select class="form-control" [ngModel]="selectedSubModuleId" (ngModelChange)="onSubModuleSelectChange($event)" *ngIf="!isAddingNewSubModule" [disabled]="!selectedModuleId">
+            <option [ngValue]="null" disabled>{{ selectedModuleId ? '-- Select Sub-Module --' : '-- Select Module First --' }}</option>
+            <option *ngFor="let sm of dbSubModules" [ngValue]="sm.subModuleId">{{ sm.subModuleName }}</option>
+            <option [ngValue]="-1" *ngIf="selectedModuleId">+ Add New Sub-Module...</option>
+          </select>
+          <div class="inline-create-row" *ngIf="isAddingNewSubModule">
+            <input type="text" class="form-control" placeholder="Enter new sub-module name..." [(ngModel)]="newSubModuleNameInput" (keydown.enter)="saveNewSubModuleInline()">
+            <button type="button" class="btn btn-sm btn-primary" (click)="saveNewSubModuleInline()">
+              <i class="fa-solid fa-check"></i> Add
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" (click)="isAddingNewSubModule = false">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Region Dropdown from DB with Add Option -->
+        <div class="form-group">
+          <div class="label-row-with-action">
+            <label><i class="fa-solid fa-location-dot text-emerald"></i> Region / Location (from DB) *</label>
+            <button type="button" class="btn-link-action" *ngIf="!isAddingNewRegion" (click)="isAddingNewRegion = true; newRegionNameInput = ''">
+              <i class="fa-solid fa-plus"></i> Add Region
+            </button>
+          </div>
+          <select class="form-control" [ngModel]="selectedRegionId" (ngModelChange)="onRegionSelectChange($event)" *ngIf="!isAddingNewRegion">
+            <option [ngValue]="null" disabled>-- Select Region --</option>
+            <option *ngFor="let r of dbRegions" [ngValue]="r.countryId">{{ r.countryName }}</option>
+            <option [ngValue]="-1">+ Add New Region...</option>
+          </select>
+          <div class="inline-create-row" *ngIf="isAddingNewRegion">
+            <input type="text" class="form-control" placeholder="Enter new region name..." [(ngModel)]="newRegionNameInput" (keydown.enter)="saveNewRegionInline()">
+            <button type="button" class="btn btn-sm btn-primary" (click)="saveNewRegionInline()">
+              <i class="fa-solid fa-check"></i> Add
+            </button>
+            <button type="button" class="btn btn-sm btn-secondary" (click)="isAddingNewRegion = false">
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
         </div>
 
         <div class="form-group">
@@ -1029,11 +1117,39 @@
           <input type="text" class="form-control" [(ngModel)]="editProjectForm.projectName">
         </div>
 
+        <!-- Project Status Toggle (Active vs Inactive) -->
         <div class="form-group">
-          <label>Region / Country</label>
-          <select class="form-control" [(ngModel)]="editProjectForm.region">
-            <option *ngFor="let country of countryList" [value]="country">{{ country }}</option>
+          <label><i class="fa-solid fa-toggle-on text-emerald"></i> Status *</label>
+          <select class="form-control" [(ngModel)]="editProjectForm.status">
+            <option value="ACTIVE">ACTIVE (Contents Accessible)</option>
+            <option value="INACTIVE">INACTIVE (Contents Locked)</option>
           </select>
+        </div>
+
+        <!-- Region Dropdown -->
+        <div class="form-group">
+          <label><i class="fa-solid fa-location-dot text-emerald"></i> Region / Location</label>
+          <select class="form-control" [(ngModel)]="editSelectedRegionId">
+            <option *ngFor="let r of dbRegions" [ngValue]="r.countryId">{{ r.countryName }}</option>
+          </select>
+        </div>
+
+        <!-- Module & SubModule Grid -->
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label><i class="fa-solid fa-layer-group text-emerald"></i> Module</label>
+            <select class="form-control" [(ngModel)]="editSelectedModuleId" (ngModelChange)="loadSubModulesForModule($event)">
+              <option *ngFor="let m of dbModules" [ngValue]="m.moduleId">{{ m.moduleName }}</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label><i class="fa-solid fa-cubes text-emerald"></i> Sub-Module</label>
+            <select class="form-control" [(ngModel)]="editProjectForm.subModule" *ngIf="dbSubModules.length > 0">
+              <option *ngFor="let sm of dbSubModules" [value]="sm.subModuleName">{{ sm.subModuleName }}</option>
+            </select>
+            <input type="text" class="form-control" [(ngModel)]="editProjectForm.subModule" *ngIf="dbSubModules.length === 0"
+              placeholder="e.g. ID Portal">
+          </div>
         </div>
 
         <div class="form-group">

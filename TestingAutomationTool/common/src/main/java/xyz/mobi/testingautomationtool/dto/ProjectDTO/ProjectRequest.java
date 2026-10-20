@@ -1,6 +1,7 @@
 package xyz.mobi.testingautomationtool.dto.ProjectDTO;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -19,12 +20,13 @@ public class ProjectRequest {
 
     private String description;
 
-    @NotBlank(message = "Region is required")
-    @Size(max = 255, message = "Region must not exceed 255 characters")
+    @NotNull(message = "Region is required")
     private Integer region;
 
+    @NotNull(message = "Module is required")
     private Integer module;
 
+    @NotNull(message = "SubModule is required")
     private Integer subModule;
 
     private String comments;

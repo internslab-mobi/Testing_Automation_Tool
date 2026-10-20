@@ -15,7 +15,7 @@ export class SidebarComponent {
 
   @Input() isOpen = false;
   @Input() availableRegions: string[] = [];
-  @Input() selectedRegion = 'ALL';
+  @Input() selectedRegion = 'India';
   @Input() projects: Project[] = [];
   @Input() activeProject: Project | null = null;
   @Input() features: Feature[] = [];
@@ -49,8 +49,14 @@ export class SidebarComponent {
   get filteredProjects(): Project[] {
     const s = this.projectSearch.toLowerCase().trim();
     return this.projects.filter(p => {
-      const matchRegion = (this.selectedRegion === 'ALL') || !p.region || p.region === this.selectedRegion;
-      const matchSearch = !s || p.projectName.toLowerCase().includes(s) || (p.region && p.region.toLowerCase().includes(s));
+      const matchRegion = (this.selectedRegion === 'ALL') || !p.region || p.region.toLowerCase() === this.selectedRegion.toLowerCase();
+      const matchSearch = !s ||
+        p.projectName.toLowerCase().includes(s) ||
+        (p.region && p.region.toLowerCase().includes(s)) ||
+        (p.module && p.module.toLowerCase().includes(s)) ||
+        (p.subModule && p.subModule.toLowerCase().includes(s)) ||
+        (p.comments && p.comments.toLowerCase().includes(s)) ||
+        (p.description && p.description.toLowerCase().includes(s));
       return matchRegion && matchSearch;
     });
   }

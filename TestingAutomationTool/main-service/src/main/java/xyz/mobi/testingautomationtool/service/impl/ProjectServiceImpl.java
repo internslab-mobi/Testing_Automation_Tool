@@ -587,4 +587,22 @@ public class ProjectServiceImpl implements ProjectService {
 
         return regionRepository.save(region);
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Module> getAllModules() {
+        return moduleRepository.findAll();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<SubModule> getSubModulesByModuleId(Integer moduleId) {
+        return subModuleRepository.findByModule_ModuleId(moduleId);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<Region> getAllRegions() {
+        return regionRepository.findAll();
+    }
 }

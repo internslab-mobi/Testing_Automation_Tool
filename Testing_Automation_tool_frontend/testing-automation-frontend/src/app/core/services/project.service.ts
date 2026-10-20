@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, catchError, shareReplay } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { Project, ProjectCreateRequest, AttachmentItem } from '../../model/workspace/workspace.model';
+import { Project, ProjectCreateRequest, AttachmentItem, ModuleItem, SubModuleItem, RegionItem } from '../../model/workspace/workspace.model';
 
 @Injectable({
   providedIn: 'root'
@@ -11,7 +11,6 @@ import { Project, ProjectCreateRequest, AttachmentItem } from '../../model/works
 export class ProjectService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiGatewayUrl;
-  private cachedCountries$?: Observable<string[]>;
 
   getProjects(): Observable<Project[]> {
     return this.http.get<any>(`${this.baseUrl}/project`).pipe(
@@ -19,14 +18,26 @@ export class ProjectService {
         const rawList = res?.data || res || [];
         return rawList.map((item: any) => {
           const p = item.project || item;
+          const audit = item.audit || {};
           return {
             projectId: p.projectId,
             projectName: p.projectName,
             region: (p.region && p.region.trim()) ? p.region.trim() : 'DEFAULT',
+            module: p.module || '',
+            subModule: p.subModule || '',
             description: p.description || '',
             comments: p.comments || '',
             status: p.status || 'ACTIVE',
-            createdDate: p.createdDate
+            isActive: p.isActive !== false,
+            isDeleted: !!p.isDeleted,
+            version: p.version || 0,
+            createdBy: audit.createdByName || (audit.createdBy ? `User #${audit.createdBy}` : ''),
+            createdByName: audit.createdByName || '',
+            createdDate: audit.createdAt || p.createdDate || p.createdAt || '',
+            createdAt: audit.createdAt || p.createdAt || '',
+            updatedBy: audit.updatedByName || '',
+            updatedByName: audit.updatedByName || '',
+            updatedAt: audit.updatedAt || p.updatedAt || ''
           } as Project;
         });
       })
@@ -41,6 +52,54 @@ export class ProjectService {
 
   updateProject(projectId: number, req: Partial<ProjectCreateRequest>): Observable<Project> {
     return this.http.put<any>(`${this.baseUrl}/project/${projectId}`, req).pipe(
+      map(res => res?.data || res)
+    );
+  }
+
+  getModules(): Observable<ModuleItem[]> {
+    return this.http.get<any>(`${this.baseUrl}/project/modules`).pipe(
+      map(res => {
+        const raw = res?.data || res || [];
+        return Array.isArray(raw) ? raw : [];
+      }),
+      catchError(() => of([]))
+    );
+  }
+
+  createModule(moduleName: string): Observable<ModuleItem> {
+    return this.http.post<any>(`${this.baseUrl}/project/module`, { moduleName }).pipe(
+      map(res => res?.data || res)
+    );
+  }
+
+  getSubModules(moduleId: number): Observable<SubModuleItem[]> {
+    return this.http.get<any>(`${this.baseUrl}/project/modules/${moduleId}/sub-modules`).pipe(
+      map(res => {
+        const raw = res?.data || res || [];
+        return Array.isArray(raw) ? raw : [];
+      }),
+      catchError(() => of([]))
+    );
+  }
+
+  createSubModule(moduleId: number, subModuleName: string): Observable<SubModuleItem> {
+    return this.http.post<any>(`${this.baseUrl}/project/${moduleId}/sub-modules`, { subModuleName }).pipe(
+      map(res => res?.data || res)
+    );
+  }
+
+  getRegions(): Observable<RegionItem[]> {
+    return this.http.get<any>(`${this.baseUrl}/project/regions`).pipe(
+      map(res => {
+        const raw = res?.data || res || [];
+        return Array.isArray(raw) ? raw : [];
+      }),
+      catchError(() => of([]))
+    );
+  }
+
+  createRegion(regionName: string): Observable<RegionItem> {
+    return this.http.post<any>(`${this.baseUrl}/project/region`, { regionName }).pipe(
       map(res => res?.data || res)
     );
   }
@@ -86,45 +145,5 @@ export class ProjectService {
     return this.http.get(`${this.baseUrl}/attachments/${attachmentId}/download`, {
       responseType: 'blob'
     });
-  }
-
-  getCountryList(): Observable<string[]> {
-    if (this.cachedCountries$) {
-      return this.cachedCountries$;
-    }
-    this.cachedCountries$ = this.http.get<any>('https://countriesnow.space/api/v0.1/countries').pipe(
-      map(res => {
-        const data = res?.data || [];
-        if (Array.isArray(data)) {
-          const list = data
-            .map((item: any) => typeof item === 'string' ? item : item?.country)
-            .filter((name: string) => !!name && name.trim().length > 0)
-            .sort((a: string, b: string) => a.localeCompare(b));
-          if (list.length > 0) return list;
-        }
-        return this.getDefaultCountryList();
-      }),
-      catchError(() => of(this.getDefaultCountryList())),
-      shareReplay(1)
-    );
-    return this.cachedCountries$;
-  }
-
-  private getDefaultCountryList(): string[] {
-    return [
-      'Afghanistan', 'Albania', 'Algeria', 'Andorra', 'Angola', 'Argentina', 'Armenia', 'Australia', 'Austria',
-      'Azerbaijan', 'Bahamas', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Belize', 'Benin',
-      'Bhutan', 'Bolivia', 'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei', 'Bulgaria', 'Cambodia',
-      'Cameroon', 'Canada', 'Chile', 'China', 'Colombia', 'Costa Rica', 'Croatia', 'Cuba', 'Cyprus',
-      'Czech Republic', 'Denmark', 'Dominican Republic', 'Ecuador', 'Egypt', 'Estonia', 'Ethiopia', 'Fiji',
-      'Finland', 'France', 'Georgia', 'Germany', 'Ghana', 'Greece', 'Guatemala', 'Honduras', 'Hong Kong',
-      'Hungary', 'Iceland', 'India', 'Indonesia', 'Iran', 'Iraq', 'Ireland', 'Israel', 'Italy', 'Jamaica',
-      'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Kuwait', 'Latvia', 'Lebanon', 'Lithuania', 'Luxembourg',
-      'Malaysia', 'Maldives', 'Malta', 'Mexico', 'Monaco', 'Morocco', 'Nepal', 'Netherlands', 'New Zealand',
-      'Nigeria', 'Norway', 'Oman', 'Pakistan', 'Panama', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Qatar',
-      'Romania', 'Saudi Arabia', 'Singapore', 'South Africa', 'South Korea', 'Spain', 'Sri Lanka', 'Sweden',
-      'Switzerland', 'Taiwan', 'Thailand', 'Turkey', 'Ukraine', 'United Arab Emirates', 'United Kingdom',
-      'United States', 'Uruguay', 'Uzbekistan', 'Vietnam', 'Zimbabwe'
-    ];
   }
 }

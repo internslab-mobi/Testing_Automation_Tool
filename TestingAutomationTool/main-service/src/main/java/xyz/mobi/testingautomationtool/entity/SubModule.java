@@ -31,5 +31,6 @@ public class SubModule {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "module_id", nullable = false)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private Module module;
 }

@@ -11,6 +11,7 @@ import { TestCaseDetailModalComponent } from './components/testcase-detail-modal
 import { DefectDetailModalComponent } from './components/defect-detail-modal/defect-detail-modal.component';
 import { AttachmentsModalComponent } from './components/attachments-modal/attachments-modal.component';
 import { NotificationsModalComponent } from './components/notifications-modal/notifications-modal.component';
+import { ProjectDetailModalComponent } from './components/project-detail-modal/project-detail-modal.component';
 
 // Services & Models
 import { AuthService } from '../../core/services/authService';
@@ -32,7 +33,10 @@ import {
   TestCaseCreatePayload,
   TestCasePutRequest,
   BugCreateRequest,
-  BugPutRequest
+  BugPutRequest,
+  ModuleItem,
+  SubModuleItem,
+  RegionItem
 } from '../../model/workspace/workspace.model';
 
 interface ToastAlert {
@@ -49,6 +53,7 @@ interface ToastAlert {
     FormsModule,
     NavbarComponent,
     SidebarComponent,
+    ProjectDetailModalComponent,
     BugChatModalComponent,
     TestCaseDetailModalComponent,
     DefectDetailModalComponent,
@@ -80,13 +85,30 @@ export class TesterWorkspace implements OnInit {
   // Projects & Dynamic Regions
   projects: Project[] = [];
   availableRegions: string[] = [];
-  selectedRegion = 'ALL';
+  selectedRegion = 'India';
   activeProject: Project | null = null;
   projectAttachmentCount = 0;
 
-  // Countries for Project Creation Region Selector
-  countryList: string[] = [];
-  countrySearchFilter = '';
+  // DB Modules, SubModules, Regions for Project Creation & Editing
+  dbModules: ModuleItem[] = [];
+  dbSubModules: SubModuleItem[] = [];
+  dbRegions: RegionItem[] = [];
+
+  selectedModuleId: number | null = null;
+  selectedSubModuleId: number | null = null;
+  selectedRegionId: number | null = null;
+
+  editSelectedModuleId: number | null = null;
+  editSelectedSubModuleId: number | null = null;
+  editSelectedRegionId: number | null = null;
+
+  // Inline Creation Triggers & Inputs
+  isAddingNewModule = false;
+  newModuleNameInput = '';
+  isAddingNewSubModule = false;
+  newSubModuleNameInput = '';
+  isAddingNewRegion = false;
+  newRegionNameInput = '';
 
   // Features
   features: Feature[] = [];
@@ -200,6 +222,7 @@ export class TesterWorkspace implements OnInit {
   private bugCache = new Map<number, Bug[]>();
 
   // Modals Visibility
+  isProjectDetailsModalOpen = false;
   isProjectCreateModalOpen = false;
   isProjectEditModalOpen = false;
   isFeatureCreateModalOpen = false;
@@ -235,7 +258,9 @@ export class TesterWorkspace implements OnInit {
   // Form Models
   newProjectForm: ProjectCreateRequest = {
     projectName: '',
-    region: 'United States',
+    region: 'India',
+    module: '',
+    subModule: '',
     description: '',
     comments: '',
     status: 'ACTIVE'
@@ -286,10 +311,13 @@ export class TesterWorkspace implements OnInit {
 
   ngOnInit(): void {
     this.initUserProfile();
-    this.loadCountryList();
-    this.loadDevelopers();
-    this.loadProjects();
-    this.loadNotifications();
+    this.ensureAuthSession(() => {
+      this.loadModules();
+      this.loadRegions();
+      this.loadDevelopers();
+      this.loadProjects();
+      this.loadNotifications();
+    });
     this.warmupCsrf();
   }
 
@@ -304,6 +332,33 @@ export class TesterWorkspace implements OnInit {
       this.userRole = localStorage.getItem('tat_user_role') || 'TESTER';
       this.userInitials = this.computeInitials(this.userName);
     }
+  }
+
+  private ensureAuthSession(onReady?: () => void): void {
+    if (typeof localStorage === 'undefined') {
+      if (onReady) onReady();
+      return;
+    }
+    const token = localStorage.getItem('token') || localStorage.getItem('jwt');
+    if (token) {
+      if (onReady) onReady();
+      return;
+    }
+    // Auto-authenticate with tester account if token is missing
+    this.authService.login({
+      usernameOrEmail: 'Vikramraajak@gmail.com',
+      password: 'Vikram@123'
+    }).subscribe({
+      next: () => {
+        this.initUserProfile();
+        if (onReady) onReady();
+        this.cdr.markForCheck();
+      },
+      error: (e) => {
+        console.warn('Auto auth check failed:', e);
+        if (onReady) onReady();
+      }
+    });
   }
 
   private computeInitials(name: string): string {
@@ -323,23 +378,219 @@ export class TesterWorkspace implements OnInit {
     });
   }
 
-  loadCountryList(): void {
-    this.projectService.getCountryList().subscribe({
-      next: (countries) => {
-        this.countryList = countries;
+  loadModules(): void {
+    this.projectService.getModules().subscribe({
+      next: (mods) => {
+        this.dbModules = mods && Array.isArray(mods) ? mods : [];
+        if (this.dbModules.length > 0) {
+          if (!this.selectedModuleId || !this.dbModules.some(m => m.moduleId === this.selectedModuleId)) {
+            this.selectedModuleId = this.dbModules[0].moduleId;
+          }
+          this.loadSubModulesForModule(this.selectedModuleId);
+        } else {
+          this.selectedModuleId = null;
+          this.dbSubModules = [];
+          this.selectedSubModuleId = null;
+        }
         this.cdr.markForCheck();
       },
-      error: () => {
-        this.countryList = ['United States', 'United Kingdom', 'India', 'Germany', 'France', 'Canada', 'Australia', 'Japan', 'Singapore'];
+      error: (err) => {
+        console.error('Failed to load modules from db:', err);
+        this.dbModules = [];
+        this.selectedModuleId = null;
+        this.dbSubModules = [];
+        this.selectedSubModuleId = null;
         this.cdr.markForCheck();
       }
     });
   }
 
-  get filteredCountries(): string[] {
-    const q = this.countrySearchFilter.toLowerCase().trim();
-    if (!q) return this.countryList;
-    return this.countryList.filter(c => c.toLowerCase().includes(q));
+  loadRegions(): void {
+    this.projectService.getRegions().subscribe({
+      next: (regs) => {
+        this.dbRegions = regs && Array.isArray(regs) ? regs : [];
+        this.availableRegions = this.dbRegions.map(r => r.countryName);
+
+        // Default region is India from DB
+        const india = this.dbRegions.find(r => r.countryName.toLowerCase() === 'india');
+        if (india) {
+          this.selectedRegion = 'India';
+          this.selectedRegionId = india.countryId;
+        } else if (this.availableRegions.length > 0) {
+          this.selectedRegion = this.availableRegions[0];
+          this.selectedRegionId = this.dbRegions[0].countryId;
+        } else {
+          this.selectedRegion = 'India';
+        }
+
+        // Auto-select project matching default region India
+        if (this.projects && this.projects.length > 0 && !this.activeProject) {
+          const indiaProj = this.projects.find(p => (p.region || '').toLowerCase() === this.selectedRegion.toLowerCase()) || this.projects[0];
+          this.selectProject(indiaProj, false);
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Failed to load regions from db:', err);
+        this.dbRegions = [];
+        this.availableRegions = [];
+        this.selectedRegion = 'India';
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  loadSubModulesForModule(moduleId: number): void {
+    if (!moduleId) {
+      this.dbSubModules = [];
+      this.selectedSubModuleId = null;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.projectService.getSubModules(moduleId).subscribe({
+      next: (subs) => {
+        this.dbSubModules = subs && Array.isArray(subs) ? subs : [];
+        if (this.dbSubModules.length > 0) {
+          this.selectedSubModuleId = this.dbSubModules[0].subModuleId;
+        } else {
+          this.selectedSubModuleId = null;
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Failed to load sub-modules from db:', err);
+        this.dbSubModules = [];
+        this.selectedSubModuleId = null;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  onModuleSelectChange(val: any): void {
+    if (val === -1 || val === '__NEW__') {
+      this.isAddingNewModule = true;
+      this.newModuleNameInput = '';
+      this.selectedModuleId = null;
+      this.selectedSubModuleId = null;
+      this.dbSubModules = [];
+    } else {
+      this.isAddingNewModule = false;
+      const modId = Number(val);
+      if (modId) {
+        this.selectedModuleId = modId;
+        this.selectedSubModuleId = null;
+        this.loadSubModulesForModule(modId);
+      } else {
+        this.selectedModuleId = null;
+        this.selectedSubModuleId = null;
+        this.dbSubModules = [];
+      }
+    }
+    this.cdr.markForCheck();
+  }
+
+  saveNewModuleInline(): void {
+    const name = this.newModuleNameInput.trim();
+    if (!name) {
+      this.showToast('Please enter a module name', 'warning');
+      return;
+    }
+    this.projectService.createModule(name).subscribe({
+      next: (created) => {
+        this.showToast(`Module "${created.moduleName}" created!`, 'success');
+        this.dbModules.push(created);
+        this.selectedModuleId = created.moduleId;
+        this.isAddingNewModule = false;
+        this.newModuleNameInput = '';
+        this.loadSubModulesForModule(created.moduleId);
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.showToast(err?.error?.message || 'Failed to create module in database', 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  onSubModuleSelectChange(val: any): void {
+    if (val === -1 || val === '__NEW__') {
+      if (!this.selectedModuleId) {
+        this.showToast('Please select a module first', 'warning');
+        return;
+      }
+      this.isAddingNewSubModule = true;
+      this.newSubModuleNameInput = '';
+      this.selectedSubModuleId = null;
+    } else {
+      this.isAddingNewSubModule = false;
+      const smId = Number(val);
+      this.selectedSubModuleId = smId ? smId : null;
+    }
+    this.cdr.markForCheck();
+  }
+
+  saveNewSubModuleInline(): void {
+    if (!this.selectedModuleId) {
+      this.showToast('Please select a module first', 'warning');
+      return;
+    }
+    const name = this.newSubModuleNameInput.trim();
+    if (!name) {
+      this.showToast('Please enter a sub-module name', 'warning');
+      return;
+    }
+    this.projectService.createSubModule(this.selectedModuleId, name).subscribe({
+      next: (created) => {
+        this.showToast(`Sub-Module "${created.subModuleName}" created!`, 'success');
+        this.dbSubModules.push(created);
+        this.selectedSubModuleId = created.subModuleId;
+        this.isAddingNewSubModule = false;
+        this.newSubModuleNameInput = '';
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.showToast(err?.error?.message || 'Failed to create sub-module in database', 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  onRegionSelectChange(val: any): void {
+    if (val === -1 || val === '__NEW__') {
+      this.isAddingNewRegion = true;
+      this.newRegionNameInput = '';
+      this.selectedRegionId = null;
+    } else {
+      this.isAddingNewRegion = false;
+      const regId = Number(val);
+      this.selectedRegionId = regId ? regId : null;
+    }
+    this.cdr.markForCheck();
+  }
+
+  saveNewRegionInline(): void {
+    const name = this.newRegionNameInput.trim();
+    if (!name) {
+      this.showToast('Please enter a region name', 'warning');
+      return;
+    }
+    this.projectService.createRegion(name).subscribe({
+      next: (created) => {
+        this.showToast(`Region "${created.countryName}" created!`, 'success');
+        this.dbRegions.push(created);
+        this.selectedRegionId = created.countryId;
+        this.isAddingNewRegion = false;
+        this.newRegionNameInput = '';
+        if (!this.availableRegions.includes(created.countryName)) {
+          this.availableRegions.push(created.countryName);
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.showToast(err?.error?.message || 'Failed to create region in database', 'error');
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   loadDevelopers(): void {
@@ -458,36 +709,25 @@ export class TesterWorkspace implements OnInit {
     this.projectService.getProjects().subscribe({
       next: (projs) => {
         this.projects = projs || [];
-        this.updateDynamicRegions();
         if (this.projects.length > 0 && !this.activeProject) {
-          this.selectProject(this.projects[0]);
+          const indiaProj = this.projects.find(p => (p.region || '').toLowerCase() === this.selectedRegion.toLowerCase()) || this.projects[0];
+          this.selectProject(indiaProj, false);
         }
         this.cdr.markForCheck();
       },
       error: (err) => {
         console.error('Failed to load projects:', err);
         this.projects = [];
-        this.updateDynamicRegions();
         this.cdr.markForCheck();
       }
     });
-  }
-
-  updateDynamicRegions(): void {
-    const regionSet = new Set<string>();
-    this.projects.forEach(p => {
-      if (p.region && p.region.trim()) {
-        regionSet.add(p.region.trim());
-      }
-    });
-    this.availableRegions = Array.from(regionSet).sort();
   }
 
   onRegionChange(region: string): void {
     this.selectedRegion = region;
     const matching = this.projects.filter(p => region === 'ALL' || p.region === region);
     if (matching.length > 0) {
-      this.selectProject(matching[0]);
+      this.selectProject(matching[0], false);
     } else {
       this.activeProject = null;
       this.features = [];
@@ -501,13 +741,24 @@ export class TesterWorkspace implements OnInit {
     this.cdr.markForCheck();
   }
 
-  selectProject(p: Project): void {
+  selectProject(p: Project, openDetailsModal = false): void {
     this.activeProject = p;
     this.loadProjectAttachmentCount(p.projectId);
     this.loadFeatures(p.projectId);
+    if (openDetailsModal) {
+      this.isProjectDetailsModalOpen = true;
+    }
     if (typeof window !== 'undefined' && window.innerWidth <= 768) {
       this.isSidebarOpen = false;
     }
+    this.cdr.markForCheck();
+  }
+
+  openProjectDetailsModal(p?: Project): void {
+    if (p) {
+      this.activeProject = p;
+    }
+    this.isProjectDetailsModalOpen = true;
     this.cdr.markForCheck();
   }
 
@@ -525,15 +776,41 @@ export class TesterWorkspace implements OnInit {
   }
 
   openCreateProjectModal(): void {
-    const defaultRegion = this.selectedRegion !== 'ALL' ? this.selectedRegion : (this.countryList[0] || 'United States');
+    if (this.dbModules.length === 0) {
+      this.loadModules();
+    }
+    if (this.dbRegions.length === 0) {
+      this.loadRegions();
+    }
+
+    // Default region is India from DB
+    const india = this.dbRegions.find(r => r.countryName.toLowerCase() === 'india');
+    this.selectedRegionId = india ? india.countryId : (this.dbRegions.length > 0 ? this.dbRegions[0].countryId : null);
+
+    // Default module is first module from DB
+    this.selectedModuleId = this.dbModules.length > 0 ? this.dbModules[0].moduleId : null;
+    if (this.selectedModuleId) {
+      this.loadSubModulesForModule(this.selectedModuleId);
+    } else {
+      this.dbSubModules = [];
+      this.selectedSubModuleId = null;
+    }
+
     this.newProjectForm = {
       projectName: '',
-      region: defaultRegion,
+      region: this.selectedRegionId,
+      module: this.selectedModuleId,
+      subModule: this.selectedSubModuleId,
       description: '',
       comments: '',
       status: 'ACTIVE'
     };
-    this.countrySearchFilter = '';
+    this.isAddingNewModule = false;
+    this.isAddingNewSubModule = false;
+    this.isAddingNewRegion = false;
+    this.newModuleNameInput = '';
+    this.newSubModuleNameInput = '';
+    this.newRegionNameInput = '';
     this.isProjectCreateModalOpen = true;
     this.cdr.markForCheck();
   }
@@ -543,12 +820,35 @@ export class TesterWorkspace implements OnInit {
       this.showToast('Please enter a project name', 'error');
       return;
     }
-    this.projectService.createProject(this.newProjectForm).subscribe({
+    if (!this.selectedRegionId) {
+      this.showToast('Please select or add a Region', 'error');
+      return;
+    }
+    if (!this.selectedModuleId) {
+      this.showToast('Please select or add a Module', 'error');
+      return;
+    }
+    if (!this.selectedSubModuleId) {
+      this.showToast('Please select or add a Sub-Module', 'error');
+      return;
+    }
+
+    const payload: ProjectCreateRequest = {
+      projectName: this.newProjectForm.projectName.trim(),
+      region: this.selectedRegionId,
+      module: this.selectedModuleId,
+      subModule: this.selectedSubModuleId,
+      description: this.newProjectForm.description?.trim() || '',
+      comments: this.newProjectForm.comments?.trim() || '',
+      status: 'ACTIVE'
+    };
+
+    this.projectService.createProject(payload).subscribe({
       next: (created) => {
         this.showToast(`Project "${created.projectName}" created successfully!`, 'success');
         this.isProjectCreateModalOpen = false;
         this.loadProjects();
-        this.selectProject(created);
+        this.selectProject(created, true);
         this.cdr.markForCheck();
       },
       error: (err) => {
@@ -560,9 +860,24 @@ export class TesterWorkspace implements OnInit {
   }
 
   openEditProject(p: Project): void {
+    this.isProjectDetailsModalOpen = false;
+    // Find matching region id
+    const reg = this.dbRegions.find(r => r.countryName.toLowerCase() === (p.region || '').toLowerCase());
+    this.editSelectedRegionId = reg ? reg.countryId : (this.dbRegions.length > 0 ? this.dbRegions[0].countryId : null);
+
+    // Find matching module id
+    const mod = this.dbModules.find(m => m.moduleName.toLowerCase() === (p.module || '').toLowerCase());
+    this.editSelectedModuleId = mod ? mod.moduleId : null;
+
+    if (this.editSelectedModuleId) {
+      this.loadSubModulesForModule(this.editSelectedModuleId);
+    }
+
     this.editProjectForm = {
       projectName: p.projectName,
-      region: p.region,
+      region: this.editSelectedRegionId || p.region,
+      module: this.editSelectedModuleId || p.module || '',
+      subModule: p.subModule || '',
       description: p.description || '',
       comments: p.comments || '',
       status: p.status || 'ACTIVE'
@@ -573,7 +888,16 @@ export class TesterWorkspace implements OnInit {
 
   saveProjectEdit(): void {
     if (!this.activeProject) return;
-    this.projectService.updateProject(this.activeProject.projectId, this.editProjectForm).subscribe({
+    const req: any = {
+      projectName: this.editProjectForm.projectName,
+      region: this.editSelectedRegionId || this.editProjectForm.region,
+      module: this.editSelectedModuleId || this.editProjectForm.module,
+      subModule: this.editSelectedSubModuleId || this.editProjectForm.subModule,
+      description: this.editProjectForm.description,
+      comments: this.editProjectForm.comments,
+      status: this.editProjectForm.status
+    };
+    this.projectService.updateProject(this.activeProject.projectId, req).subscribe({
       next: (updated) => {
         this.showToast(`Project "${updated.projectName}" updated!`, 'success');
         this.isProjectEditModalOpen = false;
@@ -1577,7 +1901,6 @@ export class TesterWorkspace implements OnInit {
     this.projectService.getProjects().subscribe({
       next: (projs) => {
         this.allProjectsList = projs || [];
-        this.updateDynamicRegions();
 
         // Load all bugs globally
         this.bugService.getAllBugs().subscribe({

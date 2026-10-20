@@ -15,7 +15,7 @@
         <div class="navbar-breadcrumb">
           <span>{{ activeProject?.region || 'India' }}</span>
           <i class="fa-solid fa-chevron-right"></i>
-          <span>{{ activeProject?.projectName || 'Project' }}</span>
+          <span class="project-crumb-link" (click)="viewProjectDetails.emit(activeProject)" title="Click to view Project Details">{{ activeProject?.projectName || 'Project' }}</span>
           <i class="fa-solid fa-chevron-right"></i>
           <span class="active-crumb">{{ activeFeature.featureName }}</span>
         </div>
@@ -28,10 +28,52 @@
           {{ activeFeature.description }}
         </div>
       </div>
+      <div class="navbar-overview-actions">
+        <button class="btn btn-secondary btn-xs" (click)="viewProjectDetails.emit(activeProject)" title="View Project Details">
+          <i class="fa-solid fa-folder-open"></i> Project Info
+        </button>
+      </div>
     </div>
 
-    <!-- 2. Master Directory Overview Banner (When in Master Directory / No Feature is Selected) -->
-    <div class="navbar-overview-center" *ngIf="!activeFeature">
+    <!-- 2. Project Info Bar (When Project is Selected and No Feature Active) -->
+    <div class="navbar-feature-center navbar-project-center" *ngIf="!activeFeature && activeProject">
+      <div class="navbar-feature-meta">
+        <div class="navbar-breadcrumb">
+          <span><i class="fa-solid fa-location-dot"></i> {{ activeProject.region || 'General' }}</span>
+          <i class="fa-solid fa-chevron-right"></i>
+          <span class="active-crumb">{{ activeProject.projectName }}</span>
+        </div>
+        <div class="navbar-feature-heading">
+          <h2 class="navbar-feat-title" (click)="viewProjectDetails.emit(activeProject)" style="cursor: pointer;" title="Click to view Project Details">
+            {{ activeProject.projectName }}
+          </h2>
+          <span class="proj-status-badge-nav" [class.inactive]="activeProject.status === 'INACTIVE'">
+            <span class="status-dot"></span>
+            {{ activeProject.status || 'ACTIVE' }}
+          </span>
+          <span class="navbar-module-tag" *ngIf="activeProject.module" [title]="'Module: ' + activeProject.module + (activeProject.subModule ? ' > Sub-Module: ' + activeProject.subModule : '')">
+            <i class="fa-solid fa-layer-group"></i>
+            <span>{{ activeProject.module }}</span>
+            <i class="fa-solid fa-angle-right sep" *ngIf="activeProject.subModule"></i>
+            <span class="submodule-nav-text" *ngIf="activeProject.subModule">{{ activeProject.subModule }}</span>
+          </span>
+        </div>
+        <div class="navbar-feat-desc" *ngIf="activeProject.comments" [title]="'Comments: ' + activeProject.comments">
+          <i class="fa-regular fa-comment-dots text-emerald"></i> {{ activeProject.comments }}
+        </div>
+      </div>
+      <div class="navbar-overview-actions">
+        <button class="btn btn-primary btn-xs" (click)="viewProjectDetails.emit(activeProject)" title="View Full Project Details">
+          <i class="fa-solid fa-circle-info"></i> Project Details
+        </button>
+        <button class="btn btn-emerald btn-xs" (click)="editProject.emit(activeProject)" title="Edit Project">
+          <i class="fa-solid fa-pen-to-square"></i> Edit
+        </button>
+      </div>
+    </div>
+
+    <!-- 3. Master Directory Overview Banner (When in Master Directory / No Project Selected) -->
+    <div class="navbar-overview-center" *ngIf="!activeFeature && !activeProject">
       <div class="navbar-overview-meta">
         <div class="navbar-breadcrumb">
           <span class="text-emerald font-semibold">{{ selectedRegion === 'ALL' ? 'Global' : selectedRegion }}</span>
@@ -42,7 +84,6 @@
           <h2 class="navbar-feat-title">Master Entities & Suites Directory</h2>
           <span class="version-tag">Workspace Hub</span>
         </div>
-       
       </div>
       <div class="navbar-overview-actions">
         <button class="btn btn-primary btn-xs" (click)="refreshOverview.emit()" title="Refresh All Data">

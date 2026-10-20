@@ -338,13 +338,84 @@
   padding: 2px 6px;
   border-radius: 4px;
   background: #f1f5f9;
+  border: 1px solid #e2e8f0;
   color: #475569;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.proj-region-tag i {
+  color: #0284c7;
+  font-size: 9px;
+}
+
+.proj-module-row {
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+}
+
+.proj-module-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  font-size: 9.5px;
+  font-weight: 600;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.proj-module-tag i.fa-layer-group {
+  font-size: 9px;
+  color: #059669;
+}
+
+.module-text {
+  color: #15803d;
+  font-weight: 600;
+}
+
+.sep {
+  font-size: 8px;
+  color: #86efac;
+  margin: 0 1px;
+}
+
+.submodule-text {
+  color: #047857;
+  font-weight: 700;
+}
+
+.proj-desc-snippet {
+  font-size: 10px;
+  color: #64748b;
+  margin-bottom: 3px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.proj-desc-snippet i {
+  color: #3b82f6;
+  font-size: 9.5px;
+  flex-shrink: 0;
 }
 
 .proj-comments-snippet,
 .feat-comments-snippet {
-  font-size: 11px;
+  font-size: 10.5px;
   color: #64748b;
   margin-bottom: 4px;
   overflow: hidden;
@@ -358,7 +429,8 @@
 .proj-comments-snippet i,
 .feat-comments-snippet i {
   color: #059669;
-  font-size: 10px;
+  font-size: 9.5px;
+  flex-shrink: 0;
 }
 
 .proj-sub-row,
@@ -368,6 +440,62 @@
   justify-content: space-between;
   font-size: 10px;
   color: #64748b;
+}
+
+.proj-meta-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.proj-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1.5px 6px;
+  border-radius: 9999px;
+  background: #dcfce7;
+  border: 1px solid #bbf7d0;
+  color: #15803d;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.proj-status-badge.inactive {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+.status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #22c55e;
+}
+
+.proj-status-badge.inactive .status-dot {
+  background: #ef4444;
+}
+
+.proj-meta-date {
+  font-size: 9px;
+  color: #94a3b8;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.proj-meta-date i {
+  font-size: 8.5px;
 }
 
 .proj-status {

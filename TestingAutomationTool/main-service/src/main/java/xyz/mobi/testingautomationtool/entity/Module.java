@@ -24,5 +24,6 @@ public class Module {
     private String moduleName;
 
     @OneToMany(mappedBy = "module", fetch = FetchType.LAZY)
+    @com.fasterxml.jackson.annotation.JsonIgnore
     private List<SubModule> subModules = new ArrayList<>();
 }
