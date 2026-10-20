@@ -286,20 +286,23 @@
         <!-- Pagination Bar for Feature Test Cases Suite -->
         <div class="table-pagination-bar" *ngIf="filteredTestCases.length > 0">
           <div class="pagination-info">
-            <span>Showing {{ tcStartIndex }}-{{ tcEndIndex }} of {{ filteredTestCases.length }} test cases</span>
+            <span class="pagination-count-text">
+              Showing <strong>{{ tcStartIndex }}-{{ tcEndIndex }}</strong> of <strong>{{ filteredTestCases.length }}</strong> test cases
+            </span>
+            <div class="pagination-divider"></div>
             <div class="page-size-picker">
               <label>Rows:</label>
-              <select [(ngModel)]="tcPageSize" (change)="onTcPageSizeChange()" class="form-control-xs">
+              <select [(ngModel)]="tcPageSize" (change)="onTcPageSizeChange()" class="form-control-xs" title="Rows per page">
                 <option *ngFor="let opt of tcPageSizeOptions" [value]="opt">{{ opt }}</option>
               </select>
             </div>
           </div>
           <div class="pagination-controls">
-            <button class="btn-page" [disabled]="tcCurrentPage <= 1" (click)="goToTcPage(tcCurrentPage - 1)">
+            <button class="btn-page" [disabled]="tcCurrentPage <= 1" (click)="goToTcPage(tcCurrentPage - 1)" title="Previous page">
               <i class="fa-solid fa-chevron-left"></i> Prev
             </button>
-            <span class="page-indicator">Page {{ tcCurrentPage }} of {{ totalTcPages }}</span>
-            <button class="btn-page" [disabled]="tcCurrentPage >= totalTcPages" (click)="goToTcPage(tcCurrentPage + 1)">
+            <span class="page-indicator">Page <strong>{{ tcCurrentPage }}</strong> of <strong>{{ totalTcPages }}</strong></span>
+            <button class="btn-page" [disabled]="tcCurrentPage >= totalTcPages" (click)="goToTcPage(tcCurrentPage + 1)" title="Next page">
               Next <i class="fa-solid fa-chevron-right"></i>
             </button>
           </div>
@@ -434,21 +437,24 @@
         <!-- Pagination Bar for Defects Suite -->
         <div class="table-pagination-bar" *ngIf="filteredBugs.length > 0">
           <div class="pagination-info">
-            <span>Showing {{ bugStartIndex }}-{{ bugEndIndex }} of {{ filteredBugs.length }} defects</span>
+            <span class="pagination-count-text">
+              Showing <strong>{{ bugStartIndex }}-{{ bugEndIndex }}</strong> of <strong>{{ filteredBugs.length }}</strong> defects
+            </span>
+            <div class="pagination-divider"></div>
             <div class="page-size-picker">
               <label>Rows:</label>
-              <select [(ngModel)]="bugPageSize" (change)="onBugPageSizeChange()" class="form-control-xs">
+              <select [(ngModel)]="bugPageSize" (change)="onBugPageSizeChange()" class="form-control-xs" title="Rows per page">
                 <option *ngFor="let opt of bugPageSizeOptions" [value]="opt">{{ opt }}</option>
               </select>
             </div>
           </div>
           <div class="pagination-controls">
-            <button class="btn-page" [disabled]="bugCurrentPage <= 1" (click)="goToBugPage(bugCurrentPage - 1)">
+            <button class="btn-page" [disabled]="bugCurrentPage <= 1" (click)="goToBugPage(bugCurrentPage - 1)" title="Previous page">
               <i class="fa-solid fa-chevron-left"></i> Prev
             </button>
-            <span class="page-indicator">Page {{ bugCurrentPage }} of {{ totalBugPages }}</span>
+            <span class="page-indicator">Page <strong>{{ bugCurrentPage }}</strong> of <strong>{{ totalBugPages }}</strong></span>
             <button class="btn-page" [disabled]="bugCurrentPage >= totalBugPages"
-              (click)="goToBugPage(bugCurrentPage + 1)">
+              (click)="goToBugPage(bugCurrentPage + 1)" title="Next page">
               Next <i class="fa-solid fa-chevron-right"></i>
             </button>
           </div>
@@ -576,20 +582,23 @@
           <!-- Pagination Bar for Projects -->
           <div class="table-pagination-bar" *ngIf="filteredAllProjects.length > 0">
             <div class="pagination-info">
-              <span>Showing {{ overviewProjStartIndex }}-{{ overviewProjEndIndex }} of {{ filteredAllProjects.length }} projects</span>
+              <span class="pagination-count-text">
+                Showing <strong>{{ overviewProjStartIndex }}-{{ overviewProjEndIndex }}</strong> of <strong>{{ filteredAllProjects.length }}</strong> projects
+              </span>
+              <div class="pagination-divider"></div>
               <div class="page-size-picker">
                 <label>Rows:</label>
-                <select [(ngModel)]="overviewProjPageSize" (change)="overviewProjPage = 1" class="form-control-xs">
+                <select [(ngModel)]="overviewProjPageSize" (change)="overviewProjPage = 1" class="form-control-xs" title="Rows per page">
                   <option *ngFor="let opt of overviewPageSizeOptions" [value]="opt">{{ opt }}</option>
                 </select>
               </div>
             </div>
             <div class="pagination-controls">
-              <button class="btn-page" [disabled]="overviewProjPage <= 1" (click)="overviewProjPage = overviewProjPage - 1">
+              <button class="btn-page" [disabled]="overviewProjPage <= 1" (click)="overviewProjPage = overviewProjPage - 1" title="Previous page">
                 <i class="fa-solid fa-chevron-left"></i> Prev
               </button>
-              <span class="page-indicator">Page {{ overviewProjPage }} of {{ totalOverviewProjPages }}</span>
-              <button class="btn-page" [disabled]="overviewProjPage >= totalOverviewProjPages" (click)="overviewProjPage = overviewProjPage + 1">
+              <span class="page-indicator">Page <strong>{{ overviewProjPage }}</strong> of <strong>{{ totalOverviewProjPages }}</strong></span>
+              <button class="btn-page" [disabled]="overviewProjPage >= totalOverviewProjPages" (click)="overviewProjPage = overviewProjPage + 1" title="Next page">
                 Next <i class="fa-solid fa-chevron-right"></i>
               </button>
             </div>
@@ -672,20 +681,23 @@
           <!-- Pagination Bar for Features -->
           <div class="table-pagination-bar" *ngIf="filteredAllFeatures.length > 0">
             <div class="pagination-info">
-              <span>Showing {{ overviewFeatStartIndex }}-{{ overviewFeatEndIndex }} of {{ filteredAllFeatures.length }} features</span>
+              <span class="pagination-count-text">
+                Showing <strong>{{ overviewFeatStartIndex }}-{{ overviewFeatEndIndex }}</strong> of <strong>{{ filteredAllFeatures.length }}</strong> features
+              </span>
+              <div class="pagination-divider"></div>
               <div class="page-size-picker">
                 <label>Rows:</label>
-                <select [(ngModel)]="overviewFeatPageSize" (change)="overviewFeatPage = 1" class="form-control-xs">
+                <select [(ngModel)]="overviewFeatPageSize" (change)="overviewFeatPage = 1" class="form-control-xs" title="Rows per page">
                   <option *ngFor="let opt of overviewPageSizeOptions" [value]="opt">{{ opt }}</option>
                 </select>
               </div>
             </div>
             <div class="pagination-controls">
-              <button class="btn-page" [disabled]="overviewFeatPage <= 1" (click)="overviewFeatPage = overviewFeatPage - 1">
+              <button class="btn-page" [disabled]="overviewFeatPage <= 1" (click)="overviewFeatPage = overviewFeatPage - 1" title="Previous page">
                 <i class="fa-solid fa-chevron-left"></i> Prev
               </button>
-              <span class="page-indicator">Page {{ overviewFeatPage }} of {{ totalOverviewFeatPages }}</span>
-              <button class="btn-page" [disabled]="overviewFeatPage >= totalOverviewFeatPages" (click)="overviewFeatPage = overviewFeatPage + 1">
+              <span class="page-indicator">Page <strong>{{ overviewFeatPage }}</strong> of <strong>{{ totalOverviewFeatPages }}</strong></span>
+              <button class="btn-page" [disabled]="overviewFeatPage >= totalOverviewFeatPages" (click)="overviewFeatPage = overviewFeatPage + 1" title="Next page">
                 Next <i class="fa-solid fa-chevron-right"></i>
               </button>
             </div>
@@ -795,20 +807,23 @@
           <!-- Pagination Bar for Test Cases -->
           <div class="table-pagination-bar" *ngIf="filteredAllTestCases.length > 0">
             <div class="pagination-info">
-              <span>Showing {{ overviewTcStartIndex }}-{{ overviewTcEndIndex }} of {{ filteredAllTestCases.length }} test cases</span>
+              <span class="pagination-count-text">
+                Showing <strong>{{ overviewTcStartIndex }}-{{ overviewTcEndIndex }}</strong> of <strong>{{ filteredAllTestCases.length }}</strong> test cases
+              </span>
+              <div class="pagination-divider"></div>
               <div class="page-size-picker">
                 <label>Rows:</label>
-                <select [(ngModel)]="overviewTcPageSize" (change)="overviewTcPage = 1" class="form-control-xs">
+                <select [(ngModel)]="overviewTcPageSize" (change)="overviewTcPage = 1" class="form-control-xs" title="Rows per page">
                   <option *ngFor="let opt of overviewPageSizeOptions" [value]="opt">{{ opt }}</option>
                 </select>
               </div>
             </div>
             <div class="pagination-controls">
-              <button class="btn-page" [disabled]="overviewTcPage <= 1" (click)="overviewTcPage = overviewTcPage - 1">
+              <button class="btn-page" [disabled]="overviewTcPage <= 1" (click)="overviewTcPage = overviewTcPage - 1" title="Previous page">
                 <i class="fa-solid fa-chevron-left"></i> Prev
               </button>
-              <span class="page-indicator">Page {{ overviewTcPage }} of {{ totalOverviewTcPages }}</span>
-              <button class="btn-page" [disabled]="overviewTcPage >= totalOverviewTcPages" (click)="overviewTcPage = overviewTcPage + 1">
+              <span class="page-indicator">Page <strong>{{ overviewTcPage }}</strong> of <strong>{{ totalOverviewTcPages }}</strong></span>
+              <button class="btn-page" [disabled]="overviewTcPage >= totalOverviewTcPages" (click)="overviewTcPage = overviewTcPage + 1" title="Next page">
                 Next <i class="fa-solid fa-chevron-right"></i>
               </button>
             </div>
@@ -926,20 +941,23 @@
           <!-- Pagination Bar for Bugs -->
           <div class="table-pagination-bar" *ngIf="filteredAllBugs.length > 0">
             <div class="pagination-info">
-              <span>Showing {{ overviewBugStartIndex }}-{{ overviewBugEndIndex }} of {{ filteredAllBugs.length }} defects</span>
+              <span class="pagination-count-text">
+                Showing <strong>{{ overviewBugStartIndex }}-{{ overviewBugEndIndex }}</strong> of <strong>{{ filteredAllBugs.length }}</strong> defects
+              </span>
+              <div class="pagination-divider"></div>
               <div class="page-size-picker">
                 <label>Rows:</label>
-                <select [(ngModel)]="overviewBugPageSize" (change)="overviewBugPage = 1" class="form-control-xs">
+                <select [(ngModel)]="overviewBugPageSize" (change)="overviewBugPage = 1" class="form-control-xs" title="Rows per page">
                   <option *ngFor="let opt of overviewPageSizeOptions" [value]="opt">{{ opt }}</option>
                 </select>
               </div>
             </div>
             <div class="pagination-controls">
-              <button class="btn-page" [disabled]="overviewBugPage <= 1" (click)="overviewBugPage = overviewBugPage - 1">
+              <button class="btn-page" [disabled]="overviewBugPage <= 1" (click)="overviewBugPage = overviewBugPage - 1" title="Previous page">
                 <i class="fa-solid fa-chevron-left"></i> Prev
               </button>
-              <span class="page-indicator">Page {{ overviewBugPage }} of {{ totalOverviewBugPages }}</span>
-              <button class="btn-page" [disabled]="overviewBugPage >= totalOverviewBugPages" (click)="overviewBugPage = overviewBugPage + 1">
+              <span class="page-indicator">Page <strong>{{ overviewBugPage }}</strong> of <strong>{{ totalOverviewBugPages }}</strong></span>
+              <button class="btn-page" [disabled]="overviewBugPage >= totalOverviewBugPages" (click)="overviewBugPage = overviewBugPage + 1" title="Next page">
                 Next <i class="fa-solid fa-chevron-right"></i>
               </button>
             </div>

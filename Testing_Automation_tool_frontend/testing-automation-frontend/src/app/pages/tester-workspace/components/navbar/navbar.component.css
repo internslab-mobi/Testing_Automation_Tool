@@ -111,18 +111,19 @@
   font-size: 10px;
 }
 
-/* Navbar Embedded Feature Card & Overview Card */
+/* Navbar Feature Info & Overview Header (Seamlessly merged into Navbar) */
 .navbar-feature-center,
 .navbar-overview-center {
   display: flex;
   align-items: center;
   gap: 16px;
-  margin-left: 20px;
-  padding: 6px 16px;
-  background: #ffffff;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.04);
+  margin-left: 18px;
+  padding: 2px 0 2px 18px;
+  background: transparent;
+  border: none;
+  border-left: 1px solid #e2e8f0;
+  border-radius: 0;
+  box-shadow: none;
   max-width: 760px;
 }
 
@@ -460,12 +461,33 @@
   .btn-hamburger {
     display: flex;
   }
+
+  .navbar-feat-desc {
+    max-width: 320px;
+  }
+}
+
+@media (max-width: 860px) {
+  .navbar-feat-desc {
+    display: none;
+  }
 }
 
 @media (max-width: 768px) {
   .app-header {
     padding: 0 14px;
     height: 58px;
+  }
+
+  .navbar-feature-center,
+  .navbar-overview-center {
+    margin-left: 12px;
+    padding-left: 12px;
+    gap: 10px;
+  }
+
+  .navbar-feat-title {
+    max-width: 180px;
   }
 
   .brand-titles span {

@@ -38,6 +38,26 @@ export class SidebarComponent {
   projectSearch = '';
   featureSearch = '';
 
+  // Track comments toggled on touch / tap
+  touchedCommentProjectId: number | null = null;
+  touchedCommentFeatureId: number | null = null;
+
+  toggleProjectComment(projectId: number, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.touchedCommentProjectId = this.touchedCommentProjectId === projectId ? null : projectId;
+    this.cdr.markForCheck();
+  }
+
+  toggleFeatureComment(featureId: number, event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.touchedCommentFeatureId = this.touchedCommentFeatureId === featureId ? null : featureId;
+    this.cdr.markForCheck();
+  }
+
   // Pagination for Projects in Sidebar (Default size 5)
   projectPage = 1;
   projectPageSize = 5;

@@ -140,7 +140,7 @@ export class TesterWorkspace implements OnInit {
   allBugStatusFilter = 'ALL';
 
   // Pagination for All-Entity Lists (Default size 5)
-  readonly overviewPageSizeOptions = [5, 10, 20, 50];
+  readonly overviewPageSizeOptions = [5, 10, 20, 50, 100];
   overviewProjPage = 1;
   overviewProjPageSize = 5;
   overviewFeatPage = 1;
@@ -201,12 +201,12 @@ export class TesterWorkspace implements OnInit {
   // Pagination: Test Cases
   tcCurrentPage = 1;
   tcPageSize = 5;
-  readonly tcPageSizeOptions = [5, 10, 20, 50];
+  readonly tcPageSizeOptions = [5, 10, 20, 50, 100];
 
   // Pagination: Defects
   bugCurrentPage = 1;
   bugPageSize = 5;
-  readonly bugPageSizeOptions = [5, 10, 20, 50];
+  readonly bugPageSizeOptions = [5, 10, 20, 50, 100];
 
   // Summary Metrics
   totalTestCasesCount = 0;
@@ -1819,15 +1819,17 @@ export class TesterWorkspace implements OnInit {
   // LOGOUT
   // ==========================================
   performLogout(): void {
-    if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem('token');
-      localStorage.removeItem('jwt');
-      localStorage.removeItem('refresh_token');
-      localStorage.removeItem('tat_user_fullname');
-      localStorage.removeItem('tat_user_role');
-    }
-    this.showToast('Signed out successfully', 'info');
-    this.router.navigate(['/login']);
+    this.authService.logout().subscribe({
+      next: () => {
+        this.showToast('Signed out successfully', 'info');
+        this.router.navigate(['/login']);
+      },
+      error: () => {
+        this.authService.clearSession();
+        this.showToast('Signed out successfully', 'info');
+        this.router.navigate(['/login']);
+      }
+    });
   }
 
   // ==========================================

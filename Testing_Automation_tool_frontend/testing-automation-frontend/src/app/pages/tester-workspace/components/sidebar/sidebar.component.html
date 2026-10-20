@@ -42,7 +42,7 @@
 
     <div class="search-box">
       <i class="fa-solid fa-magnifying-glass search-icon"></i>
-      <input type="text" placeholder="Search projects by name, module, region..." [(ngModel)]="projectSearch">
+      <input type="text" placeholder="Search projects by name..." [(ngModel)]="projectSearch">
       <button *ngIf="projectSearch" class="btn-clear-search" (click)="projectSearch = ''" title="Clear search">
         <i class="fa-solid fa-xmark"></i>
       </button>
@@ -60,31 +60,38 @@
         [class.active]="activeProject?.projectId === p.projectId"
         (click)="onSelectProject(p)"
       >
-        <!-- Project Name & Location Header -->
         <div class="proj-main-row">
-          <span class="proj-name" [title]="p.projectName">{{ p.projectName }}</span>
-          <span class="proj-region-tag" [title]="'Location: ' + (p.region || 'General')">
-            <i class="fa-solid fa-location-dot"></i> {{ p.region || 'General' }}
+          <span class="proj-name">
+            {{ p.projectName }}
+            <button
+              type="button"
+              class="btn-comment-indicator"
+              *ngIf="p.comments"
+              (click)="toggleProjectComment(p.projectId, $event)"
+              title="Click to toggle or hover to view notes: {{ p.comments }}"
+            >
+              <i class="fa-regular fa-comment-dots"></i>
+            </button>
           </span>
+          <span class="proj-region-tag">{{ p.region || 'General' }}</span>
         </div>
-
-        <!-- Module & Sub-Module Hierarchy -->
-        <div class="proj-module-row" *ngIf="p.module || p.subModule">
-          <span class="proj-module-tag" [title]="'Module: ' + (p.module || 'N/A') + (p.subModule ? ' > Sub-Module: ' + p.subModule : '')">
-            <i class="fa-solid fa-layer-group"></i>
-            <span class="module-text">{{ p.module || 'Module' }}</span>
-            <i class="fa-solid fa-angle-right sep" *ngIf="p.subModule"></i>
-            <span class="submodule-text" *ngIf="p.subModule">{{ p.subModule }}</span>
-          </span>
+        <div
+          class="proj-comments-snippet"
+          *ngIf="p.comments"
+          [class.show-touched]="touchedCommentProjectId === p.projectId"
+          [title]="p.comments"
+        >
+          <i class="fa-regular fa-comment-dots"></i> {{ p.comments }}
         </div>
-
-        <!-- Status -->
         <div class="proj-sub-row">
-          <div class="proj-meta-left">
-            <span class="proj-status-badge" [class.inactive]="p.status === 'INACTIVE'">
-              <span class="status-dot"></span>
-              {{ p.status || 'ACTIVE' }}
-            </span>
+          <span class="proj-status">{{ p.status || 'ACTIVE' }}</span>
+          <div class="proj-actions" *ngIf="activeProject?.projectId === p.projectId">
+            <button class="btn-item-action" (click)="$event.stopPropagation(); editProject.emit(p)" title="Edit Project">
+              <i class="fa-solid fa-pen-to-square"></i>
+            </button>
+            <button class="btn-item-action" (click)="$event.stopPropagation(); openProjectAttachments.emit(p)" title="Project Attachments">
+              <i class="fa-solid fa-paperclip"></i>
+            </button>
           </div>
         </div>
       </div>
@@ -110,14 +117,14 @@
       <div class="section-title">
         <span>Features ({{ filteredFeatures.length }})</span>
       </div>
-      <button class="btn-add-icon" [disabled]="!activeProject || activeProject.status === 'INACTIVE'" (click)="createFeature.emit()" [title]="activeProject?.status === 'INACTIVE' ? 'Project is inactive' : 'Create New Feature'">
+      <button class="btn-add-icon" [disabled]="!activeProject" (click)="createFeature.emit()" title="Create New Feature">
         <i class="fa-solid fa-plus"></i>
       </button>
     </div>
 
     <div class="search-box">
       <i class="fa-solid fa-magnifying-glass search-icon"></i>
-      <input type="text" placeholder="Search features..." [(ngModel)]="featureSearch" [disabled]="activeProject?.status === 'INACTIVE'">
+      <input type="text" placeholder="Search features..." [(ngModel)]="featureSearch">
       <button *ngIf="featureSearch" class="btn-clear-search" (click)="featureSearch = ''" title="Clear search">
         <i class="fa-solid fa-xmark"></i>
       </button>
@@ -129,29 +136,38 @@
         <span>Select a project first</span>
       </div>
 
-      <div *ngIf="activeProject && activeProject.status === 'INACTIVE'" class="empty-list-msg inactive-locked-msg">
-        <i class="fa-solid fa-lock text-rose" style="color: #e11d48; font-size: 20px;"></i>
-        <strong style="color: #be123c;">Project is INACTIVE</strong>
-        <span style="font-size: 10px; color: #94a3b8;">Features & contents locked</span>
-      </div>
-
-      <div *ngIf="activeProject && activeProject.status !== 'INACTIVE' && filteredFeatures.length === 0" class="empty-list-msg">
+      <div *ngIf="activeProject && filteredFeatures.length === 0" class="empty-list-msg">
         <i class="fa-solid fa-list-check"></i>
         <span>No features configured</span>
       </div>
 
-      <ng-container *ngIf="activeProject && activeProject.status !== 'INACTIVE'">
-        <div
-          *ngFor="let f of paginatedFeatures; trackBy: trackByFeatureId"
-          class="feature-item-card"
-          [class.active]="activeFeature?.featureId === f.featureId"
-          (click)="onSelectFeature(f)"
-        >
+      <div
+        *ngFor="let f of paginatedFeatures; trackBy: trackByFeatureId"
+        class="feature-item-card"
+        [class.active]="activeFeature?.featureId === f.featureId"
+        (click)="onSelectFeature(f)"
+      >
         <div class="feat-main-row">
-          <span class="feat-name">{{ f.featureName }}</span>
+          <span class="feat-name">
+            {{ f.featureName }}
+            <button
+              type="button"
+              class="btn-comment-indicator"
+              *ngIf="f.comments"
+              (click)="toggleFeatureComment(f.featureId, $event)"
+              title="Click to toggle or hover to view notes: {{ f.comments }}"
+            >
+              <i class="fa-regular fa-comment-dots"></i>
+            </button>
+          </span>
           <span class="feat-version-tag">{{ f.featureVersion || 'v1.0' }}</span>
         </div>
-        <div class="feat-comments-snippet" *ngIf="f.comments" [title]="f.comments">
+        <div
+          class="feat-comments-snippet"
+          *ngIf="f.comments"
+          [class.show-touched]="touchedCommentFeatureId === f.featureId"
+          [title]="f.comments"
+        >
           <i class="fa-regular fa-comment-dots"></i> {{ f.comments }}
         </div>
         <div class="feat-sub-row">
@@ -166,7 +182,6 @@
           </div>
         </div>
       </div>
-      </ng-container>
     </div>
 
     <!-- Sidebar Mini Pagination for Features (Size 5) -->

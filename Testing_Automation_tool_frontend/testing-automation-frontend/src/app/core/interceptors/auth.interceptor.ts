@@ -1,9 +1,11 @@
-
 import {
   HttpInterceptorFn,
   HttpErrorResponse
 } from '@angular/common/http';
-import { catchError, throwError } from 'rxjs';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, switchMap, throwError } from 'rxjs';
+import { AuthService } from '../services/authService';
 
 function getCookie(name: string): string | null {
   if (typeof document === 'undefined') {
@@ -23,6 +25,9 @@ function getCookie(name: string): string | null {
 }
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
   const isApiRequest =
     req.url.startsWith('/api') ||
     req.url.includes(':8082');
@@ -32,23 +37,57 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   }
 
   const csrfToken = getCookie('XSRF-TOKEN');
+  const accessToken = authService.getAccessToken();
+
+  const headersConfig: Record<string, string> = {};
+  if (csrfToken) {
+    headersConfig['X-XSRF-TOKEN'] = csrfToken;
+  }
+  if (accessToken && !req.headers.has('Authorization')) {
+    headersConfig['Authorization'] = `Bearer ${accessToken}`;
+  }
 
   const modifiedReq = req.clone({
     withCredentials: true,
-    ...(csrfToken
-      ? {
-          setHeaders: {
-            'X-XSRF-TOKEN': csrfToken
-          }
-        }
-      : {})
+    setHeaders: headersConfig
   });
 
   return next(modifiedReq).pipe(
     catchError((err: HttpErrorResponse) => {
-      if (err.status === 401) {
-        console.error(
-          '401 Unauthorized: inspect the request Cookies tab and backend JWT filter.'
+      // Avoid refreshing on auth endpoints (login, refresh, register, reset) to prevent loops
+      const isAuthEndpoint =
+        req.url.includes('/auth/login') ||
+        req.url.includes('/auth/refresh') ||
+        req.url.includes('/auth/register') ||
+        req.url.includes('/auth/forgot-password') ||
+        req.url.includes('/auth/reset-password') ||
+        req.url.includes('/auth/verify-otp');
+
+      if (err.status === 401 && !isAuthEndpoint) {
+        return authService.refreshToken().pipe(
+          switchMap((newAccessToken) => {
+            if (!newAccessToken) {
+              authService.clearSession();
+              router.navigate(['/login']);
+              return throwError(() => err);
+            }
+
+            // Retry the original request with the refreshed access token
+            const retryHeaders = { ...headersConfig };
+            retryHeaders['Authorization'] = `Bearer ${newAccessToken}`;
+
+            const retriedReq = req.clone({
+              withCredentials: true,
+              setHeaders: retryHeaders
+            });
+
+            return next(retriedReq);
+          }),
+          catchError((refreshErr) => {
+            authService.clearSession();
+            router.navigate(['/login']);
+            return throwError(() => refreshErr);
+          })
         );
       }
 
