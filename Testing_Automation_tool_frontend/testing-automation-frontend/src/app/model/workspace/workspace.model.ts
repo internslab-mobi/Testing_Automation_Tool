@@ -281,6 +281,7 @@ export interface ProjectPatchRequest {
   module?: number | string | null;
   subModule?: number | string | null;
   comments?: string;
+  status?: string;
 }
 
 export interface FeaturePatchRequest {

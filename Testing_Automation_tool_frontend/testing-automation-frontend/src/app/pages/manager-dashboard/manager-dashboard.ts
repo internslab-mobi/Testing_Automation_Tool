@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject, signal, ChangeDetectorRef, HostLi
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, NavigationEnd } from '@angular/router';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of, Subscription, Observable } from 'rxjs';
 import { catchError, filter, map } from 'rxjs/operators';
 import { AuthService } from '../../core/services/authService';
@@ -14,7 +14,7 @@ import { NotificationService } from '../../core/services/notification.service';
 import { NotificationsModalComponent } from '../tester-workspace/components/notifications-modal/notifications-modal.component';
 import { environment } from '../../../environments/environment';
 import { UserProfile } from '../../model/auth/userProfile';
-import { Project, TestCase, Bug, InAppNotification } from '../../model/workspace/workspace.model';
+import { Project, TestCase, Bug, InAppNotification, ProjectPatchRequest } from '../../model/workspace/workspace.model';
 
 interface SidebarNavItem {
   id: string;
@@ -1144,7 +1144,11 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     this.isUpdatingStatus = true;
     this.statusUpdateError = '';
 
-    this.projectService.patchProjectStatus(project.projectId, newStatus).subscribe({
+    const patchReq: ProjectPatchRequest = {
+      status: newStatus
+    };
+
+    this.projectService.patchProject(project.projectId, patchReq).subscribe({
       next: () => {
         // Update the status badge only after the API confirms success
         project.status = newStatus;
@@ -1156,7 +1160,7 @@ export class ManagerDashboard implements OnInit, OnDestroy {
         this.loadProjectDashboardData();
         this.cdr.markForCheck();
       },
-      error: (err) => {
+      error: (err: HttpErrorResponse) => {
         console.error('Failed to change project status:', err);
         this.isUpdatingStatus = false;
         const msg = err?.error?.message || err?.message || 'Failed to update project status. Please try again.';
@@ -2444,7 +2448,9 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     const unassignedTestCases: TestCase[] = [];
 
     testCases.forEach((tc) => {
-      const rawAssignee = (tc.assignee || tc.assignedTo || tc.createdBy || tc.updatedBy || '').trim();
+      // Calculate tester performance using existing audit properties (createdBy / updatedBy)
+      // Note: TestCase does not have an explicit assignee field; authoring/execution is tracked via audit fields
+      const rawAssignee = (tc.createdBy || tc.updatedBy || '').trim();
       const rawLower = rawAssignee.toLowerCase();
 
       let matchedTester: TesterPerformance | undefined;

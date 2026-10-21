@@ -57,6 +57,9 @@ export class ProjectService {
   }
 
   patchProject(projectId: number, req: ProjectPatchRequest): Observable<any> {
+    if (req.status) {
+      return this.patchProjectAccess(projectId, req.status as 'ACTIVE' | 'INACTIVE');
+    }
     return this.http.patch<any>(`${this.baseUrl}/project/${projectId}`, req).pipe(
       map(res => res?.data || res)
     );
