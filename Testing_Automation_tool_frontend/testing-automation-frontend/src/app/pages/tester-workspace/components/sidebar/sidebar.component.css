@@ -4,16 +4,19 @@
   transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
+:host(.collapsed),
 :host(.sidebar-collapsed) {
   width: 0 !important;
+  min-width: 0 !important;
   overflow: hidden;
 }
 
-
-
+/* ==========================================================================
+   Main Sidebar Container
+   ========================================================================== */
 .sidebar {
-  width: 240px;
-  min-width: 240px;
+  width: 250px;
+  min-width: 250px;
   height: calc(100vh - 64px);
   background: #ffffff;
   border-right: 1px solid #e2e8f0;
@@ -24,15 +27,67 @@
   box-sizing: border-box;
 }
 
-/* Desktop Collapse: slide left and collapse out of flex flow */
+/* Desktop Collapse */
 @media (min-width: 1025px) {
   .sidebar:not(.open) {
-    margin-left: -240px;
+    margin-left: -250px;
     pointer-events: none;
     visibility: hidden;
   }
 }
 
+/* ==========================================================================
+   1. Top Bar with Title & Hide Button
+   ========================================================================== */
+.sidebar-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.sidebar-nav-heading {
+  font-size: 11px;
+  font-weight: 800;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.btn-hide-sidebar {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 5px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-hide-sidebar:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+
+.btn-hide-sidebar i {
+  font-size: 9px;
+}
+
+/* ==========================================================================
+   2. Master Directory Overview Button
+   ========================================================================== */
 .sidebar-section {
   padding: 8px 10px;
   border-bottom: 1px solid #f1f5f9;
@@ -82,6 +137,9 @@
   opacity: 0.7;
 }
 
+/* ==========================================================================
+   3. Region Selector Section
+   ========================================================================== */
 .region-section {
   background: #f8fafc;
   flex-shrink: 0;
@@ -101,7 +159,7 @@
 
 .form-control {
   width: 100%;
-  padding: 5px 8px;
+  padding: 4px 8px;
   border-radius: 6px;
   border: 1px solid #cbd5e1;
   font-size: 11px;
@@ -115,7 +173,7 @@
 
 .form-control:focus {
   border-color: #059669;
-  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.12);
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.12);
 }
 
 .select-region {
@@ -123,6 +181,9 @@
   color: #0f172a;
 }
 
+/* ==========================================================================
+   4. Projects & Features Scroll Sections
+   ========================================================================== */
 .projects-section,
 .features-section {
   flex: 1 1 50%;
@@ -138,12 +199,12 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 6px;
+  margin-bottom: 5px;
   flex-shrink: 0;
 }
 
 .section-title {
-  font-size: 10px;
+  font-size: 10.5px;
   font-weight: 800;
   color: #1e293b;
   text-transform: uppercase;
@@ -176,6 +237,7 @@
   cursor: not-allowed;
 }
 
+/* Search Box */
 .search-box {
   position: relative;
   margin-bottom: 6px;
@@ -254,6 +316,7 @@
   color: #0f172a;
 }
 
+/* Lists and sleek scrollbars */
 .project-items-list,
 .feature-items-list {
   flex: 1;
@@ -261,9 +324,30 @@
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: 4px;
   padding-right: 2px;
   min-height: 0;
+}
+
+.project-items-list::-webkit-scrollbar,
+.feature-items-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.project-items-list::-webkit-scrollbar-track,
+.feature-items-list::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.project-items-list::-webkit-scrollbar-thumb,
+.feature-items-list::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.project-items-list::-webkit-scrollbar-thumb:hover,
+.feature-items-list::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .empty-list-msg {
@@ -281,10 +365,13 @@
   font-size: 18px;
 }
 
+/* ==========================================================================
+   Compact Cards (Projects & Features)
+   ========================================================================== */
 .project-item-card,
 .feature-item-card {
-  padding: 8px 10px;
-  border-radius: 8px;
+  padding: 5px 8px;
+  border-radius: 6px;
   border: 1px solid #e2e8f0;
   background: #ffffff;
   cursor: pointer;
@@ -303,7 +390,7 @@
 .feature-item-card.active {
   background: #f0fdf4;
   border-color: #86efac;
-  box-shadow: 0 1px 4px rgba(5, 150, 105, 0.08);
+  box-shadow: 0 1px 3px rgba(5, 150, 105, 0.08);
 }
 
 .proj-main-row,
@@ -317,13 +404,17 @@
 
 .proj-name,
 .feat-name {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 700;
   color: #0f172a;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   flex: 1;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  gap: 3px;
 }
 
 .project-item-card.active .proj-name,
@@ -331,198 +422,133 @@
   color: #047857;
 }
 
+/* Comment Indicator Icon Button */
+.btn-comment-indicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: #059669;
+  font-size: 9.5px;
+  cursor: pointer;
+  padding: 0 2px;
+  opacity: 0.75;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.btn-comment-indicator:hover {
+  opacity: 1;
+  transform: scale(1.2);
+  color: #047857;
+}
+
 .proj-region-tag,
 .feat-version-tag {
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 700;
-  padding: 2px 6px;
+  padding: 1px 5px;
   border-radius: 4px;
   background: #f1f5f9;
   border: 1px solid #e2e8f0;
   color: #475569;
   white-space: nowrap;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
+  line-height: 1.2;
 }
 
-.proj-region-tag i {
-  color: #0284c7;
-  font-size: 9px;
-}
-
-.proj-module-row {
-  margin-bottom: 4px;
-  display: flex;
-  align-items: center;
-}
-
-.proj-module-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  color: #166534;
-  font-size: 9.5px;
-  font-weight: 600;
-  padding: 1.5px 6px;
-  border-radius: 4px;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.proj-module-tag i.fa-layer-group {
-  font-size: 9px;
-  color: #059669;
-}
-
-.module-text {
-  color: #15803d;
-  font-weight: 600;
-}
-
-.sep {
-  font-size: 8px;
-  color: #86efac;
-  margin: 0 1px;
-}
-
-.submodule-text {
-  color: #047857;
-  font-weight: 700;
-}
-
-.proj-desc-snippet {
-  font-size: 10px;
-  color: #64748b;
-  margin-bottom: 3px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.proj-desc-snippet i {
-  color: #3b82f6;
-  font-size: 9.5px;
-  flex-shrink: 0;
-}
-
+/* Comment Snippet: Hidden by default, smoothly reveals on hover and touch */
 .proj-comments-snippet,
 .feat-comments-snippet {
-  font-size: 10.5px;
-  color: #64748b;
-  margin-bottom: 4px;
+  max-height: 0;
+  opacity: 0;
+  margin: 0;
+  padding: 0 6px;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: 10px;
+  color: #475569;
+  background: #f1f5f9;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   gap: 4px;
+  line-height: 1.25;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  pointer-events: none;
+  transition: max-height 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              opacity 0.18s ease,
+              margin 0.18s ease,
+              padding 0.18s ease;
 }
 
 .proj-comments-snippet i,
 .feat-comments-snippet i {
   color: #059669;
-  font-size: 9.5px;
+  font-size: 9px;
   flex-shrink: 0;
 }
 
+.project-item-card.active .proj-comments-snippet,
+.feature-item-card.active .feat-comments-snippet {
+  background: #dcfce7;
+  color: #166534;
+}
+
+/* Revealed on hover over the card */
+.project-item-card:hover .proj-comments-snippet,
+.feature-item-card:hover .feat-comments-snippet,
+/* Revealed when touched / toggled */
+.proj-comments-snippet.show-touched,
+.feat-comments-snippet.show-touched,
+/* Revealed when touched / pressed on mobile */
+.project-item-card:active .proj-comments-snippet,
+.feature-item-card:active .feat-comments-snippet {
+  max-height: 38px;
+  opacity: 1;
+  margin-top: 3px;
+  margin-bottom: 3px;
+  padding: 2.5px 6px;
+  pointer-events: auto;
+}
+
+/* Sub-row: Status & Action Buttons */
 .proj-sub-row,
 .feat-sub-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 10px;
+  font-size: 9.5px;
   color: #64748b;
-}
-
-.proj-meta-left {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.proj-status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 1.5px 6px;
-  border-radius: 9999px;
-  background: #dcfce7;
-  border: 1px solid #bbf7d0;
-  color: #15803d;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.proj-status-badge.inactive {
-  background: #fee2e2;
-  border-color: #fca5a5;
-  color: #b91c1c;
-}
-
-.status-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #22c55e;
-}
-
-.proj-status-badge.inactive .status-dot {
-  background: #ef4444;
-}
-
-.proj-meta-date {
-  font-size: 9px;
-  color: #94a3b8;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.proj-meta-date i {
-  font-size: 8.5px;
+  line-height: 1.2;
 }
 
 .proj-status {
   font-weight: 700;
   color: #059669;
-  font-size: 10px;
+  font-size: 9.5px;
 }
 
 .sprint-badge {
   font-weight: 700;
   color: #4f46e5;
   background: #eef2ff;
-  padding: 1px 6px;
+  padding: 1px 5px;
   border-radius: 4px;
+  font-size: 9px;
 }
 
 .proj-actions,
 .feat-actions {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .btn-item-action {
-  width: 22px;
-  height: 22px;
-  border-radius: 4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 3px;
   border: 1px solid #cbd5e1;
   background: #ffffff;
   color: #475569;
@@ -530,8 +556,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 10px;
+  font-size: 9px;
   transition: all 0.15s;
+  padding: 0;
 }
 
 .btn-item-action:hover {
@@ -540,92 +567,20 @@
   border-color: #059669;
 }
 
-.sidebar-top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px;
-  background: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
-  flex-shrink: 0;
-}
-
-.sidebar-nav-heading {
-  font-size: 11px;
-  font-weight: 800;
-  color: #0f172a;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.btn-hide-sidebar {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
-  background: #ffffff;
-  border: 1px solid #cbd5e1;
-  border-radius: 5px;
-  font-size: 10px;
-  font-weight: 700;
-  color: #64748b;
-  cursor: pointer;
-  transition: all 0.15s;
-}
-
-.btn-hide-sidebar:hover {
-  background: #fee2e2;
-  border-color: #fca5a5;
-  color: #dc2626;
-}
-
-.btn-hide-sidebar i {
-  font-size: 9px;
-}
-
-@media (max-width: 1024px) {
-  .sidebar {
-    position: fixed;
-    top: 64px;
-    left: 0;
-    bottom: 0;
-    z-index: 90;
-    transform: translateX(-100%);
-    box-shadow: 4px 0 24px rgba(15, 23, 42, 0.15);
-  }
-
-  .sidebar.open {
-    transform: translateX(0);
-  }
-
-  .sidebar-mobile-close-bar {
-    display: flex;
-  }
-}
-
-@media (max-width: 768px) {
-  .sidebar {
-    top: 58px;
-    width: 280px;
-    max-width: 85vw;
-  }
-}
-
-/* Sidebar Mini Pagination */
+/* ==========================================================================
+   5. Mini Pagination Bar for Sidebar
+   ========================================================================== */
 .sidebar-pagination-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 4px 2px 4px;
-  margin-top: 6px;
-  border-top: 1px dashed #e2e8f0;
+  padding: 5px 2px 2px 2px;
+  margin-top: 5px;
+  border-top: 1px solid #f1f5f9;
 }
 
 .sidebar-page-info {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: #64748b;
 }
@@ -633,20 +588,20 @@
 .sidebar-page-btns {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
 }
 
 .btn-sidebar-page {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   padding: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f1f5f9;
+  background: #ffffff;
   border: 1px solid #cbd5e1;
   border-radius: 4px;
-  font-size: 10px;
+  font-size: 9px;
   color: #334155;
   cursor: pointer;
   transition: all 0.15s;
@@ -661,4 +616,31 @@
 .btn-sidebar-page:disabled {
   opacity: 0.35;
   cursor: not-allowed;
+}
+
+/* ==========================================================================
+   6. Mobile & Responsive Overlay
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .sidebar {
+    position: fixed;
+    top: 64px;
+    left: 0;
+    bottom: 0;
+    z-index: 90;
+    transform: translateX(-100%);
+    box-shadow: 4px 0 24px rgba(15, 23, 42, 0.15);
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    top: 58px;
+    width: 270px;
+    max-width: 85vw;
+  }
 }

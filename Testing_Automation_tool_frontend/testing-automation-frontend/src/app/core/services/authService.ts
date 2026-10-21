@@ -104,7 +104,7 @@ export class AuthService {
       return this.refreshInProgress$;
     }
 
-    const currentRefreshToken = explicitToken || this.getRefreshToken();
+    const currentRefreshToken = this.getRefreshToken()|| explicitToken;
     const payload: RefreshTokenRequest = currentRefreshToken ? { refreshToken: currentRefreshToken } : {};
 
     this.refreshInProgress$ = this.http.post<ApiResponse<AuthResponse>>(`${this.authUrl}/refresh`, payload, {
@@ -236,6 +236,18 @@ export class AuthService {
         error: () => {
           this.currentUserSignal.set(null);
         }
+      })
+    );
+  }
+
+  /**
+   * Initializes the CSRF cookie token from the backend.
+   */
+  initCsrfToken(): Observable<any> {
+    return this.http.get<ApiResponse<string>>(`${this.authUrl}/csrf`, { withCredentials: true }).pipe(
+      catchError((err) => {
+        console.warn('Could not initialize CSRF token:', err);
+        return throwError(() => err);
       })
     );
   }

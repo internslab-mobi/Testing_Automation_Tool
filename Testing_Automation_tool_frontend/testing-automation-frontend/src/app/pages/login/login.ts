@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, OnInit } from '@angular/core';
 import {
   FormBuilder,
   FormGroup,
@@ -17,12 +17,19 @@ import { ChangeDetectorRef } from '@angular/core';
   templateUrl: './login.html',
   styleUrl: './login.css'
 })
-export class Login {
+export class Login implements OnInit {
 
   private readonly fb = inject(FormBuilder);
   private readonly authService = inject(AuthService);
   private readonly router = inject(Router);
   private readonly cd = inject(ChangeDetectorRef);
+
+  ngOnInit(): void {
+    this.authService.initCsrfToken().subscribe({
+      next: () => console.log('CSRF initialized'),
+      error: (e) => console.warn('CSRF init failed (will retry on demand)', e)
+    });
+  }
 
 
   readonly loginForm: FormGroup = this.fb.group({

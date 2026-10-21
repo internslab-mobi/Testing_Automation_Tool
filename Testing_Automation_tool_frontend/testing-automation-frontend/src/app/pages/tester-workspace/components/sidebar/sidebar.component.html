@@ -25,7 +25,7 @@
     </div>
     <select class="form-control select-region" [ngModel]="selectedRegion" (ngModelChange)="onRegionSelected($event)">
       <option value="ALL">All Regions (Global)</option>
-      <option *ngFor="let reg of availableRegions" [value]="reg">{{ reg }}</option>
+      <option *ngFor="let reg of displayRegions" [value]="reg">{{ reg }}</option>
     </select>
   </div>
 

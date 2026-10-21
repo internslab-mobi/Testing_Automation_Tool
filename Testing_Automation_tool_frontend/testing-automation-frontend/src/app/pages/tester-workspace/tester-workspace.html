@@ -188,6 +188,8 @@
               <option value="ALL">All Statuses</option>
               <option value="PASS">Passed</option>
               <option value="FAIL">Failed</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="BLOCK">Blocked</option>
               <option value="DESCOPE">Descoped</option>
             </select>
           </div>
@@ -201,8 +203,8 @@
                 <th style="width: 100px;">TC ID</th>
                 <th>Test Case Description & Steps</th>
                 <th style="width: 130px;">Type / Priority</th>
-                <th style="width: 140px;">Status / Bugs</th>
-                <th style="width: 140px; text-align: right;">Run & Actions</th>
+                <th style="width: 150px;">Status / Bugs</th>
+                <th style="width: 210px; text-align: right;">Run & Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -242,11 +244,19 @@
                 </td>
 
                 <td>
-                  <div class="status-col">
-                    <span class="badge-tag"
-                      [ngClass]="tc.executionStatus === 'PASS' ? 'badge-pass' : tc.executionStatus === 'FAIL' ? 'badge-fail' : 'badge-idle'">
-                      {{ tc.executionStatus || 'UNEXECUTED' }}
-                    </span>
+                  <div class="status-col" (click)="$event.stopPropagation()">
+                    <select class="exec-status-select"
+                      [ngClass]="'status-' + (tc.executionStatus?.toLowerCase() || 'unexecuted')"
+                      [ngModel]="tc.executionStatus || 'UNEXECUTED'"
+                      (ngModelChange)="onTestCaseStatusChange(tc, $event)"
+                      title="Change execution status">
+                      <option value="UNEXECUTED" disabled>UNEXECUTED</option>
+                      <option value="PASS">PASS</option>
+                      <option value="FAIL">FAIL</option>
+                      <option value="IN_PROGRESS">IN_PROGRESS</option>
+                      <option value="BLOCK">BLOCK</option>
+                      <option value="DESCOPE">DESCOPE</option>
+                    </select>
                     <!-- Multiple Linked Bugs Count Badge -->
                     <span *ngIf="getLinkedDefects(tc.testcaseId).length > 0" class="badge-linked-bugs"
                       (click)="$event.stopPropagation(); activeSubTab = 'bugs'; bugSearch = tc.testcaseFormatId || ''; onBugFilterChange()"
@@ -259,21 +269,30 @@
                 <td style="text-align: right;" (click)="$event.stopPropagation()">
                   <div class="row-actions">
                     <button class="btn-action-icon btn-pass"
+                      [class.btn-active-pass]="tc.executionStatus === 'PASS'"
                       (click)="handleExecuteTestCase({ testcaseId: tc.testcaseId, status: 'PASS' })"
                       title="Mark as Passed">
                       <i class="fa-solid fa-check"></i>
                     </button>
                     <button class="btn-action-icon btn-fail"
+                      [class.btn-active-fail]="tc.executionStatus === 'FAIL'"
                       (click)="handleExecuteTestCase({ testcaseId: tc.testcaseId, status: 'FAIL' })"
                       title="Mark as Failed">
                       <i class="fa-solid fa-xmark"></i>
                     </button>
-                    <button class="btn-action-icon btn-log-bug" (click)="openLogDefectModal(tc)"
-                      title="Log Defect against this testcase">
-                      <i class="fa-solid fa-bug"></i>
+                    <!-- CREATE BUG BUTTON (Appears ONLY when executionStatus is FAIL) -->
+                    <button *ngIf="tc.executionStatus === 'FAIL'"
+                      class="btn-create-bug"
+                      (click)="openLogDefectModal(tc)"
+                      title="Create Bug for this failed test case">
+                      <i class="fa-solid fa-bug"></i> Create Bug
                     </button>
-                    <button class="btn-action-icon" (click)="viewTestCaseDetail(tc)"
-                      title="Open Details Card (Edit / Delete)">
+                    <button class="btn-action-icon" (click)="viewTestCaseDetail(tc, true)"
+                      title="Edit Test Case (Full Put Request)">
+                      <i class="fa-solid fa-pen-to-square text-indigo"></i>
+                    </button>
+                    <button class="btn-action-icon" (click)="viewTestCaseDetail(tc, false)"
+                      title="Open Full Details Card">
                       <i class="fa-solid fa-ellipsis-vertical"></i>
                     </button>
                   </div>
@@ -794,7 +813,10 @@
                         title="Open in Feature Workspace">
                         <i class="fa-solid fa-arrow-right-to-bracket"></i>
                       </button>
-                      <button class="btn-action-icon" (click)="viewTestCaseDetail(tc)" title="View Testcase Card">
+                      <button class="btn-action-icon" (click)="viewTestCaseDetail(tc, true)" title="Edit Test Case">
+                        <i class="fa-solid fa-pen-to-square text-indigo"></i>
+                      </button>
+                      <button class="btn-action-icon" (click)="viewTestCaseDetail(tc, false)" title="View Testcase Card">
                         <i class="fa-solid fa-eye"></i>
                       </button>
                     </div>
@@ -969,9 +991,11 @@
 
   <!-- MODAL: TEST CASE DETAIL CARD (WITH EDIT & SOFT DELETE APIS) -->
   <app-testcase-detail-modal [isOpen]="isTestCaseDetailModalOpen" [testCase]="activeTestCaseDetail"
+    [startInEdit]="testCaseStartInEdit"
     [activeFeature]="activeFeature"
     [linkedDefects]="activeTestCaseDetail ? getLinkedDefects(activeTestCaseDetail.testcaseId) : []"
-    (close)="isTestCaseDetailModalOpen = false" (updateTestCase)="handleUpdateTestCase($event)"
+    (close)="isTestCaseDetailModalOpen = false; testCaseStartInEdit = false" (updateTestCase)="handleUpdateTestCase($event)"
+    (patchTestCase)="handlePatchTestCase($event)"
     (softDeleteTestCase)="handleSoftDeleteTestCase($event)" (executeTestCase)="handleExecuteTestCase($event)"
     (logDefect)="openLogDefectModal($event)"
     (openDefectDetail)="isTestCaseDetailModalOpen = false; viewDefectDetail($event)"></app-testcase-detail-modal>
@@ -979,6 +1003,7 @@
   <!-- MODAL: DEFECT DETAIL CARD (WITH REOPENED COUNT, LOCKED ASSIGNEE, EDIT & SOFT DELETE APIS) -->
   <app-defect-detail-modal [isOpen]="isDefectDetailModalOpen" [bug]="activeDefectDetail" [developers]="developers"
     (close)="isDefectDetailModalOpen = false" (updateBug)="handleUpdateBug($event)"
+    (patchBug)="handlePatchBug($event)"
     (softDeleteBug)="handleSoftDeleteBug($event)" (changeStatus)="handleChangeBugStatus($event)"
     (changeAssignee)="handleChangeBugAssignee($event)" (openChat)="openBugChat($event)"
     (openAttachments)="openAttachments('bug', $event.bugId, 'Defect Evidence: ' + $event.bugFormatId)"></app-defect-detail-modal>
@@ -1184,7 +1209,12 @@
 
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="isProjectEditModalOpen = false">Cancel</button>
-        <button class="btn btn-primary" (click)="saveProjectEdit()">Save Changes</button>
+        <button class="btn btn-secondary-outline" (click)="saveProjectEdit(true)" title="Save all project fields">
+          <i class="fa-solid fa-arrows-rotate"></i> Update All
+        </button>
+        <button class="btn btn-primary" (click)="saveProjectEdit(false)" title="Save changes">
+          <i class="fa-solid fa-floppy-disk"></i> Save Changes
+        </button>
       </div>
     </div>
   </div>
@@ -1278,7 +1308,12 @@
 
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="isFeatureEditModalOpen = false">Cancel</button>
-        <button class="btn btn-primary" (click)="saveFeatureEdit()">Save Changes</button>
+        <button class="btn btn-secondary-outline" (click)="saveFeatureEdit(true)" title="Save all feature fields">
+          <i class="fa-solid fa-arrows-rotate"></i> Update All
+        </button>
+        <button class="btn btn-primary" (click)="saveFeatureEdit(false)" title="Save changes">
+          <i class="fa-solid fa-floppy-disk"></i> Save Changes
+        </button>
       </div>
     </div>
   </div>
@@ -1287,18 +1322,36 @@
   <div class="modal-overlay" *ngIf="isTestCaseCreateModalOpen">
     <div class="modal-card modal-tc-card">
       <div class="modal-header">
-        <h3><i class="fa-solid fa-vial-circle-check text-indigo"></i> Author New Test Case</h3>
+        <h3><i class="fa-solid fa-vial-circle-check text-indigo"></i> Author New Test Case (Manual)</h3>
         <button class="modal-close" (click)="isTestCaseCreateModalOpen = false">&times;</button>
       </div>
 
       <div class="modal-body">
-        <div class="form-group">
-          <label>Test Case Title *</label>
-          <input type="text" class="form-control" [(ngModel)]="newTcForm.title"
-            placeholder="e.g. Verify OTP resend rate limiting">
+        <!-- Target Feature Indicator -->
+        <div style="background:#f1f5f9; padding:8px 12px; border-radius:6px; font-size:12px; display:flex; align-items:center; gap:8px;">
+          <i class="fa-solid fa-layer-group text-indigo"></i>
+          <span>Target Feature: <strong>{{ activeFeature?.featureName }}</strong> (ID: {{ activeFeature?.featureId }})</span>
+        </div>
+
+        <!-- SECTION 1: TEST CASE DEFINITION -->
+        <div class="modal-section-divider">
+          <i class="fa-solid fa-list-check"></i> 1. Test Case Attributes (TestCaseRequest)
         </div>
 
         <div class="form-grid-2">
+          <div class="form-group">
+            <label>Custom Format ID (Optional)</label>
+            <input type="text" class="form-control" [(ngModel)]="newTcForm.testcaseFormatId"
+              placeholder="e.g. TC_AUTH_001 (Auto-generated if empty)">
+          </div>
+          <div class="form-group">
+            <label>Test Case Title *</label>
+            <input type="text" class="form-control" [(ngModel)]="newTcForm.title"
+              placeholder="e.g. Verify OTP resend rate limiting">
+          </div>
+        </div>
+
+        <div class="form-grid-3">
           <div class="form-group">
             <label>Test Type</label>
             <select class="form-control" [(ngModel)]="newTcForm.testType">
@@ -1317,42 +1370,122 @@
               <option value="LOW">LOW</option>
             </select>
           </div>
+          <div class="form-group">
+            <label>Initial Status</label>
+            <select class="form-control" [(ngModel)]="newTcForm.testcaseStatus">
+              <option value="NO_RUN">NO_RUN</option>
+              <option value="PASSED">PASSED</option>
+              <option value="FAILED">FAILED</option>
+              <option value="DESCOPE">DESCOPE</option>
+              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="BLOCKED">BLOCKED</option>
+            </select>
+          </div>
         </div>
 
         <div class="form-group">
-          <label>Precondition</label>
-          <input type="text" class="form-control" [(ngModel)]="newTcForm.precondition">
+          <label>Test Case Comments / Notes</label>
+          <input type="text" class="form-control" [(ngModel)]="newTcForm.comments"
+            placeholder="High-level test case remarks">
+        </div>
+
+        <!-- SECTION 2: EXECUTION SPECIFICATIONS -->
+        <div class="modal-section-divider green">
+          <i class="fa-solid fa-play"></i> 2. Execution Specifications (TestingExecutionRequest)
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Automation Feasibility</label>
+            <select class="form-control" [(ngModel)]="newTcForm.automationFeasibility">
+              <option value="YES">YES</option>
+              <option value="NO">NO</option>
+              <option value="PARTIALLY_FEASIBLE">PARTIALLY_FEASIBLE</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Test Environment / Runner</label>
+            <input type="text" class="form-control" [(ngModel)]="newTcForm.testExecution"
+              placeholder="e.g. Chrome 122 / Cypress / Staging">
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label>Validation Objective / Expected Result</label>
+          <input type="text" class="form-control" [(ngModel)]="newTcForm.testValidation"
+            placeholder="e.g. Expected behavior, success criteria">
+        </div>
+
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Precondition</label>
+            <input type="text" class="form-control" [(ngModel)]="newTcForm.precondition"
+              placeholder="e.g. User account is active and verified">
+          </div>
+          <div class="form-group">
+            <label>Test Data</label>
+            <input type="text" class="form-control" [(ngModel)]="newTcForm.testData"
+              placeholder="e.g. username=test@mobi.xyz, otp=123456">
+          </div>
         </div>
 
         <div class="form-group">
           <label>Execution Steps</label>
-          <textarea class="form-control" [(ngModel)]="newTcForm.executionSteps" rows="2"
-            placeholder="1. Navigate to /otp&#10;2. Click resend"></textarea>
+          <textarea class="form-control" [(ngModel)]="newTcForm.executionSteps" rows="3"
+            placeholder="1. Navigate to /otp&#10;2. Click resend button&#10;3. Verify countdown timer"></textarea>
         </div>
 
         <div class="form-grid-2">
           <div class="form-group">
             <label>UI Validation</label>
             <input type="text" class="form-control" [(ngModel)]="newTcForm.uiValidations"
-              placeholder="e.g. Toast alert display">
+              placeholder="e.g. Toast alert display, button disabled">
           </div>
           <div class="form-group">
             <label>DB Validation</label>
             <input type="text" class="form-control" [(ngModel)]="newTcForm.dbValidations"
-              placeholder="e.g. Record updated in users table">
+              placeholder="e.g. Record updated in users / audit table">
           </div>
         </div>
 
         <div class="form-group">
-          <label>Comments</label>
-          <textarea class="form-control" [(ngModel)]="newTcForm.comments" rows="2"
-            placeholder="Optional tester remarks"></textarea>
+          <label>Execution Remarks</label>
+          <input type="text" class="form-control" [(ngModel)]="newTcForm.executionComments"
+            placeholder="Execution-specific notes">
+        </div>
+
+        <!-- SECTION 3: DYNAMIC FIELDS -->
+        <div class="modal-section-divider amber">
+          <i class="fa-solid fa-tags"></i> 3. Custom Dynamic Fields (Map&lt;String, Object&gt;)
+        </div>
+
+        <div class="dynamic-fields-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:11.5px; font-weight:700; color:#334155;">Custom Key-Value Attributes</span>
+            <button type="button" class="btn-add-dynamic" (click)="addDynamicField()">
+              <i class="fa-solid fa-plus"></i> Add Field
+            </button>
+          </div>
+
+          <div *ngIf="dynamicFieldsList.length === 0" class="dynamic-empty-hint">
+            No dynamic fields added. Click "+ Add Field" to attach custom metadata (e.g., Sprint, Browser, Module Tag, Device).
+          </div>
+
+          <div *ngFor="let field of dynamicFieldsList; let i = index" class="dynamic-field-row">
+            <input type="text" class="form-control" [(ngModel)]="field.key" placeholder="Key (e.g. Browser)">
+            <input type="text" class="form-control" [(ngModel)]="field.value" placeholder="Value (e.g. Chrome 122)">
+            <button type="button" class="btn-remove-dynamic" (click)="removeDynamicField(i)" title="Remove field">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
         </div>
       </div>
 
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="isTestCaseCreateModalOpen = false">Cancel</button>
-        <button class="btn btn-primary" (click)="saveNewTestCase()">Save Test Case</button>
+        <button class="btn btn-primary" (click)="saveNewTestCase()">
+          <i class="fa-solid fa-floppy-disk"></i> Save Test Case
+        </button>
       </div>
     </div>
   </div>
@@ -1390,7 +1523,7 @@
 
   <!-- MODAL: LOG DEFECT (MULTIPLE BUGS PER TESTCASE SUPPORTED) -->
   <div class="modal-overlay" *ngIf="isBugCreateModalOpen">
-    <div class="modal-card">
+    <div class="modal-card modal-tc-card">
       <div class="modal-header">
         <h3><i class="fa-solid fa-bug text-rose"></i> Log Defect (Auto-Mapped to Test Case)</h3>
         <button class="modal-close" (click)="isBugCreateModalOpen = false">&times;</button>
@@ -1412,7 +1545,7 @@
 
         <div class="form-group">
           <label>Defect Title *</label>
-          <input type="text" class="form-control" [(ngModel)]="newBugForm.title" placeholder="Summary of failure">
+          <input type="text" class="form-control" [(ngModel)]="newBugForm.title" placeholder="Summary of failure (max 300 chars)">
         </div>
 
         <div class="form-group">
@@ -1421,24 +1554,49 @@
             placeholder="Observed failure vs expected behavior"></textarea>
         </div>
 
+        <!-- Severity & Priority Enums -->
         <div class="form-grid-2">
           <div class="form-group">
-            <label>Severity</label>
+            <label>Severity (BugSeverity)</label>
             <select class="form-control" [(ngModel)]="newBugForm.severity">
-              <option value="CRITICAL">CRITICAL</option>
-              <option value="HIGH">HIGH</option>
-              <option value="MEDIUM">MEDIUM</option>
               <option value="LOW">LOW</option>
+              <option value="MEDIUM">MEDIUM</option>
+              <option value="HIGH">HIGH</option>
+              <option value="CRITICAL">CRITICAL</option>
             </select>
           </div>
           <div class="form-group">
-            <label>Category</label>
+            <label>Priority (BugPriority)</label>
+            <select class="form-control" [(ngModel)]="newBugForm.priority">
+              <option value="LOW">LOW</option>
+              <option value="MEDIUM">MEDIUM</option>
+              <option value="HIGH">HIGH</option>
+              <option value="CRITICAL">CRITICAL</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Category & Status Enums -->
+        <div class="form-grid-2">
+          <div class="form-group">
+            <label>Category (BugCategory)</label>
             <select class="form-control" [(ngModel)]="newBugForm.category">
-              <option value="FUNCTIONAL">FUNCTIONAL</option>
-              <option value="UI">UI</option>
-              <option value="API">API</option>
-              <option value="PERFORMANCE">PERFORMANCE</option>
-              <option value="SECURITY">SECURITY</option>
+              <option value="PRE_PRODUCTION">PRE_PRODUCTION</option>
+              <option value="POST_PRODUCTION">POST_PRODUCTION</option>
+              <option value="ENHANCED">ENHANCED</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Status (BugStatus)</label>
+            <select class="form-control" [(ngModel)]="newBugForm.status">
+              <option value="OPEN">OPEN</option>
+              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="FIXED">FIXED</option>
+              <option value="RESOLVED">RESOLVED</option>
+              <option value="CLOSED">CLOSED</option>
+              <option value="REOPENED">REOPENED</option>
+              <option value="NOT_A_BUG">NOT_A_BUG</option>
+              <option value="DEFERRED">DEFERRED</option>
             </select>
           </div>
         </div>
@@ -1456,7 +1614,33 @@
         <div class="form-group">
           <label>Comments</label>
           <textarea class="form-control" [(ngModel)]="newBugForm.comments" rows="2"
-            placeholder="Tester remarks"></textarea>
+            placeholder="Tester remarks / notes"></textarea>
+        </div>
+
+        <!-- SECTION: DYNAMIC FIELDS -->
+        <div class="modal-section-divider amber">
+          <i class="fa-solid fa-tags"></i> Custom Dynamic Fields (Map&lt;String, Object&gt;)
+        </div>
+
+        <div class="dynamic-fields-card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <span style="font-size:11.5px; font-weight:700; color:#334155;">Custom Key-Value Attributes</span>
+            <button type="button" class="btn-add-dynamic" (click)="addBugDynamicField()">
+              <i class="fa-solid fa-plus"></i> Add Field
+            </button>
+          </div>
+
+          <div *ngIf="bugDynamicFieldsList.length === 0" class="dynamic-empty-hint">
+            No dynamic fields added. Click "+ Add Field" to attach custom metadata (e.g., Environment, Root Cause, Browser, Sprint).
+          </div>
+
+          <div *ngFor="let field of bugDynamicFieldsList; let i = index" class="dynamic-field-row">
+            <input type="text" class="form-control" [(ngModel)]="field.key" placeholder="Key (e.g. Browser)">
+            <input type="text" class="form-control" [(ngModel)]="field.value" placeholder="Value (e.g. Chrome 122)">
+            <button type="button" class="btn-remove-dynamic" (click)="removeBugDynamicField(i)" title="Remove field">
+              <i class="fa-solid fa-trash-can"></i>
+            </button>
+          </div>
         </div>
       </div>
 

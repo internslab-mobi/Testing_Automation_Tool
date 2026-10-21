@@ -29,11 +29,21 @@ import {
   BugComment,
   InAppNotification,
   ProjectCreateRequest,
+  ProjectPatchRequest,
   FeatureCreateRequest,
+  FeaturePatchRequest,
+  TestCaseExecutionRequest,
   TestCaseCreatePayload,
   TestCasePutRequest,
+  TestCasePatchRequest,
+  BugRequest,
   BugCreateRequest,
+  BugSeverity,
+  BugPriority,
+  BugCategory,
+  BugStatus,
   BugPutRequest,
+  BugPatchRequest,
   ModuleItem,
   SubModuleItem,
   RegionItem
@@ -84,7 +94,7 @@ export class TesterWorkspace implements OnInit {
 
   // Projects & Dynamic Regions
   projects: Project[] = [];
-  availableRegions: string[] = [];
+  availableRegions: string[] = ['India', 'Singapore', 'Malaysia', 'Indonesia', 'Vietnam'];
   selectedRegion = 'India';
   activeProject: Project | null = null;
   projectAttachmentCount = 0;
@@ -231,6 +241,7 @@ export class TesterWorkspace implements OnInit {
   isExcelModalOpen = false;
   isBugCreateModalOpen = false;
   isTestCaseDetailModalOpen = false;
+  testCaseStartInEdit = false;
   isDefectDetailModalOpen = false;
   isAttachmentsModalOpen = false;
   isChatModalOpen = false;
@@ -280,24 +291,45 @@ export class TesterWorkspace implements OnInit {
   editFeatureForm: Partial<FeatureCreateRequest> = {};
 
   newTcForm = {
+    // TestCase fields
+    testcaseFormatId: '',
     title: '',
     testType: 'UI',
     testPriority: 'MEDIUM',
-    testcaseStatus: 'PASSED',
+    testcaseStatus: 'NO_RUN',
+    comments: '',
+    // TestingExecutionRequest fields
+    automationFeasibility: 'YES',
+    testExecution: '',
+    testValidation: '',
     precondition: 'Verified environment state',
+    testData: '',
     executionSteps: '',
     uiValidations: '',
     dbValidations: '',
-    comments: ''
+    executionComments: ''
   };
 
-  newBugForm: BugCreateRequest = {
+  // Dynamic Key-Value Fields for TestCase creation
+  dynamicFieldsList: Array<{ key: string; value: string }> = [];
+
+  addDynamicField(): void {
+    this.dynamicFieldsList.push({ key: '', value: '' });
+    this.cdr.markForCheck();
+  }
+
+  removeDynamicField(index: number): void {
+    this.dynamicFieldsList.splice(index, 1);
+    this.cdr.markForCheck();
+  }
+
+  newBugForm: BugRequest = {
     title: '',
     description: '',
-    severity: 'HIGH',
-    priority: 'HIGH',
-    category: 'FUNCTIONAL',
-    status: 'OPEN',
+    severity: BugSeverity.HIGH,
+    priority: BugPriority.HIGH,
+    category: BugCategory.PRE_PRODUCTION,
+    status: BugStatus.OPEN,
     comments: ''
   };
   newBugAssignedToUserId: number | null = null;
@@ -305,12 +337,26 @@ export class TesterWorkspace implements OnInit {
   bugOriginTcFormatId = '';
   bugMappedFormatId = '';
 
+  // Dynamic Key-Value Fields for Bug creation
+  bugDynamicFieldsList: Array<{ key: string; value: string }> = [];
+
+  addBugDynamicField(): void {
+    this.bugDynamicFieldsList.push({ key: '', value: '' });
+    this.cdr.markForCheck();
+  }
+
+  removeBugDynamicField(index: number): void {
+    this.bugDynamicFieldsList.splice(index, 1);
+    this.cdr.markForCheck();
+  }
+
   // Toast Alerts
   toasts: ToastAlert[] = [];
   private toastCounter = 0;
 
   ngOnInit(): void {
     this.initUserProfile();
+    this.refreshAvailableRegions();
     this.ensureAuthSession(() => {
       this.loadModules();
       this.loadRegions();
@@ -405,36 +451,95 @@ export class TesterWorkspace implements OnInit {
     });
   }
 
+  refreshAvailableRegions(): void {
+    const regionSet = new Set<string>();
+
+    // 1. Regions from DB
+    if (this.dbRegions && this.dbRegions.length > 0) {
+      for (const r of this.dbRegions) {
+        const name = (r.countryName || (r as any).regionName || (r as any).name || '').trim();
+        if (name && name.toUpperCase() !== 'ALL' && name.toUpperCase() !== 'GLOBAL') {
+          regionSet.add(name);
+        }
+      }
+    }
+
+    // 2. Regions from active projects
+    if (this.projects && this.projects.length > 0) {
+      for (const p of this.projects) {
+        const name = (p.region || '').trim();
+        if (name && name.toUpperCase() !== 'DEFAULT' && name.toUpperCase() !== 'ALL' && name.toUpperCase() !== 'GLOBAL') {
+          regionSet.add(name);
+        }
+      }
+    }
+
+    // 3. Defaults if still empty
+    if (regionSet.size === 0) {
+      ['India', 'Singapore', 'Malaysia', 'Indonesia', 'Vietnam'].forEach(r => regionSet.add(r));
+    } else if (!Array.from(regionSet).some(r => r.toLowerCase() === 'india')) {
+      regionSet.add('India');
+    }
+
+    this.availableRegions = Array.from(regionSet);
+
+    // Ensure dbRegions has corresponding items so modals have region options
+    if (this.dbRegions.length === 0) {
+      this.dbRegions = this.availableRegions.map((name, idx) => ({
+        countryId: idx + 1,
+        countryName: name
+      }));
+    } else {
+      const existing = new Set(this.dbRegions.map(d => (d.countryName || '').toLowerCase()));
+      this.availableRegions.forEach((name, idx) => {
+        if (!existing.has(name.toLowerCase())) {
+          this.dbRegions.push({
+            countryId: this.dbRegions.length + idx + 1,
+            countryName: name
+          });
+        }
+      });
+    }
+
+    // Sync selectedRegion to match casing with availableRegions
+    if (this.selectedRegion !== 'ALL') {
+      const matched = this.availableRegions.find(r => r.toLowerCase() === this.selectedRegion.toLowerCase());
+      if (matched) {
+        this.selectedRegion = matched;
+      } else if (this.availableRegions.length > 0) {
+        this.selectedRegion = this.availableRegions[0];
+      }
+    }
+
+    // Pre-sync selectedRegionId for Create Project modal
+    const activeDb = this.dbRegions.find(r => (r.countryName || '').toLowerCase() === this.selectedRegion.toLowerCase());
+    if (activeDb) {
+      this.selectedRegionId = activeDb.countryId;
+    } else if (this.dbRegions.length > 0 && !this.selectedRegionId) {
+      this.selectedRegionId = this.dbRegions[0].countryId;
+    }
+
+    this.cdr.markForCheck();
+  }
+
   loadRegions(): void {
     this.projectService.getRegions().subscribe({
       next: (regs) => {
-        this.dbRegions = regs && Array.isArray(regs) ? regs : [];
-        this.availableRegions = this.dbRegions.map(r => r.countryName);
-
-        // Default region is India from DB
-        const india = this.dbRegions.find(r => r.countryName.toLowerCase() === 'india');
-        if (india) {
-          this.selectedRegion = 'India';
-          this.selectedRegionId = india.countryId;
-        } else if (this.availableRegions.length > 0) {
-          this.selectedRegion = this.availableRegions[0];
-          this.selectedRegionId = this.dbRegions[0].countryId;
-        } else {
-          this.selectedRegion = 'India';
+        if (regs && Array.isArray(regs) && regs.length > 0) {
+          this.dbRegions = regs;
         }
+        this.refreshAvailableRegions();
 
-        // Auto-select project matching default region India
+        // Auto-select project matching selected region
         if (this.projects && this.projects.length > 0 && !this.activeProject) {
-          const indiaProj = this.projects.find(p => (p.region || '').toLowerCase() === this.selectedRegion.toLowerCase()) || this.projects[0];
-          this.selectProject(indiaProj, false);
+          const matchProj = this.projects.find(p => (p.region || '').toLowerCase() === this.selectedRegion.toLowerCase()) || this.projects[0];
+          this.selectProject(matchProj, false);
         }
         this.cdr.markForCheck();
       },
       error: (err) => {
         console.error('Failed to load regions from db:', err);
-        this.dbRegions = [];
-        this.availableRegions = [];
-        this.selectedRegion = 'India';
+        this.refreshAvailableRegions();
         this.cdr.markForCheck();
       }
     });
@@ -581,9 +686,7 @@ export class TesterWorkspace implements OnInit {
         this.selectedRegionId = created.countryId;
         this.isAddingNewRegion = false;
         this.newRegionNameInput = '';
-        if (!this.availableRegions.includes(created.countryName)) {
-          this.availableRegions.push(created.countryName);
-        }
+        this.refreshAvailableRegions();
         this.cdr.markForCheck();
       },
       error: (err) => {
@@ -709,6 +812,7 @@ export class TesterWorkspace implements OnInit {
     this.projectService.getProjects().subscribe({
       next: (projs) => {
         this.projects = projs || [];
+        this.refreshAvailableRegions();
         if (this.projects.length > 0 && !this.activeProject) {
           const indiaProj = this.projects.find(p => (p.region || '').toLowerCase() === this.selectedRegion.toLowerCase()) || this.projects[0];
           this.selectProject(indiaProj, false);
@@ -718,6 +822,7 @@ export class TesterWorkspace implements OnInit {
       error: (err) => {
         console.error('Failed to load projects:', err);
         this.projects = [];
+        this.refreshAvailableRegions();
         this.cdr.markForCheck();
       }
     });
@@ -725,9 +830,13 @@ export class TesterWorkspace implements OnInit {
 
   onRegionChange(region: string): void {
     this.selectedRegion = region;
-    const matching = this.projects.filter(p => region === 'ALL' || p.region === region);
+    const isGlobal = !region || region === 'ALL' || region.toUpperCase() === 'GLOBAL';
+    const matching = this.projects.filter(p => isGlobal || (p.region || '').trim().toLowerCase() === region.trim().toLowerCase());
     if (matching.length > 0) {
-      this.selectProject(matching[0], false);
+      const currentMatches = this.activeProject && (isGlobal || (this.activeProject.region || '').trim().toLowerCase() === region.trim().toLowerCase());
+      if (!currentMatches) {
+        this.selectProject(matching[0], false);
+      }
     } else {
       this.activeProject = null;
       this.features = [];
@@ -782,9 +891,10 @@ export class TesterWorkspace implements OnInit {
     if (this.dbRegions.length === 0) {
       this.loadRegions();
     }
+    this.refreshAvailableRegions();
 
     // Default region is India from DB
-    const india = this.dbRegions.find(r => r.countryName.toLowerCase() === 'india');
+    const india = this.dbRegions.find(r => (r.countryName || '').toLowerCase() === 'india');
     this.selectedRegionId = india ? india.countryId : (this.dbRegions.length > 0 ? this.dbRegions[0].countryId : null);
 
     // Default module is first module from DB
@@ -861,8 +971,9 @@ export class TesterWorkspace implements OnInit {
 
   openEditProject(p: Project): void {
     this.isProjectDetailsModalOpen = false;
+    this.refreshAvailableRegions();
     // Find matching region id
-    const reg = this.dbRegions.find(r => r.countryName.toLowerCase() === (p.region || '').toLowerCase());
+    const reg = this.dbRegions.find(r => (r.countryName || '').toLowerCase() === (p.region || '').toLowerCase());
     this.editSelectedRegionId = reg ? reg.countryId : (this.dbRegions.length > 0 ? this.dbRegions[0].countryId : null);
 
     // Find matching module id
@@ -886,29 +997,132 @@ export class TesterWorkspace implements OnInit {
     this.cdr.markForCheck();
   }
 
-  saveProjectEdit(): void {
+  saveProjectEdit(forcePut: boolean = false): void {
     if (!this.activeProject) return;
-    const req: any = {
-      projectName: this.editProjectForm.projectName,
-      region: this.editSelectedRegionId || this.editProjectForm.region,
-      module: this.editSelectedModuleId || this.editProjectForm.module,
-      subModule: this.editSelectedSubModuleId || this.editProjectForm.subModule,
-      description: this.editProjectForm.description,
-      comments: this.editProjectForm.comments,
-      status: this.editProjectForm.status
+
+    const handleSuccess = (msg: string = 'Project updated successfully!') => {
+      this.showToast(msg, 'success');
+      this.isProjectEditModalOpen = false;
+      this.loadProjects();
+      this.cdr.markForCheck();
     };
-    this.projectService.updateProject(this.activeProject.projectId, req).subscribe({
-      next: (updated) => {
-        this.showToast(`Project "${updated.projectName}" updated!`, 'success');
-        this.isProjectEditModalOpen = false;
+
+    if (forcePut) {
+      const req: any = {
+        projectName: this.editProjectForm.projectName,
+        region: this.editSelectedRegionId || this.editProjectForm.region,
+        module: this.editSelectedModuleId || this.editProjectForm.module,
+        subModule: this.editSelectedSubModuleId || this.editProjectForm.subModule,
+        description: this.editProjectForm.description,
+        comments: this.editProjectForm.comments,
+        status: this.editProjectForm.status
+      };
+      this.projectService.updateProject(this.activeProject.projectId, req).subscribe({
+        next: () => handleSuccess('Project updated successfully!'),
+        error: (putErr) => {
+          console.error('Error updating project:', putErr);
+          this.showToast(putErr?.error?.message || 'Failed to update project', 'error');
+          this.cdr.markForCheck();
+        }
+      });
+      return;
+    }
+
+    const patchReq: ProjectPatchRequest = {};
+
+    // Only include fields that actually changed from current project state
+    const newComments = (this.editProjectForm.comments || '').trim();
+    const oldComments = (this.activeProject.comments || '').trim();
+    if (newComments !== oldComments) {
+      patchReq.comments = this.editProjectForm.comments;
+    }
+
+    const newName = (this.editProjectForm.projectName || '').trim();
+    const oldName = (this.activeProject.projectName || '').trim();
+    if (newName && newName !== oldName) {
+      patchReq.projectName = this.editProjectForm.projectName;
+    }
+
+    const newDesc = (this.editProjectForm.description || '').trim();
+    const oldDesc = (this.activeProject.description || '').trim();
+    if (newDesc !== oldDesc) {
+      patchReq.description = this.editProjectForm.description;
+    }
+
+    if (this.editSelectedRegionId && this.editSelectedRegionId !== this.activeProject.regionId) {
+      patchReq.region = this.editSelectedRegionId;
+    }
+
+    if (this.editSelectedModuleId && this.editSelectedModuleId !== this.activeProject.moduleId) {
+      patchReq.module = this.editSelectedModuleId;
+    }
+
+    if (this.editSelectedSubModuleId && this.editSelectedSubModuleId !== this.activeProject.subModuleId) {
+      patchReq.subModule = this.editSelectedSubModuleId;
+    }
+
+    const statusChanged = this.editProjectForm.status && this.editProjectForm.status !== this.activeProject.status;
+
+    // If nothing changed, close modal
+    if (Object.keys(patchReq).length === 0 && !statusChanged) {
+      this.isProjectEditModalOpen = false;
+      return;
+    }
+
+    // If only status changed
+    if (Object.keys(patchReq).length === 0 && statusChanged) {
+      this.projectService.patchProjectAccess(this.activeProject.projectId, this.editProjectForm.status as any).subscribe({
+        next: () => handleSuccess('Project status updated successfully!'),
+        error: (err) => {
+          this.showToast(err?.error?.message || 'Failed to update project status', 'error');
+          this.cdr.markForCheck();
+        }
+      });
+      return;
+    }
+
+    // Use PATCH endpoint for partial updates (e.g. comments only)
+    this.projectService.patchProject(this.activeProject.projectId, patchReq).subscribe({
+      next: () => {
+        if (statusChanged) {
+          this.projectService.patchProjectAccess(this.activeProject!.projectId, this.editProjectForm.status as any).subscribe();
+        }
+        handleSuccess('Project updated successfully!');
+      },
+      error: (err) => {
+        // Fallback to updateProject (PUT) if PATCH is rejected
+        const req: any = {
+          projectName: this.editProjectForm.projectName,
+          region: this.editSelectedRegionId || this.editProjectForm.region,
+          module: this.editSelectedModuleId || this.editProjectForm.module,
+          subModule: this.editSelectedSubModuleId || this.editProjectForm.subModule,
+          description: this.editProjectForm.description,
+          comments: this.editProjectForm.comments,
+          status: this.editProjectForm.status
+        };
+        this.projectService.updateProject(this.activeProject!.projectId, req).subscribe({
+          next: () => handleSuccess('Project updated successfully!'),
+          error: (putErr) => {
+            console.error('Error updating project:', putErr);
+            this.showToast(putErr?.error?.message || err?.error?.message || 'Failed to update project', 'error');
+            this.cdr.markForCheck();
+          }
+        });
+      }
+    });
+  }
+
+  patchProjectComments(projectId: number, comments: string): void {
+    this.projectService.patchProject(projectId, { comments }).subscribe({
+      next: () => {
+        this.showToast('Project comments updated!', 'success');
+        if (this.activeProject && this.activeProject.projectId === projectId) {
+          this.activeProject.comments = comments;
+        }
         this.loadProjects();
         this.cdr.markForCheck();
       },
-      error: (err) => {
-        console.error('Error updating project:', err);
-        this.showToast(err?.error?.message || 'Failed to update project', 'error');
-        this.cdr.markForCheck();
-      }
+      error: (err) => this.showToast(err?.error?.message || 'Failed to update comment', 'error')
     });
   }
 
@@ -1020,21 +1234,95 @@ export class TesterWorkspace implements OnInit {
     this.cdr.markForCheck();
   }
 
-  saveFeatureEdit(): void {
+  saveFeatureEdit(forcePut: boolean = false): void {
     if (!this.activeFeature || !this.activeProject) return;
-    this.featureService.updateFeature(this.activeFeature.featureId, this.editFeatureForm).subscribe({
-      next: (updated) => {
-        this.showToast(`Feature "${updated.featureName}" updated!`, 'success');
-        this.isFeatureEditModalOpen = false;
-        this.featureCache.delete(this.activeProject!.projectId);
-        this.loadFeatures(this.activeProject!.projectId);
-        this.cdr.markForCheck();
+
+    const handleSuccess = (msg: string = 'Feature updated successfully!') => {
+      this.showToast(msg, 'success');
+      this.isFeatureEditModalOpen = false;
+      this.featureCache.delete(this.activeProject!.projectId);
+      this.loadFeatures(this.activeProject!.projectId);
+      this.cdr.markForCheck();
+    };
+
+    if (forcePut) {
+      this.featureService.updateFeature(this.activeFeature.featureId, this.editFeatureForm).subscribe({
+        next: () => handleSuccess('Feature updated successfully!'),
+        error: (putErr) => {
+          console.error('Error updating feature:', putErr);
+          this.showToast(putErr?.error?.message || 'Failed to update feature', 'error');
+          this.cdr.markForCheck();
+        }
+      });
+      return;
+    }
+
+    const patchReq: FeaturePatchRequest = {};
+
+    const newComments = (this.editFeatureForm.comments || '').trim();
+    const oldComments = (this.activeFeature.comments || '').trim();
+    if (newComments !== oldComments) {
+      patchReq.comments = this.editFeatureForm.comments;
+    }
+
+    const newName = (this.editFeatureForm.featureName || '').trim();
+    const oldName = (this.activeFeature.featureName || '').trim();
+    if (newName && newName !== oldName) {
+      patchReq.featureName = this.editFeatureForm.featureName;
+    }
+
+    if (this.editFeatureForm.sprint && this.editFeatureForm.sprint !== this.activeFeature.sprint) {
+      patchReq.sprint = this.editFeatureForm.sprint;
+    }
+
+    if (this.editFeatureForm.featureVersion && this.editFeatureForm.featureVersion !== this.activeFeature.featureVersion) {
+      patchReq.featureVersion = this.editFeatureForm.featureVersion;
+    }
+
+    const newDesc = (this.editFeatureForm.description || '').trim();
+    const oldDesc = (this.activeFeature.description || '').trim();
+    if (newDesc !== oldDesc) {
+      patchReq.description = this.editFeatureForm.description;
+    }
+
+    if (Object.keys(patchReq).length === 0) {
+      this.isFeatureEditModalOpen = false;
+      return;
+    }
+
+    // Use PATCH endpoint for partial updates
+    this.featureService.patchFeature(this.activeFeature.featureId, patchReq).subscribe({
+      next: () => {
+        handleSuccess('Feature updated successfully!');
       },
       error: (err) => {
-        console.error('Error updating feature:', err);
-        this.showToast(err?.error?.message || 'Failed to update feature', 'error');
-        this.cdr.markForCheck();
+        // Fallback to updateFeature if PATCH is rejected
+        this.featureService.updateFeature(this.activeFeature!.featureId, this.editFeatureForm).subscribe({
+          next: () => handleSuccess('Feature updated successfully!'),
+          error: (putErr) => {
+            console.error('Error updating feature:', putErr);
+            this.showToast(putErr?.error?.message || err?.error?.message || 'Failed to update feature', 'error');
+            this.cdr.markForCheck();
+          }
+        });
       }
+    });
+  }
+
+  patchFeatureComments(featureId: number, comments: string): void {
+    this.featureService.patchFeature(featureId, { comments }).subscribe({
+      next: () => {
+        this.showToast('Feature comments updated!', 'success');
+        if (this.activeFeature && this.activeFeature.featureId === featureId) {
+          this.activeFeature.comments = comments;
+        }
+        if (this.activeProject) {
+          this.featureCache.delete(this.activeProject.projectId);
+          this.loadFeatures(this.activeProject.projectId);
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => this.showToast(err?.error?.message || 'Failed to update comment', 'error')
     });
   }
 
@@ -1089,16 +1377,23 @@ export class TesterWorkspace implements OnInit {
   openCreateTestCaseModal(): void {
     if (!this.activeFeature) return;
     this.newTcForm = {
+      testcaseFormatId: '',
       title: '',
       testType: 'UI',
       testPriority: 'MEDIUM',
-      testcaseStatus: 'PASSED',
+      testcaseStatus: 'NO_RUN',
+      comments: '',
+      automationFeasibility: 'YES',
+      testExecution: '',
+      testValidation: '',
       precondition: 'Verified environment state',
+      testData: '',
       executionSteps: '',
       uiValidations: '',
       dbValidations: '',
-      comments: ''
+      executionComments: ''
     };
+    this.dynamicFieldsList = [];
     this.isTestCaseCreateModalOpen = true;
     this.cdr.markForCheck();
   }
@@ -1109,26 +1404,41 @@ export class TesterWorkspace implements OnInit {
       return;
     }
 
-    const payload: TestCaseCreatePayload = {
+    // Convert dynamicFieldsList array into a dynamicFields map
+    const dynamicFieldsObj: Record<string, any> = {};
+    for (const item of this.dynamicFieldsList) {
+      if (item.key && item.key.trim()) {
+        dynamicFieldsObj[item.key.trim()] = item.value;
+      }
+    }
+
+    const payload: TestCaseExecutionRequest = {
       testCase: {
         featureId: this.activeFeature.featureId,
-        title: this.newTcForm.title,
+        testcaseFormatId: this.newTcForm.testcaseFormatId?.trim() || undefined,
+        title: this.newTcForm.title.trim(),
         testType: this.newTcForm.testType,
         testPriority: this.newTcForm.testPriority,
-        testcaseStatus: this.newTcForm.testcaseStatus,
-        comments: this.newTcForm.comments
+        testcaseStatus: this.newTcForm.testcaseStatus || 'NO_RUN',
+        comments: this.newTcForm.comments?.trim() || undefined,
+        dynamicFields: Object.keys(dynamicFieldsObj).length > 0 ? dynamicFieldsObj : undefined
       },
       testingExecutionRequest: {
-        precondition: this.newTcForm.precondition,
-        executionSteps: this.newTcForm.executionSteps,
-        uiValidations: this.newTcForm.uiValidations,
-        dbValidations: this.newTcForm.dbValidations
+        automationFeasibility: this.newTcForm.automationFeasibility,
+        testExecution: this.newTcForm.testExecution?.trim() || undefined,
+        testValidation: this.newTcForm.testValidation?.trim() || undefined,
+        precondition: this.newTcForm.precondition?.trim() || '',
+        testData: this.newTcForm.testData?.trim() || undefined,
+        executionSteps: this.newTcForm.executionSteps?.trim() || '',
+        uiValidations: this.newTcForm.uiValidations?.trim() || '',
+        dbValidations: this.newTcForm.dbValidations?.trim() || '',
+        comments: this.newTcForm.executionComments?.trim() || undefined
       }
     };
 
     this.testCaseService.createTestCase(payload).subscribe({
       next: (created) => {
-        this.showToast(`Test case "${created.title}" created successfully!`, 'success');
+        this.showToast(`Test case "${created.title || created.testcaseFormatId}" created successfully!`, 'success');
         this.isTestCaseCreateModalOpen = false;
         if (this.activeFeature) {
           this.testcaseCache.delete(this.activeFeature.featureId);
@@ -1145,22 +1455,71 @@ export class TesterWorkspace implements OnInit {
   }
 
   // Click row to open Detail Card Modal
-  viewTestCaseDetail(tc: TestCase): void {
+  viewTestCaseDetail(tc: TestCase, editMode: boolean = false): void {
     this.activeTestCaseDetail = tc;
+    this.testCaseStartInEdit = editMode;
     this.isTestCaseDetailModalOpen = true;
     this.cdr.markForCheck();
   }
 
-  // API 1 on Testcase Card: Edit Testcase (PUT /testcases/{id})
-  handleUpdateTestCase(event: { testcaseId: number; data: TestCasePutRequest }): void {
-    this.testCaseService.updateTestCase(event.testcaseId, event.data).subscribe({
-      next: () => {
-        this.showToast('Test case details updated successfully!', 'success');
+  // API 1a on Testcase Card: Selective Edit Testcase (PATCH /testcases/{id})
+  handlePatchTestCase(event: { testcaseId: number; data: TestCasePatchRequest }): void {
+    const changedFields = Object.keys(event.data).join(', ');
+    this.testCaseService.patchTestCase(event.testcaseId, event.data).subscribe({
+      next: (res) => {
+        this.showToast('Test case updated successfully!', 'success');
         if (this.activeFeature) {
           this.testcaseCache.delete(this.activeFeature.featureId);
           this.loadTestCases(this.activeFeature.featureId);
         }
+        if (this.activeTestCaseDetail && this.activeTestCaseDetail.testcaseId === event.testcaseId) {
+          if (event.data.title !== undefined) this.activeTestCaseDetail.title = event.data.title;
+          if (event.data.testType !== undefined) this.activeTestCaseDetail.testType = event.data.testType as any;
+          if (event.data.testPriority !== undefined) this.activeTestCaseDetail.testPriority = event.data.testPriority as any;
+          if (event.data.comments !== undefined) {
+            this.activeTestCaseDetail.comments = event.data.comments;
+            if (this.activeTestCaseDetail.execution) this.activeTestCaseDetail.execution.comments = event.data.comments;
+          }
+          if (this.activeTestCaseDetail.execution) {
+            if (event.data.executionSteps !== undefined) this.activeTestCaseDetail.execution.executionSteps = event.data.executionSteps;
+            if (event.data.precondition !== undefined) this.activeTestCaseDetail.execution.precondition = event.data.precondition;
+            if (event.data.uiValidations !== undefined) this.activeTestCaseDetail.execution.uiValidations = event.data.uiValidations;
+            if (event.data.dbValidations !== undefined) this.activeTestCaseDetail.execution.dbValidations = event.data.dbValidations;
+          }
+          if (event.data.executionStatus !== undefined) {
+            this.activeTestCaseDetail.executionStatus = event.data.executionStatus;
+          }
+        }
         this.isTestCaseDetailModalOpen = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error updating test case:', err);
+        this.showToast(err?.error?.message || 'Failed to update test case', 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // API 1b on Testcase Card: Full Overwrite Testcase (PUT /testcases/{id})
+  handleUpdateTestCase(event: { testcaseId: number; data: TestCasePutRequest }): void {
+    this.testCaseService.updateTestCase(event.testcaseId, event.data).subscribe({
+      next: () => {
+        this.showToast('Test case updated successfully!', 'success');
+        if (this.activeFeature) {
+          this.testcaseCache.delete(this.activeFeature.featureId);
+          this.loadTestCases(this.activeFeature.featureId);
+        }
+        const found = this.allTestCasesList.find(t => t.testcaseId === event.testcaseId);
+        if (found) {
+          if (event.data.title !== undefined) found.title = event.data.title;
+          if (event.data.testType !== undefined) found.testType = event.data.testType;
+          if (event.data.testPriority !== undefined) found.testPriority = event.data.testPriority;
+          if (event.data.automationFeasibility !== undefined) found.automationFeasibility = event.data.automationFeasibility;
+          if (event.data.dynamicFields !== undefined) found.dynamicFields = event.data.dynamicFields;
+        }
+        this.isTestCaseDetailModalOpen = false;
+        this.testCaseStartInEdit = false;
         this.cdr.markForCheck();
       },
       error: (err) => {
@@ -1191,8 +1550,40 @@ export class TesterWorkspace implements OnInit {
     });
   }
 
-  handleExecuteTestCase(event: { testcaseId: number; status: 'PASS' | 'FAIL' | 'DESCOPE' }): void {
-    this.testCaseService.executeTestCase(event.testcaseId, event.status).subscribe({
+  handleExecuteTestCase(event: { testcaseId: number; status: 'PASS' | 'FAIL' | 'DESCOPE' | 'IN_PROGRESS' | 'BLOCK' | string }): void {
+    const tc = this.testcases.find(t => t.testcaseId === event.testcaseId);
+    if (tc) {
+      tc.executionStatus = event.status;
+      if (event.status === 'PASS') {
+        tc.testcaseStatus = 'PASSED';
+      } else if (event.status === 'FAIL') {
+        tc.testcaseStatus = 'FAILED';
+      } else if (event.status === 'DESCOPE') {
+        tc.testcaseStatus = 'DESCOPE';
+      } else if (event.status === 'IN_PROGRESS') {
+        tc.testcaseStatus = 'IN_PROGRESS';
+      } else if (event.status === 'BLOCK') {
+        tc.testcaseStatus = 'BLOCKED';
+      }
+      this.updateMetrics();
+      this.cdr.markForCheck();
+    }
+    if (this.activeTestCaseDetail && this.activeTestCaseDetail.testcaseId === event.testcaseId) {
+      this.activeTestCaseDetail.executionStatus = event.status;
+      if (event.status === 'PASS') {
+        this.activeTestCaseDetail.testcaseStatus = 'PASSED';
+      } else if (event.status === 'FAIL') {
+        this.activeTestCaseDetail.testcaseStatus = 'FAILED';
+      } else if (event.status === 'DESCOPE') {
+        this.activeTestCaseDetail.testcaseStatus = 'DESCOPE';
+      } else if (event.status === 'IN_PROGRESS') {
+        this.activeTestCaseDetail.testcaseStatus = 'IN_PROGRESS';
+      } else if (event.status === 'BLOCK') {
+        this.activeTestCaseDetail.testcaseStatus = 'BLOCKED';
+      }
+    }
+
+    this.testCaseService.executeTestCase(event.testcaseId, event.status as any).subscribe({
       next: () => {
         this.showToast(`Test case marked as ${event.status}`, 'success');
         if (this.activeFeature) {
@@ -1204,9 +1595,18 @@ export class TesterWorkspace implements OnInit {
       error: (err) => {
         console.error('Execution error:', err);
         this.showToast('Execution update failed', 'error');
+        if (this.activeFeature) {
+          this.loadTestCases(this.activeFeature.featureId);
+        }
         this.cdr.markForCheck();
       }
     });
+  }
+
+  onTestCaseStatusChange(tc: TestCase, newStatus: string): void {
+    if (!tc || !newStatus || newStatus === 'UNEXECUTED') return;
+    if (tc.executionStatus === newStatus) return;
+    this.handleExecuteTestCase({ testcaseId: tc.testcaseId, status: newStatus as any });
   }
 
   // Export Test Cases via Summary Export Service
@@ -1335,13 +1735,14 @@ export class TesterWorkspace implements OnInit {
     this.newBugForm = {
       title: originTc ? `Defect: ${originTc.title}` : '',
       description: originTc?.execution?.executionSteps ? `Observed failure during steps:\n${originTc.execution.executionSteps}` : '',
-      severity: 'HIGH',
-      priority: 'HIGH',
-      category: 'FUNCTIONAL',
-      status: 'OPEN',
+      severity: BugSeverity.HIGH,
+      priority: BugPriority.HIGH,
+      category: BugCategory.PRE_PRODUCTION,
+      status: BugStatus.OPEN,
       comments: ''
     };
     this.newBugAssignedToUserId = null;
+    this.bugDynamicFieldsList = [];
     if (!this.developers || this.developers.length === 0) {
       this.loadDevelopers();
     }
@@ -1355,19 +1756,25 @@ export class TesterWorkspace implements OnInit {
       return;
     }
 
-    const payload: BugCreateRequest = {
-      title: this.newBugForm.title,
-      description: this.newBugForm.description,
-      severity: this.newBugForm.severity,
-      priority: this.newBugForm.priority,
-      category: this.newBugForm.category,
-      status: this.newBugForm.status,
-      comments: this.newBugForm.comments
-    };
-
-    if (this.newBugAssignedToUserId) {
-      payload.assignedTo = this.newBugAssignedToUserId;
+    // Convert bugDynamicFieldsList array into Map<string, any>
+    const dynamicFieldsObj: Record<string, any> = {};
+    for (const item of this.bugDynamicFieldsList) {
+      if (item.key && item.key.trim()) {
+        dynamicFieldsObj[item.key.trim()] = item.value;
+      }
     }
+
+    const payload: BugRequest = {
+      title: this.newBugForm.title.trim(),
+      description: this.newBugForm.description?.trim() || undefined,
+      severity: this.newBugForm.severity || BugSeverity.MEDIUM,
+      priority: this.newBugForm.priority || BugPriority.MEDIUM,
+      category: this.newBugForm.category || BugCategory.PRE_PRODUCTION,
+      status: this.newBugForm.status || BugStatus.OPEN,
+      comments: this.newBugForm.comments?.trim() || undefined,
+      assignedTo: this.newBugAssignedToUserId || undefined,
+      dynamicFields: Object.keys(dynamicFieldsObj).length > 0 ? dynamicFieldsObj : undefined
+    };
 
     this.bugService.createBug(this.bugOriginTcId, payload).subscribe({
       next: (created) => {
@@ -1398,11 +1805,41 @@ export class TesterWorkspace implements OnInit {
     this.cdr.markForCheck();
   }
 
-  // API 1 on Defect Card: Edit Defect (PUT /bugs/{bugId})
+  // API 1a on Defect Card: Selective Edit Defect (PATCH /bugs/{bugId})
+  handlePatchBug(event: { bugId: number; data: BugPatchRequest }): void {
+    const changedFields = Object.keys(event.data).join(', ');
+    this.bugService.patchBug(event.bugId, event.data).subscribe({
+      next: (res) => {
+        this.showToast('Defect updated successfully!', 'success');
+        if (this.activeFeature) {
+          this.bugCache.delete(this.activeFeature.featureId);
+          this.loadBugs(this.activeFeature.featureId);
+        }
+        if (this.activeDefectDetail && this.activeDefectDetail.bugId === event.bugId) {
+          if (event.data.title !== undefined) this.activeDefectDetail.title = event.data.title;
+          if (event.data.description !== undefined) this.activeDefectDetail.description = event.data.description;
+          if (event.data.severity !== undefined) this.activeDefectDetail.severity = event.data.severity as any;
+          if (event.data.priority !== undefined) this.activeDefectDetail.priority = event.data.priority as any;
+          if (event.data.category !== undefined) this.activeDefectDetail.category = event.data.category as any;
+          if (event.data.status !== undefined) this.activeDefectDetail.status = event.data.status as any;
+          if (event.data.comments !== undefined) this.activeDefectDetail.comments = event.data.comments;
+        }
+        this.isDefectDetailModalOpen = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Error updating defect:', err);
+        this.showToast(err?.error?.message || 'Failed to update defect', 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // API 1b on Defect Card: Full Overwrite Defect (PUT /bugs/{bugId})
   handleUpdateBug(event: { bugId: number; data: BugPutRequest }): void {
     this.bugService.updateBug(event.bugId, event.data).subscribe({
       next: () => {
-        this.showToast('Defect details updated successfully!', 'success');
+        this.showToast('Defect updated successfully!', 'success');
         if (this.activeFeature) {
           this.bugCache.delete(this.activeFeature.featureId);
           this.loadBugs(this.activeFeature.featureId);
@@ -1976,7 +2413,7 @@ export class TesterWorkspace implements OnInit {
     return this.allProjectsList.filter(p => {
       const matchSearch = !s || p.projectName.toLowerCase().includes(s) || (p.region && p.region.toLowerCase().includes(s)) || (p.description && p.description.toLowerCase().includes(s));
       const matchStatus = this.allProjStatusFilter === 'ALL' || (p.status || 'ACTIVE') === this.allProjStatusFilter;
-      const matchRegion = this.selectedRegion === 'ALL' || p.region === this.selectedRegion;
+      const matchRegion = this.selectedRegion === 'ALL' || (p.region || '').trim().toLowerCase() === this.selectedRegion.trim().toLowerCase();
       return matchSearch && matchStatus && matchRegion;
     });
   }
@@ -1996,7 +2433,7 @@ export class TesterWorkspace implements OnInit {
     return this.allFeaturesList.filter(f => {
       const matchSearch = !s || f.featureName.toLowerCase().includes(s) || (f.projectName && f.projectName.toLowerCase().includes(s)) || (f.description && f.description.toLowerCase().includes(s));
       const matchProj = this.allFeatProjFilter === 'ALL' || (f.projectName && f.projectName === this.allFeatProjFilter);
-      const matchRegion = this.selectedRegion === 'ALL' || f.region === this.selectedRegion;
+      const matchRegion = this.selectedRegion === 'ALL' || (f.region || '').trim().toLowerCase() === this.selectedRegion.trim().toLowerCase();
       return matchSearch && matchProj && matchRegion;
     });
   }

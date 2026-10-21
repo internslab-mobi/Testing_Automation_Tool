@@ -43,9 +43,8 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
   if (csrfToken) {
     headersConfig['X-XSRF-TOKEN'] = csrfToken;
   }
-  if (accessToken && !req.headers.has('Authorization')) {
-    headersConfig['Authorization'] = `Bearer ${accessToken}`;
-  }
+  // Pure HttpOnly Cookie authentication: credentials sent automatically via withCredentials: true
+  // headersConfig['Authorization'] = `Bearer ${accessToken}`;
 
   const modifiedReq = req.clone({
     withCredentials: true,
@@ -72,9 +71,14 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
               return throwError(() => err);
             }
 
-            // Retry the original request with the refreshed access token
+            // Retry the original request with the refreshed access token (HttpOnly cookie sent automatically via withCredentials)
             const retryHeaders = { ...headersConfig };
-            retryHeaders['Authorization'] = `Bearer ${newAccessToken}`;
+            // Re-read fresh CSRF cookie in case the refresh request rotated or renewed the XSRF-TOKEN
+            const freshCsrf = getCookie('XSRF-TOKEN');
+            if (freshCsrf) {
+              retryHeaders['X-XSRF-TOKEN'] = freshCsrf;
+            }
+            // retryHeaders['Authorization'] = `Bearer ${newAccessToken}`;
 
             const retriedReq = req.clone({
               withCredentials: true,

@@ -17,6 +17,7 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 import xyz.mobi.testingautomationtool.dto.ApiResponse;
 import xyz.mobi.testingautomationtool.dto.AuthDTO.*;
@@ -39,6 +40,17 @@ public class AuthController {
 
     @Value("${app.jwt.cookie.same-site:Lax}")
     private String cookieSameSite;
+
+    @Operation(summary = "Initialize CSRF cookie token", description = "Generates and sends the XSRF-TOKEN cookie for the frontend client.")
+    @GetMapping("/csrf")
+    public ResponseEntity<ApiResponse<String>> getCsrfToken(HttpServletRequest request) {
+        CsrfToken token = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+        if (token == null) {
+            token = (CsrfToken) request.getAttribute("_csrf");
+        }
+        String tokenValue = token != null ? token.getToken() : "OK";
+        return ResponseEntity.ok(ApiResponse.success("CSRF token initialized", tokenValue));
+    }
 
     @Operation(summary = "Register a new user", description = "Allows user registration with specific roles: MANAGER, TESTER, DEVELOPER, ADMIN")
     @PostMapping("/register")

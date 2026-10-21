@@ -19,8 +19,9 @@
       </div>
     </div>
 
-    <!-- VIEW MODE -->
+    <!-- VIEW MODE: ALL TEST CASE GET DATA -->
     <div class="detail-body" *ngIf="!isEditMode">
+      <!-- Top Badges -->
       <div class="detail-top-badges">
         <span class="badge-tag badge-id" title="System Test Case ID">TC ID: #{{ testCase?.testcaseId }}</span>
         <span class="badge-tag badge-format">{{ testCase?.testcaseFormatId || ('TC_' + testCase?.testcaseId) }}</span>
@@ -28,55 +29,107 @@
         <span class="badge-tag" [ngClass]="'badge-prio-' + (testCase?.testPriority?.toLowerCase() || 'medium')">
           {{ testCase?.testPriority }} Priority
         </span>
-        <span class="badge-tag" [ngClass]="testCase?.executionStatus === 'PASS' ? 'badge-pass' : testCase?.executionStatus === 'FAIL' ? 'badge-fail' : 'badge-idle'">
-          {{ testCase?.executionStatus || 'UNEXECUTED' }}
-        </span>
-        <span class="badge-tag badge-auto" *ngIf="testCase?.automationFeasibility">
-          <i class="fa-solid fa-robot"></i> {{ testCase?.automationFeasibility }}
+        <select class="exec-status-select-modal"
+          [ngClass]="'status-' + (testCase?.executionStatus?.toLowerCase() || 'unexecuted')"
+          [ngModel]="testCase?.executionStatus || 'UNEXECUTED'"
+          (ngModelChange)="onExecute($event)"
+          title="Change execution status">
+          <option value="UNEXECUTED" disabled>UNEXECUTED</option>
+          <option value="PASS">PASS</option>
+          <option value="FAIL">FAIL</option>
+          <option value="IN_PROGRESS">IN_PROGRESS</option>
+          <option value="BLOCK">BLOCK</option>
+          <option value="DESCOPE">DESCOPE</option>
+        </select>
+        <span class="badge-tag badge-auto" title="Automation Feasibility">
+          <i class="fa-solid fa-robot"></i> {{ testCase?.automationFeasibility || testCase?.execution?.automationFeasibility || 'YES' }}
         </span>
       </div>
 
+      <!-- Test Case Title -->
       <div class="detail-section">
         <label class="field-label">Test Case Title</label>
         <div class="field-value title-val">{{ testCase?.title }}</div>
       </div>
 
+      <!-- Execution Scope: Precondition & Test Execution (Runner/Environment) -->
       <div class="detail-grid-2">
         <div class="detail-section">
-          <label class="field-label">Precondition</label>
+          <label class="field-label"><i class="fa-solid fa-shield-halved"></i> Precondition</label>
           <div class="field-value box-val">{{ testCase?.execution?.precondition || 'No precondition specified' }}</div>
         </div>
         <div class="detail-section">
-          <label class="field-label">Execution Steps</label>
-          <div class="field-value box-val">{{ testCase?.execution?.executionSteps || 'No execution steps specified' }}</div>
+          <label class="field-label"><i class="fa-solid fa-laptop-code"></i> Test Environment / Runner</label>
+          <div class="field-value box-val">{{ testCase?.testExecution || testCase?.execution?.testExecution || 'Not specified' }}</div>
         </div>
       </div>
 
-      <div class="detail-section" *ngIf="testCase?.testData">
+      <!-- Test Data -->
+      <div class="detail-section">
         <label class="field-label"><i class="fa-solid fa-database"></i> Test Data / Input Parameters</label>
-        <div class="field-value box-val">{{ testCase?.testData }}</div>
+        <div class="field-value box-val">{{ testCase?.testData || testCase?.execution?.testData || 'No test data specified' }}</div>
+      </div>
+
+      <!-- Execution Steps -->
+      <div class="detail-section">
+        <label class="field-label"><i class="fa-solid fa-list-ol"></i> Execution Steps</label>
+        <div class="field-value box-val steps-val">{{ testCase?.execution?.executionSteps || 'No execution steps specified' }}</div>
+      </div>
+
+      <!-- Validations: Objective & UI / DB -->
+      <div class="detail-section">
+        <label class="field-label"><i class="fa-solid fa-bullseye"></i> Validation Objective / Expected Result</label>
+        <div class="field-value box-val">{{ testCase?.testValidation || testCase?.execution?.testValidation || 'No validation objective specified' }}</div>
       </div>
 
       <div class="detail-grid-2">
         <div class="detail-section">
-          <label class="field-label">UI Validation</label>
+          <label class="field-label"><i class="fa-solid fa-display"></i> UI Validation</label>
           <div class="field-value box-val">{{ testCase?.execution?.uiValidations || 'No UI validation rule' }}</div>
         </div>
         <div class="detail-section">
-          <label class="field-label">DB Validation</label>
+          <label class="field-label"><i class="fa-solid fa-server"></i> DB Validation</label>
           <div class="field-value box-val">{{ testCase?.execution?.dbValidations || 'No DB validation rule' }}</div>
         </div>
       </div>
 
-      <div class="detail-section" *ngIf="testCase?.comments || testCase?.execution?.comments">
-        <label class="field-label"><i class="fa-regular fa-comment-dots"></i> Comments</label>
-        <div class="field-value box-val comments-val">{{ testCase?.comments || testCase?.execution?.comments }}</div>
+      <!-- Comments / Remarks -->
+      <div class="detail-section">
+        <label class="field-label"><i class="fa-regular fa-comment-dots"></i> Comments & Remarks</label>
+        <div class="field-value box-val comments-val">{{ testCase?.comments || testCase?.execution?.comments || 'No comments' }}</div>
       </div>
 
-      <div class="meta-info-grid" *ngIf="testCase?.createdBy">
+      <!-- Custom Dynamic Fields (Map<String, Object>) -->
+      <div class="detail-section">
+        <label class="field-label"><i class="fa-solid fa-tags text-indigo"></i> Custom Dynamic Fields</label>
+        <div *ngIf="getDynamicFieldEntries().length === 0" class="empty-dynamic-badge">
+          No custom dynamic fields attached.
+        </div>
+        <div class="dynamic-chips-grid" *ngIf="getDynamicFieldEntries().length > 0">
+          <div *ngFor="let item of getDynamicFieldEntries()" class="dynamic-chip">
+            <span class="dyn-key">{{ item.key }}:</span>
+            <span class="dyn-val">{{ item.value }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Audit Metadata -->
+      <div class="meta-info-grid">
         <div class="meta-item" *ngIf="testCase?.createdBy">
-          <span class="meta-label">Author:</span>
+          <span class="meta-label">Created By:</span>
           <span class="meta-val">{{ testCase?.createdBy }}</span>
+        </div>
+        <div class="meta-item" *ngIf="testCase?.createdAt">
+          <span class="meta-label">Created Date:</span>
+          <span class="meta-val">{{ testCase?.createdAt | date:'medium' }}</span>
+        </div>
+        <div class="meta-item" *ngIf="testCase?.updatedBy">
+          <span class="meta-label">Updated By:</span>
+          <span class="meta-val">{{ testCase?.updatedBy }}</span>
+        </div>
+        <div class="meta-item" *ngIf="testCase?.updatedAt">
+          <span class="meta-label">Updated Date:</span>
+          <span class="meta-val">{{ testCase?.updatedAt | date:'medium' }}</span>
         </div>
       </div>
 
@@ -87,8 +140,8 @@
             <i class="fa-solid fa-bug text-rose"></i>
             Linked Defects ({{ linkedDefects.length }})
           </label>
-          <button class="btn btn-rose-sm" (click)="onLogDefect()">
-            <i class="fa-solid fa-plus"></i> Log Another Defect
+          <button *ngIf="testCase?.executionStatus === 'FAIL'" class="btn btn-rose-sm btn-create-bug" (click)="onLogDefect()" title="Create Bug for this failed test case">
+            <i class="fa-solid fa-bug"></i> Create Bug
           </button>
         </div>
 
@@ -113,14 +166,19 @@
       </div>
     </div>
 
-    <!-- EDIT MODE (API: PUT /testcases/{id}) -->
+    <!-- EDIT MODE: FULL TESTCASE PUT REQUEST FORM -->
     <div class="detail-body edit-body" *ngIf="isEditMode">
-      <div class="form-group">
-        <label>Title *</label>
-        <input type="text" class="form-control" [(ngModel)]="editForm.title">
+      <!-- Section 1: Definition -->
+      <div class="form-section-banner">
+        <i class="fa-solid fa-list-check"></i> 1. Test Case Attributes
       </div>
 
-      <div class="form-grid-2">
+      <div class="form-group">
+        <label>Title *</label>
+        <input type="text" class="form-control" [(ngModel)]="editForm.title" placeholder="Test case summary">
+      </div>
+
+      <div class="form-grid-3">
         <div class="form-group">
           <label>Test Type</label>
           <select class="form-control" [(ngModel)]="editForm.testType">
@@ -139,32 +197,92 @@
             <option value="LOW">LOW</option>
           </select>
         </div>
+        <div class="form-group">
+          <label>Automation Feasibility</label>
+          <select class="form-control" [(ngModel)]="editForm.automationFeasibility">
+            <option value="YES">YES</option>
+            <option value="NO">NO</option>
+            <option value="PARTIALLY_FEASIBLE">PARTIALLY_FEASIBLE</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Section 2: Execution Specifications -->
+      <div class="form-section-banner banner-green">
+        <i class="fa-solid fa-play"></i> 2. Execution Specifications
+      </div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label>Test Environment / Runner</label>
+          <input type="text" class="form-control" [(ngModel)]="editForm.testExecution" placeholder="e.g. Chrome 122 / Cypress / Staging">
+        </div>
+        <div class="form-group">
+          <label>Precondition</label>
+          <input type="text" class="form-control" [(ngModel)]="editForm.precondition" placeholder="e.g. User account is active and verified">
+        </div>
       </div>
 
       <div class="form-group">
-        <label>Precondition</label>
-        <input type="text" class="form-control" [(ngModel)]="editForm.precondition">
+        <label>Test Data / Input Parameters</label>
+        <input type="text" class="form-control" [(ngModel)]="editForm.testData" placeholder="e.g. username=tester@mobi.xyz, otp=123456">
       </div>
 
       <div class="form-group">
         <label>Execution Steps</label>
-        <textarea class="form-control" [(ngModel)]="editForm.executionSteps" rows="3"></textarea>
+        <textarea class="form-control" [(ngModel)]="editForm.executionSteps" rows="3" placeholder="1. Navigate to page&#10;2. Perform action&#10;3. Verify outcome"></textarea>
+      </div>
+
+      <!-- Section 3: Validations & Remarks -->
+      <div class="form-section-banner banner-purple">
+        <i class="fa-solid fa-vial-circle-check"></i> 3. Validations & Remarks
+      </div>
+
+      <div class="form-group">
+        <label>Validation Objective / Expected Result</label>
+        <input type="text" class="form-control" [(ngModel)]="editForm.testValidation" placeholder="e.g. Success criteria, response payload status 200">
       </div>
 
       <div class="form-grid-2">
         <div class="form-group">
           <label>UI Validation</label>
-          <input type="text" class="form-control" [(ngModel)]="editForm.uiValidations">
+          <input type="text" class="form-control" [(ngModel)]="editForm.uiValidations" placeholder="e.g. Toast message displayed, button disabled">
         </div>
         <div class="form-group">
           <label>DB Validation</label>
-          <input type="text" class="form-control" [(ngModel)]="editForm.dbValidations">
+          <input type="text" class="form-control" [(ngModel)]="editForm.dbValidations" placeholder="e.g. Row added to users / status updated">
         </div>
       </div>
 
       <div class="form-group">
-        <label>Comments</label>
-        <textarea class="form-control" [(ngModel)]="editForm.comments" rows="2" placeholder="Tester comments, remarks, or notes"></textarea>
+        <label>Comments / Notes</label>
+        <textarea class="form-control" [(ngModel)]="editForm.comments" rows="2" placeholder="Tester remarks, execution observations, or notes"></textarea>
+      </div>
+
+      <!-- Section 4: Dynamic Fields (Map<String, Object>) -->
+      <div class="form-section-banner banner-amber">
+        <i class="fa-solid fa-tags"></i> 4. Custom Dynamic Fields (Map&lt;String, Object&gt;)
+      </div>
+
+      <div class="dynamic-fields-card">
+        <div class="dynamic-header">
+          <span class="dyn-heading">Custom Key-Value Attributes</span>
+          <button type="button" class="btn-add-dynamic" (click)="addDynamicField()">
+            <i class="fa-solid fa-plus"></i> Add Field
+          </button>
+        </div>
+
+        <div *ngIf="dynamicFieldsList.length === 0" class="dynamic-empty-hint">
+          No dynamic fields added. Click "+ Add Field" to attach custom metadata (e.g., Browser, Module Tag, Sprint, Device).
+        </div>
+
+        <div *ngFor="let field of dynamicFieldsList; let i = index" class="dynamic-field-row">
+          <input type="text" class="form-control" [(ngModel)]="field.key" placeholder="Key (e.g. Browser)">
+          <input type="text" class="form-control" [(ngModel)]="field.value" placeholder="Value (e.g. Chrome 122)">
+          <button type="button" class="btn-remove-dynamic" (click)="removeDynamicField(i)" title="Remove field">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
       </div>
     </div>
 
@@ -172,14 +290,17 @@
     <div class="modal-footer" *ngIf="!isEditMode">
       <div class="execution-actions">
         <span class="action-label">Quick Run:</span>
-        <button class="btn btn-pass-sm" (click)="onExecute('PASS')">
+        <button class="btn btn-pass-sm" [class.btn-active-pass]="testCase?.executionStatus === 'PASS'" (click)="onExecute('PASS')">
           <i class="fa-solid fa-check"></i> Pass
         </button>
-        <button class="btn btn-fail-sm" (click)="onExecute('FAIL')">
+        <button class="btn btn-fail-sm" [class.btn-active-fail]="testCase?.executionStatus === 'FAIL'" (click)="onExecute('FAIL')">
           <i class="fa-solid fa-xmark"></i> Fail
         </button>
-        <button class="btn btn-descope-sm" (click)="onExecute('DESCOPE')">
+        <button class="btn btn-descope-sm" [class.btn-active-descope]="testCase?.executionStatus === 'DESCOPE'" (click)="onExecute('DESCOPE')">
           <i class="fa-solid fa-ban"></i> Descope
+        </button>
+        <button *ngIf="testCase?.executionStatus === 'FAIL'" class="btn btn-rose-sm btn-create-bug" (click)="onLogDefect()" title="Create Bug for this failed test case">
+          <i class="fa-solid fa-bug"></i> Create Bug
         </button>
       </div>
       <button class="btn btn-secondary" (click)="onClose()">Close</button>
@@ -187,8 +308,8 @@
 
     <div class="modal-footer" *ngIf="isEditMode">
       <button class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
-      <button class="btn btn-primary" (click)="saveEdit()">
-        <i class="fa-solid fa-floppy-disk"></i> Save Changes (PUT /testcases)
+      <button class="btn btn-primary" (click)="saveEdit()" title="Update test case details via TestCasePutRequest">
+        <i class="fa-solid fa-floppy-disk"></i> Update Test Case
       </button>
     </div>
   </div>
