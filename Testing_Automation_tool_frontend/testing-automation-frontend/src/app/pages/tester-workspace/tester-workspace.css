@@ -964,13 +964,15 @@ app-workspace-sidebar.collapsed {
   color: #0f172a;
 }
 
-.btn-action-icon.btn-pass:hover {
+.btn-action-icon.btn-pass:hover,
+.btn-action-icon.btn-active-pass {
   background: #22c55e;
   color: #ffffff;
   border-color: #22c55e;
 }
 
-.btn-action-icon.btn-fail:hover {
+.btn-action-icon.btn-fail:hover,
+.btn-action-icon.btn-active-fail {
   background: #ef4444;
   color: #ffffff;
   border-color: #ef4444;
@@ -980,6 +982,104 @@ app-workspace-sidebar.collapsed {
   background: #e11d48;
   color: #ffffff;
   border-color: #e11d48;
+}
+
+/* Execution Status Dropdown in Testcase Row */
+.exec-status-select {
+  padding: 3px 22px 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  outline: none;
+  appearance: none;
+  -webkit-appearance: none;
+  background-repeat: no-repeat;
+  background-position: right 6px center;
+  background-size: 10px 10px;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2364748b'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+  transition: all 0.2s ease;
+}
+
+.exec-status-select.status-pass {
+  background-color: #dcfce7;
+  color: #15803d;
+  border-color: #86efac;
+}
+
+.exec-status-select.status-fail {
+  background-color: #fee2e2;
+  color: #b91c1c;
+  border-color: #fca5a5;
+}
+
+.exec-status-select.status-in_progress {
+  background-color: #fef3c7;
+  color: #b45309;
+  border-color: #fde68a;
+}
+
+.exec-status-select.status-block {
+  background-color: #f3e8ff;
+  color: #7e22ce;
+  border-color: #d8b4fe;
+}
+
+.exec-status-select.status-descope {
+  background-color: #e2e8f0;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+.exec-status-select.status-unexecuted {
+  background-color: #f1f5f9;
+  color: #64748b;
+  border-color: #e2e8f0;
+}
+
+.exec-status-select:hover {
+  filter: brightness(0.96);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.exec-status-select:focus {
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+/* Button: Create Bug (Shown ONLY when execution status is FAIL) */
+.btn-create-bug {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  border: 1px solid #f43f5e;
+  background: #fff1f2;
+  color: #e11d48;
+  cursor: pointer;
+  transition: all 0.15s ease-in-out;
+  white-space: nowrap;
+  animation: pulseBugGlow 1.8s infinite ease-in-out;
+}
+
+.btn-create-bug:hover {
+  background: #e11d48;
+  color: #ffffff;
+  border-color: #e11d48;
+  box-shadow: 0 2px 6px rgba(225, 29, 72, 0.3);
+}
+
+@keyframes pulseBugGlow {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(244, 63, 94, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(244, 63, 94, 0.12);
+  }
 }
 
 /* --------------------------------------------------------------------------
@@ -1022,7 +1122,7 @@ app-workspace-sidebar.collapsed {
 }
 
 .modal-tc-card {
-  max-width: 650px;
+  max-width: 840px;
 }
 
 .modal-header {
@@ -1104,10 +1204,106 @@ app-workspace-sidebar.collapsed {
   box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.1);
 }
 
+.modal-section-divider {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #4338ca;
+  background: #eef2ff;
+  padding: 6px 12px;
+  border-radius: 6px;
+  margin: 10px 0 6px 0;
+  border-left: 3px solid #6366f1;
+}
+
+.modal-section-divider.green {
+  color: #047857;
+  background: #ecfdf5;
+  border-left-color: #10b981;
+}
+
+.modal-section-divider.amber {
+  color: #b45309;
+  background: #fffbeb;
+  border-left-color: #f59e0b;
+}
+
 .form-grid-2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+}
+
+.form-grid-3 {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 12px;
+}
+
+.dynamic-fields-card {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dynamic-field-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.btn-remove-dynamic {
+  background: #fee2e2;
+  color: #ef4444;
+  border: 1px solid #fca5a5;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-remove-dynamic:hover {
+  background: #fecaca;
+  color: #b91c1c;
+}
+
+.btn-add-dynamic {
+  background: #eef2ff;
+  color: #4f46e5;
+  border: 1px dashed #6366f1;
+  border-radius: 6px;
+  padding: 6px 12px;
+  font-size: 11.5px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  align-self: flex-start;
+  transition: all 0.15s ease;
+}
+
+.btn-add-dynamic:hover {
+  background: #e0e7ff;
+  border-style: solid;
+}
+
+.dynamic-empty-hint {
+  font-size: 11.5px;
+  color: #94a3b8;
+  font-style: italic;
+  padding: 4px 0;
 }
 
 .dropzone-box {
@@ -1242,6 +1438,19 @@ app-workspace-sidebar.collapsed {
 
 .btn-secondary:hover {
   background: #f1f5f9;
+}
+
+.btn-secondary-outline {
+  background: #ffffff;
+  color: #3b82f6;
+  border: 1px solid #bfdbfe;
+  font-weight: 600;
+}
+
+.btn-secondary-outline:hover {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
 }
 
 /* Subtle Secondary Top Buttons (Small & Unobtrusive) */

@@ -1,7 +1,7 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Bug, BugPutRequest } from '../../../../model/workspace/workspace.model';
+import { Bug, BugPutRequest, BugPatchRequest } from '../../../../model/workspace/workspace.model';
 import { DeveloperUser } from '../../../../core/services/bug.service';
 
 @Component({
@@ -20,6 +20,7 @@ export class DefectDetailModalComponent {
 
   @Output() close = new EventEmitter<void>();
   @Output() updateBug = new EventEmitter<{ bugId: number; data: BugPutRequest }>();
+  @Output() patchBug = new EventEmitter<{ bugId: number; data: BugPatchRequest }>();
   @Output() softDeleteBug = new EventEmitter<number>();
   @Output() changeStatus = new EventEmitter<{ bugId: number; status: string }>();
   @Output() changeAssignee = new EventEmitter<{ bugId: number; assignedTo: number }>();
@@ -58,11 +59,79 @@ export class DefectDetailModalComponent {
     this.cdr.markForCheck();
   }
 
-  saveEdit(): void {
-    if (!this.bug || !this.editForm.title?.trim()) return;
-    this.updateBug.emit({
+  savePatchEdit(): void {
+    this.saveEdit(false);
+  }
+
+  savePutEdit(): void {
+    this.saveEdit(true);
+  }
+
+  saveEdit(forcePut: boolean = false): void {
+    if (!this.bug) return;
+
+    if (forcePut) {
+      if (!this.editForm.title?.trim() || !this.editForm.description?.trim()) {
+        alert('Title and Description are required for a full defect update.');
+        return;
+      }
+      this.updateBug.emit({
+        bugId: this.bug.bugId,
+        data: this.editForm
+      });
+      this.isEditMode = false;
+      this.cdr.markForCheck();
+      return;
+    }
+
+    // Single / Partial field matching with backend BugPatchRequest
+    const patchData: BugPatchRequest = {};
+
+    const newTitle = (this.editForm.title || '').trim();
+    const oldTitle = (this.bug.title || '').trim();
+    if (newTitle && newTitle !== oldTitle) {
+      patchData.title = newTitle;
+    }
+
+    const newDesc = (this.editForm.description || '').trim();
+    const oldDesc = (this.bug.description || '').trim();
+    if (newDesc !== oldDesc) {
+      patchData.description = newDesc;
+    }
+
+    if (this.editForm.severity && this.editForm.severity !== this.bug.severity) {
+      patchData.severity = this.editForm.severity;
+    }
+
+    if (this.editForm.priority && this.editForm.priority !== this.bug.priority) {
+      patchData.priority = this.editForm.priority;
+    }
+
+    if (this.editForm.category && this.editForm.category !== this.bug.category) {
+      patchData.category = this.editForm.category;
+    }
+
+    if (this.editForm.status && this.editForm.status !== this.bug.status) {
+      patchData.status = this.editForm.status;
+    }
+
+    const newComments = (this.editForm.comments || '').trim();
+    const oldComments = (this.bug.comments || '').trim();
+    if (newComments !== oldComments) {
+      patchData.comments = this.editForm.comments || '';
+    }
+
+    const changedCount = Object.keys(patchData).length;
+    if (changedCount === 0) {
+      this.isEditMode = false;
+      this.cdr.markForCheck();
+      return;
+    }
+
+    // Emit selective PATCH update
+    this.patchBug.emit({
       bugId: this.bug.bugId,
-      data: this.editForm
+      data: patchData
     });
     this.isEditMode = false;
     this.cdr.markForCheck();

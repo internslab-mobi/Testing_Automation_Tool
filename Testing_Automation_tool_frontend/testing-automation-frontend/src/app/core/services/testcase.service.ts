@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { TestCase, TestCaseCreatePayload, TestCasePutRequest } from '../../model/workspace/workspace.model';
+import { TestCase, TestCaseExecutionRequest, TestCaseCreatePayload, TestCasePutRequest, TestCasePatchRequest } from '../../model/workspace/workspace.model';
 
 @Injectable({
   providedIn: 'root'
@@ -58,37 +58,66 @@ export class TestCaseService {
     );
   }
 
-  createTestCase(payload: TestCaseCreatePayload): Observable<TestCase> {
-    return this.http.post<any>(`${this.baseUrl}/testcases`, payload).pipe(
-      map(res => res?.data || res)
+  createTestCase(payload: TestCaseExecutionRequest): Observable<TestCase> {
+    return this.http.post<any>(`${this.baseUrl}/testcase`, payload).pipe(
+      map(res => {
+        const data = res?.data || res;
+        const tc = data?.testCaseResponse || data?.testCase || data;
+        const ex = data?.testingExecutionResponse || data?.execution || {};
+        return {
+          testcaseId: tc.testcaseId || tc.id,
+          testcaseFormatId: tc.testcaseFormatId || (tc.testcaseId ? `TC_${tc.testcaseId}` : 'TC'),
+          featureId: tc.featureId || payload.testCase.featureId,
+          title: tc.title || payload.testCase.title,
+          testType: tc.testType || payload.testCase.testType,
+          testPriority: tc.testPriority || payload.testCase.testPriority,
+          testcaseStatus: tc.testcaseStatus || payload.testCase.testcaseStatus || 'NO_RUN',
+          executionStatus: ex.executionStatus || 'UNEXECUTED',
+          comments: tc.comments || '',
+          execution: {
+            executionId: ex.executionId,
+            precondition: ex.precondition || payload.testingExecutionRequest?.precondition || '',
+            executionSteps: ex.executionSteps || payload.testingExecutionRequest?.executionSteps || '',
+            uiValidations: ex.uiValidations || payload.testingExecutionRequest?.uiValidations || '',
+            dbValidations: ex.dbValidations || payload.testingExecutionRequest?.dbValidations || '',
+            comments: ex.comments || ''
+          }
+        } as TestCase;
+      })
     );
   }
 
   updateTestCase(testcaseId: number, req: TestCasePutRequest): Observable<any> {
-    return this.http.put<any>(`${this.baseUrl}/testcases/${testcaseId}`, req).pipe(
+    return this.http.put<any>(`${this.baseUrl}/testcase/${testcaseId}`, req).pipe(
       map(res => res?.data || res)
     );
   }
 
   softDeleteTestCase(testcaseId: number): Observable<any> {
-    return this.http.delete<any>(`${this.baseUrl}/testcases/soft/${testcaseId}`).pipe(
+    return this.http.delete<any>(`${this.baseUrl}/testcase/soft/${testcaseId}`).pipe(
       map(res => res?.data || res)
     );
   }
 
-  executeTestCase(testcaseId: number, executionStatus: 'PASS' | 'FAIL' | 'DESCOPE'): Observable<any> {
-    return this.http.patch<any>(`${this.baseUrl}/testcases/${testcaseId}`, { executionStatus });
+  executeTestCase(testcaseId: number, executionStatus: 'PASS' | 'FAIL' | 'DESCOPE' | 'IN_PROGRESS' | 'BLOCK' | string): Observable<any> {
+    return this.http.patch<any>(`${this.baseUrl}/testcase/${testcaseId}`, { executionStatus });
+  }
+
+  patchTestCase(testcaseId: number, req: TestCasePatchRequest): Observable<any> {
+    return this.http.patch<any>(`${this.baseUrl}/testcase/${testcaseId}`, req).pipe(
+      map(res => res?.data || res)
+    );
   }
 
   uploadBulkExcel(featureId: number, file: File): Observable<any> {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('featureId', String(featureId));
-    return this.http.post<any>(`${this.baseUrl}/testcases/upload`, formData);
+    return this.http.post<any>(`${this.baseUrl}/testcase/upload`, formData);
   }
 
   downloadTemplate(featureId: number): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/testcases/${featureId}/template`, {
+    return this.http.get(`${this.baseUrl}/testcase/${featureId}/template`, {
       responseType: 'blob'
     });
   }

@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { Feature, FeatureCreateRequest, AttachmentItem } from '../../model/workspace/workspace.model';
+import { Feature, FeatureCreateRequest, FeaturePatchRequest, AttachmentItem } from '../../model/workspace/workspace.model';
 
 @Injectable({
   providedIn: 'root'
@@ -42,6 +42,12 @@ export class FeatureService {
 
   updateFeature(featureId: number, req: Partial<FeatureCreateRequest>): Observable<Feature> {
     return this.http.put<any>(`${this.baseUrl}/feature/${featureId}`, req).pipe(
+      map(res => res?.data || res)
+    );
+  }
+
+  patchFeature(featureId: number, req: FeaturePatchRequest): Observable<any> {
+    return this.http.patch<any>(`${this.baseUrl}/feature/${featureId}`, req).pipe(
       map(res => res?.data || res)
     );
   }

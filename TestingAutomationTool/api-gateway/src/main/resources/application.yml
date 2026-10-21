@@ -36,6 +36,7 @@ spring:
                   - "Authorization"
                   - "X-XSRF-TOKEN"
                   - "X-CSRF-TOKEN"
+                  - "Set-Cookie"
                 allowCredentials: true
                 maxAge: 3600
 
@@ -56,7 +57,7 @@ spring:
             - id: main-service-business
               uri: ${services.main-service.url}
               predicates:
-                - Path=/manager/**, /project/**, /projects/**, /feature/**, /features/**, /testcases/**, /testcase/**, /bugs/**, /bug/**, /comments/**, /attachments/**, /in-app-notifications/**, /notifications/**, /admin/**
+                - Path=/csrf, /manager/**, /project/**, /projects/**, /feature/**, /features/**, /testcases/**, /testcase/**, /bugs/**, /bug/**, /comments/**, /attachments/**, /in-app-notifications/**, /notifications/**, /admin/**
               metadata:
                 response-timeout: 30000
 

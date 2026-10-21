@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, catchError, shareReplay } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { Project, ProjectCreateRequest, AttachmentItem, ModuleItem, SubModuleItem, RegionItem } from '../../model/workspace/workspace.model';
+import { Project, ProjectCreateRequest, ProjectPatchRequest, AttachmentItem, ModuleItem, SubModuleItem, RegionItem } from '../../model/workspace/workspace.model';
 
 @Injectable({
   providedIn: 'root'
@@ -56,6 +56,20 @@ export class ProjectService {
     );
   }
 
+  patchProject(projectId: number, req: ProjectPatchRequest): Observable<any> {
+    return this.http.patch<any>(`${this.baseUrl}/project/${projectId}`, req).pipe(
+      map(res => res?.data || res)
+    );
+  }
+
+  patchProjectAccess(projectId: number, status: 'ACTIVE' | 'INACTIVE'): Observable<any> {
+    return this.http.patch<any>(`${this.baseUrl}/project/access/${projectId}`, null, {
+      params: { status }
+    }).pipe(
+      map(res => res?.data || res)
+    );
+  }
+
   getModules(): Observable<ModuleItem[]> {
     return this.http.get<any>(`${this.baseUrl}/project/modules`).pipe(
       map(res => {
@@ -92,7 +106,11 @@ export class ProjectService {
     return this.http.get<any>(`${this.baseUrl}/project/regions`).pipe(
       map(res => {
         const raw = res?.data || res || [];
-        return Array.isArray(raw) ? raw : [];
+        const list = Array.isArray(raw) ? raw : [];
+        return list.map((item: any) => ({
+          countryId: item.countryId || item.id || item.regionId,
+          countryName: (item.countryName || item.regionName || item.name || '').trim()
+        } as RegionItem)).filter(r => !!r.countryName);
       }),
       catchError(() => of([]))
     );

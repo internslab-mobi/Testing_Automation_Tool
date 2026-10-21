@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { Bug, BugCreateRequest, BugPutRequest, AttachmentItem, BugComment } from '../../model/workspace/workspace.model';
+import { Bug, BugRequest, BugCreateRequest, BugPutRequest, BugPatchRequest, AttachmentItem, BugComment } from '../../model/workspace/workspace.model';
 
 export interface DeveloperUser {
   userId: number;
@@ -107,7 +107,7 @@ export class BugService {
     });
   }
 
-  createBug(testcaseId: number, req: BugCreateRequest): Observable<Bug> {
+  createBug(testcaseId: number, req: BugRequest): Observable<Bug> {
     return this.http.post<any>(`${this.baseUrl}/bug?testcaseId=${encodeURIComponent(testcaseId)}`, req).pipe(
       map(res => res?.data || res)
     );
@@ -131,6 +131,12 @@ export class BugService {
 
   patchBugAssignee(bugId: number, assignedTo: number): Observable<any> {
     return this.http.patch<any>(`${this.baseUrl}/bug/${bugId}`, { assignedTo });
+  }
+
+  patchBug(bugId: number, req: BugPatchRequest): Observable<any> {
+    return this.http.patch<any>(`${this.baseUrl}/bug/${bugId}`, req).pipe(
+      map(res => res?.data || res)
+    );
   }
 
   getBugAttachments(bugId: number): Observable<AttachmentItem[]> {

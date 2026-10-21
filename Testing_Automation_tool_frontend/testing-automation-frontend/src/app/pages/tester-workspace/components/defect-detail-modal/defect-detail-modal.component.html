@@ -122,7 +122,7 @@
       </div>
     </div>
 
-    <!-- EDIT MODE (API: PUT /bugs/{bugId}) -->
+    <!-- EDIT MODE -->
     <div class="detail-body edit-body" *ngIf="isEditMode">
       <div class="form-group">
         <label>Defect Title *</label>
@@ -202,8 +202,11 @@
 
     <div class="modal-footer" *ngIf="isEditMode">
       <button class="btn btn-secondary" (click)="cancelEdit()">Cancel</button>
-      <button class="btn btn-primary" (click)="saveEdit()">
-        <i class="fa-solid fa-floppy-disk"></i> Save Changes (PUT /bugs)
+      <button class="btn btn-secondary-outline" (click)="savePutEdit()" title="Save all defect fields">
+        <i class="fa-solid fa-arrows-rotate"></i> Update All
+      </button>
+      <button class="btn btn-primary" (click)="savePatchEdit()" title="Save changes">
+        <i class="fa-solid fa-floppy-disk"></i> Save Changes
       </button>
     </div>
   </div>

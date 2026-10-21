@@ -134,8 +134,34 @@ export class SidebarComponent {
     }
   }
 
+  get displayRegions(): string[] {
+    const set = new Set<string>();
+    if (this.availableRegions && this.availableRegions.length > 0) {
+      for (const r of this.availableRegions) {
+        if (r && r.trim() && r.toUpperCase() !== 'ALL' && r.toUpperCase() !== 'GLOBAL') {
+          set.add(r.trim());
+        }
+      }
+    }
+    // Also include any unique regions from projects
+    if (this.projects && this.projects.length > 0) {
+      for (const p of this.projects) {
+        const r = (p.region || '').trim();
+        if (r && r.toUpperCase() !== 'DEFAULT' && r.toUpperCase() !== 'ALL' && r.toUpperCase() !== 'GLOBAL') {
+          set.add(r);
+        }
+      }
+    }
+    // Sane fallback defaults so regions are always visible
+    if (set.size === 0) {
+      ['India', 'Singapore', 'Malaysia', 'Indonesia', 'Vietnam'].forEach(r => set.add(r));
+    }
+    return Array.from(set);
+  }
+
   onRegionSelected(region: string): void {
     this.selectedRegion = region;
+    this.projectPage = 1;
     this.regionChange.emit(region);
     this.cdr.markForCheck();
   }
