@@ -33,15 +33,15 @@ public class  AdminController {
                 .body(ApiResponse.success("Manager created successfully", response));
     }
 
-    @PutMapping("/managers/{userId}")
-    public ResponseEntity<ApiResponse<ManagerResponse>> updateManager(
+    @PutMapping({"/users/{userId}", "/managers/{userId}"})
+    public ResponseEntity<ApiResponse<ManagerResponse>> updateUser(
             @PathVariable Integer userId,
             @Valid @RequestBody CreateManagerRequest request) {
 
         ManagerResponse response =
-                adminService.updateManager(userId, request);
+                adminService.updateUser(userId, request);
 
-        return ResponseEntity.ok(ApiResponse.success("Manager updated successfully", response));
+        return ResponseEntity.ok(ApiResponse.success("User updated successfully", response));
     }
 
     @PatchMapping("/managers/{userId}")

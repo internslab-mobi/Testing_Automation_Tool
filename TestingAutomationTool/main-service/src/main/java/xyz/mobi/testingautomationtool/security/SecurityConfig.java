@@ -78,6 +78,7 @@ public class SecurityConfig {
                                 "/webjars/**",
                                 "/static/**",
                                 "/bug-chat.html",
+
                                 "/manager-dashboard.html",
                                 "/favicon.ico",
                                 "/error"

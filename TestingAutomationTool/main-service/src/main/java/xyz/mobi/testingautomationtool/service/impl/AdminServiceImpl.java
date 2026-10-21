@@ -27,6 +27,7 @@ import xyz.mobi.testingautomationtool.service.AdminService;
 import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.EmailService;
 
+import java.security.SecureRandom;
 import java.util.List;
 
 @Service
@@ -74,7 +75,7 @@ public class AdminServiceImpl implements AdminService {
                         ));
 
 
-        String rawPassword = request.getPassword();
+        String rawPassword = generateRandomPassword(10);
 
         String encodedPassword =
                 passwordEncoder.encode(rawPassword);
@@ -109,22 +110,28 @@ public class AdminServiceImpl implements AdminService {
     public ManagerResponse updateManager(
             Integer userId,
             CreateManagerRequest request) {
+        return updateUser(userId, request);
+    }
 
-        User manager = userRepository
+    @Transactional
+    @Override
+    public ManagerResponse updateUser(
+            Integer userId,
+            CreateManagerRequest request) {
+
+        User user = userRepository
                 .findByUserIdAndIsActiveTrue(userId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "Manager not found with id: " + userId
+                                "User not found with id: " + userId
                         )
                 );
 
-        if (!"MANAGER".equals(manager.getRole().getRole())) {
-            throw new IllegalArgumentException(
-                    "User is not a MANAGER"
-            );
+        if (user.getRole() != null && ("ADMIN".equalsIgnoreCase(user.getRole().getRole()) || "ROLE_ADMIN".equalsIgnoreCase(user.getRole().getRole()))) {
+            throw new IllegalArgumentException("Admin user profiles cannot be edited");
         }
 
-        if (!manager.getUsername().equals(request.getUsername())
+        if (!user.getUsername().equals(request.getUsername())
                 && userRepository.existsByUsername(request.getUsername())) {
 
             throw new DuplicateResourceException(
@@ -132,7 +139,7 @@ public class AdminServiceImpl implements AdminService {
             );
         }
 
-        if (!manager.getEmail().equals(request.getEmail())
+        if (!user.getEmail().equals(request.getEmail())
                 && userRepository.existsByEmail(request.getEmail())) {
 
             throw new DuplicateResourceException(
@@ -140,15 +147,15 @@ public class AdminServiceImpl implements AdminService {
             );
         }
 
-        manager.setUsername(request.getUsername());
-        manager.setEmail(request.getEmail());
-        manager.setFullName(request.getFullName());
-        manager.setDesignation(request.getDesignation());
-        manager.setSkills(request.getSkills());
+        user.setUsername(request.getUsername());
+        user.setEmail(request.getEmail());
+        user.setFullName(request.getFullName());
+        user.setDesignation(request.getDesignation());
+        user.setSkills(request.getSkills());
 
-        User updatedManager = userRepository.save(manager);
+        User updatedUser = userRepository.save(user);
 
-        return adminMapper.toResponse(updatedManager);
+        return adminMapper.toResponse(updatedUser);
     }
 
     @Transactional
@@ -234,6 +241,7 @@ public class AdminServiceImpl implements AdminService {
         return userRepository
                 .findAllByIsActiveTrue()
                 .stream()
+                .filter(u -> u.getRole() == null || (!"ADMIN".equalsIgnoreCase(u.getRole().getRole()) && !"ROLE_ADMIN".equalsIgnoreCase(u.getRole().getRole())))
                 .map(adminMapper::toResponse)
                 .toList();
     }
@@ -257,10 +265,10 @@ public class AdminServiceImpl implements AdminService {
         User currentAdmin = authService.getCurrentUser();
 
         User user = userRepository
-                .findByUserIdAndIsActiveFalse(userId)
+                .findByUserIdAndIsActiveTrue(userId)
                 .orElseThrow(() ->
                         new ResourceNotFoundException(
-                                "User not found with ID: " + userId
+                                "Active user not found with ID: " + userId
                         ));
 
 
@@ -356,5 +364,27 @@ public class AdminServiceImpl implements AdminService {
                         ));
 
         bugRepository.delete(bug);
+    }
+
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    private String generateRandomPassword(int length) {
+        String characters =
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
+                        "abcdefghijklmnopqrstuvwxyz" +
+                        "0123456789@#$!";
+
+        StringBuilder password = new StringBuilder(length);
+
+        for (int i = 0; i < length; i++) {
+            password.append(
+                    characters.charAt(
+                            SECURE_RANDOM.nextInt(characters.length())
+                    )
+            );
+        }
+
+        return password.toString();
     }
 }

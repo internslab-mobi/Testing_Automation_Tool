@@ -590,17 +590,64 @@ public class EmailServiceImpl implements EmailService {
     }
 
 
+
     @Async
     @Override
     public void confirmationEmail(String toEmail, String username) {
         if (toEmail == null || toEmail.isBlank()) {
             return;
         }
+
         String subject = "Account Approved - Testing Automation Tool";
-        String htmlContent = "<h3>Hello " + escapeHtml(username) + ",</h3>"
-                + "<p>Your account has been approved by the manager. You can now log in to the Testing Automation Tool.</p>"
-                + "<p>Best regards,<br>Testing Automation Team</p>";
-        sendHtmlEmail(toEmail, subject, htmlContent);
+        StringBuilder message = new StringBuilder();
+
+        appendHtmlHeader(
+                message,
+                "Account Approved",
+                "Your account is ready to use"
+        );
+
+        message.append("""
+            <p style="margin:0 0 20px;font-size:16px;color:#334155;">
+                Hello,
+            </p>
+            """);
+
+        message.append("<p style=\"margin:0 0 20px;font-size:15px;"
+                + "line-height:1.8;color:#475569;\">Hello "
+                + escapeHtml(username == null || username.isBlank()
+                ? "User" : username)
+                + ", your account has been approved by the manager. "
+                + "You can now log in to the Testing Automation Tool "
+                + "using your registered credentials.</p>");
+
+        message.append("""
+            <div style="margin-top:24px;padding:18px;
+                        background-color:#ecfdf5;
+                        border-left:4px solid #16a34a;
+                        border-radius:6px;">
+                <p style="margin:0 0 8px;font-size:15px;
+                          font-weight:bold;color:#166534;">
+                    Account successfully approved
+                </p>
+                <p style="margin:0;font-size:14px;
+                          line-height:1.7;color:#166534;">
+                    You can now access the platform and start
+                    using its testing automation features.
+                </p>
+            </div>
+            """);
+
+        message.append("""
+            <p style="margin-top:28px;line-height:1.7;
+                      color:#475569;">
+                Welcome to the team!
+            </p>
+            """);
+
+        appendHtmlFooter(message);
+
+        sendHtmlEmail(toEmail, subject, message.toString());
     }
 
     @Async
@@ -609,12 +656,58 @@ public class EmailServiceImpl implements EmailService {
         if (toEmail == null || toEmail.isBlank()) {
             return;
         }
-        String subject = "Account Request Rejected - Testing Automation Tool";
-        String htmlContent = "<h3>Hello " + escapeHtml(username) + ",</h3>"
-                + "<p>Your account registration request has been rejected by the manager. If you believe this is an error, please contact your administrator.</p>"
-                + "<p>Best regards,<br>Testing Automation Team</p>";
-        sendHtmlEmail(toEmail, subject, htmlContent);
+
+        String subject =
+                "Account Request Rejected - Testing Automation Tool";
+
+        StringBuilder message = new StringBuilder();
+
+        appendHtmlHeader(
+                message,
+                "Account Request Update",
+                "An update regarding your registration"
+        );
+
+        message.append("<p style=\"margin:0 0 20px;font-size:16px;"
+                + "color:#334155;\">Hello "
+                + escapeHtml(username == null || username.isBlank()
+                ? "User" : username)
+                + ",</p>");
+
+        message.append("""
+            <p style="margin:0 0 20px;font-size:15px;
+                      line-height:1.8;color:#475569;">
+                Unfortunately, your account registration request
+                has been rejected by the manager.
+            </p>
+
+            <div style="margin-top:24px;padding:18px;
+                        background-color:#fef2f2;
+                        border-left:4px solid #dc2626;
+                        border-radius:6px;">
+                <p style="margin:0 0 8px;font-size:15px;
+                          font-weight:bold;color:#991b1b;">
+                    Registration not approved
+                </p>
+                <p style="margin:0;font-size:14px;
+                          line-height:1.7;color:#991b1b;">
+                    If you believe this decision was made in error,
+                    please contact your administrator for assistance.
+                </p>
+            </div>
+
+            <p style="margin-top:28px;line-height:1.7;
+                      color:#475569;">
+                Thank you for your interest in the
+                Testing Automation Tool.
+            </p>
+            """);
+
+        appendHtmlFooter(message);
+
+        sendHtmlEmail(toEmail, subject, message.toString());
     }
+
 
 
 

@@ -200,9 +200,11 @@ export class Profile implements OnInit {
 
   goBack(): void {
     const role = (this.profile?.role || '').toUpperCase();
-    if (role === 'DEVELOPER') {
+    if (role.includes('ADMIN')) {
+      this.router.navigate(['/admin-workspace']);
+    } else if (role.includes('DEV')) {
       this.router.navigate(['/developer-workspace']);
-    } else if (role === 'TESTER') {
+    } else if (role.includes('TESTER')) {
       this.router.navigate(['/tester-workspace']);
     } else {
       this.location.back();

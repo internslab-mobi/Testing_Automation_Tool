@@ -218,11 +218,6 @@ export class BugService {
     );
   }
 
-  patchBug(bugId: number, req: any): Observable<any> {
-    return this.http.patch<any>(`${this.baseUrl}/bug/${bugId}`, req).pipe(
-      map(res => res?.data || res)
-    );
-  }
 
   getBugComments(bugId: number): Observable<BugComment[]> {
     return this.http.get<any>(`${this.baseUrl}/bugs/${bugId}/comments`).pipe(

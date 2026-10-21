@@ -17,6 +17,11 @@ public interface AdminService {
             CreateManagerRequest request);
 
     @Transactional
+    ManagerResponse updateUser(
+            Integer userId,
+            CreateManagerRequest request);
+
+    @Transactional
     String patchManager(
             Integer userId,
             CreateManagerRequest request);

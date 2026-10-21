@@ -8,6 +8,7 @@ import { TesterWorkspace } from './pages/tester-workspace/tester-workspace';
 import { ManagerDashboard } from './pages/manager-dashboard/manager-dashboard';
 import { managerGuard } from './core/guards/manager.guard';
 import { DeveloperWorkspace } from './pages/developer-workspace/developer-workspace';
+import { AdminWorkspace } from './pages/admin-workspace/admin-workspace';
 import { Profile } from './pages/profile/profile';
 
 export const routes: Routes = [
@@ -85,6 +86,15 @@ export const routes: Routes = [
   {
     path: 'developer',
     redirectTo: 'developer-workspace',
+    pathMatch: 'full'
+  },
+  {
+    path: 'admin-workspace',
+    component: AdminWorkspace
+  },
+  {
+    path: 'admin',
+    redirectTo: 'admin-workspace',
     pathMatch: 'full'
   },
   {
