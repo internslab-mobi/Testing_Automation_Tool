@@ -267,6 +267,16 @@ export class TesterWorkspace implements OnInit {
   isAttachmentsModalOpen = false;
   isChatModalOpen = false;
   isNotificationsModalOpen = false;
+  isMoveTestCasesModalOpen = false;
+
+  // Selected Test Cases for bulk operations (mapping to other feature)
+  selectedTestCaseIds: Set<number> = new Set<number>();
+  isMovingTestCases = false;
+  targetMoveProjectId: number | null = null;
+  targetMoveFeatureId: number | null = null;
+  availableMoveFeatures: Feature[] = [];
+  isLoadingMoveFeatures = false;
+  moveErrorMessage = '';
 
   // Modal State & Forms
   activeTestCaseDetail: TestCase | null = null;
@@ -2560,5 +2570,196 @@ export class TesterWorkspace implements OnInit {
   // Quick navigation to project
   navigateToProject(p: Project): void {
     this.selectProject(p);
+  }
+
+  // =========================================================================
+  // TEST CASE BULK SELECTION & MAP TO FEATURE
+  // =========================================================================
+  toggleTestCaseSelect(tcId: number, event?: Event): void {
+    if (event) event.stopPropagation();
+    if (this.selectedTestCaseIds.has(tcId)) {
+      this.selectedTestCaseIds.delete(tcId);
+    } else {
+      this.selectedTestCaseIds.add(tcId);
+    }
+    this.cdr.markForCheck();
+  }
+
+  isTestCaseSelected(tcId: number): boolean {
+    return this.selectedTestCaseIds.has(tcId);
+  }
+
+  isAllTestCasesSelected(): boolean {
+    if (!this.paginatedTestCases || this.paginatedTestCases.length === 0) return false;
+    return this.paginatedTestCases.every(tc => this.selectedTestCaseIds.has(tc.testcaseId));
+  }
+
+  isPartiallySelected(): boolean {
+    if (!this.paginatedTestCases || this.paginatedTestCases.length === 0) return false;
+    const count = this.paginatedTestCases.filter(tc => this.selectedTestCaseIds.has(tc.testcaseId)).length;
+    return count > 0 && count < this.paginatedTestCases.length;
+  }
+
+  toggleSelectAllTestCases(event?: Event): void {
+    if (event) event.stopPropagation();
+    const allSelected = this.isAllTestCasesSelected();
+    if (allSelected) {
+      this.paginatedTestCases.forEach(tc => this.selectedTestCaseIds.delete(tc.testcaseId));
+    } else {
+      this.paginatedTestCases.forEach(tc => this.selectedTestCaseIds.add(tc.testcaseId));
+    }
+    this.cdr.markForCheck();
+  }
+
+  isAllOverviewTcSelected(): boolean {
+    if (!this.paginatedAllTestCases || this.paginatedAllTestCases.length === 0) return false;
+    return this.paginatedAllTestCases.every(tc => this.selectedTestCaseIds.has(tc.testcaseId));
+  }
+
+  isPartiallyOverviewTcSelected(): boolean {
+    if (!this.paginatedAllTestCases || this.paginatedAllTestCases.length === 0) return false;
+    const count = this.paginatedAllTestCases.filter(tc => this.selectedTestCaseIds.has(tc.testcaseId)).length;
+    return count > 0 && count < this.paginatedAllTestCases.length;
+  }
+
+  toggleSelectAllOverviewTc(event?: Event): void {
+    if (event) event.stopPropagation();
+    const allSelected = this.isAllOverviewTcSelected();
+    if (allSelected) {
+      this.paginatedAllTestCases.forEach(tc => this.selectedTestCaseIds.delete(tc.testcaseId));
+    } else {
+      this.paginatedAllTestCases.forEach(tc => this.selectedTestCaseIds.add(tc.testcaseId));
+    }
+    this.cdr.markForCheck();
+  }
+
+  clearSelectedTestCases(): void {
+    this.selectedTestCaseIds.clear();
+    this.cdr.markForCheck();
+  }
+
+  getSelectedTestCaseDisplayNames(): string[] {
+    const names: string[] = [];
+    const allCases = [...this.testcases, ...(this.allTestCasesList || [])];
+    const seen = new Set<number>();
+    for (const tcId of this.selectedTestCaseIds) {
+      if (seen.has(tcId)) continue;
+      seen.add(tcId);
+      const found = allCases.find(t => t.testcaseId === tcId);
+      if (found) {
+        names.push(found.testcaseFormatId || `TC_${found.testcaseId}`);
+      } else {
+        names.push(`TC_${tcId}`);
+      }
+      if (names.length >= 6) break;
+    }
+    return names;
+  }
+
+  openMoveTestCasesModal(): void {
+    if (this.selectedTestCaseIds.size === 0) {
+      this.showToast('Please select at least one test case to map.');
+      return;
+    }
+    this.isMoveTestCasesModalOpen = true;
+    this.moveErrorMessage = '';
+    this.targetMoveProjectId = this.activeProject?.projectId || (this.projects && this.projects[0] ? this.projects[0].projectId : null);
+    this.targetMoveFeatureId = null;
+    this.loadFeaturesForMove(this.targetMoveProjectId);
+    this.cdr.markForCheck();
+  }
+
+  closeMoveTestCasesModal(): void {
+    if (this.isMovingTestCases) return;
+    this.isMoveTestCasesModalOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  onMoveProjectChange(projectId: number): void {
+    this.targetMoveProjectId = projectId;
+    this.targetMoveFeatureId = null;
+    this.loadFeaturesForMove(projectId);
+  }
+
+  loadFeaturesForMove(projectId: number | null): void {
+    if (!projectId) {
+      this.availableMoveFeatures = [];
+      return;
+    }
+    this.isLoadingMoveFeatures = true;
+    this.featureService.getFeaturesByProject(projectId).subscribe({
+      next: (feats) => {
+        const list = feats || [];
+        if (this.activeFeature && projectId === this.activeProject?.projectId) {
+          this.availableMoveFeatures = list.filter(f => f.featureId !== this.activeFeature?.featureId);
+        } else {
+          this.availableMoveFeatures = list;
+        }
+        if (this.availableMoveFeatures.length > 0) {
+          this.targetMoveFeatureId = this.availableMoveFeatures[0].featureId;
+        } else {
+          this.targetMoveFeatureId = null;
+        }
+        this.isLoadingMoveFeatures = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Failed to load features for project:', err);
+        this.availableMoveFeatures = [];
+        this.isLoadingMoveFeatures = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  confirmMoveTestCases(): void {
+    if (!this.targetMoveFeatureId) {
+      this.moveErrorMessage = 'Please select a destination feature.';
+      return;
+    }
+    if (this.selectedTestCaseIds.size === 0) {
+      this.moveErrorMessage = 'No test cases selected.';
+      return;
+    }
+
+    this.isMovingTestCases = true;
+    this.moveErrorMessage = '';
+
+    const testCaseIds = Array.from(this.selectedTestCaseIds);
+    const targetFeat = this.availableMoveFeatures.find(f => f.featureId === this.targetMoveFeatureId);
+    const targetName = targetFeat?.featureName || `Feature #${this.targetMoveFeatureId}`;
+
+    this.featureService.patchFeature(this.targetMoveFeatureId, { testCaseId: testCaseIds }).subscribe({
+      next: (res) => {
+        this.isMovingTestCases = false;
+        this.isMoveTestCasesModalOpen = false;
+        const count = testCaseIds.length;
+        this.showToast(`Successfully mapped ${count} test case${count > 1 ? 's' : ''} to ${targetName}!`);
+
+        if (this.activeFeature) {
+          this.testcaseCache.delete(this.activeFeature.featureId);
+        }
+        this.testcaseCache.delete(this.targetMoveFeatureId!);
+
+        if (this.activeFeature) {
+          this.loadTestCases(this.activeFeature.featureId);
+        }
+
+        if (this.allFeaturesList.length > 0) {
+          this.loadAllOverviewData();
+        }
+
+        this.selectedTestCaseIds.clear();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Failed to move test cases:', err);
+        this.isMovingTestCases = false;
+        const errorDetail = err?.error?.message || err?.message || 'Failed to map test cases to the selected feature.';
+        this.moveErrorMessage = errorDetail;
+        this.showToast('Error mapping test cases: ' + errorDetail);
+        this.cdr.markForCheck();
+      }
+    });
   }
 }

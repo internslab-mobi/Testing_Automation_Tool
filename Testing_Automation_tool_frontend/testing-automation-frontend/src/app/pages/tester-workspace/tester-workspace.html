@@ -134,6 +134,12 @@
 
         <!-- Suite Actions Strip -->
         <div class="cockpit-tab-actions" *ngIf="activeSubTab === 'testcases'">
+          <button class="btn btn-warning btn-sm" *ngIf="selectedTestCaseIds.size > 0" (click)="openMoveTestCasesModal()" title="Map selected test cases to another feature">
+            <i class="fa-solid fa-arrow-right-arrow-left"></i> Map to Feature ({{ selectedTestCaseIds.size }})
+          </button>
+          <button class="btn btn-secondary btn-sm" *ngIf="selectedTestCaseIds.size > 0" (click)="clearSelectedTestCases()" title="Clear Selection">
+            <i class="fa-solid fa-xmark"></i> Clear
+          </button>
           <button class="btn btn-primary btn-sm" (click)="openCreateTestCaseModal()">
             <i class="fa-solid fa-plus"></i> Add Test Case
           </button>
@@ -197,11 +203,34 @@
           </div>
         </div>
 
+        <!-- Bulk Selection Action Banner -->
+        <div class="selection-banner" *ngIf="selectedTestCaseIds.size > 0">
+          <div class="selection-info">
+            <i class="fa-solid fa-circle-check text-emerald"></i>
+            <span><strong>{{ selectedTestCaseIds.size }}</strong> test case{{ selectedTestCaseIds.size > 1 ? 's' : '' }} selected</span>
+          </div>
+          <div class="selection-actions">
+            <button class="btn btn-warning btn-sm" (click)="openMoveTestCasesModal()">
+              <i class="fa-solid fa-arrow-right-arrow-left"></i> Map to Another Feature
+            </button>
+            <button class="btn btn-secondary btn-sm" (click)="clearSelectedTestCases()">
+              <i class="fa-solid fa-xmark"></i> Deselect All
+            </button>
+          </div>
+        </div>
+
         <!-- Clamped 2-Line Test Cases Table with Click to View Card -->
         <div class="table-responsive">
           <table class="cockpit-table">
             <thead>
               <tr>
+                <th style="width: 44px; text-align: center;">
+                  <input type="checkbox"
+                    [checked]="isAllTestCasesSelected()"
+                    [indeterminate]="isPartiallySelected()"
+                    (change)="toggleSelectAllTestCases($event)"
+                    title="Select / Deselect all visible test cases" />
+                </th>
                 <th style="width: 100px;">TC ID</th>
                 <th>Test Case Description & Steps</th>
                 <th style="width: 130px;">Type / Priority</th>
@@ -211,14 +240,21 @@
             </thead>
             <tbody>
               <tr *ngIf="paginatedTestCases.length === 0">
-                <td colspan="5" class="empty-table-cell">
+                <td colspan="6" class="empty-table-cell">
                   <i class="fa-solid fa-vial-circle-check"></i>
                   <span>No test cases match filter criteria</span>
                 </td>
               </tr>
 
               <tr *ngFor="let tc of paginatedTestCases; trackBy: trackByTestCaseId" class="clickable-row"
+                [class.row-selected]="isTestCaseSelected(tc.testcaseId)"
                 (click)="viewTestCaseDetail(tc)" title="Click to view detailed card, edit, or soft delete">
+                <td style="width: 44px; text-align: center;" (click)="$event.stopPropagation()">
+                  <input type="checkbox"
+                    [checked]="isTestCaseSelected(tc.testcaseId)"
+                    (change)="toggleTestCaseSelect(tc.testcaseId, $event)"
+                    title="Select test case" />
+                </td>
                 <td>
                   <span class="tc-id-pill">{{ tc.testcaseFormatId || ('TC_' + tc.testcaseId) }}</span>
                 </td>
@@ -757,10 +793,33 @@
             </div>
           </div>
 
+          <!-- Bulk Selection Action Banner for Overview Tab -->
+          <div class="selection-banner" *ngIf="selectedTestCaseIds.size > 0">
+            <div class="selection-info">
+              <i class="fa-solid fa-circle-check text-emerald"></i>
+              <span><strong>{{ selectedTestCaseIds.size }}</strong> test case{{ selectedTestCaseIds.size > 1 ? 's' : '' }} selected</span>
+            </div>
+            <div class="selection-actions">
+              <button class="btn btn-warning btn-sm" (click)="openMoveTestCasesModal()">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i> Map to Another Feature
+              </button>
+              <button class="btn btn-secondary btn-sm" (click)="clearSelectedTestCases()">
+                <i class="fa-solid fa-xmark"></i> Deselect All
+              </button>
+            </div>
+          </div>
+
           <div class="table-responsive">
             <table class="cockpit-table">
               <thead>
                 <tr>
+                  <th style="width: 44px; text-align: center;">
+                    <input type="checkbox"
+                      [checked]="isAllOverviewTcSelected()"
+                      [indeterminate]="isPartiallyOverviewTcSelected()"
+                      (change)="toggleSelectAllOverviewTc($event)"
+                      title="Select / Deselect all visible test cases" />
+                  </th>
                   <th style="width: 100px;">TC ID</th>
                   <th>Test Case & Parent Feature</th>
                   <th style="width: 130px;">Type / Priority</th>
@@ -770,13 +829,20 @@
               </thead>
               <tbody>
                 <tr *ngIf="paginatedAllTestCases.length === 0">
-                  <td colspan="5" class="empty-table-cell">
+                  <td colspan="6" class="empty-table-cell">
                     <i class="fa-solid fa-vial-circle-check"></i>
                     <span>No test cases found matching criteria</span>
                   </td>
                 </tr>
                 <tr *ngFor="let tc of paginatedAllTestCases; trackBy: trackByTestCaseId" class="clickable-row"
+                  [class.row-selected]="isTestCaseSelected(tc.testcaseId)"
                   (click)="viewTestCaseDetail(tc)">
+                  <td style="width: 44px; text-align: center;" (click)="$event.stopPropagation()">
+                    <input type="checkbox"
+                      [checked]="isTestCaseSelected(tc.testcaseId)"
+                      (change)="toggleTestCaseSelect(tc.testcaseId, $event)"
+                      title="Select test case" />
+                  </td>
                   <td>
                     <span class="tc-id-pill">{{ tc.testcaseFormatId || ('TC_' + tc.testcaseId) }}</span>
                   </td>
@@ -1650,6 +1716,96 @@
         <button class="btn btn-secondary" (click)="isBugCreateModalOpen = false">Cancel</button>
         <button class="btn btn-rose" (click)="saveNewDefect()">
           <i class="fa-solid fa-paper-plane"></i> Log Defect
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP / MOVE TEST CASES TO ANOTHER FEATURE MODAL -->
+  <div class="modal-backdrop" *ngIf="isMoveTestCasesModalOpen" (click)="closeMoveTestCasesModal()">
+    <div class="modal-card modal-md" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="modal-title-wrap">
+          <h3><i class="fa-solid fa-arrow-right-arrow-left text-emerald"></i> Map Test Cases to Feature</h3>
+          <p class="modal-subtitle">Transfer selected test cases and linked defects to another feature</p>
+        </div>
+        <button class="modal-close" (click)="closeMoveTestCasesModal()">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Selected Count & Chips -->
+        <div class="move-selected-summary">
+          <label class="form-label-bold"><i class="fa-solid fa-list-check text-emerald"></i> Selected Test Cases ({{ selectedTestCaseIds.size }}):</label>
+          <div class="selected-tc-chips-container">
+            <span class="selected-tc-chip" *ngFor="let name of getSelectedTestCaseDisplayNames()">
+              <i class="fa-solid fa-vial text-xs"></i> {{ name }}
+            </span>
+            <span class="selected-tc-chip more-chip" *ngIf="selectedTestCaseIds.size > 6">
+              +{{ selectedTestCaseIds.size - 6 }} more
+            </span>
+          </div>
+        </div>
+
+        <!-- Current Source Feature info -->
+        <div class="source-feature-callout" *ngIf="activeFeature">
+          <div class="source-label">Current Location:</div>
+          <div class="source-value">
+            <i class="fa-solid fa-folder text-indigo"></i>
+            <span>{{ activeProject?.projectName }}</span>
+            <i class="fa-solid fa-chevron-right text-xs text-muted"></i>
+            <span class="active-feat-highlight">{{ activeFeature.featureName }}</span>
+          </div>
+        </div>
+
+        <!-- Target Project Dropdown -->
+        <div class="form-group">
+          <label><i class="fa-solid fa-folder-open text-emerald"></i> Target Project *</label>
+          <select class="form-control" [ngModel]="targetMoveProjectId" (ngModelChange)="onMoveProjectChange($event)">
+            <option *ngFor="let p of projects" [ngValue]="p.projectId">
+              {{ p.projectName }}
+            </option>
+          </select>
+        </div>
+
+        <!-- Target Feature Dropdown -->
+        <div class="form-group">
+          <label><i class="fa-solid fa-cube text-emerald"></i> Target Feature *</label>
+          <div *ngIf="isLoadingMoveFeatures" class="loading-features-hint">
+            <i class="fa-solid fa-spinner fa-spin"></i> Loading features...
+          </div>
+          <select *ngIf="!isLoadingMoveFeatures" class="form-control" [(ngModel)]="targetMoveFeatureId">
+            <option [ngValue]="null" disabled>-- Select Destination Feature --</option>
+            <option *ngFor="let f of availableMoveFeatures" [ngValue]="f.featureId">
+              {{ f.featureName }} {{ f.sprint ? '(Sprint ' + f.sprint + ')' : '' }}
+            </option>
+          </select>
+          <div *ngIf="!isLoadingMoveFeatures && availableMoveFeatures.length === 0" class="no-features-hint text-warning mt-1">
+            <i class="fa-solid fa-triangle-exclamation"></i> No available features found in this project.
+          </div>
+        </div>
+
+        <!-- Informative note -->
+        <div class="move-info-box">
+          <i class="fa-solid fa-circle-info text-indigo"></i>
+          <div>
+            <strong>Backend Mapping:</strong> Moving test cases will update their parent feature ID. Any active defects/bugs linked to these test cases will also automatically be updated to the destination feature.
+          </div>
+        </div>
+
+        <!-- Error Message if any -->
+        <div class="alert alert-danger mt-2" *ngIf="moveErrorMessage">
+          <i class="fa-solid fa-triangle-exclamation"></i> {{ moveErrorMessage }}
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" (click)="closeMoveTestCasesModal()" [disabled]="isMovingTestCases">
+          Cancel
+        </button>
+        <button class="btn btn-primary" type="button" (click)="confirmMoveTestCases()" [disabled]="isMovingTestCases || !targetMoveFeatureId">
+          <i class="fa-solid fa-spinner fa-spin" *ngIf="isMovingTestCases"></i>
+          <i class="fa-solid fa-arrow-right-arrow-left" *ngIf="!isMovingTestCases"></i>
+          {{ isMovingTestCases ? 'Mapping...' : 'Confirm Mapping' }}
         </button>
       </div>
     </div>

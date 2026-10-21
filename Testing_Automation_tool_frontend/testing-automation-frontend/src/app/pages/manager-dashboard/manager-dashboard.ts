@@ -55,6 +55,24 @@ export interface TesterPerformance {
   testCases: TestCase[];
 }
 
+export interface DeveloperPerformance {
+  id: string;
+  name: string;
+  username: string;
+  email?: string;
+  initials: string;
+  avatarColor: string;
+  isUnassigned?: boolean;
+  total: number;
+  openCount: number;
+  inProgressCount: number;
+  resolvedCount: number;
+  openPercent: number;
+  inProgressPercent: number;
+  resolvedPercent: number;
+  bugs: Bug[];
+}
+
 @Component({
   selector: 'app-manager-dashboard',
   standalone: true,
@@ -191,6 +209,9 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     }
   }
 
+  // Active Performance Role View ('TESTER' | 'DEVELOPER')
+  activePerformanceTab: 'TESTER' | 'DEVELOPER' = 'TESTER';
+
   // Tester Performance Analysis State
   testerPerformanceList: TesterPerformance[] = [];
   isTesterMetricsLoading = false;
@@ -203,6 +224,19 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   testerDetailsSearchTerm = '';
   testerDetailsPage = 0;
   readonly testerDetailsPageSize = 8;
+
+  // Developer Performance Analysis State
+  developerPerformanceList: DeveloperPerformance[] = [];
+  isDeveloperMetricsLoading = false;
+  developerMetricsError = '';
+  selectedDeveloper: DeveloperPerformance | null = null;
+  showAllDevelopers = false;
+  readonly initialDeveloperLimit = 3;
+
+  // Selected Developer Drilldown Table State
+  developerDetailsSearchTerm = '';
+  developerDetailsPage = 0;
+  readonly developerDetailsPageSize = 8;
 
   // Filter Data Sources
   allProjects: ProjectOption[] = [];
@@ -692,6 +726,8 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     this.errorMessage = '';
     this.loadQaDefectSeverityMetrics();
     this.loadTesterPerformanceMetrics();
+    this.loadDeveloperPerformanceMetrics();
+    this.loadDefectManagementData();
 
     if (this.qaTestDrilldown?.active) {
       this.loadQaTestCasesDrilldown(this.qaTestDrilldown.statusKey);
@@ -1421,6 +1457,70 @@ export class ManagerDashboard implements OnInit, OnDestroy {
 
   get openBugsCount(): number {
     return this.bugsList.filter(b => b.status === 'OPEN').length;
+  }
+
+  // =========================================================================
+  // SPLIT DASHBOARD: RECENT DEFECTS / GETALLBUGS WIDGET
+  // =========================================================================
+  recentBugsSearch = '';
+  recentBugsSeverityFilter = 'ALL';
+  recentBugsStatusFilter = 'ALL';
+  recentBugsPage = 0;
+  recentBugsPageSize = 5;
+
+  get recentBugsFiltered(): Bug[] {
+    const s = (this.recentBugsSearch || '').toLowerCase().trim();
+    const sorted = [...this.bugsList].sort((a, b) => (b.bugId || 0) - (a.bugId || 0));
+    return sorted.filter(b => {
+      const bSev = (b.severity || 'HIGH').toString().toUpperCase();
+      const bStat = (b.status || 'OPEN').toString().toUpperCase();
+      const matchSeverity = this.recentBugsSeverityFilter === 'ALL' || bSev === this.recentBugsSeverityFilter;
+      const matchStatus = this.recentBugsStatusFilter === 'ALL' || bStat === this.recentBugsStatusFilter;
+      const matchSearch = !s ||
+        (b.bugFormatId && b.bugFormatId.toLowerCase().includes(s)) ||
+        (b.title && b.title.toLowerCase().includes(s)) ||
+        (b.featureName && b.featureName.toLowerCase().includes(s)) ||
+        (b.assignedTo && b.assignedTo.toLowerCase().includes(s)) ||
+        (b.reportedBy && b.reportedBy.toLowerCase().includes(s));
+      return matchSeverity && matchStatus && matchSearch;
+    });
+  }
+
+  get paginatedRecentBugs(): Bug[] {
+    const start = this.recentBugsPage * this.recentBugsPageSize;
+    return this.recentBugsFiltered.slice(start, start + this.recentBugsPageSize);
+  }
+
+  get recentBugsTotalPages(): number {
+    return Math.max(1, Math.ceil(this.recentBugsFiltered.length / this.recentBugsPageSize));
+  }
+
+  get recentBugsCriticalCount(): number {
+    return this.bugsList.filter(b => {
+      const s = (b.severity || '').toString().toUpperCase();
+      return s === 'CRITICAL' || s === 'HIGH';
+    }).length;
+  }
+
+  get recentBugsOpenCount(): number {
+    return this.bugsList.filter(b => {
+      const s = (b.status || '').toString().toUpperCase();
+      return s === 'OPEN' || s === 'IN_PROGRESS';
+    }).length;
+  }
+
+  prevRecentBugsPage(): void {
+    if (this.recentBugsPage > 0) {
+      this.recentBugsPage--;
+      this.cdr.markForCheck();
+    }
+  }
+
+  nextRecentBugsPage(): void {
+    if (this.recentBugsPage < this.recentBugsTotalPages - 1) {
+      this.recentBugsPage++;
+      this.cdr.markForCheck();
+    }
   }
 
   // =========================================================================
@@ -2341,11 +2441,17 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     this.testerMetricsError = '';
 
     const users$ = this.http.get<any>(`${this.apiBase}/manager/users/active`).pipe(
-      catchError((err) => {
-        console.warn('Failed to load active users for tester performance:', err);
-        return of({ data: [] });
-      })
-    );
+  map((res) => ({
+    ...res,
+    data: (res?.data ?? []).filter(
+      (user: any) => user.role === 'TESTER'
+    )
+  })),
+  catchError((err) => {
+    console.warn('Failed to load active testers for tester performance:', err);
+    return of({ data: [] });
+  })
+);
 
     let testCases$: Observable<any[]>;
 
@@ -2660,9 +2766,302 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     this.loadDashboardMetrics();
   }
 
-  onTesterSprintChange(sprint: number | null): void {
-    this.onSprintSelect(sprint);
-    this.loadDashboardMetrics();
+  // =========================================================================
+  // DEVELOPER PERFORMANCE ANALYSIS
+  // =========================================================================
+  loadDeveloperPerformanceMetrics(): void {
+    this.isDeveloperMetricsLoading = true;
+    this.developerMetricsError = '';
+
+    const activeUsers$ = this.http.get<any>(`${this.apiBase}/manager/users/active`).pipe(
+      map((res) => {
+        const raw = res?.data || res || [];
+        const arr: any[] = Array.isArray(raw) ? raw : [];
+        return arr.filter((u: any) => {
+          const roleStr = typeof u.role === 'object' ? (u.role?.role || u.role?.roleName || '') : (u.role || '');
+          return roleStr.toUpperCase().includes('DEV');
+        });
+      }),
+      catchError(() => of([]))
+    );
+
+    const devs$ = this.bugService.getDevelopers().pipe(catchError(() => of([])));
+    const bugs$ = this.bugService.getAllBugs().pipe(catchError(() => of([])));
+
+    forkJoin({ activeUsers: activeUsers$, devs: devs$, bugs: bugs$ }).subscribe({
+      next: ({ activeUsers, devs, bugs }) => {
+        const devMap = new Map<string, { id: number | string; name: string; username: string; email?: string }>();
+
+        activeUsers.forEach((u: any) => {
+          const username = (u.username || '').trim();
+          const name = (u.fullName || u.username || 'Developer').trim();
+          const key = username.toLowerCase() || String(u.userId);
+          devMap.set(key, { id: u.userId, name, username, email: u.email });
+        });
+
+        devs.forEach((d: any) => {
+          const username = (d.username || '').trim();
+          const name = (d.fullName || d.username || 'Developer').trim();
+          const key = username.toLowerCase() || String(d.userId);
+          if (!devMap.has(key)) {
+            devMap.set(key, { id: d.userId, name, username, email: d.email });
+          }
+        });
+
+        let scopedBugs = bugs;
+        if (this.selectedFeatureId != null) {
+          scopedBugs = bugs.filter((b: Bug) => b.featureId === this.selectedFeatureId);
+        } else if (this.selectedProjectId != null) {
+          scopedBugs = bugs.filter((b: Bug) => {
+            if (b.projectName) {
+              const proj = this.allProjects.find(p => p.projectId === this.selectedProjectId);
+              return proj && b.projectName.toLowerCase() === proj.projectName.toLowerCase();
+            }
+            return true;
+          });
+        }
+
+        this.processDeveloperPerformanceData(Array.from(devMap.values()), scopedBugs);
+        this.isDeveloperMetricsLoading = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Failed to load developer performance data:', err);
+        this.developerMetricsError = 'Unable to load developer performance data.';
+        this.isDeveloperMetricsLoading = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  mapBugStatusToCategory(status?: string): 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' {
+    const s = (status || '').toUpperCase().trim();
+    if (s === 'RESOLVED' || s === 'FIXED' || s === 'CLOSED' || s === 'NOT_A_BUG') {
+      return 'RESOLVED';
+    }
+    if (s === 'IN_PROGRESS' || s === 'TESTING' || s === 'REOPENED') {
+      return 'IN_PROGRESS';
+    }
+    return 'OPEN';
+  }
+
+  private processDeveloperPerformanceData(devUsers: any[], bugs: Bug[]): void {
+    const devMap = new Map<string, DeveloperPerformance>();
+
+    devUsers.forEach((u) => {
+      const username = (u.username || '').toLowerCase().trim();
+      const displayName = (u.name || u.fullName || u.username || 'Developer').trim();
+      const idKey = username || `user_${u.id}`;
+      devMap.set(idKey, {
+        id: idKey,
+        name: displayName,
+        username: u.username || '',
+        email: u.email || '',
+        initials: this.getInitialsForName(displayName),
+        avatarColor: this.getTesterAvatarColor(displayName),
+        isUnassigned: false,
+        total: 0,
+        openCount: 0,
+        inProgressCount: 0,
+        resolvedCount: 0,
+        openPercent: 0,
+        inProgressPercent: 0,
+        resolvedPercent: 0,
+        bugs: []
+      });
+    });
+
+    const unassignedBugs: Bug[] = [];
+
+    bugs.forEach((bug) => {
+      const rawAssignee = (bug.assignedTo || '').trim();
+      const rawLower = rawAssignee.toLowerCase();
+      const devId = bug.assignedToId ? `user_${bug.assignedToId}` : '';
+
+      let matchedDev: DeveloperPerformance | undefined;
+      if (devId && devMap.has(devId)) {
+        matchedDev = devMap.get(devId);
+      } else if (rawLower && devMap.has(rawLower)) {
+        matchedDev = devMap.get(rawLower);
+      } else if (rawLower) {
+        for (const d of devMap.values()) {
+          if (d.name.toLowerCase() === rawLower || d.username.toLowerCase() === rawLower) {
+            matchedDev = d;
+            break;
+          }
+        }
+      }
+
+      if (matchedDev) {
+        matchedDev.bugs.push(bug);
+      } else if (rawAssignee) {
+        const newDev: DeveloperPerformance = {
+          id: rawLower,
+          name: rawAssignee,
+          username: rawAssignee,
+          initials: this.getInitialsForName(rawAssignee),
+          avatarColor: this.getTesterAvatarColor(rawAssignee),
+          isUnassigned: false,
+          total: 0,
+          openCount: 0,
+          inProgressCount: 0,
+          resolvedCount: 0,
+          openPercent: 0,
+          inProgressPercent: 0,
+          resolvedPercent: 0,
+          bugs: [bug]
+        };
+        devMap.set(rawLower, newDev);
+      } else {
+        unassignedBugs.push(bug);
+      }
+    });
+
+    const list: DeveloperPerformance[] = [];
+
+    devMap.forEach((dev) => {
+      dev.total = dev.bugs.length;
+      let open = 0;
+      let inProgress = 0;
+      let resolved = 0;
+
+      dev.bugs.forEach((b) => {
+        const cat = this.mapBugStatusToCategory(b.status);
+        if (cat === 'RESOLVED') resolved++;
+        else if (cat === 'IN_PROGRESS') inProgress++;
+        else open++;
+      });
+
+      dev.openCount = open;
+      dev.inProgressCount = inProgress;
+      dev.resolvedCount = resolved;
+
+      if (dev.total > 0) {
+        dev.openPercent = Math.round((open / dev.total) * 100);
+        dev.inProgressPercent = Math.round((inProgress / dev.total) * 100);
+        dev.resolvedPercent = Math.round((resolved / dev.total) * 100);
+      } else {
+        dev.openPercent = 0;
+        dev.inProgressPercent = 0;
+        dev.resolvedPercent = 0;
+      }
+
+      list.push(dev);
+    });
+
+    if (unassignedBugs.length > 0) {
+      let uOpen = 0;
+      let uInProgress = 0;
+      let uResolved = 0;
+      unassignedBugs.forEach((b) => {
+        const cat = this.mapBugStatusToCategory(b.status);
+        if (cat === 'RESOLVED') uResolved++;
+        else if (cat === 'IN_PROGRESS') uInProgress++;
+        else uOpen++;
+      });
+      const uTotal = unassignedBugs.length;
+      list.push({
+        id: 'unassigned',
+        name: 'Unassigned',
+        username: 'unassigned',
+        initials: 'UA',
+        avatarColor: '#8993a4',
+        isUnassigned: true,
+        total: uTotal,
+        openCount: uOpen,
+        inProgressCount: uInProgress,
+        resolvedCount: uResolved,
+        openPercent: uTotal > 0 ? Math.round((uOpen / uTotal) * 100) : 0,
+        inProgressPercent: uTotal > 0 ? Math.round((uInProgress / uTotal) * 100) : 0,
+        resolvedPercent: uTotal > 0 ? Math.round((uResolved / uTotal) * 100) : 0,
+        bugs: unassignedBugs
+      });
+    }
+
+    list.sort((a, b) => {
+      if (a.isUnassigned) return 1;
+      if (b.isUnassigned) return -1;
+      return b.total - a.total;
+    });
+
+    this.developerPerformanceList = list;
+  }
+
+  get developerSummaryActiveDevs(): number {
+    return this.developerPerformanceList.filter((d) => !d.isUnassigned && d.total > 0).length;
+  }
+
+  get developerSummaryTotalAssigned(): number {
+    return this.developerPerformanceList.reduce((sum, d) => sum + (d.isUnassigned ? 0 : d.total), 0);
+  }
+
+  get developerSummaryTotalInProgress(): number {
+    return this.developerPerformanceList.reduce((sum, d) => sum + (d.isUnassigned ? 0 : d.inProgressCount), 0);
+  }
+
+  get developerSummaryTotalResolved(): number {
+    return this.developerPerformanceList.reduce((sum, d) => sum + (d.isUnassigned ? 0 : d.resolvedCount), 0);
+  }
+
+  get displayedDevelopers(): DeveloperPerformance[] {
+    if (this.showAllDevelopers || this.developerPerformanceList.length <= this.initialDeveloperLimit) {
+      return this.developerPerformanceList;
+    }
+    return this.developerPerformanceList.slice(0, this.initialDeveloperLimit);
+  }
+
+  selectDeveloper(dev: DeveloperPerformance): void {
+    if (this.selectedDeveloper?.id === dev.id) {
+      this.clearSelectedDeveloper();
+      return;
+    }
+    this.selectedDeveloper = dev;
+    this.developerDetailsSearchTerm = '';
+    this.developerDetailsPage = 0;
+    this.cdr.markForCheck();
+  }
+
+  clearSelectedDeveloper(): void {
+    this.selectedDeveloper = null;
+    this.developerDetailsSearchTerm = '';
+    this.developerDetailsPage = 0;
+    this.cdr.markForCheck();
+  }
+
+  get filteredDeveloperBugs(): Bug[] {
+    if (!this.selectedDeveloper) return [];
+    const s = this.developerDetailsSearchTerm.toLowerCase().trim();
+    if (!s) return this.selectedDeveloper.bugs;
+    return this.selectedDeveloper.bugs.filter(
+      (b) =>
+        (b.title && b.title.toLowerCase().includes(s)) ||
+        (b.bugFormatId && b.bugFormatId.toLowerCase().includes(s)) ||
+        (b.status && b.status.toLowerCase().includes(s)) ||
+        (b.severity && b.severity.toLowerCase().includes(s)) ||
+        (b.featureName && b.featureName.toLowerCase().includes(s)) ||
+        (b.reportedBy && b.reportedBy.toLowerCase().includes(s))
+    );
+  }
+
+  get paginatedDeveloperBugs(): Bug[] {
+    const start = this.developerDetailsPage * this.developerDetailsPageSize;
+    return this.filteredDeveloperBugs.slice(start, start + this.developerDetailsPageSize);
+  }
+
+  get totalDeveloperDetailsPages(): number {
+    return Math.ceil(this.filteredDeveloperBugs.length / this.developerDetailsPageSize) || 1;
+  }
+
+  nextDeveloperDetailsPage(): void {
+    if (this.developerDetailsPage < this.totalDeveloperDetailsPages - 1) {
+      this.developerDetailsPage++;
+    }
+  }
+
+  prevDeveloperDetailsPage(): void {
+    if (this.developerDetailsPage > 0) {
+      this.developerDetailsPage--;
+    }
   }
 
   onLogout(): void {

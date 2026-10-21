@@ -899,20 +899,50 @@
         </article>
       </section>
 
+      <!-- ================= SPLIT: TESTER PERFORMANCE & RECENT BUGS ================= -->
+      <div class="perf-bugs-split-grid">
       <!-- ================= TESTER PERFORMANCE ANALYSIS SECTION ================= -->
       <section class="tester-performance-card view-panel-container" id="tester-performance-section">
         <!-- Card Header -->
         <div class="tester-perf-header">
           <div class="tester-perf-titles">
             <div class="tester-title-row">
-              <span class="tester-perf-icon-circle">
-                <i class="fa-solid fa-users-gear"></i>
+              <span class="tester-perf-icon-circle" [style.background-color]="activePerformanceTab === 'DEVELOPER' ? '#eff6ff' : '#ecfdf5'" [style.color]="activePerformanceTab === 'DEVELOPER' ? '#2563eb' : '#059669'" [style.border-color]="activePerformanceTab === 'DEVELOPER' ? '#bfdbfe' : '#a7f3d0'">
+                <i class="fa-solid" [ngClass]="activePerformanceTab === 'DEVELOPER' ? 'fa-laptop-code' : 'fa-users-gear'"></i>
               </span>
               <div>
-                <h2 class="tester-perf-title">Tester Performance Analysis</h2>
-                <p class="tester-perf-subtitle">Workload and execution progress by tester</p>
+                <h2 class="tester-perf-title">
+                  {{ activePerformanceTab === 'DEVELOPER' ? 'Developer Performance Analysis' : 'Tester Performance Analysis' }}
+                </h2>
+                <p class="tester-perf-subtitle">
+                  {{ activePerformanceTab === 'DEVELOPER' ? 'Workload and defect resolution progress by developer' : 'Workload and execution progress by tester' }}
+                </p>
               </div>
             </div>
+          </div>
+
+          <!-- Role Toggle Tabs: Tester vs Developer -->
+          <div class="perf-role-switch-pills">
+            <button
+              type="button"
+              class="role-switch-btn"
+              [class.active]="activePerformanceTab === 'TESTER'"
+              (click)="activePerformanceTab = 'TESTER'"
+            >
+              <i class="fa-solid fa-vial-circle-check"></i>
+              <span>Testers</span>
+              <span class="role-badge">{{ testerPerformanceList.length }}</span>
+            </button>
+            <button
+              type="button"
+              class="role-switch-btn"
+              [class.active]="activePerformanceTab === 'DEVELOPER'"
+              (click)="activePerformanceTab = 'DEVELOPER'"
+            >
+              <i class="fa-solid fa-code"></i>
+              <span>Developers</span>
+              <span class="role-badge">{{ developerPerformanceList.length }}</span>
+            </button>
           </div>
 
           <!-- Scope Indicator (Shows current active dashboard scope) -->
@@ -923,8 +953,8 @@
             </span>
           </div>
 
-          <!-- Small Legend -->
-          <div class="tester-chart-legend">
+          <!-- Small Legend for Testers -->
+          <div class="tester-chart-legend" *ngIf="activePerformanceTab === 'TESTER'">
             <div class="tester-legend-item">
               <span class="tester-legend-box bg-seg-todo"></span>
               <span class="tester-legend-label">To Do</span>
@@ -938,10 +968,26 @@
               <span class="tester-legend-label">Done</span>
             </div>
           </div>
+
+          <!-- Small Legend for Developers -->
+          <div class="tester-chart-legend" *ngIf="activePerformanceTab === 'DEVELOPER'">
+            <div class="tester-legend-item">
+              <span class="tester-legend-box bg-seg-todo" style="background:#2563eb;"></span>
+              <span class="tester-legend-label">Open</span>
+            </div>
+            <div class="tester-legend-item">
+              <span class="tester-legend-box bg-seg-progress"></span>
+              <span class="tester-legend-label">In Progress</span>
+            </div>
+            <div class="tester-legend-item">
+              <span class="tester-legend-box bg-seg-done"></span>
+              <span class="tester-legend-label">Resolved</span>
+            </div>
+          </div>
         </div>
 
-        <!-- Summary Metrics Row (Chips) -->
-        <div class="tester-summary-chips-grid">
+        <!-- Summary Metrics Row (Chips for Testers) -->
+        <div class="tester-summary-chips-grid" *ngIf="activePerformanceTab === 'TESTER'">
           <div class="tester-summary-chip">
             <div class="chip-icon-box chip-icon-testers">
               <i class="fa-solid fa-user-check"></i>
@@ -983,8 +1029,51 @@
           </div>
         </div>
 
-        <!-- Error State -->
-        <div class="dashboard-error-banner" *ngIf="testerMetricsError && !isTesterMetricsLoading">
+        <!-- Summary Metrics Row (Chips for Developers) -->
+        <div class="tester-summary-chips-grid" *ngIf="activePerformanceTab === 'DEVELOPER'">
+          <div class="tester-summary-chip">
+            <div class="chip-icon-box chip-icon-testers" style="background:#eff6ff; color:#2563eb;">
+              <i class="fa-solid fa-user-check"></i>
+            </div>
+            <div class="chip-data">
+              <span class="chip-number">{{ isDeveloperMetricsLoading ? '--' : developerSummaryActiveDevs }}</span>
+              <span class="chip-label">Active Developers</span>
+            </div>
+          </div>
+
+          <div class="tester-summary-chip">
+            <div class="chip-icon-box chip-icon-assigned" style="background:#f5f3ff; color:#7c3aed;">
+              <i class="fa-solid fa-bug"></i>
+            </div>
+            <div class="chip-data">
+              <span class="chip-number">{{ isDeveloperMetricsLoading ? '--' : (developerSummaryTotalAssigned | number) }}</span>
+              <span class="chip-label">Total Assigned</span>
+            </div>
+          </div>
+
+          <div class="tester-summary-chip">
+            <div class="chip-icon-box chip-icon-progress">
+              <i class="fa-solid fa-spinner"></i>
+            </div>
+            <div class="chip-data">
+              <span class="chip-number">{{ isDeveloperMetricsLoading ? '--' : (developerSummaryTotalInProgress | number) }}</span>
+              <span class="chip-label">In Progress</span>
+            </div>
+          </div>
+
+          <div class="tester-summary-chip">
+            <div class="chip-icon-box chip-icon-completed">
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div class="chip-data">
+              <span class="chip-number">{{ isDeveloperMetricsLoading ? '--' : (developerSummaryTotalResolved | number) }}</span>
+              <span class="chip-label">Resolved</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tester Error / Loading / Empty States -->
+        <div class="dashboard-error-banner" *ngIf="activePerformanceTab === 'TESTER' && testerMetricsError && !isTesterMetricsLoading">
           <i class="fa-solid fa-triangle-exclamation"></i>
           <span>{{ testerMetricsError }}</span>
           <button class="btn-retry" (click)="loadTesterPerformanceMetrics()" type="button">
@@ -992,21 +1081,39 @@
           </button>
         </div>
 
-        <!-- Loading State -->
-        <div class="panel-loading-state" *ngIf="isTesterMetricsLoading">
+        <div class="panel-loading-state" *ngIf="activePerformanceTab === 'TESTER' && isTesterMetricsLoading">
           <i class="fa-solid fa-spinner fa-spin"></i>
           <span>Loading tester performance data...</span>
         </div>
 
-        <!-- Empty State -->
-        <div class="panel-empty-state" *ngIf="!isTesterMetricsLoading && !testerMetricsError && testerPerformanceList.length === 0">
+        <div class="panel-empty-state" *ngIf="activePerformanceTab === 'TESTER' && !isTesterMetricsLoading && !testerMetricsError && testerPerformanceList.length === 0">
           <i class="fa-solid fa-clipboard-question"></i>
           <h3>No Tester Data Available</h3>
           <p>No test cases or active testers found for the selected filter scope.</p>
         </div>
 
-        <!-- Stacked Bar Chart List -->
-        <div class="tester-bars-container" *ngIf="!isTesterMetricsLoading && !testerMetricsError && testerPerformanceList.length > 0">
+        <!-- Developer Error / Loading / Empty States -->
+        <div class="dashboard-error-banner" *ngIf="activePerformanceTab === 'DEVELOPER' && developerMetricsError && !isDeveloperMetricsLoading">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>{{ developerMetricsError }}</span>
+          <button class="btn-retry" (click)="loadDeveloperPerformanceMetrics()" type="button">
+            <i class="fa-solid fa-rotate-right"></i> Retry
+          </button>
+        </div>
+
+        <div class="panel-loading-state" *ngIf="activePerformanceTab === 'DEVELOPER' && isDeveloperMetricsLoading">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <span>Loading developer performance data...</span>
+        </div>
+
+        <div class="panel-empty-state" *ngIf="activePerformanceTab === 'DEVELOPER' && !isDeveloperMetricsLoading && !developerMetricsError && developerPerformanceList.length === 0">
+          <i class="fa-solid fa-clipboard-question"></i>
+          <h3>No Developer Data Available</h3>
+          <p>No assigned defects or active developers found for the selected filter scope.</p>
+        </div>
+
+        <!-- Stacked Bar Chart List (Testers) -->
+        <div class="tester-bars-container" *ngIf="activePerformanceTab === 'TESTER' && !isTesterMetricsLoading && !testerMetricsError && testerPerformanceList.length > 0">
           <div class="tester-bars-header-row">
             <span class="col-header-tester">Tester</span>
             <span class="col-header-progress">Execution Progress</span>
@@ -1100,8 +1207,104 @@
           </div>
         </div>
 
+        <!-- Stacked Bar Chart List (Developers) -->
+        <div class="tester-bars-container" *ngIf="activePerformanceTab === 'DEVELOPER' && !isDeveloperMetricsLoading && !developerMetricsError && developerPerformanceList.length > 0">
+          <div class="tester-bars-header-row">
+            <span class="col-header-tester">Developer</span>
+            <span class="col-header-progress">Resolution Progress</span>
+            <span class="col-header-total">Total</span>
+          </div>
+
+          <div class="tester-rows-list">
+            <div
+              *ngFor="let dev of displayedDevelopers"
+              class="tester-bar-row"
+              [class.active-tester-row]="selectedDeveloper?.id === dev.id"
+              (click)="selectDeveloper(dev)"
+              role="button"
+              tabindex="0"
+              [title]="'Click to view defects assigned to ' + dev.name"
+            >
+              <!-- Left: Avatar & Name -->
+              <div class="tester-identity">
+                <div class="tester-avatar-circle" [style.background-color]="dev.avatarColor">
+                  {{ dev.initials }}
+                </div>
+                <div class="tester-name-meta">
+                  <span class="tester-name">{{ dev.name }}</span>
+                  <span class="tester-role-sub" *ngIf="dev.isUnassigned">Unassigned Defects</span>
+                  <span class="tester-role-sub" *ngIf="!dev.isUnassigned && dev.username">@{{ dev.username }}</span>
+                </div>
+              </div>
+
+              <!-- Center: Horizontal Stacked Bar -->
+              <div class="tester-bar-wrapper">
+                <div class="stacked-bar-track">
+                  <!-- Open Segment (Blue) -->
+                  <div
+                    *ngIf="dev.openCount > 0"
+                    class="bar-segment bar-seg-todo"
+                    style="background-color: #2563eb;"
+                    [style.width.%]="dev.openPercent"
+                    [title]="'Open: ' + dev.openCount + ' (' + dev.openPercent + '%)'"
+                  >
+                    <span *ngIf="dev.openPercent >= 10" class="bar-seg-text">{{ dev.openCount }}</span>
+                  </div>
+
+                  <!-- In Progress Segment (Yellow/Orange) -->
+                  <div
+                    *ngIf="dev.inProgressCount > 0"
+                    class="bar-segment bar-seg-progress"
+                    [style.width.%]="dev.inProgressPercent"
+                    [title]="'In Progress: ' + dev.inProgressCount + ' (' + dev.inProgressPercent + '%)'"
+                  >
+                    <span *ngIf="dev.inProgressPercent >= 10" class="bar-seg-text">{{ dev.inProgressCount }}</span>
+                  </div>
+
+                  <!-- Resolved Segment (Green) -->
+                  <div
+                    *ngIf="dev.resolvedCount > 0"
+                    class="bar-segment bar-seg-done"
+                    [style.width.%]="dev.resolvedPercent"
+                    [title]="'Resolved: ' + dev.resolvedCount + ' (' + dev.resolvedPercent + '%)'"
+                  >
+                    <span *ngIf="dev.resolvedPercent >= 10" class="bar-seg-text">{{ dev.resolvedCount }}</span>
+                  </div>
+
+                  <!-- Empty segment if total is 0 -->
+                  <div
+                    *ngIf="dev.total === 0"
+                    class="bar-segment bar-seg-empty"
+                    style="width: 100%;"
+                    title="No defects assigned"
+                  >
+                    <span class="bar-seg-empty-text">No defects assigned</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Total Count Badge -->
+              <div class="tester-total-box">
+                <span class="tester-total-badge">{{ dev.total }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scalability: Show All / Show Less Toggle for Developers -->
+          <div class="tester-show-more-bar" *ngIf="developerPerformanceList.length > initialDeveloperLimit">
+            <button
+              class="btn-toggle-show-all"
+              (click)="showAllDevelopers = !showAllDevelopers; $event.stopPropagation()"
+              type="button"
+            >
+              <i class="fa-solid" [ngClass]="showAllDevelopers ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+              <span>{{ showAllDevelopers ? 'Show fewer developers' : 'Show all ' + developerPerformanceList.length + ' developers' }}</span>
+            </button>
+          </div>
+        </div>
+
         <!-- ================= SELECTED TESTER DRILLDOWN DETAILS TABLE ================= -->
-        <div class="tester-drilldown-subpanel" *ngIf="selectedTester">
+        <div class="tester-drilldown-subpanel" *ngIf="activePerformanceTab === 'TESTER' && selectedTester">
           <div class="tester-drilldown-header">
             <div class="tester-drilldown-meta">
               <div class="tester-avatar-circle small" [style.background-color]="selectedTester.avatarColor">
@@ -1255,7 +1458,364 @@
             </div>
           </div>
         </div>
+
+        <!-- ================= SELECTED DEVELOPER DRILLDOWN DETAILS TABLE ================= -->
+        <div class="tester-drilldown-subpanel" *ngIf="activePerformanceTab === 'DEVELOPER' && selectedDeveloper">
+          <div class="tester-drilldown-header">
+            <div class="tester-drilldown-meta">
+              <div class="tester-avatar-circle small" [style.background-color]="selectedDeveloper.avatarColor">
+                {{ selectedDeveloper.initials }}
+              </div>
+              <div>
+                <h3 class="tester-drilldown-title">{{ selectedDeveloper.name }} — Assigned Defects</h3>
+                <p class="tester-drilldown-subtitle">
+                  <span>{{ filteredDeveloperBugs.length }} {{ filteredDeveloperBugs.length === 1 ? 'defect' : 'defects' }} in current scope</span>
+                  <span class="filter-context-tag" *ngIf="hasActiveFilters()">• Filtered by {{ activeFilterDescription }}</span>
+                </p>
+              </div>
+            </div>
+
+            <div class="tester-drilldown-tools">
+              <!-- Search inside developer table -->
+              <div class="drilldown-search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input
+                  type="text"
+                  [(ngModel)]="developerDetailsSearchTerm"
+                  (ngModelChange)="developerDetailsPage = 0"
+                  placeholder="Search defects..."
+                />
+                <button
+                  *ngIf="developerDetailsSearchTerm"
+                  (click)="developerDetailsSearchTerm = ''; developerDetailsPage = 0"
+                  class="btn-clear-search"
+                  type="button"
+                  title="Clear search"
+                >
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+
+              <!-- Close Details Button -->
+              <button
+                class="btn-close-drilldown"
+                (click)="clearSelectedDeveloper()"
+                type="button"
+                title="Close developer details"
+              >
+                <i class="fa-solid fa-xmark"></i>
+                <span>Close Details</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty search results -->
+          <div class="panel-empty-state" *ngIf="filteredDeveloperBugs.length === 0">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <h3>No Matching Defects</h3>
+            <p *ngIf="developerDetailsSearchTerm">No defects match "{{ developerDetailsSearchTerm }}".</p>
+            <p *ngIf="!developerDetailsSearchTerm">This developer has no defects assigned in the current filter scope.</p>
+          </div>
+
+          <!-- Defects Table -->
+          <div class="table-responsive" *ngIf="filteredDeveloperBugs.length > 0">
+            <table class="manager-data-table">
+              <thead>
+                <tr>
+                  <th style="width: 120px;">Bug ID</th>
+                  <th>Defect Title</th>
+                  <th style="width: 160px;">Feature</th>
+                  <th style="width: 120px;">Severity</th>
+                  <th style="width: 130px;">Status</th>
+                  <th style="width: 130px;">Reported By</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let bug of paginatedDeveloperBugs">
+                  <td>
+                    <code>{{ bug.bugFormatId || ('BUG_' + bug.bugId) }}</code>
+                  </td>
+                  <td>
+                    <strong>{{ bug.title }}</strong>
+                  </td>
+                  <td>
+                    <span class="feature-tag">
+                      <i class="fa-regular fa-folder" style="color: #0052cc;"></i>
+                      {{ bug.featureName || getFeatureName(bug.featureId) }}
+                    </span>
+                  </td>
+                  <td>
+                    <span
+                      class="severity-badge"
+                      [ngClass]="{
+                        'badge-critical': (bug.severity || '').toUpperCase() === 'CRITICAL' || (bug.severity || '').toUpperCase() === 'BLOCKER',
+                        'badge-high': (bug.severity || '').toUpperCase() === 'HIGH',
+                        'badge-medium': (bug.severity || '').toUpperCase() === 'MEDIUM',
+                        'badge-low': (bug.severity || '').toUpperCase() === 'LOW' || (bug.severity || '').toUpperCase() === 'TRIVIAL'
+                      }"
+                    >
+                      {{ bug.severity || 'MEDIUM' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span
+                      class="tc-status-badge"
+                      [ngClass]="{
+                        'tc-passed': (bug.status || '').toUpperCase() === 'RESOLVED' || (bug.status || '').toUpperCase() === 'FIXED' || (bug.status || '').toUpperCase() === 'CLOSED' || (bug.status || '').toUpperCase() === 'NOT_A_BUG',
+                        'tc-blocked': (bug.status || '').toUpperCase() === 'IN_PROGRESS' || (bug.status || '').toUpperCase() === 'TESTING',
+                        'tc-failed': (bug.status || '').toUpperCase() === 'OPEN' || (bug.status || '').toUpperCase() === 'REOPENED' || (bug.status || '').toUpperCase() === 'NEW'
+                      }"
+                    >
+                      {{ bug.status || 'OPEN' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="assignee-cell">
+                      <i class="fa-regular fa-user" style="color: #5e6c84;"></i>
+                      {{ bug.reportedBy || 'Tester' }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Table Pagination Footer -->
+          <div class="table-pagination-footer" *ngIf="filteredDeveloperBugs.length > developerDetailsPageSize">
+            <span class="pagination-info">
+              Showing {{ developerDetailsPage * developerDetailsPageSize + 1 }} to {{ min(developerDetailsPage * developerDetailsPageSize + developerDetailsPageSize, filteredDeveloperBugs.length) }} of {{ filteredDeveloperBugs.length }} entries
+            </span>
+            <div class="pagination-controls">
+              <button
+                class="btn-page-nav"
+                [disabled]="developerDetailsPage === 0"
+                (click)="prevDeveloperDetailsPage()"
+                type="button"
+              >
+                <i class="fa-solid fa-chevron-left"></i> Previous
+              </button>
+              <span class="page-number-display">Page {{ developerDetailsPage + 1 }} of {{ totalDeveloperDetailsPages }}</span>
+              <button
+                class="btn-page-nav"
+                [disabled]="developerDetailsPage >= totalDeveloperDetailsPages - 1"
+                (click)="nextDeveloperDetailsPage()"
+                type="button"
+              >
+                Next <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
       </section>
+
+      <!-- ================= RECENT DEFECTS / GETALLBUGS RECENT BUGS LIST ================= -->
+      <section class="recent-bugs-card view-panel-container" id="recent-bugs-section">
+        <!-- Card Header -->
+        <div class="recent-bugs-header">
+          <div class="recent-bugs-titles">
+            <div class="recent-title-row">
+              <span class="recent-bugs-icon-circle">
+                <i class="fa-solid fa-bug-slash"></i>
+              </span>
+              <div>
+                <h2 class="recent-bugs-title">Recent Bugs & Defects</h2>
+                <p class="recent-bugs-subtitle">All bugs tracked across test executions</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Header Actions / Quick Stats -->
+          <div class="recent-bugs-header-actions">
+            <div class="recent-bugs-stat-pills">
+              <span class="stat-pill-item total" title="Total Defects">
+                <i class="fa-solid fa-bug"></i>
+                <strong>{{ isBugsLoading ? '--' : bugsList.length }}</strong>
+              </span>
+              <span class="stat-pill-item critical" title="Critical & High Defects">
+                <i class="fa-solid fa-triangle-exclamation"></i>
+                <strong>{{ isBugsLoading ? '--' : recentBugsCriticalCount }}</strong>
+              </span>
+              <span class="stat-pill-item open" title="Open Defects">
+                <i class="fa-solid fa-clock"></i>
+                <strong>{{ isBugsLoading ? '--' : recentBugsOpenCount }}</strong>
+              </span>
+            </div>
+
+            <button
+              class="btn-refresh-recent-bugs"
+              (click)="loadDefectManagementData()"
+              type="button"
+              title="Refresh defects list"
+            >
+              <i class="fa-solid fa-rotate-right" [class.fa-spin]="isBugsLoading"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter / Search Toolbar -->
+        <div class="recent-bugs-toolbar">
+          <div class="recent-bugs-search-box">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <input
+              type="text"
+              [(ngModel)]="recentBugsSearch"
+              (ngModelChange)="recentBugsPage = 0"
+              placeholder="Search bugs by ID, title, feature, or assignee..."
+            />
+            <button
+              *ngIf="recentBugsSearch"
+              (click)="recentBugsSearch = ''; recentBugsPage = 0"
+              class="btn-clear-recent-search"
+              type="button"
+              title="Clear search"
+            >
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <div class="recent-bugs-filters">
+            <select
+              class="recent-bugs-filter-select"
+              [(ngModel)]="recentBugsSeverityFilter"
+              (ngModelChange)="recentBugsPage = 0"
+              title="Filter by severity"
+            >
+              <option value="ALL">All Severities</option>
+              <option value="CRITICAL">Critical</option>
+              <option value="HIGH">High</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="LOW">Low</option>
+            </select>
+
+            <select
+              class="recent-bugs-filter-select"
+              [(ngModel)]="recentBugsStatusFilter"
+              (ngModelChange)="recentBugsPage = 0"
+              title="Filter by status"
+            >
+              <option value="ALL">All Statuses</option>
+              <option value="OPEN">Open</option>
+              <option value="IN_PROGRESS">In Progress</option>
+              <option value="RESOLVED">Resolved</option>
+              <option value="CLOSED">Closed</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Loading State -->
+        <div class="panel-loading-state" *ngIf="isBugsLoading">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <span>Loading defect list...</span>
+        </div>
+
+        <!-- Error State -->
+        <div class="panel-error-state" *ngIf="!isBugsLoading && bugsError">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span>{{ bugsError }}</span>
+          <button class="btn-retry" (click)="loadDefectManagementData()" type="button">Retry</button>
+        </div>
+
+        <!-- Empty State -->
+        <div class="panel-empty-state" *ngIf="!isBugsLoading && !bugsError && recentBugsFiltered.length === 0">
+          <i class="fa-solid fa-shield-virus"></i>
+          <h3>No Defects Found</h3>
+          <p>{{ bugsList.length === 0 ? 'No defects have been logged yet.' : 'No defects match current filter criteria.' }}</p>
+        </div>
+
+        <!-- Bugs Table -->
+        <div class="recent-bugs-table-container" *ngIf="!isBugsLoading && !bugsError && recentBugsFiltered.length > 0">
+          <table class="recent-bugs-table">
+            <thead>
+              <tr>
+                <th style="width: 85px;">Bug ID</th>
+                <th>Defect Summary</th>
+                <th style="width: 85px;">Severity</th>
+                <th style="width: 95px;">Status</th>
+                <th style="width: 105px;">Assignee</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let b of paginatedRecentBugs">
+                <td>
+                  <code class="text-bug-id">{{ b.bugFormatId || ('BUG-' + b.bugId) }}</code>
+                </td>
+                <td>
+                  <div class="recent-bug-summary-cell">
+                    <div class="recent-bug-title line-clamp-1" [title]="b.title">
+                      {{ b.title }}
+                    </div>
+                    <div class="recent-bug-meta" *ngIf="b.featureName || b.projectName">
+                      <span class="bug-meta-feature" *ngIf="b.featureName">
+                        <i class="fa-solid fa-folder-tree"></i> {{ b.featureName }}
+                      </span>
+                      <span class="bug-meta-project" *ngIf="b.projectName && !b.featureName">
+                        <i class="fa-solid fa-layer-group"></i> {{ b.projectName }}
+                      </span>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span
+                    class="severity-tag"
+                    [class.sev-critical]="(b.severity || '').toUpperCase() === 'CRITICAL'"
+                    [class.sev-high]="(b.severity || '').toUpperCase() === 'HIGH'"
+                    [class.sev-medium]="(b.severity || '').toUpperCase() === 'MEDIUM'"
+                    [class.sev-low]="(b.severity || '').toUpperCase() === 'LOW'"
+                  >
+                    {{ b.severity || 'HIGH' }}
+                  </span>
+                </td>
+                <td>
+                  <span
+                    class="recent-bug-status-pill"
+                    [class.stat-open]="(b.status || '').toUpperCase() === 'OPEN'"
+                    [class.stat-progress]="(b.status || '').toUpperCase() === 'IN_PROGRESS'"
+                    [class.stat-resolved]="(b.status || '').toUpperCase() === 'RESOLVED'"
+                    [class.stat-closed]="(b.status || '').toUpperCase() === 'CLOSED'"
+                  >
+                    {{ b.status || 'OPEN' }}
+                  </span>
+                </td>
+                <td>
+                  <span class="recent-bug-assignee" [title]="b.assignedTo || 'Unassigned'">
+                    <i class="fa-regular fa-user"></i>
+                    <span class="assignee-text">{{ b.assignedTo ? b.assignedTo : 'Unassigned' }}</span>
+                  </span>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Table Pagination Footer -->
+        <div class="table-pagination-footer" *ngIf="!isBugsLoading && recentBugsFiltered.length > recentBugsPageSize">
+          <span class="pagination-info">
+            Showing {{ recentBugsPage * recentBugsPageSize + 1 }} to {{ min((recentBugsPage + 1) * recentBugsPageSize, recentBugsFiltered.length) }} of {{ recentBugsFiltered.length }}
+          </span>
+          <div class="pagination-controls">
+            <button
+              class="btn-page-nav"
+              [disabled]="recentBugsPage === 0"
+              (click)="prevRecentBugsPage()"
+              type="button"
+              title="Previous page"
+            >
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <span class="page-number-display">{{ recentBugsPage + 1 }} / {{ recentBugsTotalPages }}</span>
+            <button
+              class="btn-page-nav"
+              [disabled]="recentBugsPage >= recentBugsTotalPages - 1"
+              (click)="nextRecentBugsPage()"
+              type="button"
+              title="Next page"
+            >
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </section>
+      </div>
 
       </ng-container>
 
