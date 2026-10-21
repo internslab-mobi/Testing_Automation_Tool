@@ -102,14 +102,14 @@ public class SecurityConfig {
                         .requestMatchers("/manager/**").hasAnyRole("MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.PATCH, "/project/*/status", "/project/active", "/project/inactive").hasAnyRole("MANAGER", "ADMIN")
 
-                        // Authenticated application endpoints (MANAGER, TESTER, ADMIN)
-                        .requestMatchers("/bugs/**", "/bug/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
-                        .requestMatchers("/feature/**", "/features/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
-                        .requestMatchers("/project/**", "/projects/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
-                        .requestMatchers("/testcases/**", "/testcase/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
-                        .requestMatchers("/comments/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
-                        .requestMatchers("/attachments/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
-                        .requestMatchers("/notifications/**", "/in-app-notifications/**").hasAnyRole("MANAGER", "TESTER", "ADMIN")
+                        // Authenticated application endpoints (MANAGER, TESTER, ADMIN, DEVELOPER)
+                        .requestMatchers("/bugs/**", "/bug/**").hasAnyRole("MANAGER", "TESTER", "ADMIN", "DEVELOPER")
+                        .requestMatchers("/feature/**", "/features/**").hasAnyRole("MANAGER", "TESTER", "ADMIN", "DEVELOPER")
+                        .requestMatchers("/project/**", "/projects/**").hasAnyRole("MANAGER", "TESTER", "ADMIN", "DEVELOPER")
+                        .requestMatchers("/testcases/**", "/testcase/**").hasAnyRole("MANAGER", "TESTER", "ADMIN", "DEVELOPER")
+                        .requestMatchers("/comments/**").hasAnyRole("MANAGER", "TESTER", "ADMIN", "DEVELOPER")
+                        .requestMatchers("/attachments/**").hasAnyRole("MANAGER", "TESTER", "ADMIN", "DEVELOPER")
+                        .requestMatchers("/notifications/**", "/in-app-notifications/**").hasAnyRole("MANAGER", "TESTER", "ADMIN", "DEVELOPER")
 
                         // Any other request
                         .anyRequest().authenticated()

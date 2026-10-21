@@ -35,7 +35,7 @@ import java.util.List;
 @RequestMapping("/bug")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+@PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN', 'DEVELOPER')")
 public class BugController {
 
     private final BugService bugService;
@@ -64,12 +64,13 @@ public class BugController {
     @GetMapping
     public ResponseEntity<ApiResponse<Page<BugResponse>>> getAllBugs(
             @RequestParam(required = false) Integer featureId,
+            @RequestParam(required = false) Integer assignedTo,
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "20") Integer size) {
         if (featureId != null) {
             return ResponseEntity.ok(ApiResponse.success("Bugs retrieved successfully", bugService.getBugsByFeature(featureId, page, size)));
         }
-        return ResponseEntity.ok(ApiResponse.success("Bugs retrieved successfully", bugService.getAllBugs(page, size)));
+        return ResponseEntity.ok(ApiResponse.success("Bugs retrieved successfully", bugService.getAllBugs(assignedTo, page, size)));
     }
 
     @PutMapping("/{bugId}")

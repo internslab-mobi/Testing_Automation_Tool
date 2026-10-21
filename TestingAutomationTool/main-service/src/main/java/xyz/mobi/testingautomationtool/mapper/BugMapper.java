@@ -52,15 +52,22 @@ public interface BugMapper {
 
         BugResponse.FeatureRef featureRef = null;
         if (bug.getFeature() != null) {
+            Integer projId = bug.getFeature().getProject() != null ? bug.getFeature().getProject().getProjectId() : null;
+            String projName = bug.getFeature().getProject() != null ? bug.getFeature().getProject().getProjectName() : null;
             featureRef = BugResponse.FeatureRef.builder()
                     .featureId(bug.getFeature().getFeatureId())
                     .featureName(bug.getFeature().getFeatureName())
+                    .sprint(bug.getFeature().getSprint())
+                    .projectId(projId)
+                    .projectName(projName)
                     .build();
         }
 
         BugResponse.WorkflowInfo workflowInfo = BugResponse.WorkflowInfo.builder()
-                .reportedBy(bug.getReportedBy() != null ? bug.getReportedBy().getUsername() : null)
-                .assignedTo(bug.getAssignedTo() != null ? bug.getAssignedTo().getUsername() : null)
+                .assignedToId(bug.getAssignedTo() != null ? bug.getAssignedTo().getUserId() : null)
+                .assignedTo(bug.getAssignedTo() != null ? (bug.getAssignedTo().getFullName() != null && !bug.getAssignedTo().getFullName().isEmpty() ? bug.getAssignedTo().getFullName() : bug.getAssignedTo().getUsername()) : null)
+                .reportedById(bug.getReportedBy() != null ? bug.getReportedBy().getUserId() : null)
+                .reportedBy(bug.getReportedBy() != null ? (bug.getReportedBy().getFullName() != null && !bug.getReportedBy().getFullName().isEmpty() ? bug.getReportedBy().getFullName() : bug.getReportedBy().getUsername()) : null)
                 .executedBy(bug.getExecutedBy() != null ? bug.getExecutedBy().getUsername() : null)
                 .resolvedAt(bug.getResolvedAt())
                 .build();

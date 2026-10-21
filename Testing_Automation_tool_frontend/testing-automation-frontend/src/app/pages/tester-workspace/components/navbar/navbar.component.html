@@ -117,16 +117,18 @@
       <span class="notif-badge" *ngIf="unreadNotificationCount > 0">{{ unreadNotificationCount }}</span>
     </button>
 
-    <!-- User Profile & Sign Out -->
-    <div class="user-chip">
+    <!-- User Profile Link (Click to view and edit profile details) -->
+    <a routerLink="/profile" (click)="goToProfile($event)" class="user-chip" title="Click to view and edit profile details">
       <div class="user-avatar">{{ userInitials }}</div>
       <div class="user-info">
         <span class="user-name">{{ userName }}</span>
         <span class="user-role">{{ userRole }} (QA)</span>
       </div>
-      <button class="btn-signout" (click)="onLogout()" title="Sign Out of Session">
-        <i class="fa-solid fa-right-from-bracket"></i>
-      </button>
-    </div>
+    </a>
+
+    <!-- Sign Out Button -->
+    <button class="btn-signout" (click)="onLogout()" title="Sign Out of Session">
+      <i class="fa-solid fa-right-from-bracket"></i>
+    </button>
   </div>
 </header>

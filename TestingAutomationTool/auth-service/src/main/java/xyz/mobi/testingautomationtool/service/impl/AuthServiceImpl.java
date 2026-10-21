@@ -378,6 +378,38 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
+    public UserProfileResponse updateProfile(String username, UpdateProfileRequest request) {
+        User user = userRepository.findByUsernameOrEmail(username, username)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
+
+        if (request.getFullName() != null && !request.getFullName().trim().isEmpty()) {
+            user.setFullName(request.getFullName().trim());
+        }
+        if (request.getDesignation() != null) {
+            user.setDesignation(request.getDesignation().trim());
+        }
+        if (request.getSkills() != null) {
+            user.setSkills(request.getSkills().trim());
+        }
+
+        user = userRepository.save(user);
+
+        return UserProfileResponse.builder()
+                .userId(user.getUserId())
+                .username(user.getUsername())
+                .email(user.getEmail())
+                .fullName(user.getFullName())
+                .designation(user.getDesignation())
+                .skills(user.getSkills())
+                .role(user.getRole() != null ? user.getRole().getRole() : null)
+                .active(user.isActive())
+                .createdAt(user.getCreatedAt())
+                .updatedAt(user.getUpdatedAt())
+                .build();
+    }
+
+    @Override
     public void changePassword(String username, ChangePasswordRequest request) {
         User user = userRepository.findByUsernameOrEmail(username, username)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));

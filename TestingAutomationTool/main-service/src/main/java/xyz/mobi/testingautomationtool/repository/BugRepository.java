@@ -25,6 +25,12 @@ public interface BugRepository extends JpaRepository<Bug, Integer>, JpaSpecifica
     Page<Bug> findByIsActiveTrue(Pageable pageable);
 
     @EntityGraph(attributePaths = {"testCase", "feature", "reportedBy", "assignedTo", "executedBy", "updatedBy"})
+    Page<Bug> findByAssignedTo_UserIdAndIsActiveTrue(Integer userId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"testCase", "feature", "reportedBy", "assignedTo", "executedBy", "updatedBy"})
+    Page<Bug> findByAssignedTo_UserIdAndFeature_FeatureIdAndIsActiveTrue(Integer userId, Integer featureId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"testCase", "feature", "reportedBy", "assignedTo", "executedBy", "updatedBy"})
     Page<Bug> findByFeature_FeatureIdAndIsDeletedFalse(Integer featureId, Pageable pageable);
 
     @Modifying

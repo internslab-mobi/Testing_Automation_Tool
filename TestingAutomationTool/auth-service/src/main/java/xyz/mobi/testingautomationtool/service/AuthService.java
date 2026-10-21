@@ -13,6 +13,7 @@ public interface AuthService {
 //    AuthResponse resetPasswordWithOtp(ResetPasswordWithOtpRequest request);
     AuthResponse logout(LogoutRequest request);
     UserProfileResponse getCurrentUserProfile(String username);
+    UserProfileResponse updateProfile(String username, UpdateProfileRequest request);
     void changePassword(String username, ChangePasswordRequest request);
     User getCurrentUser();
 }

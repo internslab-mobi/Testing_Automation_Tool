@@ -22,12 +22,12 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+@PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN', 'DEVELOPER')")
 public class CommentController {
 
     private final CommentService commentService;
 
-    @PostMapping("/bugs/{bugId}/comments")
+    @PostMapping({"/bugs/{bugId}/comments", "/bug/{bugId}/comments"})
     public ResponseEntity<ApiResponse<CommentResponse>> addComment(
             @PathVariable("bugId") Integer bugId,
             @Valid @RequestBody CommentRequest request) {
@@ -36,14 +36,14 @@ public class CommentController {
                 .body(ApiResponse.success("Comment added successfully", response));
     }
 
-    @GetMapping("/bugs/{bugId}/comments")
+    @GetMapping({"/bugs/{bugId}/comments", "/bug/{bugId}/comments"})
     public ResponseEntity<ApiResponse<List<CommentResponse>>> getComments(
             @PathVariable("bugId") Integer bugId) {
         List<CommentResponse> response = commentService.getCommentsByBugId(bugId);
         return ResponseEntity.ok(ApiResponse.success("Comments retrieved successfully", response));
     }
 
-    @GetMapping("/bugs/{bugId}/comments/page")
+    @GetMapping({"/bugs/{bugId}/comments/page", "/bug/{bugId}/comments/page"})
     public ResponseEntity<ApiResponse<Page<CommentResponse>>> getCommentsPaged(
             @PathVariable("bugId") Integer bugId,
             @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.ASC) Pageable pageable) {

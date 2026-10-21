@@ -7,4 +7,6 @@ export interface UserProfile {
   skills?: string;
   role?: string;
   active?: boolean;
+  createdAt?: string | Date;
+  updatedAt?: string | Date;
 }

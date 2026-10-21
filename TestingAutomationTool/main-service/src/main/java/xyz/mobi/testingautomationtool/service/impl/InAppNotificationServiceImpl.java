@@ -8,6 +8,7 @@ import xyz.mobi.testingautomationtool.entity.Bug;
 import xyz.mobi.testingautomationtool.entity.Comment;
 import xyz.mobi.testingautomationtool.entity.InAppNotification;
 import xyz.mobi.testingautomationtool.entity.User;
+import xyz.mobi.testingautomationtool.enums.BugStatus;
 import xyz.mobi.testingautomationtool.enums.InAppNotificationStatus;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.mapper.NotificationMapper;
@@ -34,10 +35,14 @@ public class InAppNotificationServiceImpl implements InAppNotificationService {
             return;
         }
 
+        String msg = bug.getStatus() == BugStatus.NOT_A_BUG
+                ? "Bug " + bug.getBugFormatId() + " was marked as NOT A BUG by developer"
+                : "Bug " + bug.getBugFormatId() + " has been fixed by developer";
+
         InAppNotification notification = InAppNotification.builder()
                 .employee(bug.getReportedBy())
                 .bug(bug)
-                .message("Bug " + bug.getBugFormatId() + " has been fixed")
+                .message(msg)
                 .notificationStatus(InAppNotificationStatus.UNREAD)
                 .createdAt(Instant.now())
                 .build();

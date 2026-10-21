@@ -13,7 +13,7 @@ import xyz.mobi.testingautomationtool.service.AttachmentService;
 @RequestMapping("/attachments")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+@PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN', 'DEVELOPER')")
 @Tag(name = "Attachment Management", description = "Common attachment operations for bugs, features, projects, and test cases")
 public class AttachmentController {
 

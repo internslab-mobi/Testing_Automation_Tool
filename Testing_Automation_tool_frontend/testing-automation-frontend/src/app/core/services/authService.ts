@@ -30,6 +30,81 @@ export class AuthService {
   private readonly currentUserSignal = signal<UserProfile | null>(null);
   public readonly currentUser = this.currentUserSignal.asReadonly();
 
+  constructor() {
+    this.restoreSessionFromToken();
+  }
+
+  private restoreSessionFromToken(): void {
+    const token = this.getAccessToken();
+    if (token) {
+      try {
+        const payloadBase64 = token.split('.')[1];
+        if (payloadBase64) {
+          const decoded = JSON.parse(atob(payloadBase64));
+          const profile: UserProfile = {
+            userId: decoded.userId ? Number(decoded.userId) : undefined,
+            username: decoded.sub || decoded.username || '',
+            email: decoded.email,
+            role: decoded.role,
+            fullName: decoded.fullName
+          };
+          this.currentUserSignal.set(profile);
+          if (typeof localStorage !== 'undefined' && profile.userId) {
+            localStorage.setItem('tat_user_id', String(profile.userId));
+            if (profile.role) localStorage.setItem('tat_user_role', profile.role);
+            if (profile.username) localStorage.setItem('tat_user_name', profile.username);
+            if (profile.fullName) localStorage.setItem('tat_user_fullname', profile.fullName);
+          }
+        }
+      } catch (e) {
+        // ignore decoding errors
+      }
+    }
+  }
+
+  getCurrentUser(): UserProfile | null {
+    const mem = this.currentUserSignal();
+    if (mem && mem.userId) return mem;
+
+    const token = this.getAccessToken();
+    if (token) {
+      try {
+        const payloadBase64 = token.split('.')[1];
+        if (payloadBase64) {
+          const decoded = JSON.parse(atob(payloadBase64));
+          const profile: UserProfile = {
+            userId: decoded.userId ? Number(decoded.userId) : undefined,
+            username: decoded.sub || decoded.username || '',
+            email: decoded.email,
+            role: decoded.role,
+            fullName: decoded.fullName
+          };
+          if (profile.userId) {
+            this.currentUserSignal.set(profile);
+            if (typeof localStorage !== 'undefined') {
+              localStorage.setItem('tat_user_id', String(profile.userId));
+              if (profile.role) localStorage.setItem('tat_user_role', profile.role);
+              if (profile.username) localStorage.setItem('tat_user_name', profile.username);
+              if (profile.fullName) localStorage.setItem('tat_user_fullname', profile.fullName);
+            }
+            return profile;
+          }
+        }
+      } catch (e) {}
+    }
+    return mem;
+  }
+
+  getUserId(): number | null {
+    const profile = this.getCurrentUser();
+    if (profile?.userId) return Number(profile.userId);
+    if (typeof localStorage !== 'undefined') {
+      const stored = localStorage.getItem('tat_user_id');
+      if (stored) return Number(stored);
+    }
+    return null;
+  }
+
   /**
    * Retrieves the current access token from memory or localStorage.
    */
@@ -128,6 +203,9 @@ export class AuthService {
           if (res.data.fullName && typeof localStorage !== 'undefined') {
             localStorage.setItem('tat_user_fullname', res.data.fullName);
           }
+          if (res.data.userId && typeof localStorage !== 'undefined') {
+            localStorage.setItem('tat_user_id', String(res.data.userId));
+          }
           if (res.data.role && typeof localStorage !== 'undefined') {
             localStorage.setItem('tat_user_role', res.data.role);
           }
@@ -179,6 +257,9 @@ export class AuthService {
           if (res.data.fullName && typeof localStorage !== 'undefined') {
             localStorage.setItem('tat_user_fullname', res.data.fullName);
           }
+          if (res.data.userId && typeof localStorage !== 'undefined') {
+            localStorage.setItem('tat_user_id', String(res.data.userId));
+          }
           if (res.data.role && typeof localStorage !== 'undefined') {
             localStorage.setItem('tat_user_role', res.data.role);
           }
@@ -210,6 +291,9 @@ export class AuthService {
           if (res.data.fullName && typeof localStorage !== 'undefined') {
             localStorage.setItem('tat_user_fullname', res.data.fullName);
           }
+          if (res.data.userId && typeof localStorage !== 'undefined') {
+            localStorage.setItem('tat_user_id', String(res.data.userId));
+          }
           if (res.data.role && typeof localStorage !== 'undefined') {
             localStorage.setItem('tat_user_role', res.data.role);
           }
@@ -231,6 +315,12 @@ export class AuthService {
         next: (res) => {
           if (res?.data) {
             this.currentUserSignal.set(res.data);
+            if (typeof localStorage !== 'undefined') {
+              if (res.data.userId) localStorage.setItem('tat_user_id', String(res.data.userId));
+              if (res.data.username) localStorage.setItem('tat_user_name', res.data.username);
+              if (res.data.fullName) localStorage.setItem('tat_user_fullname', res.data.fullName);
+              if (res.data.role) localStorage.setItem('tat_user_role', res.data.role);
+            }
           }
         },
         error: () => {
@@ -238,6 +328,28 @@ export class AuthService {
         }
       })
     );
+  }
+
+  updateProfile(payload: { fullName?: string; designation?: string; skills?: string }): Observable<ApiResponse<UserProfile>> {
+    return this.http.put<ApiResponse<UserProfile>>(`${this.authUrl}/profile`, payload, { withCredentials: true }).pipe(
+      tap({
+        next: (res) => {
+          if (res?.data) {
+            this.currentUserSignal.set(res.data);
+            if (typeof localStorage !== 'undefined') {
+              if (res.data.userId) localStorage.setItem('tat_user_id', String(res.data.userId));
+              if (res.data.username) localStorage.setItem('tat_user_name', res.data.username);
+              if (res.data.fullName) localStorage.setItem('tat_user_fullname', res.data.fullName);
+              if (res.data.role) localStorage.setItem('tat_user_role', res.data.role);
+            }
+          }
+        }
+      })
+    );
+  }
+
+  changePassword(payload: { currentPassword: string; newPassword: string; confirmPassword?: string }): Observable<ApiResponse<string>> {
+    return this.http.post<ApiResponse<string>>(`${this.authUrl}/change-password`, payload, { withCredentials: true });
   }
 
   /**
@@ -269,6 +381,7 @@ export class AuthService {
       localStorage.removeItem('token');
       localStorage.removeItem('jwt');
       localStorage.removeItem('refresh_token');
+      localStorage.removeItem('tat_user_id');
       localStorage.removeItem('tat_user_name');
       localStorage.removeItem('tat_user_fullname');
       localStorage.removeItem('tat_user_role');

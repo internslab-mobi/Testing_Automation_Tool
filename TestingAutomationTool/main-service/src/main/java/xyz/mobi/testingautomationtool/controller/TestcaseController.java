@@ -28,7 +28,7 @@ import xyz.mobi.testingautomationtool.service.TestCaseService;
 @RequestMapping("/testcase")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+@PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN', 'DEVELOPER')")
 public class TestcaseController {
 
     private final TestCaseService testCaseService;

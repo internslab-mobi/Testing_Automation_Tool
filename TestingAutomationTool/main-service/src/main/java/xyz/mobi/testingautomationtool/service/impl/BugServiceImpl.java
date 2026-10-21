@@ -8,6 +8,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.http.MediaType;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
@@ -217,13 +218,50 @@ public class BugServiceImpl implements BugService {
             throw new ResourceNotFoundException("The bug has been removed with ID: " + bugId);
         }
 
+        User currentUser = null;
+        try {
+            currentUser = authService.getCurrentUser();
+        } catch (Exception ignored) {
+        }
+
+        // If logged-in user is a DEVELOPER, verify they are assigned to this bug
+        if (currentUser != null && currentUser.getRole() != null && "DEVELOPER".equalsIgnoreCase(currentUser.getRole().getRole())) {
+            if (bug.getAssignedTo() == null || !currentUser.getUserId().equals(bug.getAssignedTo().getUserId())) {
+                throw new AccessDeniedException("Access denied: You can only view bugs assigned to you");
+            }
+        }
+
         return bugMapper.toResponse(bug);
     }
 
     @Override
     @Transactional(readOnly = true)
     public Page<BugResponse> getAllBugs(int page, int size) {
+        return getAllBugs(null, page, size);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<BugResponse> getAllBugs(Integer assignedTo, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+        User currentUser = null;
+        try {
+            currentUser = authService.getCurrentUser();
+        } catch (Exception ignored) {
+        }
+
+        // If logged-in user is a DEVELOPER, strictly restrict to only their assigned bugs
+        if (currentUser != null && currentUser.getRole() != null && "DEVELOPER".equalsIgnoreCase(currentUser.getRole().getRole())) {
+            return bugRepository.findByAssignedTo_UserIdAndIsActiveTrue(currentUser.getUserId(), pageable)
+                    .map(bugMapper::toResponse);
+        }
+
+        // If explicit assignedTo filter is provided (e.g. for MANAGER/TESTER/ADMIN)
+        if (assignedTo != null) {
+            return bugRepository.findByAssignedTo_UserIdAndIsActiveTrue(assignedTo, pageable)
+                    .map(bugMapper::toResponse);
+        }
+
         return bugRepository.findByIsActiveTrue(pageable)
                 .map(bugMapper::toResponse);
     }
@@ -232,6 +270,18 @@ public class BugServiceImpl implements BugService {
     @Transactional(readOnly = true)
     public Page<BugResponse> getBugsByFeature(Integer featureId, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+        User currentUser = null;
+        try {
+            currentUser = authService.getCurrentUser();
+        } catch (Exception ignored) {
+        }
+
+        // If logged-in user is a DEVELOPER, restrict to bugs in this feature assigned to them
+        if (currentUser != null && currentUser.getRole() != null && "DEVELOPER".equalsIgnoreCase(currentUser.getRole().getRole())) {
+            return bugRepository.findByAssignedTo_UserIdAndFeature_FeatureIdAndIsActiveTrue(currentUser.getUserId(), featureId, pageable)
+                    .map(bugMapper::toResponse);
+        }
+
         return bugRepository.findByFeature_FeatureIdAndIsDeletedFalse(featureId, pageable)
                 .map(bugMapper::toResponse);
     }
@@ -256,6 +306,12 @@ public class BugServiceImpl implements BugService {
         }
 
         User currentUser = authService.getCurrentUser();
+
+        if (currentUser != null && currentUser.getRole() != null && "DEVELOPER".equalsIgnoreCase(currentUser.getRole().getRole())) {
+            if (bug.getAssignedTo() == null || !currentUser.getUserId().equals(bug.getAssignedTo().getUserId())) {
+                throw new AccessDeniedException("Access denied: You can only update bugs assigned to you");
+            }
+        }
 
         Integer oldAssignedUserId =
                 bug.getAssignedTo() != null
@@ -334,7 +390,7 @@ public class BugServiceImpl implements BugService {
 
         bug = bugRepository.save(bug);
 
-        if (statusChanged && bug.getStatus() == BugStatus.FIXED) {
+        if (statusChanged && (bug.getStatus() == BugStatus.FIXED || bug.getStatus() == BugStatus.NOT_A_BUG)) {
             eventPublisher.publishEvent(new BugFixedEvent(bug));
         }
 
@@ -402,6 +458,12 @@ public class BugServiceImpl implements BugService {
         }
 
         User currentUser = authService.getCurrentUser();
+
+        if (currentUser != null && currentUser.getRole() != null && "DEVELOPER".equalsIgnoreCase(currentUser.getRole().getRole())) {
+            if (bug.getAssignedTo() == null || !currentUser.getUserId().equals(bug.getAssignedTo().getUserId())) {
+                throw new AccessDeniedException("Access denied: You can only update bugs assigned to you");
+            }
+        }
 
         List<String> updatedFields = new ArrayList<>();
 

@@ -87,6 +87,49 @@ export class TestCaseService {
     );
   }
 
+  getTestCaseById(testcaseId: number): Observable<TestCase> {
+    return this.http.get<any>(`${this.baseUrl}/testcase/${testcaseId}`).pipe(
+        map(res => {
+          const item = res?.data || res;
+          const tc = item.testCase || item;
+          const ex = item.execution || item.testingExecution || {};
+          const val = item.validations || {};
+          const auto = item.automation || {};
+          const bugSum = item.bugSummary || {};
+          const audit = item.audit || {};
+
+          const tcId = tc.testcaseId || item.testcaseId || tc.id || item.id;
+          const tcFormat = tc.testcaseFormatId || item.testcaseFormatId || (tcId ? `TC_${tcId}` : 'TC');
+
+          return {
+            testcaseId: tcId,
+            testcaseFormatId: tcFormat,
+            featureId: tc.featureId || item.featureId,
+            title: tc.title || item.title || '',
+            testType: tc.testType || item.testType || 'UI',
+            testPriority: tc.testPriority || item.testPriority || 'MEDIUM',
+            testcaseStatus: tc.testcaseStatus || item.testcaseStatus || 'PASSED',
+            executionStatus: ex.executionStatus || item.executionStatus || tc.testcaseStatus || 'UNEXECUTED',
+            comments: tc.comments || ex.comments || item.comments || '',
+            testData: ex.testData || item.testData || '',
+            automationFeasibility: auto.automationFeasibility || item.automationFeasibility || '',
+            bugsCount: bugSum.bugsCount ?? item.bugsCount ?? 0,
+            createdBy: audit.createdBy || item.createdBy || '',
+            updatedBy: audit.updatedBy || item.updatedBy || '',
+            execution: {
+              executionId: ex.executionId || item.executionId,
+              executionNumber: ex.executionNumber || 1,
+              precondition: ex.precondition || item.precondition || '',
+              executionSteps: ex.executionSteps || item.executionSteps || '',
+              uiValidations: val.uiValidations || ex.uiValidations || item.uiValidations || '',
+              dbValidations: val.dbValidations || ex.dbValidations || item.dbValidations || '',
+              comments: ex.comments || tc.comments || item.comments || ''
+            }
+          } as TestCase;
+        })
+    );
+  }
+
   updateTestCase(testcaseId: number, req: TestCasePutRequest): Observable<any> {
     return this.http.put<any>(`${this.baseUrl}/testcase/${testcaseId}`, req).pipe(
       map(res => res?.data || res)

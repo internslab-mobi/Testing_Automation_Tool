@@ -91,6 +91,9 @@ public class BugResponse {
     public static class FeatureRef {
         private Integer featureId;
         private String featureName;
+        private Integer sprint;
+        private Integer projectId;
+        private String projectName;
     }
 
     @Data
@@ -99,8 +102,10 @@ public class BugResponse {
     @Builder
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public static class WorkflowInfo {
-        private String reportedBy;
+        private Integer assignedToId;
         private String assignedTo;
+        private Integer reportedById;
+        private String reportedBy;
         private String executedBy;
         private Instant resolvedAt;
     }

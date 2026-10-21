@@ -1,0 +1,757 @@
+<div class="workspace-wrapper">
+  <!-- Top Navigation Header (Clean & Minimal, No Project in Navbar) -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand-logo" title="TAT Developer Cockpit">
+        <div class="brand-badge"><i class="fa-solid fa-code"></i></div>
+        <div class="brand-titles">
+          <h1 class="brand-title-text">TAT Developer Cockpit</h1>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <!-- User Profile Link (Click to view and edit profile details) -->
+      <a routerLink="/profile" (click)="goToProfile($event)" class="user-chip" title="Click to view and edit profile details">
+        <div class="user-avatar">{{ userInitials }}</div>
+        <div class="user-info">
+          <span class="user-name">{{ userName }}</span>
+          <span class="user-role">{{ userRole }} (DEV)</span>
+        </div>
+
+      </a>
+
+      <!-- Sign Out Button -->
+      <button class="btn-signout" (click)="performLogout()" title="Sign Out of Session">
+        <i class="fa-solid fa-right-from-bracket"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- In-App Notification Confirmation Toast -->
+  <div class="toast-notification-banner" *ngIf="statusToastMessage">
+    <div class="toast-content">
+      <i class="fa-solid fa-circle-check text-emerald"></i>
+      <span>{{ statusToastMessage }}</span>
+    </div>
+    <button class="btn-close-toast" (click)="statusToastMessage = ''">&times;</button>
+  </div>
+
+  <!-- Workspace Body -->
+  <div class="workspace-body">
+    <main class="main-content">
+      <!-- Workflow Categorization Tabs (Open vs Fixed / Not a Bug) -->
+      <div class="category-tabs-bar">
+        <div class="category-tabs-group">
+          <!-- Tab 1: OPEN Defects -->
+          <button
+            class="cat-tab"
+            [class.active]="defectCategoryTab === 'OPEN'"
+            (click)="setCategoryTab('OPEN')"
+          >
+            <i class="fa-solid fa-fire text-amber"></i>
+            <span>Active & Open</span>
+            <span class="cat-badge badge-open">{{ openBugsCount }}</span>
+          </button>
+
+          <!-- Tab 2: FIXED & NOT_A_BUG Defects -->
+          <button
+            class="cat-tab"
+            [class.active]="defectCategoryTab === 'RESOLVED'"
+            (click)="setCategoryTab('RESOLVED')"
+          >
+            <i class="fa-solid fa-circle-check text-emerald"></i>
+            <span>Fixed & Not a Bug</span>
+            <span class="cat-badge badge-resolved">{{ resolvedBugsCount }}</span>
+          </button>
+
+          <!-- Tab 3: ALL Assigned Defects -->
+          <button
+            class="cat-tab"
+            [class.active]="defectCategoryTab === 'ALL'"
+            (click)="setCategoryTab('ALL')"
+          >
+            <i class="fa-solid fa-list-check text-indigo"></i>
+            <span>All Assigned</span>
+            <span class="cat-badge">{{ myAssignedBugs.length }}</span>
+          </button>
+        </div>
+
+        <div class="queue-refresh-action">
+          <button class="btn btn-secondary btn-sm" (click)="loadBugs()" title="Refresh Assigned Defects">
+            <i class="fa-solid fa-rotate" [class.fa-spin]="isLoading"></i> Sync Queue
+          </button>
+        </div>
+      </div>
+
+      <!-- VIEW PANEL: DEFECTS TABLE & SEARCH TOOLBAR -->
+      <div class="view-panel">
+        <!-- Modern SaaS Search & Filter Bar -->
+        <div class="modern-search-toolbar">
+          <div class="search-input-wrapper">
+            <i class="fa-solid fa-magnifying-glass search-leading-icon"></i>
+            <input
+              type="text"
+              class="search-input-field"
+              placeholder="Search assigned defects by Bug ID, title, description, testcase, or reporter..."
+              [(ngModel)]="bugSearch"
+              (ngModelChange)="onFilterChange()"
+            >
+            <button
+              class="search-clear-btn"
+              *ngIf="bugSearch"
+              (click)="bugSearch = ''; onFilterChange()"
+              title="Clear search"
+            >
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+
+          <div class="search-filter-controls">
+            <!-- Filter by Severity -->
+            <select
+              class="form-control-pill"
+              [(ngModel)]="bugFilterSeverity"
+              (change)="onFilterChange()"
+              title="Filter by Severity"
+            >
+              <option value="ALL">All Severities</option>
+              <option value="CRITICAL">CRITICAL</option>
+              <option value="HIGH">HIGH</option>
+              <option value="MEDIUM">MEDIUM</option>
+              <option value="LOW">LOW</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Defect Listing Table (Filtered Strictly to Current Developer's Assigned Bugs) -->
+        <div class="table-responsive">
+          <table class="cockpit-table">
+            <thead>
+              <tr>
+                <th style="width: 140px;">Bug ID</th>
+                <th>Defect Summary</th>
+                <th style="width: 130px;">Linked TestCase</th>
+                <th style="width: 160px;">Reported By</th>
+                <th style="width: 110px;">Severity</th>
+                <th style="width: 170px;">Status & Patch</th>
+                <th style="width: 190px; text-align: right;">Inspect, Chat & Files</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngIf="paginatedBugs.length === 0">
+                <td colspan="7" class="empty-table-cell">
+                  <i class="fa-solid fa-bug-slash"></i>
+                  <span>No defects found in this category assigned to you</span>
+                </td>
+              </tr>
+
+              <tr
+                *ngFor="let b of paginatedBugs; trackBy: trackByBugId"
+                class="clickable-row"
+                (click)="viewDefectDetail(b)"
+                title="Click to view full bug & test case details"
+              >
+                <!-- Bug ID -->
+                <td>
+                  <span class="bug-id-pill">{{ b.bugFormatId || ('BUG_' + b.bugId) }}</span>
+                </td>
+
+                <!-- Defect Title & Summary -->
+                <td>
+                  <div class="bug-content-box">
+                    <div class="bug-title line-clamp-2" [title]="b.title">
+                      {{ b.title }}
+                    </div>
+                    <div class="bug-desc-snippet line-clamp-1" *ngIf="b.description" [title]="b.description">
+                      {{ b.description }}
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Linked Test Case -->
+                <td>
+                  <span class="tc-ref-pill" [title]="'Linked TestCase: ' + (b.testcaseFormatId || ('TC_' + b.testcaseId) || 'TC_GENERAL')">
+                    <i class="fa-solid fa-file-lines"></i>
+                    {{ b.testcaseFormatId || ('TC_' + b.testcaseId) || 'TC_GENERAL' }}
+                  </span>
+                </td>
+
+                <!-- Reported By (Clearly displaying who reported the bug) -->
+                <td>
+                  <div class="reporter-cell" [title]="'Reported By: ' + (b.reportedBy || 'QA Tester')">
+                    <div class="reporter-avatar">
+                      <i class="fa-solid fa-user-shield text-indigo"></i>
+                    </div>
+                    <div class="reporter-meta">
+                      <span class="reporter-name">{{ b.reportedBy || 'QA Tester' }}</span>
+                      <span class="reporter-role">QA Reporter</span>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Severity -->
+                <td>
+                  <span class="badge-tag" [ngClass]="'badge-sev-' + (b.severity?.toLowerCase() || 'high')">
+                    {{ b.severity }}
+                  </span>
+                </td>
+
+                <!-- Status & Status Patch Control (OPEN, FIXED, NOT_A_BUG) -->
+                <td (click)="$event.stopPropagation()">
+                  <div class="status-patch-container">
+                    <span class="badge-tag" [ngClass]="'badge-status-' + (b.status?.toLowerCase() || 'open')">
+                      {{ b.status }}
+                    </span>
+
+                    <select
+                      class="status-patch-select"
+                      [ngModel]="b.status"
+                      (change)="onStatusSelect(b, $event)"
+                      title="Update Status (Sends in-app notification to tester)"
+                    >
+                      <option value="OPEN">OPEN</option>
+                      <option value="FIXED">FIXED</option>
+                      <option value="NOT_A_BUG">NOT_A_BUG</option>
+                    </select>
+                  </div>
+                </td>
+
+                <!-- Actions: Details, Chat, Files -->
+                <td style="text-align: right;" (click)="$event.stopPropagation()">
+                  <div class="row-actions">
+                    <!-- Inspect Bug & Test Case (GET Details) -->
+                    <button
+                      class="btn-action-icon btn-inspect"
+                      (click)="viewDefectDetail(b)"
+                      title="Inspect Bug & Linked TestCase Details"
+                    >
+                      <i class="fa-solid fa-circle-info text-indigo"></i> Details
+                    </button>
+
+                    <!-- QA Chat / Discussion Button -->
+                    <button
+                      class="btn-action-icon btn-chat"
+                      (click)="openBugChat(b)"
+                      title="Chat & Discuss with QA Reporter"
+                    >
+                      <i class="fa-solid fa-comments text-emerald"></i> Chat
+                    </button>
+
+                    <!-- File Attachments Trigger -->
+                    <button
+                      class="btn-action-icon"
+                      (click)="openAttachmentsModal(b)"
+                      title="Evidence Attachments & Upload"
+                    >
+                      <i class="fa-solid fa-paperclip text-muted"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div class="table-pagination-bar" *ngIf="filteredBugs.length > 0">
+          <div class="pagination-info">
+            <span class="pagination-count-text">
+              Showing <strong>{{ bugStartIndex }}-{{ bugEndIndex }}</strong> of <strong>{{ filteredBugs.length }}</strong> defects
+            </span>
+            <div class="pagination-divider"></div>
+            <div class="page-size-picker">
+              <label>Rows:</label>
+              <select [(ngModel)]="bugPageSize" (change)="onPageSizeChange()" class="form-control-xs" title="Rows per page">
+                <option *ngFor="let opt of bugPageSizeOptions" [value]="opt">{{ opt }}</option>
+              </select>
+            </div>
+          </div>
+          <div class="pagination-controls">
+            <button
+              class="btn-page"
+              [disabled]="bugCurrentPage <= 1"
+              (click)="goToPage(bugCurrentPage - 1)"
+              title="Previous page"
+            >
+              <i class="fa-solid fa-chevron-left"></i> Prev
+            </button>
+            <span class="page-indicator">Page <strong>{{ bugCurrentPage }}</strong> of <strong>{{ totalPages }}</strong></span>
+            <button
+              class="btn-page"
+              [disabled]="bugCurrentPage >= totalPages"
+              (click)="goToPage(bugCurrentPage + 1)"
+              title="Next page"
+            >
+              Next <i class="fa-solid fa-chevron-right"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 1: BUG & LINKED TEST CASE DETAILS INSPECTOR
+       (Shows Project Name, Feature Name, Sprint + Preconditions & Steps + Files)
+       ========================================================================== -->
+  <div class="modal-overlay" *ngIf="isDetailModalOpen">
+    <div class="modal-card modal-lg">
+      <div class="modal-header">
+        <div class="header-titles">
+          <h3>
+            <i class="fa-solid fa-bug text-rose"></i>
+            {{ activeBugForDetail?.bugFormatId || ('BUG_' + activeBugForDetail?.bugId) }}: {{ activeBugForDetail?.title }}
+          </h3>
+          <div class="chat-sub-info">
+            Reported By: <strong>{{ activeBugForDetail?.reportedBy || 'QA Tester' }}</strong>
+            • Severity: <span class="badge-tag" [ngClass]="'badge-sev-' + (activeBugForDetail?.severity?.toLowerCase() || 'high')">{{ activeBugForDetail?.severity }}</span>
+            • Status: <span class="badge-tag" [ngClass]="'badge-status-' + (activeBugForDetail?.status?.toLowerCase() || 'open')">{{ activeBugForDetail?.status }}</span>
+          </div>
+        </div>
+
+        <div class="header-modal-actions">
+          <!-- Quick Status Actions (OPEN, FIXED, NOT_A_BUG) -->
+          <ng-container *ngIf="activeBugForDetail">
+            <button
+              *ngIf="activeBugForDetail.status !== 'FIXED'"
+              class="btn btn-emerald btn-xs"
+              (click)="applyStatusUpdate(activeBugForDetail.bugId, 'FIXED')"
+              title="Mark as FIXED (Sends in-app notification to tester)"
+            >
+              <i class="fa-solid fa-check"></i> Mark FIXED
+            </button>
+
+            <button
+              *ngIf="activeBugForDetail.status !== 'NOT_A_BUG'"
+              class="btn btn-secondary btn-xs"
+              (click)="applyStatusUpdate(activeBugForDetail.bugId, 'NOT_A_BUG')"
+              title="Mark as NOT A BUG (Sends in-app notification to tester)"
+            >
+              <i class="fa-solid fa-ban text-rose"></i> NOT A BUG
+            </button>
+
+            <button
+              *ngIf="activeBugForDetail.status !== 'OPEN'"
+              class="btn btn-secondary btn-xs"
+              (click)="applyStatusUpdate(activeBugForDetail.bugId, 'OPEN')"
+              title="Reopen defect"
+            >
+              <i class="fa-solid fa-rotate-left"></i> Reopen (OPEN)
+            </button>
+          </ng-container>
+
+          <!-- Chat Trigger from Inspector -->
+          <button
+            class="btn btn-chat-header btn-xs"
+            (click)="openBugChat(activeBugForDetail!)"
+            title="Open Chat & Discussion with QA Reporter"
+          >
+            <i class="fa-solid fa-comments"></i> QA Chat
+          </button>
+
+          <button class="modal-close" (click)="closeDetailModal()">&times;</button>
+        </div>
+      </div>
+
+      <div class="modal-body-pad" *ngIf="activeBugForDetail">
+        <!-- Project, Feature & Sprint Hierarchy Meta Strip (Moved from Navbar) -->
+        <div class="detail-context-strip">
+          <span class="detail-context-pill pill-proj" title="Project">
+            <i class="fa-solid fa-folder-tree"></i>
+            <span>Project: <strong>{{ getBugProjectName(activeBugForDetail) }}</strong></span>
+          </span>
+          <span class="detail-context-pill pill-feat" title="Feature">
+            <i class="fa-solid fa-puzzle-piece"></i>
+            <span>Feature: <strong>{{ getBugFeatureName(activeBugForDetail) }}</strong></span>
+          </span>
+          <span class="detail-context-pill pill-sp" title="Sprint">
+            <i class="fa-solid fa-bolt"></i>
+            <span>Sprint: <strong>Sprint {{ getBugSprint(activeBugForDetail) }}</strong></span>
+          </span>
+        </div>
+
+        <div class="inspector-dual-grid">
+          <!-- Left Column: Bug Information (Read-Only GET) -->
+          <div class="inspector-col bug-info-col">
+            <div class="inspector-section-header">
+              <i class="fa-solid fa-triangle-exclamation text-amber"></i>
+              <h4>Defect Specifications</h4>
+            </div>
+
+            <div class="detail-text-box">
+              <div class="spec-label">Title</div>
+              <div class="spec-value-strong">{{ activeBugForDetail.title }}</div>
+              <div class="spec-label" style="margin-top: 10px;">Description</div>
+              <p class="spec-desc-text">{{ activeBugForDetail.description || 'No detailed description provided.' }}</p>
+            </div>
+
+            <div class="detail-meta-grid">
+              <div class="meta-item">
+                <span class="meta-label">Reported By:</span>
+                <span class="meta-val highlight-reporter">
+                  <i class="fa-solid fa-user-shield text-indigo"></i>
+                  {{ activeBugForDetail.reportedBy || 'QA Tester' }}
+                </span>
+              </div>
+
+              <div class="meta-item">
+                <span class="meta-label">Severity:</span>
+                <span class="meta-val badge-tag" [ngClass]="'badge-sev-' + (activeBugForDetail.severity?.toLowerCase() || 'high')">
+                  {{ activeBugForDetail.severity }}
+                </span>
+              </div>
+
+              <div class="meta-item">
+                <span class="meta-label">Current Status:</span>
+                <span class="meta-val badge-tag" [ngClass]="'badge-status-' + (activeBugForDetail.status?.toLowerCase() || 'open')">
+                  {{ activeBugForDetail.status }}
+                </span>
+              </div>
+
+              <div class="meta-item">
+                <span class="meta-label">Category:</span>
+                <span class="meta-val">{{ activeBugForDetail.category || 'FUNCTIONAL' }}</span>
+              </div>
+
+              <div class="meta-item">
+                <span class="meta-label">Occurrences:</span>
+                <span class="meta-val">{{ activeBugForDetail.bugOccurrence || 1 }} time(s)</span>
+              </div>
+
+              <div class="meta-item">
+                <span class="meta-label">Created Date:</span>
+                <span class="meta-val">{{ (activeBugForDetail.createdAt | date:'medium') || 'Active Sprint' }}</span>
+              </div>
+            </div>
+
+            <div class="detail-text-box" *ngIf="activeBugForDetail.comments" style="margin-top: 12px;">
+              <div class="spec-label">Tester Execution Notes</div>
+              <p class="spec-desc-text">{{ activeBugForDetail.comments }}</p>
+            </div>
+          </div>
+
+          <!-- Right Column: Linked TestCase Details (Read-Only GET) -->
+          <div class="inspector-col testcase-info-col">
+            <div class="inspector-section-header">
+              <i class="fa-solid fa-vial-circle-check text-emerald"></i>
+              <h4>Linked Test Case Details</h4>
+              <span class="tc-format-badge" *ngIf="activeBugForDetail.testcaseFormatId || selectedTestCase?.testcaseFormatId">
+                {{ selectedTestCase?.testcaseFormatId || activeBugForDetail.testcaseFormatId }}
+              </span>
+            </div>
+
+            <!-- Loading Spinner for TestCase -->
+            <div *ngIf="isTestCaseLoading" class="loading-state">
+              <i class="fa-solid fa-spinner fa-spin text-indigo"></i>
+              <span>Loading linked testcase execution steps...</span>
+            </div>
+
+            <!-- Error State -->
+            <div *ngIf="!isTestCaseLoading && testCaseLoadError" class="empty-tc-state">
+              <i class="fa-solid fa-circle-exclamation text-amber"></i>
+              <span>{{ testCaseLoadError }}</span>
+            </div>
+
+            <!-- Loaded TestCase Content -->
+            <div *ngIf="!isTestCaseLoading && selectedTestCase" class="tc-content">
+              <div class="tc-summary-bar">
+                <div class="tc-title-text">{{ selectedTestCase.title }}</div>
+                <div class="tc-meta-pills">
+                  <span class="badge-tag">{{ selectedTestCase.testType }}</span>
+                  <span class="badge-tag">{{ selectedTestCase.testPriority }}</span>
+                  <span class="badge-tag" [ngClass]="selectedTestCase.executionStatus === 'FAIL' ? 'badge-sev-critical' : 'badge-sev-medium'">
+                    {{ selectedTestCase.executionStatus || selectedTestCase.testcaseStatus }}
+                  </span>
+                </div>
+              </div>
+
+              <!-- Preconditions -->
+              <div class="tc-detail-block" *ngIf="selectedTestCase.execution?.precondition">
+                <div class="tc-block-title">
+                  <i class="fa-solid fa-clipboard-check"></i> Preconditions
+                </div>
+                <pre class="tc-code-view">{{ selectedTestCase.execution?.precondition }}</pre>
+              </div>
+
+              <!-- Execution Steps to Reproduce -->
+              <div class="tc-detail-block">
+                <div class="tc-block-title">
+                  <i class="fa-solid fa-list-ol text-cyan"></i> Execution Steps (Reproduction)
+                </div>
+                <pre class="tc-code-view steps-highlight">{{ selectedTestCase.execution?.executionSteps || 'No step-by-step instructions specified.' }}</pre>
+              </div>
+
+              <!-- UI & DB Validations -->
+              <div class="tc-detail-block" *ngIf="selectedTestCase.execution?.uiValidations || selectedTestCase.execution?.dbValidations">
+                <div class="tc-block-title">
+                  <i class="fa-solid fa-circle-check text-emerald"></i> Expected Validations
+                </div>
+                <div class="validation-item" *ngIf="selectedTestCase.execution?.uiValidations">
+                  <strong>UI Validation:</strong> {{ selectedTestCase.execution?.uiValidations }}
+                </div>
+                <div class="validation-item" *ngIf="selectedTestCase.execution?.dbValidations">
+                  <strong>DB Validation:</strong> {{ selectedTestCase.execution?.dbValidations }}
+                </div>
+              </div>
+
+              <!-- Test Data -->
+              <div class="tc-detail-block" *ngIf="selectedTestCase.testData">
+                <div class="tc-block-title">
+                  <i class="fa-solid fa-database text-amber"></i> Test Data
+                </div>
+                <pre class="tc-code-view">{{ selectedTestCase.testData }}</pre>
+              </div>
+            </div>
+
+            <!-- No TestCase Found State -->
+            <div *ngIf="!isTestCaseLoading && !selectedTestCase && !testCaseLoadError" class="empty-tc-state">
+              <i class="fa-regular fa-file-lines"></i>
+              <span>No direct test case linked or standalone defect.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Evidence & File Attachments Section -->
+        <div class="inspector-attachments-section">
+          <div class="inspector-section-header">
+            <i class="fa-solid fa-paperclip text-indigo"></i>
+            <h4>Defect Evidence & Diagnostic Attachments</h4>
+            <span class="comments-counter">{{ activeBugAttachments.length }} files</span>
+
+            <!-- Attach Files Button -->
+            <label class="btn btn-primary btn-xs btn-upload-inline" title="Attach screenshots, logs, or error traces">
+              <i class="fa-solid fa-upload" [class.fa-spin]="isUploadingAttachment"></i>
+              <span>{{ isUploadingAttachment ? 'Uploading...' : 'Attach Files' }}</span>
+              <input
+                type="file"
+                multiple
+                (change)="onFileUpload($event, activeBugForDetail.bugId)"
+                [disabled]="isUploadingAttachment"
+                style="display: none;"
+              >
+            </label>
+          </div>
+
+          <div *ngIf="isAttachmentsLoading" class="loading-state-mini">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span>Loading attachments...</span>
+          </div>
+
+          <div *ngIf="!isAttachmentsLoading && activeBugAttachments.length === 0" class="empty-attachments-mini">
+            <i class="fa-regular fa-folder-open"></i>
+            <span>No files attached yet. Click "Attach Files" above to upload screenshots or diagnostic logs.</span>
+          </div>
+
+          <div class="attachments-list" *ngIf="activeBugAttachments.length > 0">
+            <div *ngFor="let att of activeBugAttachments" class="att-row-item">
+              <div class="att-icon">
+                <i
+                  class="fa-solid"
+                  [ngClass]="att.fileName.endsWith('.png') || att.fileName.endsWith('.jpg') || att.fileName.endsWith('.jpeg') ? 'fa-file-image text-emerald' : 'fa-file-lines text-indigo'"
+                ></i>
+              </div>
+              <div class="att-meta">
+                <div class="att-name" [title]="att.fileName">{{ att.fileName }}</div>
+                <div class="att-sub">
+                  <span *ngIf="att.fileSize">{{ (att.fileSize / 1024) | number:'1.1-1' }} KB</span>
+                  <span *ngIf="att.uploaderName">• By {{ att.uploaderName }}</span>
+                </div>
+              </div>
+              <button class="btn-action-icon" (click)="downloadAttachment(att)" title="Download Attachment">
+                <i class="fa-solid fa-download"></i> Download
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer-row">
+        <button class="btn btn-secondary btn-sm" (click)="closeDetailModal()">Close</button>
+        <button class="btn btn-emerald btn-sm" (click)="openBugChat(activeBugForDetail!)">
+          <i class="fa-solid fa-comments"></i> Open QA Discussion Chat
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 2: QA & DEVELOPER COLLABORATION CHAT MODAL
+       ========================================================================== -->
+  <div class="modal-overlay" *ngIf="isBugChatOpen">
+    <div class="modal-card modal-chat-card">
+      <div class="modal-header">
+        <div class="header-titles">
+          <h3>
+            <i class="fa-solid fa-comments text-emerald"></i>
+            Discussion: {{ activeBugForChat?.bugFormatId || ('BUG_' + activeBugForChat?.bugId) }}
+          </h3>
+          <div class="chat-sub-info">
+            Reported By: <strong>{{ activeBugForChat?.reportedBy || 'QA Tester' }}</strong>
+            • Linked TC: <strong>{{ activeBugForChat?.testcaseFormatId || 'TC_GENERAL' }}</strong>
+            • Severity: <span class="badge-tag" [ngClass]="'badge-sev-' + (activeBugForChat?.severity?.toLowerCase() || 'high')">{{ activeBugForChat?.severity }}</span>
+            • Status: <span class="badge-tag" [ngClass]="'badge-status-' + (activeBugForChat?.status?.toLowerCase() || 'open')">{{ activeBugForChat?.status }}</span>
+          </div>
+        </div>
+
+        <div class="header-modal-actions">
+          <!-- Quick Status Actions Inside Chat -->
+          <button
+            *ngIf="activeBugForChat && activeBugForChat.status !== 'FIXED'"
+            class="btn btn-emerald btn-xs"
+            (click)="applyStatusUpdate(activeBugForChat.bugId, 'FIXED')"
+            title="Mark as FIXED"
+          >
+            <i class="fa-solid fa-check"></i> Mark FIXED
+          </button>
+          <button
+            *ngIf="activeBugForChat && activeBugForChat.status !== 'NOT_A_BUG'"
+            class="btn btn-secondary btn-xs"
+            (click)="applyStatusUpdate(activeBugForChat.bugId, 'NOT_A_BUG')"
+            title="Mark as NOT A BUG"
+          >
+            <i class="fa-solid fa-ban text-rose"></i> NOT A BUG
+          </button>
+
+          <button class="modal-close" (click)="closeBugChat()">&times;</button>
+        </div>
+      </div>
+
+      <!-- Chat Stream -->
+      <div class="chat-stream" id="devChatStream">
+        <div *ngIf="isBugChatLoading" class="loading-state">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <span>Loading discussion comments...</span>
+        </div>
+
+        <div *ngIf="!isBugChatLoading && bugComments.length === 0" class="empty-chat-msg">
+          <i class="fa-regular fa-comment-dots"></i>
+          <span>No messages yet in this discussion. Send a message to start collaborating with the QA team.</span>
+        </div>
+
+        <!-- Chat Bubbles -->
+        <div
+          *ngFor="let c of bugComments"
+          class="chat-bubble"
+          [class.chat-bubble-me]="isMyComment(c)"
+          [class.chat-bubble-other]="!isMyComment(c)"
+        >
+          <div class="chat-bubble-header">
+            <div class="sender-meta">
+              <strong>{{ c.creatorName || c.createdByFullName || c.createdByUsername || 'Team Member' }}</strong>
+              <span class="role-pill" [class.role-dev]="isMyComment(c)" [class.role-qa]="!isMyComment(c)">
+                {{ getCommentRole(c) }}
+              </span>
+            </div>
+            <span class="chat-time" *ngIf="c.createdAt">{{ c.createdAt | date:'shortTime' }}</span>
+          </div>
+          <div class="chat-text">{{ c.comment }}</div>
+        </div>
+      </div>
+
+      <!-- Quick Reply Suggestion Chips Bar -->
+      <div class="quick-replies-strip">
+        <span class="quick-chip-label"><i class="fa-solid fa-bolt text-amber"></i> Quick:</span>
+        <div class="quick-chips-scroll">
+          <button
+            *ngFor="let rep of quickReplies"
+            class="quick-reply-pill"
+            (click)="useQuickReply(rep)"
+          >
+            {{ rep }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Chat Input Composer -->
+      <div class="chat-input-bar">
+        <input
+          type="text"
+          class="form-control"
+          placeholder="Type message or reply to QA reporter... (Press Enter to send)"
+          [(ngModel)]="newChatMessage"
+          (keydown.enter)="sendChatMessage()"
+          [disabled]="isSendingComment"
+        >
+        <button
+          class="btn btn-primary"
+          (click)="sendChatMessage()"
+          [disabled]="!newChatMessage.trim() || isSendingComment"
+        >
+          <i class="fa-solid fa-paper-plane" [class.fa-spin]="isSendingComment"></i> Send
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================================================
+       MODAL 3: STANDALONE ATTACHMENTS & LOGS MODAL
+       ========================================================================== -->
+  <div class="modal-overlay" *ngIf="isAttachmentsModalOpen">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="header-titles">
+          <h3>
+            <i class="fa-solid fa-paperclip text-indigo"></i>
+            Evidence Attachments: {{ activeBugForAttachments?.bugFormatId }}
+          </h3>
+          <div class="chat-sub-info">
+            Screenshots, network dumps, and stack traces uploaded for this defect.
+          </div>
+        </div>
+        <button class="modal-close" (click)="closeAttachmentsModal()">&times;</button>
+      </div>
+
+      <div class="modal-body-pad">
+        <div class="attachments-upload-bar">
+          <label class="btn btn-primary btn-xs">
+            <i class="fa-solid fa-upload" [class.fa-spin]="isUploadingAttachment"></i>
+            <span>{{ isUploadingAttachment ? 'Uploading...' : 'Upload Evidence / Logs' }}</span>
+            <input
+              type="file"
+              multiple
+              (change)="onFileUpload($event, activeBugForAttachments?.bugId)"
+              [disabled]="isUploadingAttachment"
+              style="display: none;"
+            >
+          </label>
+        </div>
+
+        <div *ngIf="isAttachmentsLoading" class="loading-state">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <span>Loading attachments...</span>
+        </div>
+
+        <div *ngIf="!isAttachmentsLoading && activeBugAttachments.length === 0" class="empty-chat-msg">
+          <i class="fa-regular fa-folder-open"></i>
+          <span>No attachments found for this defect.</span>
+        </div>
+
+        <div class="attachments-list" *ngIf="activeBugAttachments.length > 0">
+          <div *ngFor="let att of activeBugAttachments" class="att-row-item">
+            <div class="att-icon">
+              <i
+                class="fa-solid"
+                [ngClass]="att.fileName.endsWith('.png') || att.fileName.endsWith('.jpg') ? 'fa-file-image text-emerald' : 'fa-file-lines text-indigo'"
+              ></i>
+            </div>
+            <div class="att-meta">
+              <div class="att-name" [title]="att.fileName">{{ att.fileName }}</div>
+              <div class="att-sub">
+                <span *ngIf="att.fileSize">{{ (att.fileSize / 1024) | number:'1.1-1' }} KB</span>
+                <span *ngIf="att.uploaderName">• By {{ att.uploaderName }}</span>
+              </div>
+            </div>
+            <button class="btn-action-icon" (click)="downloadAttachment(att)" title="Download">
+              <i class="fa-solid fa-download"></i> Download
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer-row">
+        <button class="btn btn-secondary btn-sm" (click)="closeAttachmentsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+</div>

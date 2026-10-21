@@ -162,6 +162,16 @@ public class AuthController {
         return ResponseEntity.ok(ApiResponse.success("User profile retrieved successfully", profile));
     }
 
+    @Operation(summary = "Update current authenticated user profile", security = @SecurityRequirement(name = "bearerAuth"))
+    @PutMapping("/profile")
+    public ResponseEntity<ApiResponse<UserProfileResponse>> updateProfile(
+            @AuthenticationPrincipal UserDetails userDetails,
+            @Valid @RequestBody UpdateProfileRequest request
+    ) {
+        UserProfileResponse profile = authService.updateProfile(userDetails.getUsername(), request);
+        return ResponseEntity.ok(ApiResponse.success("Profile updated successfully", profile));
+    }
+
     @Operation(summary = "Change password for logged in user", security = @SecurityRequirement(name = "bearerAuth"))
     @PostMapping("/change-password")
     public ResponseEntity<ApiResponse<String>> changePassword(

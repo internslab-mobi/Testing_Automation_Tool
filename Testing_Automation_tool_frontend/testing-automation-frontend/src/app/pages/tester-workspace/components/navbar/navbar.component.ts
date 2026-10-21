@@ -1,15 +1,24 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router, RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-workspace-navbar',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './navbar.component.html',
   styleUrl: './navbar.component.css'
 })
 export class NavbarComponent {
   readonly cdr = inject(ChangeDetectorRef);
+  private readonly router = inject(Router);
+
+  goToProfile(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+    }
+    this.router.navigate(['/profile']);
+  }
 
   @Input() userName = 'Tester';
   @Input() userRole = 'TESTER';

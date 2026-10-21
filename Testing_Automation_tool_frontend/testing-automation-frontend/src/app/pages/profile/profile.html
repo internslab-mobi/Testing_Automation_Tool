@@ -1,0 +1,328 @@
+<div class="profile-page-wrapper">
+  <!-- Top Navigation Header -->
+  <header class="app-header">
+    <div class="header-left">
+      <button class="btn-back-icon" (click)="goBack()" title="Back">
+        <i class="fa-solid fa-arrow-left"></i>
+      </button>
+
+      <div class="header-divider"></div>
+
+      <div class="brand-logo" title="TAT Profile Management">
+        <div class="brand-badge"><i class="fa-solid fa-user-gear"></i></div>
+        <div class="brand-titles">
+          <h1 class="brand-title-text">My Profile & Account Settings</h1>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <div class="user-chip-static">
+        <div class="user-avatar-mini">{{ userInitials }}</div>
+        <div class="user-info-mini">
+          <span class="user-name-mini">{{ profile?.fullName || profile?.username }}</span>
+          <span class="user-role-mini">{{ profile?.role || 'USER' }}</span>
+        </div>
+      </div>
+
+      <button class="btn-signout" (click)="logout()" title="Sign Out of Session">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span>Sign Out</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Toast Notification Alert -->
+  <div class="toast-banner" *ngIf="toastMessage" [class.toast-error]="toastType === 'error'">
+    <div class="toast-content">
+      <i class="fa-solid" [ngClass]="toastType === 'success' ? 'fa-circle-check text-emerald' : 'fa-circle-exclamation text-rose'"></i>
+      <span>{{ toastMessage }}</span>
+    </div>
+    <button class="btn-close-toast" (click)="toastMessage = ''">&times;</button>
+  </div>
+
+  <!-- Main Profile Content -->
+  <main class="profile-content-container">
+    <div class="profile-grid">
+      <!-- Left Column: Identity & Overview Card -->
+      <aside class="identity-card">
+        <div class="identity-header">
+          <div class="avatar-ring">
+            <div class="user-avatar-large">{{ userInitials }}</div>
+          </div>
+          <h2 class="user-display-name">{{ profile?.fullName || profile?.username || 'User Profile' }}</h2>
+          <p class="user-designation-text">{{ profile?.designation || 'QA / Engineering Specialist' }}</p>
+
+          <div class="role-pill-wrapper">
+            <span class="role-pill" [attr.data-role]="profile?.role">
+              <i class="fa-solid fa-shield-halved"></i>
+              {{ profile?.role || 'DEVELOPER' }}
+            </span>
+            <span class="status-pill status-active">
+              <span class="pulse-dot"></span>
+              Active
+            </span>
+          </div>
+        </div>
+
+        <div class="identity-meta-list">
+          <div class="meta-item">
+            <div class="meta-icon"><i class="fa-solid fa-id-badge"></i></div>
+            <div class="meta-data">
+              <span class="meta-label">User ID</span>
+              <span class="meta-value font-mono">#{{ profile?.userId || 'N/A' }}</span>
+            </div>
+          </div>
+
+          <div class="meta-item">
+            <div class="meta-icon"><i class="fa-solid fa-at"></i></div>
+            <div class="meta-data">
+              <span class="meta-label">Username</span>
+              <span class="meta-value font-mono">&#64;{{ profile?.username || 'user' }}</span>
+            </div>
+          </div>
+
+          <div class="meta-item">
+            <div class="meta-icon"><i class="fa-solid fa-envelope"></i></div>
+            <div class="meta-data">
+              <span class="meta-label">Email Address</span>
+              <span class="meta-value">{{ profile?.email || 'user@example.com' }}</span>
+            </div>
+          </div>
+
+          <div class="meta-item" *ngIf="profile?.createdAt">
+            <div class="meta-icon"><i class="fa-regular fa-calendar-check"></i></div>
+            <div class="meta-data">
+              <span class="meta-label">Member Since</span>
+              <span class="meta-value">{{ profile?.createdAt | date:'mediumDate' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Skills Overview in Card -->
+        <div class="identity-skills-block" *ngIf="skillsList.length > 0">
+          <h4 class="skills-block-title">
+            <i class="fa-solid fa-code text-cyan"></i>
+            Skills & Competencies
+          </h4>
+          <div class="skills-tag-cloud">
+            <span class="skill-badge" *ngFor="let s of skillsList">{{ s }}</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right Column: Edit Profile & Password Sections -->
+      <section class="forms-column">
+        <!-- 1. Edit Profile Form Card -->
+        <div class="card-section">
+          <div class="card-header">
+            <div class="card-header-icon"><i class="fa-solid fa-user-pen text-indigo"></i></div>
+            <div>
+              <h3 class="card-title">Edit Profile Information</h3>
+              <p class="card-subtitle">Update your personal details, designation, and engineering competencies</p>
+            </div>
+          </div>
+
+          <form (ngSubmit)="saveProfile()" class="form-body">
+            <!-- Full Name -->
+            <div class="form-group">
+              <label class="form-label" for="fullName">
+                Full Name <span class="required">*</span>
+              </label>
+              <div class="input-wrapper">
+                <i class="fa-regular fa-user input-icon"></i>
+                <input
+                  type="text"
+                  id="fullName"
+                  name="fullName"
+                  class="form-control"
+                  [(ngModel)]="editFullName"
+                  placeholder="e.g. Rahul Verma"
+                  required
+                />
+              </div>
+            </div>
+
+            <!-- Designation -->
+            <div class="form-group">
+              <label class="form-label" for="designation">Designation / Job Title</label>
+              <div class="input-wrapper">
+                <i class="fa-solid fa-briefcase input-icon"></i>
+                <input
+                  type="text"
+                  id="designation"
+                  name="designation"
+                  class="form-control"
+                  [(ngModel)]="editDesignation"
+                  placeholder="e.g. Senior Backend Engineer / Fullstack Specialist"
+                />
+              </div>
+            </div>
+
+            <!-- Skills Tag Input -->
+            <div class="form-group">
+              <label class="form-label" for="newSkill">
+                Skills & Tech Stack
+                <span class="label-hint">(Press Enter or Comma to add tags)</span>
+              </label>
+
+              <!-- Tags Preview -->
+              <div class="tags-editor-box">
+                <div class="tag-pill" *ngFor="let skill of skillsList">
+                  <span>{{ skill }}</span>
+                  <button type="button" class="btn-remove-tag" (click)="removeSkill(skill)" title="Remove skill">
+                    &times;
+                  </button>
+                </div>
+
+                <input
+                  type="text"
+                  id="newSkill"
+                  name="newSkill"
+                  class="tag-input-field"
+                  [(ngModel)]="newSkillInput"
+                  (keydown)="onSkillKeydown($event)"
+                  placeholder="Add skill (e.g. Java, Angular, Selenium)..."
+                />
+              </div>
+            </div>
+
+            <!-- Readonly Account System Fields -->
+            <div class="readonly-grid">
+              <div class="readonly-field">
+                <span class="readonly-label">
+                  <i class="fa-solid fa-lock text-slate-400"></i> Username
+                </span>
+                <span class="readonly-val font-mono">&#64;{{ profile?.username }}</span>
+              </div>
+
+              <div class="readonly-field">
+                <span class="readonly-label">
+                  <i class="fa-solid fa-lock text-slate-400"></i> Account Email
+                </span>
+                <span class="readonly-val">{{ profile?.email }}</span>
+              </div>
+
+              <div class="readonly-field">
+                <span class="readonly-label">
+                  <i class="fa-solid fa-lock text-slate-400"></i> Assigned Role
+                </span>
+                <span class="readonly-val">{{ profile?.role }} (Assigned by Admin)</span>
+              </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions-bar">
+              <button
+                type="submit"
+                class="btn-save"
+                [disabled]="isSaving || !editFullName.trim()"
+              >
+                <i class="fa-solid fa-floppy-disk" *ngIf="!isSaving"></i>
+                <i class="fa-solid fa-circle-notch fa-spin" *ngIf="isSaving"></i>
+                <span>{{ isSaving ? 'Saving Changes...' : 'Save Profile Changes' }}</span>
+              </button>
+
+              <button
+                type="button"
+                class="btn-secondary-action"
+                (click)="loadUserProfile()"
+                [disabled]="isSaving"
+              >
+                <i class="fa-solid fa-rotate-left"></i>
+                <span>Reset Fields</span>
+              </button>
+            </div>
+          </form>
+        </div>
+
+        <!-- 2. Security & Password Management Card -->
+        <div class="card-section security-card">
+          <div class="card-header cursor-pointer" (click)="showPasswordSection = !showPasswordSection">
+            <div class="card-header-icon security-icon"><i class="fa-solid fa-key text-amber"></i></div>
+            <div class="header-titles-flex">
+              <div>
+                <h3 class="card-title">Security & Password Management</h3>
+                <p class="card-subtitle">Change account credentials and update your password</p>
+              </div>
+              <button type="button" class="btn-toggle-security" title="Toggle password section">
+                <i class="fa-solid" [ngClass]="showPasswordSection ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="security-body" *ngIf="showPasswordSection">
+            <div class="alert-box-error" *ngIf="passwordError">
+              <i class="fa-solid fa-circle-exclamation"></i>
+              <span>{{ passwordError }}</span>
+            </div>
+
+            <form (ngSubmit)="updatePassword()">
+              <div class="password-fields-grid">
+                <div class="form-group">
+                  <label class="form-label" for="currentPassword">Current Password <span class="required">*</span></label>
+                  <div class="input-wrapper">
+                    <i class="fa-solid fa-lock input-icon"></i>
+                    <input
+                      type="password"
+                      id="currentPassword"
+                      name="currentPassword"
+                      class="form-control"
+                      [(ngModel)]="currentPassword"
+                      placeholder="Enter current password"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="newPassword">New Password <span class="required">*</span></label>
+                  <div class="input-wrapper">
+                    <i class="fa-solid fa-shield-keyhole input-icon"></i>
+                    <input
+                      type="password"
+                      id="newPassword"
+                      name="newPassword"
+                      class="form-control"
+                      [(ngModel)]="newPassword"
+                      placeholder="Minimum 6 characters"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="confirmPassword">Confirm New Password <span class="required">*</span></label>
+                  <div class="input-wrapper">
+                    <i class="fa-solid fa-check-double input-icon"></i>
+                    <input
+                      type="password"
+                      id="confirmPassword"
+                      name="confirmPassword"
+                      class="form-control"
+                      [(ngModel)]="confirmPassword"
+                      placeholder="Re-enter new password"
+                      required
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div class="security-actions-bar">
+                <button
+                  type="submit"
+                  class="btn-update-pwd"
+                  [disabled]="isUpdatingPassword || !currentPassword || !newPassword || !confirmPassword"
+                >
+                  <i class="fa-solid fa-shield-halved" *ngIf="!isUpdatingPassword"></i>
+                  <i class="fa-solid fa-circle-notch fa-spin" *ngIf="isUpdatingPassword"></i>
+                  <span>{{ isUpdatingPassword ? 'Updating Password...' : 'Update Password' }}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>

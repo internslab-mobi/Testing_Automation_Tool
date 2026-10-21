@@ -30,8 +30,11 @@ export class BugService {
     );
   }
 
-  getAllBugs(): Observable<Bug[]> {
-    return this.http.get<any>(`${this.baseUrl}/bug?page=0&size=100`).pipe(
+  getAllBugs(assignedTo?: number): Observable<Bug[]> {
+    const url = assignedTo != null
+      ? `${this.baseUrl}/bug?assignedTo=${assignedTo}&page=0&size=100`
+      : `${this.baseUrl}/bug?page=0&size=100`;
+    return this.http.get<any>(url).pipe(
       map(res => {
         const pageData = res?.data || res;
         const rawList = pageData?.content || (Array.isArray(pageData) ? pageData : []);
@@ -40,18 +43,39 @@ export class BugService {
     );
   }
 
+  getAssignedBugs(assignedToId?: number): Observable<Bug[]> {
+    return this.getAllBugs(assignedToId);
+  }
+
   private mapBugEntity(item: any): Bug {
     const b = item.bug || item;
+    const tc = item.testCase || b.testCase || {};
+    const feat = item.feature || b.feature || {};
     const wf = item.workflow || b.workflow || {};
     const assignedUser = b.assignedTo || {};
     const reporterUser = b.reportedBy || b.executedBy || {};
 
+    const tcId = tc.testcaseId || b.testcaseId;
+    const tcFormat = tc.testcaseFormatId || b.testcaseFormatId || (tcId ? `TC_${tcId}` : undefined);
+    const featId = feat.featureId || b.featureId;
+    const featName = feat.featureName || b.featureName || '';
+    const projName = feat.projectName || b.projectName || '';
+    const sprintNum = feat.sprint || b.sprint || 1;
+
+    const assignedId = wf.assignedToId || (typeof assignedUser === 'object' ? assignedUser.userId : undefined) || b.assignedToId;
+    const reportedId = wf.reportedById || (typeof reporterUser === 'object' ? reporterUser.userId : undefined) || b.reportedById;
+    const assignedName = typeof assignedUser === 'string' ? assignedUser : (assignedUser.fullName || assignedUser.username || wf.assignedTo || '');
+    const reportedName = typeof reporterUser === 'string' ? reporterUser : (reporterUser.fullName || reporterUser.username || wf.reportedBy || 'Tester');
+
     return {
       bugId: b.bugId,
       bugFormatId: b.bugFormatId || `BUG_${b.bugId}`,
-      testcaseId: b.testcaseId || (b.testCase ? b.testCase.testcaseId : undefined),
-      testcaseFormatId: b.testcaseFormatId || (b.testCase ? (b.testCase.testcaseFormatId || `TC_${b.testCase.testcaseId}`) : 'TC_GENERAL'),
-      featureId: b.featureId || (b.testCase ? b.testCase.featureId : undefined),
+      testcaseId: tcId,
+      testcaseFormatId: tcFormat,
+      featureId: featId,
+      featureName: featName,
+      projectName: projName,
+      sprint: sprintNum,
       title: b.title,
       description: b.description || '',
       severity: b.severity || 'HIGH',
@@ -60,14 +84,17 @@ export class BugService {
       category: b.category || 'FUNCTIONAL',
       bugOccurrence: b.bugOccurrence || 1,
       comments: b.comments || '',
-      assignedTo: assignedUser.fullName || assignedUser.username || wf.assignedTo || '',
-      assignedToId: assignedUser.userId || undefined,
-      reportedBy: reporterUser.fullName || reporterUser.username || wf.reportedBy || 'Tester',
-      createdAt: b.createdAt,
+      assignedTo: assignedName,
+      assignedToId: assignedId ? Number(assignedId) : undefined,
+      reportedBy: reportedName,
+      reportedById: reportedId ? Number(reportedId) : undefined,
+      createdAt: b.createdAt || item.audit?.createdAt,
       workflow: {
         workflowId: wf.workflowId,
-        assignedTo: assignedUser.fullName || assignedUser.username || wf.assignedTo || 'Unassigned',
-        reportedBy: reporterUser.fullName || reporterUser.username || wf.reportedBy || 'QA',
+        assignedTo: assignedName || 'Unassigned',
+        assignedToId: assignedId ? Number(assignedId) : undefined,
+        reportedBy: reportedName || 'QA',
+        reportedById: reportedId ? Number(reportedId) : undefined,
         status: b.status || 'OPEN'
       }
     };
@@ -182,13 +209,47 @@ export class BugService {
     });
   }
 
+  getBugById(bugId: number): Observable<Bug> {
+    return this.http.get<any>(`${this.baseUrl}/bug/${bugId}`).pipe(
+      map(res => {
+        const item = res?.data || res;
+        return this.mapBugEntity(item);
+      })
+    );
+  }
+
+  patchBug(bugId: number, req: any): Observable<any> {
+    return this.http.patch<any>(`${this.baseUrl}/bug/${bugId}`, req).pipe(
+      map(res => res?.data || res)
+    );
+  }
+
   getBugComments(bugId: number): Observable<BugComment[]> {
-    return this.http.get<any>(`${this.baseUrl}/bug/${bugId}/comments`).pipe(
-      map(res => res?.data || res || [])
+    return this.http.get<any>(`${this.baseUrl}/bugs/${bugId}/comments`).pipe(
+      map(res => {
+        const raw = res?.data || res || [];
+        return Array.isArray(raw) ? raw : [];
+      }),
+      catchError(() => {
+        return this.http.get<any>(`${this.baseUrl}/bug/${bugId}/comments`).pipe(
+          map(res => {
+            const raw = res?.data || res || [];
+            return Array.isArray(raw) ? raw : [];
+          }),
+          catchError(() => of([]))
+        );
+      })
     );
   }
 
   createBugComment(bugId: number, comment: string): Observable<any> {
-    return this.http.post<any>(`${this.baseUrl}/bug/${bugId}/comments`, { comment });
+    return this.http.post<any>(`${this.baseUrl}/bugs/${bugId}/comments`, { comment }).pipe(
+      map(res => res?.data || res),
+      catchError(() => {
+        return this.http.post<any>(`${this.baseUrl}/bug/${bugId}/comments`, { comment }).pipe(
+          map(res => res?.data || res)
+        );
+      })
+    );
   }
 }

@@ -7,6 +7,8 @@ import { ResetPassword } from './pages/reset-password/reset-password';
 import { TesterWorkspace } from './pages/tester-workspace/tester-workspace';
 import { ManagerDashboard } from './pages/manager-dashboard/manager-dashboard';
 import { managerGuard } from './core/guards/manager.guard';
+import { DeveloperWorkspace } from './pages/developer-workspace/developer-workspace';
+import { Profile } from './pages/profile/profile';
 
 export const routes: Routes = [
   {
@@ -17,6 +19,10 @@ export const routes: Routes = [
   {
     path: 'login',
     component: Login
+  },
+  {
+    path: 'profile',
+    component: Profile
   },
   {
     path: 'manager-dashboard',
@@ -70,6 +76,15 @@ export const routes: Routes = [
   {
     path: 'tester',
     redirectTo: 'tester-workspace',
+    pathMatch: 'full'
+  },
+  {
+    path: 'developer-workspace',
+    component: DeveloperWorkspace
+  },
+  {
+    path: 'developer',
+    redirectTo: 'developer-workspace',
     pathMatch: 'full'
   },
   {

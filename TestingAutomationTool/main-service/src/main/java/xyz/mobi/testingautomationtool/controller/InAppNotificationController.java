@@ -15,7 +15,7 @@ import java.util.List;
 @RequestMapping("/in-app-notifications")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+@PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN', 'DEVELOPER')")
 public class InAppNotificationController {
 
     private final InAppNotificationService inAppNotificationService;

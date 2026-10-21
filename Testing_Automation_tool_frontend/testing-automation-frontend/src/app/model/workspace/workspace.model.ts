@@ -160,7 +160,9 @@ export interface TestCasePutRequest {
 export interface BugWorkflow {
   workflowId?: number;
   assignedTo?: string;
+  assignedToId?: number;
   reportedBy?: string;
+  reportedById?: number;
   status?: string;
 }
 
@@ -201,6 +203,9 @@ export interface Bug {
   testcaseId?: number;
   testcaseFormatId?: string;
   featureId?: number;
+  featureName?: string;
+  projectName?: string;
+  sprint?: number;
   title: string;
   description?: string;
   severity: BugSeverity | string;
@@ -213,6 +218,7 @@ export interface Bug {
   assignedTo?: string;
   assignedToId?: number;
   reportedBy?: string;
+  reportedById?: number;
   createdAt?: string;
   dynamicFields?: Record<string, any>;
 }

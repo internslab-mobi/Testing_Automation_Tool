@@ -51,13 +51,13 @@ public class ProjectController {
         return ResponseEntity.ok(ApiResponse.success("Attachments uploaded successfully", projectResponse));
     }
 
-    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN', 'DEVELOPER')")
     @GetMapping
     public ResponseEntity<ApiResponse<List<ProjectResponse>>> getAllProjects() {
         return ResponseEntity.ok(ApiResponse.success("Projects retrieved successfully", projectService.getAllProjects()));
     }
 
-    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN', 'DEVELOPER')")
     @GetMapping("/{projectId:\\d+}")
     public ResponseEntity<ApiResponse<ProjectResponse>> getProjectById(@PathVariable("projectId") Integer projectId) {
         return ResponseEntity.ok(ApiResponse.success("Project retrieved successfully", projectService.getProjectById(projectId)));
@@ -74,7 +74,7 @@ public class ProjectController {
                 .body(excelBytes);
     }
 
-    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN', 'DEVELOPER')")
     @GetMapping("/search")
     public ResponseEntity<ApiResponse<List<ProjectResponse>>> searchProjects(
             @RequestParam(required = false) String keyword,
@@ -243,19 +243,19 @@ public class ProjectController {
                 .body(region);
     }
 
-    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN', 'DEVELOPER')")
     @GetMapping("/modules")
     public ResponseEntity<ApiResponse<List<Module>>> getAllModules() {
         return ResponseEntity.ok(ApiResponse.success("Modules retrieved successfully", projectService.getAllModules()));
     }
 
-    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN', 'DEVELOPER')")
     @GetMapping("/modules/{moduleId}/sub-modules")
     public ResponseEntity<ApiResponse<List<SubModule>>> getSubModulesByModuleId(@PathVariable Integer moduleId) {
         return ResponseEntity.ok(ApiResponse.success("SubModules retrieved successfully", projectService.getSubModulesByModuleId(moduleId)));
     }
 
-    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN', 'DEVELOPER')")
     @GetMapping("/regions")
     public ResponseEntity<ApiResponse<List<Region>>> getAllRegions() {
         return ResponseEntity.ok(ApiResponse.success("Regions retrieved successfully", projectService.getAllRegions()));

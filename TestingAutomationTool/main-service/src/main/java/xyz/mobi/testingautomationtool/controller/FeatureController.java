@@ -28,7 +28,7 @@ import java.util.List;
 @RequestMapping("/feature")
 @RequiredArgsConstructor
 @SecurityRequirement(name = "bearerAuth")
-@PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+@PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN', 'DEVELOPER')")
 public class FeatureController {
 
     private final FeatureService featureService;
@@ -57,7 +57,7 @@ public class FeatureController {
         return ResponseEntity.ok(ApiResponse.success("Feature retrieved successfully", featureService.getFeatureById(featureId)));
     }
 
-    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN')")
+    @PreAuthorize("hasAnyRole('MANAGER', 'TESTER', 'ADMIN', 'DEVELOPER')")
     @GetMapping("/{featureId:\\d+}/export")
     public ResponseEntity<byte[]> exportFeatureSummary(@PathVariable("featureId") Integer featureId) {
         byte[] excelBytes = featureService.exportFeatureSummary(featureId);
