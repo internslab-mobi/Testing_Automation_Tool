@@ -20,10 +20,12 @@ export class NavbarComponent {
   @Input() featureAttachmentCount = 0;
   @Input() selectedRegion = 'India';
   @Input() isOverviewLoading = false;
+  @Input() isManagerUser = false;
 
   @Output() toggleSidebar = new EventEmitter<void>();
   @Output() openNotifications = new EventEmitter<void>();
   @Output() logout = new EventEmitter<void>();
+  @Output() backToManager = new EventEmitter<void>();
   @Output() openOverview = new EventEmitter<void>();
   @Output() openOverviewTab = new EventEmitter<'projects' | 'features' | 'testcases' | 'bugs'>();
   @Output() openFeatureAttachments = new EventEmitter<any>();
@@ -31,6 +33,10 @@ export class NavbarComponent {
   @Output() createProject = new EventEmitter<void>();
   @Output() viewProjectDetails = new EventEmitter<any>();
   @Output() editProject = new EventEmitter<any>();
+
+  onBackToManager(): void {
+    this.backToManager.emit();
+  }
 
   onSelectOverviewTab(tab: 'projects' | 'features' | 'testcases' | 'bugs'): void {
     this.openOverviewTab.emit(tab);

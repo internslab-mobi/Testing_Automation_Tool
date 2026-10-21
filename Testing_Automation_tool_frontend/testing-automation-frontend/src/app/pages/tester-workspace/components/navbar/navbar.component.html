@@ -97,6 +97,20 @@
   </div>
 
   <div class="header-right">
+    <!-- Manager-Only Return Button -->
+    <button
+      *ngIf="isManagerUser"
+      class="btn-back-manager"
+      (click)="onBackToManager()"
+      title="Return to Manager Dashboard"
+      type="button"
+      id="btn-back-to-manager"
+    >
+      <i class="fa-solid fa-arrow-left"></i>
+      <i class="fa-solid fa-chart-pie"></i>
+      <span>Manager Dashboard</span>
+    </button>
+
     <!-- In-App Notifications Bell -->
     <button class="btn-header-icon" (click)="onOpenNotifications()" title="System Notifications">
       <i class="fa-regular fa-bell"></i>

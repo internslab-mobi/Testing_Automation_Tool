@@ -89,6 +89,27 @@ export class TesterWorkspace implements OnInit {
   userRole = 'TESTER';
   userInitials = 'TS';
 
+  get isManager(): boolean {
+    const signalUser = this.authService.currentUser();
+    const signalRole = (signalUser?.role || '').toUpperCase();
+    if (signalRole) {
+      return signalRole.includes('MANAGER') || signalRole.includes('ADMIN');
+    }
+    const storedRole = (
+      (typeof localStorage !== 'undefined' ? (localStorage.getItem('tat_user_role') || localStorage.getItem('role')) : '') ||
+      ''
+    ).toUpperCase();
+    if (storedRole) {
+      return storedRole.includes('MANAGER') || storedRole.includes('ADMIN');
+    }
+    const currentRole = (this.userRole || '').toUpperCase();
+    return currentRole.includes('MANAGER') || currentRole.includes('ADMIN');
+  }
+
+  navigateToManagerDashboard(): void {
+    this.router.navigate(['/manager-dashboard']);
+  }
+
   // Responsive Sidebar (open by default on desktop)
   isSidebarOpen = typeof window !== 'undefined' ? window.innerWidth > 1024 : true;
 
@@ -371,26 +392,62 @@ export class TesterWorkspace implements OnInit {
   // INITIALIZATION & CSRF WARMUP (PREVENTS ACCESS DENIED FIRST CLICK)
   // ==========================================
   private initUserProfile(): void {
+    const signalUser = this.authService.currentUser();
+    if (signalUser) {
+      this.isAuthenticated = true;
+      this.userName = (signalUser.fullName || signalUser.username || 'User').trim();
+      const rawRole = (signalUser.role || '').toUpperCase();
+      this.userRole = rawRole.includes('MANAGER') ? 'Manager' : rawRole.includes('ADMIN') ? 'Admin' : 'TESTER';
+      this.userInitials = this.computeInitials(this.userName);
+      return;
+    }
     if (typeof localStorage !== 'undefined') {
       const token = localStorage.getItem('token') || localStorage.getItem('jwt');
       this.isAuthenticated = !!token;
       this.userName = localStorage.getItem('tat_user_fullname') || localStorage.getItem('tat_user_name') || 'Arjun Kumar';
-      this.userRole = localStorage.getItem('tat_user_role') || 'TESTER';
+      const storedRole = (localStorage.getItem('tat_user_role') || localStorage.getItem('role') || 'TESTER').toUpperCase();
+      this.userRole = storedRole.includes('MANAGER') ? 'Manager' : storedRole.includes('ADMIN') ? 'Admin' : 'TESTER';
       this.userInitials = this.computeInitials(this.userName);
     }
   }
 
   private ensureAuthSession(onReady?: () => void): void {
+    const cachedUser = this.authService.currentUser();
+    if (cachedUser) {
+      this.initUserProfile();
+      if (onReady) onReady();
+      return;
+    }
+
+    // Attempt to verify session using profile API (prevents overwriting manager session)
+    this.authService.getProfile().subscribe({
+      next: (res) => {
+        if (res?.data) {
+          this.initUserProfile();
+          if (onReady) onReady();
+          this.cdr.markForCheck();
+        } else {
+          this.fallbackAutoLogin(onReady);
+        }
+      },
+      error: () => {
+        this.fallbackAutoLogin(onReady);
+      }
+    });
+  }
+
+  private fallbackAutoLogin(onReady?: () => void): void {
     if (typeof localStorage === 'undefined') {
       if (onReady) onReady();
       return;
     }
     const token = localStorage.getItem('token') || localStorage.getItem('jwt');
-    if (token) {
+    const storedRole = (localStorage.getItem('tat_user_role') || localStorage.getItem('role') || '').toUpperCase();
+    if (token || storedRole.includes('MANAGER') || storedRole.includes('ADMIN')) {
       if (onReady) onReady();
       return;
     }
-    // Auto-authenticate with tester account if token is missing
+    // Auto-authenticate with tester account only if completely unauthenticated with no session/role
     this.authService.login({
       usernameOrEmail: 'Vikramraajak@gmail.com',
       password: 'Vikram@123'

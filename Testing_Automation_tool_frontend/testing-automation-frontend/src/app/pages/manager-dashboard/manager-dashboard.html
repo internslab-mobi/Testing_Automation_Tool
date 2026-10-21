@@ -1,0 +1,2395 @@
+<!-- Toast Alert Notification -->
+<div class="dashboard-toast" *ngIf="toastMessage">
+  <i class="fa-solid fa-circle-info"></i>
+  <span>{{ toastMessage }}</span>
+</div>
+
+<!-- Main Dashboard Container -->
+<div class="jira-dashboard-layout">
+
+  <!-- ================= TOP HEADER NAVIGATION ================= -->
+  <!-- ================= TOP HEADER NAVIGATION ================= -->
+  <header class="app-header jira-top-header">
+    <div class="header-left">
+      <!-- Sidebar Hide/Show Hamburger Toggle (Aligned with Tester Workspace) -->
+      <button class="btn-hamburger" (click)="toggleSidebar()" title="Toggle Navigation Sidebar" type="button">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+
+      <!-- TAT QA Cockpit Brand Logo (Aligned with Tester Workspace) -->
+      <div class="brand-logo" (click)="loadDashboardMetrics()" title="TAT QA Cockpit — Manager Workspace">
+        <div class="brand-badge"><i class="fa-solid fa-vial-circle-check"></i></div>
+        <div class="brand-titles">
+          <div class="app-title-line">
+            <h1>TAT QA Cockpit</h1>
+            <span class="header-manager-pill">Manager</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <!-- In-App Notifications Bell (from Tester Workspace) -->
+      <button class="btn-header-icon" (click)="openNotificationsModal()" title="System Notifications" type="button">
+        <i class="fa-regular fa-bell"></i>
+        <span class="notif-badge" *ngIf="unreadNotificationCount > 0">{{ unreadNotificationCount }}</span>
+      </button>
+
+      <!-- User Profile & Dropdown (Aligned with Tester Workspace) -->
+      <div class="profile-avatar-wrapper">
+        <div class="user-chip user-chip-clickable" (click)="toggleProfileMenu()" [title]="userName ? userName + ' (Manager)' : 'User Profile'">
+          <div class="user-avatar">{{ userInitials || 'M' }}</div>
+          <div class="user-info">
+            <span class="user-name">{{ userName || 'Manager' }}</span>
+            <span class="user-role">{{ userRole || 'MANAGER' }}</span>
+          </div>
+          <button class="btn-signout" (click)="onLogout(); $event.stopPropagation()" title="Sign Out of Session" type="button">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
+
+        <!-- Dropdown Menu -->
+        <div class="profile-dropdown-card" *ngIf="showProfileMenu">
+          <div class="profile-card-header">
+            <div class="dropdown-avatar">{{ userInitials || 'M' }}</div>
+            <div class="dropdown-user-details">
+              <span class="dropdown-user-name" *ngIf="userName">{{ userName }}</span>
+              <span class="dropdown-user-role" *ngIf="userRole">{{ userRole }}</span>
+              <span class="dropdown-user-email" *ngIf="userEmail">{{ userEmail }}</span>
+            </div>
+          </div>
+          <div class="profile-card-actions">
+            <button class="btn-dropdown-logout" (click)="onLogout()" type="button">
+              <i class="fa-solid fa-right-from-bracket"></i>
+              <span>Log out</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= BODY CONTENT: SIDEBAR + DASHBOARD ================= -->
+  <div class="jira-dashboard-body">
+
+    <!-- ================= LEFT SIDEBAR ================= -->
+    <aside class="jira-sidebar" [class.collapsed]="!isSidebarOpen">
+      <div class="sidebar-header-toggle" *ngIf="isSidebarOpen">
+        <span class="sidebar-title">Manager Workspace</span>
+        <button class="btn-hide-sidebar" (click)="isSidebarOpen = false" title="Hide Sidebar" type="button">
+          <i class="fa-solid fa-chevron-left"></i>
+        </button>
+      </div>
+
+      <nav class="sidebar-nav-menu">
+        <button
+          *ngFor="let item of sidebarNavItems"
+          class="sidebar-nav-item"
+          [class.active]="activeSidebarItem === item.label"
+          (click)="onSelectSidebarItem(item)"
+          type="button"
+        >
+          <i [class]="item.icon + ' sidebar-item-icon'"></i>
+          <span class="sidebar-item-label">{{ item.label }}</span>
+        </button>
+      </nav>
+    </aside>
+
+    <!-- ================= MAIN DASHBOARD VIEW ================= -->
+    <main class="jira-main-content">
+      <!-- Quick Unhide/Show Sidebar Floating Pill when collapsed -->
+      <button *ngIf="!isSidebarOpen" class="btn-floating-show-sidebar" (click)="isSidebarOpen = true"
+        title="Show Navigation Sidebar" type="button">
+        <i class="fa-solid fa-angles-right"></i>
+        <span>Show Sidebar</span>
+      </button>
+
+      <!-- ================= 3. QA DASHBOARD VIEW ================= -->
+      <ng-container *ngIf="activeSidebarItem === 'QA Dashboard'">
+        <!-- Page Title & Header Actions Bar -->
+        <!-- Page Title & Header Actions Bar -->
+        <section class="dashboard-page-header qa-dashboard-header">
+          <div class="header-titles">
+            <h1 class="page-title">QA Dashboard</h1>
+            <p class="page-subtitle">
+              Overview of testing progress, defect status, automation coverage and team workload.
+            </p>
+          </div>
+
+          <div class="header-actions qa-dashboard-header-actions">
+            <!-- Compact Dashboard-Level Filters -->
+            <div class="qa-filter-controls">
+              <!-- Project Dropdown -->
+              <div class="qa-filter-wrapper" title="Filter by Project">
+                <i class="fa-solid fa-folder-tree qa-filter-icon"></i>
+                <select
+                  class="qa-filter-select"
+                  [ngModel]="selectedProjectId"
+                  (ngModelChange)="onProjectSelectAndReload($event)"
+                  aria-label="Filter by Project"
+                >
+                  <option [ngValue]="null">All Projects</option>
+                  <option *ngFor="let proj of allProjects" [ngValue]="proj.projectId">
+                    {{ proj.projectName }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Feature Dropdown -->
+              <div class="qa-filter-wrapper" title="Filter by Feature">
+                <i class="fa-regular fa-folder qa-filter-icon"></i>
+                <select
+                  class="qa-filter-select"
+                  [ngModel]="selectedFeatureId"
+                  (ngModelChange)="onFeatureSelectAndReload($event)"
+                  aria-label="Filter by Feature"
+                >
+                  <option [ngValue]="null">All Features</option>
+                  <option *ngFor="let feat of availableFeatures" [ngValue]="feat.featureId">
+                    {{ feat.featureName }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Sprint Dropdown -->
+              <div class="qa-filter-wrapper" title="Filter by Sprint">
+                <i class="fa-solid fa-bolt qa-filter-icon"></i>
+                <select
+                  class="qa-filter-select"
+                  [ngModel]="selectedSprint"
+                  (ngModelChange)="onSprintSelectAndReload($event)"
+                  aria-label="Filter by Sprint"
+                >
+                  <option [ngValue]="null">All Sprints</option>
+                  <option *ngFor="let sprint of availableSprints" [ngValue]="sprint">
+                    Sprint {{ sprint }}
+                  </option>
+                </select>
+              </div>
+
+              <!-- Compact Reset Action (Visible when any filter is active) -->
+              <button
+                class="qa-filter-reset-btn"
+                *ngIf="hasActiveFilters()"
+                (click)="resetFilters()"
+                type="button"
+                title="Reset all filters"
+              >
+                <i class="fa-solid fa-arrow-rotate-left"></i>
+                <span>Reset</span>
+              </button>
+            </div>
+
+            <!-- Refresh Action (Aligned at top-right corner) -->
+            <button 
+              class="header-action-btn qa-btn-refresh" 
+              (click)="onRefresh()" 
+              type="button" 
+              title="Refresh dashboard metrics and filter data"
+            >
+              <i class="fa-solid fa-rotate" [class.fa-spin]="isLoading"></i>
+              <span>Refresh</span>
+            </button>
+          </div>
+        </section>
+
+      <!-- Error State Banner -->
+      <div class="dashboard-error-banner" *ngIf="hasError">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <span>{{ errorMessage }}</span>
+        <button class="btn-retry" (click)="loadDashboardMetrics()" type="button">
+          <i class="fa-solid fa-rotate-right"></i> Retry
+        </button>
+      </div>
+
+      <!-- ================= FIRST ROW: FIVE SUMMARY CARDS ================= -->
+      <section class="summary-cards-grid" [class.loading-state]="isLoading">
+
+        <!-- Card 1: Total Test Cases (No hardcoded trend or comparisons) -->
+        <article class="metric-card card-total">
+          <div class="card-icon-container bg-blue-subtle">
+            <div class="card-icon-circle blue-circle">
+              <i class="fa-solid fa-clipboard-check text-blue"></i>
+            </div>
+          </div>
+          <div class="card-content-area">
+            <div class="card-header-label">Total Test Cases</div>
+            <div class="card-value-row">
+              <span class="card-main-number" *ngIf="!isLoading">{{ totalCount | number }}</span>
+              <span class="card-skeleton-number" *ngIf="isLoading">--</span>
+            </div>
+            <div class="card-subtext" *ngIf="!isLoading">Total Defined Tests</div>
+          </div>
+        </article>
+
+        <!-- Card 2: Passed -->
+        <article class="metric-card card-passed">
+          <div class="card-icon-container bg-green-subtle">
+            <div class="card-icon-circle green-circle">
+              <i class="fa-solid fa-circle-check text-green"></i>
+            </div>
+          </div>
+          <div class="card-content-area">
+            <div class="card-header-label">Passed</div>
+            <div class="card-value-row">
+              <span class="card-main-number" *ngIf="!isLoading">{{ passedCount | number }}</span>
+              <span class="card-skeleton-number" *ngIf="isLoading">--</span>
+            </div>
+            <div class="card-progress-meta" *ngIf="!isLoading">
+              <span class="progress-percent-label">{{ passedPercent }}%</span>
+              <div class="progress-track">
+                <div class="progress-fill fill-green" [style.width.%]="passedPercent"></div>
+              </div>
+            </div>
+            <div class="progress-track skeleton-track" *ngIf="isLoading">
+              <div class="progress-fill"></div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 3: Failed -->
+        <article class="metric-card card-failed">
+          <div class="card-icon-container bg-red-subtle">
+            <div class="card-icon-circle red-circle">
+              <i class="fa-solid fa-circle-xmark text-red"></i>
+            </div>
+          </div>
+          <div class="card-content-area">
+            <div class="card-header-label">Failed</div>
+            <div class="card-value-row">
+              <span class="card-main-number" *ngIf="!isLoading">{{ failedCount | number }}</span>
+              <span class="card-skeleton-number" *ngIf="isLoading">--</span>
+            </div>
+            <div class="card-progress-meta" *ngIf="!isLoading">
+              <span class="progress-percent-label">{{ failedPercent }}%</span>
+              <div class="progress-track">
+                <div class="progress-fill fill-red" [style.width.%]="failedPercent"></div>
+              </div>
+            </div>
+            <div class="progress-track skeleton-track" *ngIf="isLoading">
+              <div class="progress-fill"></div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 4: Blocked -->
+        <article class="metric-card card-blocked">
+          <div class="card-icon-container bg-grey-subtle">
+            <div class="card-icon-circle grey-circle">
+              <i class="fa-solid fa-circle-minus text-grey"></i>
+            </div>
+          </div>
+          <div class="card-content-area">
+            <div class="card-header-label">Blocked</div>
+            <div class="card-value-row">
+              <span class="card-main-number" *ngIf="!isLoading">{{ blockedCount | number }}</span>
+              <span class="card-skeleton-number" *ngIf="isLoading">--</span>
+            </div>
+            <div class="card-progress-meta" *ngIf="!isLoading">
+              <span class="progress-percent-label">{{ blockedPercent }}%</span>
+              <div class="progress-track">
+                <div class="progress-fill fill-grey" [style.width.%]="blockedPercent"></div>
+              </div>
+            </div>
+            <div class="progress-track skeleton-track" *ngIf="isLoading">
+              <div class="progress-fill"></div>
+            </div>
+          </div>
+        </article>
+
+        <!-- Card 5: Not Executed (Strictly counts NO_RUN) -->
+        <article class="metric-card card-not-executed">
+          <div class="card-icon-container bg-blue-clock-subtle">
+            <div class="card-icon-circle blue-clock-circle">
+              <i class="fa-solid fa-clock text-clock-blue"></i>
+            </div>
+          </div>
+          <div class="card-content-area">
+            <div class="card-header-label">Not Executed</div>
+            <div class="card-value-row">
+              <span class="card-main-number" *ngIf="!isLoading">{{ notExecutedCount | number }}</span>
+              <span class="card-skeleton-number" *ngIf="isLoading">--</span>
+            </div>
+            <div class="card-progress-meta" *ngIf="!isLoading">
+              <span class="progress-percent-label">{{ notExecutedPercent }}%</span>
+              <div class="progress-track">
+                <div class="progress-fill fill-blue" [style.width.%]="notExecutedPercent"></div>
+              </div>
+            </div>
+            <div class="progress-track skeleton-track" *ngIf="isLoading">
+              <div class="progress-fill"></div>
+            </div>
+          </div>
+        </article>
+
+      </section>
+
+      <!-- ================= QA DASHBOARD CHARTS ROW ================= -->
+      <section class="qa-charts-grid" [class.loading-state]="isLoading">
+        <!-- Chart 1: Test Execution Progress -->
+        <article class="chart-widget-card" [class.has-open-drilldown]="qaTestDrilldown?.active">
+          <div class="chart-card-header">
+            <span class="chart-card-title">Test Execution Progress</span>
+            <div class="chart-header-actions">
+              <button class="chart-action-icon-btn" type="button" title="Expand view" (click)="openExpandModal('testExecution')">
+                <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+              </button>
+              <div class="chart-menu-container">
+                <button class="chart-action-icon-btn" type="button" title="Chart options" (click)="toggleChartMenu('testExecution', $event)">
+                  <i class="fa-solid fa-ellipsis"></i>
+                </button>
+                <div class="chart-dropdown-menu" *ngIf="activeChartMenu === 'testExecution'" (click)="$event.stopPropagation()">
+                  <button class="chart-menu-item" (click)="viewChartDetails('testExecution')" type="button">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>View chart details</span>
+                  </button>
+                  <button class="chart-menu-item" (click)="viewActiveFilters('Test Execution Progress')" type="button">
+                    <i class="fa-solid fa-filter"></i>
+                    <span>View active filters</span>
+                  </button>
+                  <button class="chart-menu-item" (click)="refreshChart('testExecution')" type="button">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    <span>Refresh chart</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-card-body">
+            <!-- Donut Chart Left -->
+            <div class="donut-chart-wrapper">
+              <svg viewBox="0 0 140 140" class="donut-svg">
+                <!-- Empty grey circle if 0 -->
+                <circle
+                  *ngIf="totalCount === 0"
+                  cx="70"
+                  cy="70"
+                  r="52"
+                  fill="transparent"
+                  stroke="#ebecf0"
+                  stroke-width="14"
+                ></circle>
+                <!-- Real Data Segments -->
+                <circle
+                  *ngFor="let seg of qaTestExecutionSegments"
+                  cx="70"
+                  cy="70"
+                  r="52"
+                  fill="transparent"
+                  [attr.stroke]="seg.color"
+                  stroke-width="14"
+                  [attr.stroke-dasharray]="seg.dasharray"
+                  [attr.stroke-dashoffset]="seg.dashoffset"
+                  transform="rotate(-90 70 70)"
+                  stroke-linecap="butt"
+                  class="donut-segment-interactive"
+                  [class.active-segment]="qaTestDrilldown?.statusKey === seg.key"
+                  (click)="seg.key && selectTestExecutionStatus(seg.key)"
+                  role="button"
+                  [attr.aria-label]="'Filter by ' + seg.key + ' test cases'"
+                ></circle>
+              </svg>
+
+              <!-- Center Text -->
+              <div class="donut-center-content">
+                <div class="donut-number">{{ (isLoading ? 0 : totalCount) | number }}</div>
+                <div class="donut-sublabel">Test Cases</div>
+              </div>
+            </div>
+
+            <!-- Legend Right -->
+            <div class="donut-legend-container">
+              <div
+                class="legend-item-row legend-item-interactive"
+                [class.active-legend-row]="qaTestDrilldown?.statusKey === 'PASSED'"
+                (click)="selectTestExecutionStatus('PASSED')"
+                role="button"
+                tabindex="0"
+                title="Click to view Passed test cases"
+              >
+                <div class="legend-item-left">
+                  <span class="legend-color-box bg-chart-green"></span>
+                  <span class="legend-label">Passed</span>
+                </div>
+                <span class="legend-value">{{ passedCount | number }} ({{ passedPercent }}%)</span>
+              </div>
+
+              <div
+                class="legend-item-row legend-item-interactive"
+                [class.active-legend-row]="qaTestDrilldown?.statusKey === 'FAILED'"
+                (click)="selectTestExecutionStatus('FAILED')"
+                role="button"
+                tabindex="0"
+                title="Click to view Failed test cases"
+              >
+                <div class="legend-item-left">
+                  <span class="legend-color-box bg-chart-red"></span>
+                  <span class="legend-label">Failed</span>
+                </div>
+                <span class="legend-value">{{ failedCount | number }} ({{ failedPercent }}%)</span>
+              </div>
+
+              <div
+                class="legend-item-row legend-item-interactive"
+                [class.active-legend-row]="qaTestDrilldown?.statusKey === 'BLOCKED'"
+                (click)="selectTestExecutionStatus('BLOCKED')"
+                role="button"
+                tabindex="0"
+                title="Click to view Blocked test cases"
+              >
+                <div class="legend-item-left">
+                  <span class="legend-color-box bg-chart-grey"></span>
+                  <span class="legend-label">Blocked</span>
+                </div>
+                <span class="legend-value">{{ blockedCount | number }} ({{ blockedPercent }}%)</span>
+              </div>
+
+              <div
+                class="legend-item-row legend-item-interactive"
+                [class.active-legend-row]="qaTestDrilldown?.statusKey === 'NO_RUN'"
+                (click)="selectTestExecutionStatus('NO_RUN')"
+                role="button"
+                tabindex="0"
+                title="Click to view Not Executed test cases"
+              >
+                <div class="legend-item-left">
+                  <span class="legend-color-box bg-chart-blue"></span>
+                  <span class="legend-label">Not Executed</span>
+                </div>
+                <span class="legend-value">{{ notExecutedCount | number }} ({{ notExecutedPercent }}%)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ================= ATTACHED DRILLDOWN FOR TEST CASES ================= -->
+          <div class="chart-attached-drilldown" *ngIf="qaTestDrilldown?.active" id="qa-testcase-details-section">
+            <div class="drilldown-header-bar">
+              <div class="drilldown-title-group">
+                <span class="drilldown-icon-circle" [ngClass]="qaTestDrilldown?.badgeClass">
+                  <i class="fa-solid fa-list-check"></i>
+                </span>
+                <div class="drilldown-titles">
+                  <div class="drilldown-main-title">
+                    <h4>Test Cases: {{ qaTestDrilldown?.badgeLabel }}</h4>
+                    <span class="drilldown-count-pill">
+                      {{ filteredQaTestCases.length }} {{ filteredQaTestCases.length === 1 ? 'Record' : 'Records' }}
+                    </span>
+                  </div>
+                  <p class="drilldown-subtitle">
+                    <span>Scope: <strong>{{ activeFilterDescription }}</strong></span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="drilldown-actions">
+                <div class="drilldown-search-box">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input
+                    type="text"
+                    [(ngModel)]="qaTestSearchTerm"
+                    (ngModelChange)="qaTestPage = 0"
+                    placeholder="Filter test cases..."
+                  />
+                  <button
+                    *ngIf="qaTestSearchTerm"
+                    (click)="qaTestSearchTerm = ''; qaTestPage = 0"
+                    class="btn-clear-search"
+                    type="button"
+                    title="Clear search"
+                  >
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+
+                <button
+                  class="btn-close-drilldown"
+                  (click)="closeQaTestDrilldown()"
+                  type="button"
+                  title="Close details"
+                >
+                  <i class="fa-solid fa-xmark"></i>
+                  <span>Close</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Loading State -->
+            <div class="panel-loading-state" *ngIf="isQaTestLoading">
+              <i class="fa-solid fa-circle-notch fa-spin"></i>
+              <p>Loading test cases...</p>
+            </div>
+
+            <!-- Error State -->
+            <div class="dashboard-error-banner" *ngIf="!isQaTestLoading && qaTestError">
+              <i class="fa-solid fa-triangle-exclamation"></i>
+              <span>{{ qaTestError }}</span>
+              <button class="btn-retry" (click)="refreshQaTestDrilldown()" type="button">
+                <i class="fa-solid fa-arrows-rotate"></i> Retry
+              </button>
+            </div>
+
+            <!-- Test Cases Table -->
+            <ng-container *ngIf="!isQaTestLoading && !qaTestError">
+              <div class="table-responsive" *ngIf="filteredQaTestCases.length > 0">
+                <table class="manager-data-table compact-chart-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 100px;">TC ID</th>
+                      <th>Title</th>
+                      <th style="width: 110px;">Feature</th>
+                      <th style="width: 75px;">Type</th>
+                      <th style="width: 85px;">Priority</th>
+                      <th style="width: 100px;">Status</th>
+                      <th>Comments</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let tc of pagedQaTestCases">
+                      <td><code>{{ tc.testcaseFormatId || ('TC_' + tc.testcaseId) }}</code></td>
+                      <td class="font-medium text-dark">{{ tc.title }}</td>
+                      <td>
+                        <span class="feature-tag">
+                          <i class="fa-solid fa-cube text-slate"></i>
+                          {{ getFeatureName(tc.featureId) }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="type-badge">{{ tc.testType || 'UI' }}</span>
+                      </td>
+                      <td>
+                        <span
+                          class="priority-pill"
+                          [ngClass]="{
+                            'priority-critical': tc.testPriority === 'CRITICAL',
+                            'priority-high': tc.testPriority === 'HIGH',
+                            'priority-medium': tc.testPriority === 'MEDIUM',
+                            'priority-low': tc.testPriority === 'LOW'
+                          }"
+                        >
+                          {{ tc.testPriority || 'MEDIUM' }}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          class="tc-status-badge"
+                          [ngClass]="{
+                            'tc-passed': tc.testcaseStatus === 'PASSED',
+                            'tc-failed': tc.testcaseStatus === 'FAILED',
+                            'tc-blocked': tc.testcaseStatus === 'BLOCKED',
+                            'tc-norun': tc.testcaseStatus === 'NO_RUN' || tc.testcaseStatus === 'DESCOPE'
+                          }"
+                        >
+                          {{ tc.testcaseStatus === 'NO_RUN' ? 'NOT EXECUTED' : tc.testcaseStatus }}
+                        </span>
+                      </td>
+                      <td class="comments-cell" [title]="tc.comments || 'No comments'">
+                        {{ tc.comments || '—' }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Empty State -->
+              <div class="panel-empty-state" *ngIf="filteredQaTestCases.length === 0">
+                <i class="fa-solid fa-list-check"></i>
+                <h4>No Test Cases Found</h4>
+                <p *ngIf="qaTestSearchTerm">No test cases match your search term "{{ qaTestSearchTerm }}".</p>
+                <p *ngIf="!qaTestSearchTerm">There are currently no test cases with status <strong>{{ qaTestDrilldown?.badgeLabel }}</strong> in the selected scope.</p>
+              </div>
+
+              <!-- Pagination -->
+              <div class="table-pagination-footer" *ngIf="filteredQaTestCases.length > qaTestPageSize">
+                <span class="pagination-info">
+                  {{ qaTestPage * qaTestPageSize + 1 }}-{{ min(qaTestPage * qaTestPageSize + qaTestPageSize, filteredQaTestCases.length) }} of {{ filteredQaTestCases.length }}
+                </span>
+                <div class="pagination-controls">
+                  <button class="btn-page-nav" [disabled]="qaTestPage === 0" (click)="qaTestPage = qaTestPage - 1" type="button">
+                    <i class="fa-solid fa-chevron-left"></i>
+                  </button>
+                  <span class="page-number-display">{{ qaTestPage + 1 }} / {{ qaTestTotalPages }}</span>
+                  <button class="btn-page-nav" [disabled]="qaTestPage + 1 >= qaTestTotalPages" (click)="qaTestPage = qaTestPage + 1" type="button">
+                    <i class="fa-solid fa-chevron-right"></i>
+                  </button>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+        </article>
+
+        <!-- Chart 2: Defects by Severity -->
+        <article class="chart-widget-card" [class.has-open-drilldown]="qaDefectDrilldown?.active">
+          <div class="chart-card-header">
+            <span class="chart-card-title">Defects by Severity</span>
+            <div class="chart-header-actions">
+              <button class="chart-action-icon-btn" type="button" title="Expand view" (click)="openExpandModal('defects')">
+                <i class="fa-solid fa-up-right-and-down-left-from-center"></i>
+              </button>
+              <div class="chart-menu-container">
+                <button class="chart-action-icon-btn" type="button" title="Chart options" (click)="toggleChartMenu('defects', $event)">
+                  <i class="fa-solid fa-ellipsis"></i>
+                </button>
+                <div class="chart-dropdown-menu" *ngIf="activeChartMenu === 'defects'" (click)="$event.stopPropagation()">
+                  <button class="chart-menu-item" (click)="viewChartDetails('defects')" type="button">
+                    <i class="fa-solid fa-chart-pie"></i>
+                    <span>View chart details</span>
+                  </button>
+                  <button class="chart-menu-item" (click)="viewActiveFilters('Defects by Severity')" type="button">
+                    <i class="fa-solid fa-filter"></i>
+                    <span>View active filters</span>
+                  </button>
+                  <button class="chart-menu-item" (click)="refreshChart('defects')" type="button">
+                    <i class="fa-solid fa-arrows-rotate"></i>
+                    <span>Refresh chart</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="chart-card-body">
+            <!-- Donut Chart Left -->
+            <div class="donut-chart-wrapper">
+              <svg viewBox="0 0 140 140" class="donut-svg">
+                <!-- Empty grey circle if 0 -->
+                <circle
+                  *ngIf="qaOpenDefectsCount === 0"
+                  cx="70"
+                  cy="70"
+                  r="52"
+                  fill="transparent"
+                  stroke="#ebecf0"
+                  stroke-width="14"
+                ></circle>
+                <!-- Real Data Segments -->
+                <circle
+                  *ngFor="let seg of qaDefectsSegments"
+                  cx="70"
+                  cy="70"
+                  r="52"
+                  fill="transparent"
+                  [attr.stroke]="seg.color"
+                  stroke-width="14"
+                  [attr.stroke-dasharray]="seg.dasharray"
+                  [attr.stroke-dashoffset]="seg.dashoffset"
+                  transform="rotate(-90 70 70)"
+                  stroke-linecap="butt"
+                  class="donut-segment-interactive"
+                  [class.active-segment]="qaDefectDrilldown?.statusKey === seg.key"
+                  (click)="seg.key && selectDefectSeverity(seg.key)"
+                  role="button"
+                  [attr.aria-label]="'Filter by ' + seg.key + ' defects'"
+                ></circle>
+              </svg>
+
+              <!-- Center Text -->
+              <div class="donut-center-content">
+                <div class="donut-number">{{ (isQaDefectsLoading ? 0 : qaOpenDefectsCount) | number }}</div>
+                <div class="donut-sublabel">Open Defects</div>
+              </div>
+            </div>
+
+            <!-- Legend Right -->
+            <div class="donut-legend-container">
+              <div
+                class="legend-item-row legend-item-interactive"
+                [class.active-legend-row]="qaDefectDrilldown?.statusKey === 'CRITICAL'"
+                (click)="selectDefectSeverity('CRITICAL')"
+                role="button"
+                tabindex="0"
+                title="Click to view Critical open defects"
+              >
+                <div class="legend-item-left">
+                  <span class="legend-color-box bg-chart-red"></span>
+                  <span class="legend-label">Critical</span>
+                </div>
+                <span class="legend-value">{{ qaCriticalCount | number }} ({{ qaCriticalPercent }}%)</span>
+              </div>
+
+              <div
+                class="legend-item-row legend-item-interactive"
+                [class.active-legend-row]="qaDefectDrilldown?.statusKey === 'HIGH'"
+                (click)="selectDefectSeverity('HIGH')"
+                role="button"
+                tabindex="0"
+                title="Click to view High open defects"
+              >
+                <div class="legend-item-left">
+                  <span class="legend-color-box bg-chart-orange"></span>
+                  <span class="legend-label">High</span>
+                </div>
+                <span class="legend-value">{{ qaHighCount | number }} ({{ qaHighPercent }}%)</span>
+              </div>
+
+              <div
+                class="legend-item-row legend-item-interactive"
+                [class.active-legend-row]="qaDefectDrilldown?.statusKey === 'MEDIUM'"
+                (click)="selectDefectSeverity('MEDIUM')"
+                role="button"
+                tabindex="0"
+                title="Click to view Medium open defects"
+              >
+                <div class="legend-item-left">
+                  <span class="legend-color-box bg-chart-yellow"></span>
+                  <span class="legend-label">Medium</span>
+                </div>
+                <span class="legend-value">{{ qaMediumCount | number }} ({{ qaMediumPercent }}%)</span>
+              </div>
+
+              <div
+                class="legend-item-row legend-item-interactive"
+                [class.active-legend-row]="qaDefectDrilldown?.statusKey === 'LOW'"
+                (click)="selectDefectSeverity('LOW')"
+                role="button"
+                tabindex="0"
+                title="Click to view Low open defects"
+              >
+                <div class="legend-item-left">
+                  <span class="legend-color-box bg-chart-blue"></span>
+                  <span class="legend-label">Low</span>
+                </div>
+                <span class="legend-value">{{ qaLowCount | number }} ({{ qaLowPercent }}%)</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- ================= ATTACHED DRILLDOWN FOR DEFECTS ================= -->
+          <div class="chart-attached-drilldown" *ngIf="qaDefectDrilldown?.active" id="qa-defect-details-section">
+            <div class="drilldown-header-bar">
+              <div class="drilldown-title-group">
+                <span class="drilldown-icon-circle" [ngClass]="qaDefectDrilldown?.badgeClass">
+                  <i class="fa-solid fa-bug"></i>
+                </span>
+                <div class="drilldown-titles">
+                  <div class="drilldown-main-title">
+                    <h4>Open Defects: {{ qaDefectDrilldown?.badgeLabel }}</h4>
+                    <span class="drilldown-count-pill">
+                      {{ filteredQaBugs.length }} {{ filteredQaBugs.length === 1 ? 'Defect' : 'Defects' }}
+                    </span>
+                  </div>
+                  <p class="drilldown-subtitle">
+                    <span>Scope: <strong>{{ activeFilterDescription }}</strong></span>
+                  </p>
+                </div>
+              </div>
+
+              <div class="drilldown-actions">
+                <div class="drilldown-search-box">
+                  <i class="fa-solid fa-magnifying-glass"></i>
+                  <input
+                    type="text"
+                    [(ngModel)]="qaDefectSearchTerm"
+                    (ngModelChange)="qaDefectPage = 0"
+                    placeholder="Filter defects..."
+                  />
+                  <button
+                    *ngIf="qaDefectSearchTerm"
+                    (click)="qaDefectSearchTerm = ''; qaDefectPage = 0"
+                    class="btn-clear-search"
+                    type="button"
+                    title="Clear search"
+                  >
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+
+                <button
+                  class="btn-close-drilldown"
+                  (click)="closeQaDefectDrilldown()"
+                  type="button"
+                  title="Close details"
+                >
+                  <i class="fa-solid fa-xmark"></i>
+                  <span>Close</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- DEFECTS TABLE -->
+            <ng-container *ngIf="!isQaDefectsLoading">
+              <div class="table-responsive" *ngIf="filteredQaBugs.length > 0">
+                <table class="manager-data-table compact-chart-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 100px;">Bug ID</th>
+                      <th>Title</th>
+                      <th style="width: 110px;">Feature</th>
+                      <th style="width: 85px;">Severity</th>
+                      <th style="width: 95px;">Status</th>
+                      <th style="width: 110px;">Assigned To</th>
+                      <th>Description / Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let bug of pagedQaBugs">
+                      <td>
+                        <code class="text-bug-id">
+                          <i class="fa-solid fa-bug" style="margin-right: 4px;"></i>{{ bug.bugFormatId || ('BUG_' + bug.bugId) }}
+                        </code>
+                      </td>
+                      <td class="font-medium text-dark">{{ bug.title }}</td>
+                      <td>
+                        <span class="feature-tag">
+                          <i class="fa-solid fa-cube text-slate"></i>
+                          {{ getFeatureName(bug.featureId) }}
+                        </span>
+                      </td>
+                      <td>
+                        <span
+                          class="severity-tag"
+                          [ngClass]="{
+                            'sev-critical': bug.severity === 'CRITICAL' || bug.severity === 'BLOCKER',
+                            'sev-high': bug.severity === 'HIGH',
+                            'sev-medium': bug.severity === 'MEDIUM',
+                            'sev-low': bug.severity === 'LOW' || bug.severity === 'TRIVIAL'
+                          }"
+                        >
+                          {{ bug.severity || 'MEDIUM' }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="status-pill-active" *ngIf="bug.status === 'OPEN' || bug.status === 'IN_PROGRESS' || bug.status === 'REOPENED'">
+                          <span class="dot-active" [style.background-color]="bug.status === 'OPEN' ? '#de350b' : '#ff8b00'"></span>
+                          {{ bug.status }}
+                        </span>
+                        <span class="badge-neutral" *ngIf="bug.status !== 'OPEN' && bug.status !== 'IN_PROGRESS' && bug.status !== 'REOPENED'">
+                          {{ bug.status }}
+                        </span>
+                      </td>
+                      <td>
+                        <span class="assignee-cell">
+                          <i class="fa-solid fa-user-circle text-slate"></i>
+                          {{ bug.assignedTo || 'Unassigned' }}
+                        </span>
+                      </td>
+                      <td class="comments-cell" [title]="bug.description || bug.comments || 'No description'">
+                        {{ bug.description || bug.comments || '—' }}
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Empty State -->
+              <div class="panel-empty-state" *ngIf="filteredQaBugs.length === 0">
+                <i class="fa-solid fa-bug-slash"></i>
+                <h4>No Open Defects Found</h4>
+                <p *ngIf="qaDefectSearchTerm">No defects match your search term "{{ qaDefectSearchTerm }}".</p>
+                <p *ngIf="!qaDefectSearchTerm">There are currently no open defects with severity <strong>{{ qaDefectDrilldown?.badgeLabel }}</strong> in the selected scope.</p>
+              </div>
+
+              <!-- Pagination -->
+              <div class="table-pagination-footer" *ngIf="filteredQaBugs.length > qaDefectPageSize">
+                <span class="pagination-info">
+                  {{ qaDefectPage * qaDefectPageSize + 1 }}-{{ min(qaDefectPage * qaDefectPageSize + qaDefectPageSize, filteredQaBugs.length) }} of {{ filteredQaBugs.length }}
+                </span>
+                <div class="pagination-controls">
+                  <button class="btn-page-nav" [disabled]="qaDefectPage === 0" (click)="qaDefectPage = qaDefectPage - 1" type="button">
+                    <i class="fa-solid fa-chevron-left"></i>
+                  </button>
+                  <span class="page-number-display">{{ qaDefectPage + 1 }} / {{ qaDefectTotalPages }}</span>
+                  <button class="btn-page-nav" [disabled]="qaDefectPage + 1 >= qaDefectTotalPages" (click)="qaDefectPage = qaDefectPage + 1" type="button">
+                    <i class="fa-solid fa-chevron-right"></i>
+                  </button>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+        </article>
+      </section>
+
+      <!-- ================= TESTER PERFORMANCE ANALYSIS SECTION ================= -->
+      <section class="tester-performance-card view-panel-container" id="tester-performance-section">
+        <!-- Card Header -->
+        <div class="tester-perf-header">
+          <div class="tester-perf-titles">
+            <div class="tester-title-row">
+              <span class="tester-perf-icon-circle">
+                <i class="fa-solid fa-users-gear"></i>
+              </span>
+              <div>
+                <h2 class="tester-perf-title">Tester Performance Analysis</h2>
+                <p class="tester-perf-subtitle">Workload and execution progress by tester</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scope Indicator (Shows current active dashboard scope) -->
+          <div class="tester-header-scope-info" *ngIf="hasActiveFilters()">
+            <span class="tester-scope-pill" title="Filtered by dashboard scope">
+              <i class="fa-solid fa-filter"></i>
+              <span>{{ activeFilterDescription }}</span>
+            </span>
+          </div>
+
+          <!-- Small Legend -->
+          <div class="tester-chart-legend">
+            <div class="tester-legend-item">
+              <span class="tester-legend-box bg-seg-todo"></span>
+              <span class="tester-legend-label">To Do</span>
+            </div>
+            <div class="tester-legend-item">
+              <span class="tester-legend-box bg-seg-progress"></span>
+              <span class="tester-legend-label">In Progress</span>
+            </div>
+            <div class="tester-legend-item">
+              <span class="tester-legend-box bg-seg-done"></span>
+              <span class="tester-legend-label">Done</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Summary Metrics Row (Chips) -->
+        <div class="tester-summary-chips-grid">
+          <div class="tester-summary-chip">
+            <div class="chip-icon-box chip-icon-testers">
+              <i class="fa-solid fa-user-check"></i>
+            </div>
+            <div class="chip-data">
+              <span class="chip-number">{{ isTesterMetricsLoading ? '--' : testerSummaryActiveTesters }}</span>
+              <span class="chip-label">Active Testers</span>
+            </div>
+          </div>
+
+          <div class="tester-summary-chip">
+            <div class="chip-icon-box chip-icon-assigned">
+              <i class="fa-solid fa-list-check"></i>
+            </div>
+            <div class="chip-data">
+              <span class="chip-number">{{ isTesterMetricsLoading ? '--' : (testerSummaryTotalAssigned | number) }}</span>
+              <span class="chip-label">Total Assigned</span>
+            </div>
+          </div>
+
+          <div class="tester-summary-chip">
+            <div class="chip-icon-box chip-icon-progress">
+              <i class="fa-solid fa-spinner"></i>
+            </div>
+            <div class="chip-data">
+              <span class="chip-number">{{ isTesterMetricsLoading ? '--' : (testerSummaryTotalInProgress | number) }}</span>
+              <span class="chip-label">In Progress</span>
+            </div>
+          </div>
+
+          <div class="tester-summary-chip">
+            <div class="chip-icon-box chip-icon-completed">
+              <i class="fa-solid fa-circle-check"></i>
+            </div>
+            <div class="chip-data">
+              <span class="chip-number">{{ isTesterMetricsLoading ? '--' : (testerSummaryTotalCompleted | number) }}</span>
+              <span class="chip-label">Completed</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Error State -->
+        <div class="dashboard-error-banner" *ngIf="testerMetricsError && !isTesterMetricsLoading">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>{{ testerMetricsError }}</span>
+          <button class="btn-retry" (click)="loadTesterPerformanceMetrics()" type="button">
+            <i class="fa-solid fa-rotate-right"></i> Retry
+          </button>
+        </div>
+
+        <!-- Loading State -->
+        <div class="panel-loading-state" *ngIf="isTesterMetricsLoading">
+          <i class="fa-solid fa-spinner fa-spin"></i>
+          <span>Loading tester performance data...</span>
+        </div>
+
+        <!-- Empty State -->
+        <div class="panel-empty-state" *ngIf="!isTesterMetricsLoading && !testerMetricsError && testerPerformanceList.length === 0">
+          <i class="fa-solid fa-clipboard-question"></i>
+          <h3>No Tester Data Available</h3>
+          <p>No test cases or active testers found for the selected filter scope.</p>
+        </div>
+
+        <!-- Stacked Bar Chart List -->
+        <div class="tester-bars-container" *ngIf="!isTesterMetricsLoading && !testerMetricsError && testerPerformanceList.length > 0">
+          <div class="tester-bars-header-row">
+            <span class="col-header-tester">Tester</span>
+            <span class="col-header-progress">Execution Progress</span>
+            <span class="col-header-total">Total</span>
+          </div>
+
+          <div class="tester-rows-list">
+            <div
+              *ngFor="let tester of displayedTesters"
+              class="tester-bar-row"
+              [class.active-tester-row]="selectedTester?.id === tester.id"
+              (click)="selectTester(tester)"
+              role="button"
+              tabindex="0"
+              [title]="'Click to view test cases assigned to ' + tester.name"
+            >
+              <!-- Left: Avatar & Name -->
+              <div class="tester-identity">
+                <div class="tester-avatar-circle" [style.background-color]="tester.avatarColor">
+                  {{ tester.initials }}
+                </div>
+                <div class="tester-name-meta">
+                  <span class="tester-name">{{ tester.name }}</span>
+                  <span class="tester-role-sub" *ngIf="tester.isUnassigned">Unassigned Tests</span>
+                  <span class="tester-role-sub" *ngIf="!tester.isUnassigned && tester.username">@{{ tester.username }}</span>
+                </div>
+              </div>
+
+              <!-- Center: Horizontal Stacked Bar -->
+              <div class="tester-bar-wrapper">
+                <div class="stacked-bar-track">
+                  <!-- To Do Segment (Blue) -->
+                  <div
+                    *ngIf="tester.todoCount > 0"
+                    class="bar-segment bar-seg-todo"
+                    [style.width.%]="tester.todoPercent"
+                    [title]="'To Do: ' + tester.todoCount + ' (' + tester.todoPercent + '%)'"
+                  >
+                    <span *ngIf="tester.todoPercent >= 10" class="bar-seg-text">{{ tester.todoCount }}</span>
+                  </div>
+
+                  <!-- In Progress Segment (Yellow/Orange) -->
+                  <div
+                    *ngIf="tester.inProgressCount > 0"
+                    class="bar-segment bar-seg-progress"
+                    [style.width.%]="tester.inProgressPercent"
+                    [title]="'In Progress: ' + tester.inProgressCount + ' (' + tester.inProgressPercent + '%)'"
+                  >
+                    <span *ngIf="tester.inProgressPercent >= 10" class="bar-seg-text">{{ tester.inProgressCount }}</span>
+                  </div>
+
+                  <!-- Done Segment (Green) -->
+                  <div
+                    *ngIf="tester.doneCount > 0"
+                    class="bar-segment bar-seg-done"
+                    [style.width.%]="tester.donePercent"
+                    [title]="'Done: ' + tester.doneCount + ' (' + tester.donePercent + '%)'"
+                  >
+                    <span *ngIf="tester.donePercent >= 10" class="bar-seg-text">{{ tester.doneCount }}</span>
+                  </div>
+
+                  <!-- Empty segment if total is 0 -->
+                  <div
+                    *ngIf="tester.total === 0"
+                    class="bar-segment bar-seg-empty"
+                    style="width: 100%;"
+                    title="No test cases assigned"
+                  >
+                    <span class="bar-seg-empty-text">No test cases assigned</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: Total Count Badge -->
+              <div class="tester-total-box">
+                <span class="tester-total-badge">{{ tester.total }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Scalability: Show All / Show Less Toggle -->
+          <div class="tester-show-more-bar" *ngIf="testerPerformanceList.length > initialTesterLimit">
+            <button
+              class="btn-toggle-show-all"
+              (click)="showAllTesters = !showAllTesters; $event.stopPropagation()"
+              type="button"
+            >
+              <i class="fa-solid" [ngClass]="showAllTesters ? 'fa-chevron-up' : 'fa-chevron-down'"></i>
+              <span>{{ showAllTesters ? 'Show fewer testers' : 'Show all ' + testerPerformanceList.length + ' testers' }}</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- ================= SELECTED TESTER DRILLDOWN DETAILS TABLE ================= -->
+        <div class="tester-drilldown-subpanel" *ngIf="selectedTester">
+          <div class="tester-drilldown-header">
+            <div class="tester-drilldown-meta">
+              <div class="tester-avatar-circle small" [style.background-color]="selectedTester.avatarColor">
+                {{ selectedTester.initials }}
+              </div>
+              <div>
+                <h3 class="tester-drilldown-title">{{ selectedTester.name }} — Assigned Test Cases</h3>
+                <p class="tester-drilldown-subtitle">
+                  <span>{{ filteredTesterTestCases.length }} {{ filteredTesterTestCases.length === 1 ? 'test case' : 'test cases' }} in current scope</span>
+                  <span class="filter-context-tag" *ngIf="hasActiveFilters()">• Filtered by {{ activeFilterDescription }}</span>
+                </p>
+              </div>
+            </div>
+
+            <div class="tester-drilldown-tools">
+              <!-- Search inside tester table -->
+              <div class="drilldown-search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input
+                  type="text"
+                  [(ngModel)]="testerDetailsSearchTerm"
+                  (ngModelChange)="testerDetailsPage = 0"
+                  placeholder="Search test cases..."
+                />
+                <button
+                  *ngIf="testerDetailsSearchTerm"
+                  (click)="testerDetailsSearchTerm = ''; testerDetailsPage = 0"
+                  class="btn-clear-search"
+                  type="button"
+                  title="Clear search"
+                >
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+
+              <!-- Close Details Button -->
+              <button
+                class="btn-close-drilldown"
+                (click)="clearSelectedTester()"
+                type="button"
+                title="Close tester details"
+              >
+                <i class="fa-solid fa-xmark"></i>
+                <span>Close Details</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Empty search results -->
+          <div class="panel-empty-state" *ngIf="filteredTesterTestCases.length === 0">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <h3>No Matching Test Cases</h3>
+            <p *ngIf="testerDetailsSearchTerm">No test cases match "{{ testerDetailsSearchTerm }}".</p>
+            <p *ngIf="!testerDetailsSearchTerm">This tester has no test cases assigned in the current filter scope.</p>
+          </div>
+
+          <!-- Test Cases Table -->
+          <div class="table-responsive" *ngIf="filteredTesterTestCases.length > 0">
+            <table class="manager-data-table">
+              <thead>
+                <tr>
+                  <th style="width: 120px;">TC ID</th>
+                  <th>Test Case Title</th>
+                  <th style="width: 160px;">Feature</th>
+                  <th style="width: 110px;">Sprint</th>
+                  <th style="width: 140px;">Assignee</th>
+                  <th style="width: 130px;">Status</th>
+                  <th style="width: 100px;">Priority</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let tc of paginatedTesterTestCases">
+                  <td>
+                    <code>{{ tc.testcaseFormatId || ('TC_' + tc.testcaseId) }}</code>
+                  </td>
+                  <td>
+                    <strong>{{ tc.title }}</strong>
+                  </td>
+                  <td>
+                    <span class="feature-tag">
+                      <i class="fa-regular fa-folder" style="color: #0052cc;"></i>
+                      {{ getFeatureName(tc.featureId) }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="sprint-pill">
+                      <i class="fa-solid fa-bolt" style="color: #ffab00; font-size: 10px;"></i>
+                      {{ getSprintForFeature(tc.featureId) }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="assignee-cell">
+                      <i class="fa-regular fa-user" style="color: #5e6c84;"></i>
+                      {{ selectedTester.name }}
+                    </span>
+                  </td>
+                  <td>
+                    <span
+                      class="tc-status-badge"
+                      [ngClass]="{
+                        'tc-passed': tc.executionStatus === 'PASS' || tc.executionStatus === 'PASSED' || tc.testcaseStatus === 'PASSED',
+                        'tc-failed': tc.executionStatus === 'FAIL' || tc.executionStatus === 'FAILED' || tc.testcaseStatus === 'FAILED',
+                        'tc-blocked': tc.executionStatus === 'BLOCK' || tc.executionStatus === 'BLOCKED' || tc.testcaseStatus === 'BLOCKED' || tc.testcaseStatus === 'IN_PROGRESS' || tc.executionStatus === 'IN_PROGRESS',
+                        'tc-norun': tc.executionStatus === 'UNEXECUTED' || tc.testcaseStatus === 'NO_RUN' || (!tc.executionStatus && !tc.testcaseStatus)
+                      }"
+                    >
+                      {{ tc.executionStatus || tc.testcaseStatus || 'NO_RUN' }}
+                    </span>
+                  </td>
+                  <td>
+                    <span
+                      class="priority-pill"
+                      [ngClass]="{
+                        'priority-critical': tc.testPriority === 'CRITICAL',
+                        'priority-high': tc.testPriority === 'HIGH',
+                        'priority-medium': tc.testPriority === 'MEDIUM',
+                        'priority-low': tc.testPriority === 'LOW'
+                      }"
+                    >
+                      {{ tc.testPriority || 'MEDIUM' }}
+                    </span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Table Pagination Footer -->
+          <div class="table-pagination-footer" *ngIf="filteredTesterTestCases.length > testerDetailsPageSize">
+            <span class="pagination-info">
+              Showing {{ testerDetailsPage * testerDetailsPageSize + 1 }} to {{ min(testerDetailsPage * testerDetailsPageSize + testerDetailsPageSize, filteredTesterTestCases.length) }} of {{ filteredTesterTestCases.length }} entries
+            </span>
+            <div class="pagination-controls">
+              <button
+                class="btn-page-nav"
+                [disabled]="testerDetailsPage === 0"
+                (click)="prevTesterDetailsPage()"
+                type="button"
+              >
+                <i class="fa-solid fa-chevron-left"></i> Previous
+              </button>
+              <span class="page-number-display">Page {{ testerDetailsPage + 1 }} of {{ totalTesterDetailsPages }}</span>
+              <button
+                class="btn-page-nav"
+                [disabled]="testerDetailsPage >= totalTesterDetailsPages - 1"
+                (click)="nextTesterDetailsPage()"
+                type="button"
+              >
+                Next <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      </ng-container>
+
+      <!-- ================= 1. SYSTEM DASHBOARD VIEW ================= -->
+      <ng-container *ngIf="activeSidebarItem === 'System Dashboard'">
+        <section class="dashboard-page-header">
+          <div class="header-titles">
+            <h1 class="page-title">System Dashboard</h1>
+            <p class="page-subtitle">
+              Platform administration, user onboarding approvals, active accounts, and gateway status.
+            </p>
+          </div>
+          <div class="header-actions">
+            <button class="header-action-btn" (click)="loadSystemDashboardData()" type="button" title="Refresh user approvals and system data">
+              <i class="fa-solid fa-rotate" [class.fa-spin]="isSystemLoading"></i>
+              <span>Refresh</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- System Stats Row -->
+        <div class="system-stats-grid sys-stats-2col">
+          <div class="sys-stat-card">
+            <div class="sys-stat-icon text-blue"><i class="fa-solid fa-users"></i></div>
+            <div class="sys-stat-info">
+              <span class="sys-stat-val">{{ activeUsers.length }}</span>
+              <span class="sys-stat-lbl">Active Platform Users</span>
+            </div>
+          </div>
+          <div class="sys-stat-card" [class.highlight-pending]="pendingUsers.length > 0">
+            <div class="sys-stat-icon text-amber"><i class="fa-solid fa-user-clock"></i></div>
+            <div class="sys-stat-info">
+              <span class="sys-stat-val">{{ pendingUsers.length }}</span>
+              <span class="sys-stat-lbl">Pending Registration Approvals</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- System Tabs: Pending Approvals / Active Users -->
+        <div class="view-panel-container">
+          <div class="subnav-tabs">
+            <button class="subnav-tab-btn" [class.active]="systemTab === 'pending'" (click)="systemTab = 'pending'" type="button">
+              <i class="fa-solid fa-user-clock"></i>
+              <span>Pending Approvals</span>
+              <span class="tab-badge" *ngIf="pendingUsers.length > 0">{{ pendingUsers.length }}</span>
+            </button>
+            <button class="subnav-tab-btn" [class.active]="systemTab === 'active'" (click)="systemTab = 'active'" type="button">
+              <i class="fa-solid fa-users-gear"></i>
+              <span>Active Users Directory</span>
+              <span class="tab-badge tab-badge-neutral">{{ activeUsers.length }}</span>
+            </button>
+          </div>
+
+          <!-- Pending Approvals Tab -->
+          <div class="tab-content-area" *ngIf="systemTab === 'pending'">
+            <div class="tab-header-bar">
+              <div class="tab-header-left">
+                <span class="tab-section-title">Users Awaiting Manager Authorization</span>
+                <span class="tab-section-subtitle">Assign appropriate role and confirm access to testing automation tools.</span>
+              </div>
+            </div>
+
+            <!-- Loading State -->
+            <div class="panel-loading-state" *ngIf="isSystemLoading">
+              <i class="fa-solid fa-spinner fa-spin"></i>
+              <span>Loading pending registrations...</span>
+            </div>
+
+            <!-- Empty State -->
+            <div class="panel-empty-state" *ngIf="!isSystemLoading && pendingUsers.length === 0">
+              <i class="fa-solid fa-circle-check text-emerald"></i>
+              <h3>All registrations processed</h3>
+              <p>There are no pending user approvals at this time.</p>
+            </div>
+
+            <!-- Pending Users Table -->
+            <div class="table-responsive" *ngIf="!isSystemLoading && pendingUsers.length > 0">
+              <table class="manager-data-table">
+                <thead>
+                  <tr>
+                    <th>User ID</th>
+                    <th>Full Name</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Assign Role</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let u of pendingUsers">
+                    <td><code>#{{ u.userId }}</code></td>
+                    <td class="font-semibold">{{ u.fullName || u.username }}</td>
+                    <td>{{ u.username }}</td>
+                    <td>{{ u.email || '—' }}</td>
+                    <td>
+                      <select class="table-inline-select" [(ngModel)]="pendingRoleSelections[u.userId]">
+                        <option value="TESTER">Tester</option>
+                        <option value="DEVELOPER">Developer</option>
+                        <option value="MANAGER">Manager</option>
+                      </select>
+                    </td>
+                    <td>
+                      <div class="action-buttons-inline">
+                        <button class="btn-table-action btn-approve" (click)="approvePendingUser(u)" type="button" title="Authorize and activate user">
+                          <i class="fa-solid fa-check"></i>
+                          <span>Approve</span>
+                        </button>
+                        <button class="btn-table-action btn-reject" (click)="rejectPendingUser(u)" type="button" title="Reject registration">
+                          <i class="fa-solid fa-xmark"></i>
+                          <span>Reject</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Active Users Directory Tab -->
+          <div class="tab-content-area" *ngIf="systemTab === 'active'">
+            <div class="tab-toolbar">
+              <div class="search-input-wrapper">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" [(ngModel)]="userSearchTerm" placeholder="Search by name, username, or email..." />
+              </div>
+              <div class="filter-dropdown-wrap">
+                <select class="toolbar-select" [(ngModel)]="userRoleFilter">
+                  <option value="ALL">All Roles</option>
+                  <option value="TESTER">Testers</option>
+                  <option value="DEVELOPER">Developers</option>
+                  <option value="MANAGER">Managers</option>
+                  <option value="ADMIN">Admins</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="table-responsive" *ngIf="!isSystemLoading">
+              <table class="manager-data-table">
+                <thead>
+                  <tr>
+                    <th>User ID</th>
+                    <th>Name</th>
+                    <th>Username</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let u of filteredActiveUsers" [class.highlight-manager-row]="isCurrentLoggedInManager(u)">
+                    <td><code>#{{ u.userId }}</code></td>
+                    <td class="font-semibold">
+                      {{ u.fullName || u.username }}
+                      <span class="current-user-tag" *ngIf="isCurrentLoggedInManager(u)" title="Logged-in Manager">Manager (You)</span>
+                    </td>
+                    <td>{{ u.username }}</td>
+                    <td>{{ u.email || '—' }}</td>
+                    <td>
+                      <span class="role-badge" [class.badge-manager]="(u.role?.role || u.role || '').includes('MANAGER')"
+                                              [class.badge-tester]="(u.role?.role || u.role || '').includes('TESTER')"
+                                              [class.badge-developer]="(u.role?.role || u.role || '').includes('DEVELOPER')">
+                        {{ u.role?.role || u.role?.roleName || u.role || 'TESTER' }}
+                      </span>
+                    </td>
+                    <td>
+                      <span class="status-pill-active"><span class="dot-active"></span>Active</span>
+                    </td>
+                  </tr>
+                  <tr *ngIf="filteredActiveUsers.length === 0">
+                    <td colspan="6" class="text-center py-4 text-muted">No users found matching your filters.</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ================= 2. PROJECT DASHBOARD VIEW ================= -->
+      <ng-container *ngIf="activeSidebarItem === 'Project Dashboard'">
+        <section class="dashboard-page-header">
+          <div class="header-titles">
+            <h1 class="page-title">Project Dashboard</h1>
+            <p class="page-subtitle">
+              Portfolio directory, active module structures, regional coverage and project summary exports.
+            </p>
+          </div>
+          <div class="header-actions">
+            <button class="header-action-btn" (click)="loadProjectDashboardData()" type="button" title="Refresh project catalog">
+              <i class="fa-solid fa-rotate" [class.fa-spin]="isProjectsLoading"></i>
+              <span>Refresh</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Project Metrics Row -->
+        <div class="system-stats-grid">
+          <div class="sys-stat-card">
+            <div class="sys-stat-icon text-blue"><i class="fa-solid fa-folder-tree"></i></div>
+            <div class="sys-stat-info">
+              <span class="sys-stat-val">{{ projectsList.length }}</span>
+              <span class="sys-stat-lbl">Total Projects</span>
+            </div>
+          </div>
+          <div class="sys-stat-card">
+            <div class="sys-stat-icon text-emerald"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="sys-stat-info">
+              <span class="sys-stat-val">{{ activeProjectsCount }}</span>
+              <span class="sys-stat-lbl">Active Projects</span>
+            </div>
+          </div>
+          <div class="sys-stat-card">
+            <div class="sys-stat-icon text-slate"><i class="fa-solid fa-circle-pause"></i></div>
+            <div class="sys-stat-info">
+              <span class="sys-stat-val">{{ inactiveProjectsCount }}</span>
+              <span class="sys-stat-lbl">Inactive / Suspended</span>
+            </div>
+          </div>
+          <div class="sys-stat-card">
+            <div class="sys-stat-icon text-purple"><i class="fa-solid fa-earth-americas"></i></div>
+            <div class="sys-stat-info">
+              <span class="sys-stat-val">{{ projectRegionsList.length }}</span>
+              <span class="sys-stat-lbl">Deployment Regions</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Project Directory Panel -->
+        <div class="view-panel-container">
+          <div class="tab-toolbar">
+            <div class="search-input-wrapper">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" [(ngModel)]="projectSearchTerm" placeholder="Search projects by name, module, region..." />
+            </div>
+            <div class="filter-dropdown-wrap">
+              <select class="toolbar-select" [(ngModel)]="projectStatusFilter">
+                <option value="ALL">All Statuses</option>
+                <option value="ACTIVE">Active Only</option>
+                <option value="INACTIVE">Inactive Only</option>
+              </select>
+            </div>
+            <div class="filter-dropdown-wrap" *ngIf="projectRegionsList.length > 0">
+              <select class="toolbar-select" [(ngModel)]="projectRegionFilter">
+                <option value="ALL">All Regions</option>
+                <option *ngFor="let r of projectRegionsList" [value]="r.toUpperCase()">{{ r }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="panel-loading-state" *ngIf="isProjectsLoading">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span>Loading project catalog...</span>
+          </div>
+
+          <div class="panel-empty-state" *ngIf="!isProjectsLoading && projectsList.length === 0">
+            <i class="fa-regular fa-folder-open text-muted"></i>
+            <h3>No projects registered</h3>
+            <p>No projects were returned from the backend service.</p>
+          </div>
+
+          <div class="table-responsive" *ngIf="!isProjectsLoading && projectsList.length > 0">
+            <table class="manager-data-table projects-data-table">
+              <thead>
+                <tr>
+                  <th class="th-proj-id">Project ID</th>
+                  <th class="th-proj-name">Project Name</th>
+                  <th class="th-proj-region">Region</th>
+                  <th class="th-proj-module">Module / Submodule</th>
+                  <th class="th-proj-status">Status</th>
+                  <th class="th-proj-actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let p of filteredProjectsList">
+                  <td class="td-proj-id"><code>#{{ p.projectId }}</code></td>
+                  <td class="font-semibold text-primary-dark td-proj-name">{{ p.projectName }}</td>
+                  <td class="td-proj-region"><span class="region-pill"><i class="fa-solid fa-location-dot"></i> {{ p.region || 'Default' }}</span></td>
+                  <td class="td-proj-module">
+                    <span *ngIf="p.module">{{ p.module }}</span>
+                    <span *ngIf="p.subModule" class="text-muted"> / {{ p.subModule }}</span>
+                    <span *ngIf="!p.module" class="text-muted">—</span>
+                  </td>
+                  <td class="td-proj-status">
+                    <div class="status-cell-wrapper">
+                      <span class="status-badge"
+                            [class.status-active]="(p.status || 'ACTIVE').toUpperCase() === 'ACTIVE'"
+                            [class.status-inactive]="(p.status || 'ACTIVE').toUpperCase() !== 'ACTIVE'">
+                        <span class="dot"></span>
+                        <span>{{ p.status || 'ACTIVE' }}</span>
+                      </span>
+                      <button class="btn-edit-status"
+                              (click)="openStatusConfirmModal(p)"
+                              type="button"
+                              [disabled]="isUpdatingStatus && projectForStatusChange?.projectId === p.projectId"
+                              [title]="'Edit status for ' + p.projectName">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        <span>Edit Status</span>
+                      </button>
+                    </div>
+                  </td>
+                  <td class="td-proj-actions">
+                    <button class="btn-table-action btn-export-excel" 
+                            (click)="downloadProjectSummary(p.projectId, p.projectName)" 
+                            type="button" 
+                            title="Download Project Summary Excel (.xlsx)">
+                      <i class="fa-solid fa-file-excel"></i>
+                      <span>Export</span>
+                    </button>
+                  </td>
+                </tr>
+                <tr *ngIf="filteredProjectsList.length === 0">
+                  <td colspan="6" class="text-center py-4 text-muted">No projects found matching the criteria.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ================= 4. TEST EXECUTION VIEW ================= -->
+      <ng-container *ngIf="activeSidebarItem === 'Test Execution'">
+        <section class="dashboard-page-header">
+          <div class="header-titles">
+            <h1 class="page-title">Test Execution</h1>
+            <p class="page-subtitle">
+              Execute test cases, monitor live execution outcomes, and record test pass/fail results.
+            </p>
+          </div>
+          <div class="header-actions">
+            <button class="header-action-btn" (click)="loadTestExecutionData()" type="button" title="Refresh test execution data">
+              <i class="fa-solid fa-rotate" [class.fa-spin]="isTestCasesLoading"></i>
+              <span>Refresh</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Execution Panel -->
+        <div class="view-panel-container">
+          <div class="tab-toolbar">
+            <div class="search-input-wrapper">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" [(ngModel)]="tcSearchTerm" placeholder="Search test cases by title, ID, type..." />
+            </div>
+
+            <!-- Feature Filter -->
+            <div class="filter-dropdown-wrap">
+              <select class="toolbar-select" [(ngModel)]="tcFeatureFilter" (ngModelChange)="onTcFilterChange()">
+                <option [ngValue]="null">All Features</option>
+                <option *ngFor="let f of allFeatures" [ngValue]="f.featureId">
+                  {{ f.featureName }} (Sprint {{ f.sprint }})
+                </option>
+              </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="filter-dropdown-wrap">
+              <select class="toolbar-select" [(ngModel)]="tcStatusFilter" (ngModelChange)="onTcFilterChange()">
+                <option value="ALL">All Statuses</option>
+                <option value="PASSED">Passed</option>
+                <option value="FAILED">Failed</option>
+                <option value="BLOCKED">Blocked</option>
+                <option value="NO_RUN">Not Executed (NO_RUN)</option>
+              </select>
+            </div>
+
+            <!-- Priority Filter -->
+            <div class="filter-dropdown-wrap">
+              <select class="toolbar-select" [(ngModel)]="tcPriorityFilter" (ngModelChange)="onTcFilterChange()">
+                <option value="ALL">All Priorities</option>
+                <option value="CRITICAL">Critical</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="panel-loading-state" *ngIf="isTestCasesLoading">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span>Loading test cases...</span>
+          </div>
+
+          <div class="panel-empty-state" *ngIf="!isTestCasesLoading && testCasesList.length === 0">
+            <i class="fa-solid fa-flask text-muted"></i>
+            <h3>No test cases found</h3>
+            <p>Try clearing filters or selecting another feature.</p>
+          </div>
+
+          <div class="table-responsive" *ngIf="!isTestCasesLoading && testCasesList.length > 0">
+            <table class="manager-data-table">
+              <thead>
+                <tr>
+                  <th>Format ID</th>
+                  <th>Test Case Title</th>
+                  <th>Type</th>
+                  <th>Priority</th>
+                  <th>Status</th>
+                  <th>Execution</th>
+                  <th>Quick Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let tc of filteredTestCases">
+                  <td><code>{{ tc.testcaseFormatId }}</code></td>
+                  <td class="font-semibold">{{ tc.title }}</td>
+                  <td><span class="type-badge">{{ tc.testType }}</span></td>
+                  <td>
+                    <span class="priority-pill" [class.priority-critical]="tc.testPriority === 'CRITICAL'"
+                                               [class.priority-high]="tc.testPriority === 'HIGH'"
+                                               [class.priority-medium]="tc.testPriority === 'MEDIUM'"
+                                               [class.priority-low]="tc.testPriority === 'LOW'">
+                      {{ tc.testPriority }}
+                    </span>
+                  </td>
+                  <td>
+                    <span class="tc-status-badge" [class.tc-passed]="tc.testcaseStatus === 'PASSED'"
+                                                 [class.tc-failed]="tc.testcaseStatus === 'FAILED'"
+                                                 [class.tc-blocked]="tc.testcaseStatus === 'BLOCKED'"
+                                                 [class.tc-norun]="tc.testcaseStatus === 'NO_RUN' || tc.testcaseStatus === 'DESCOPE'">
+                      {{ tc.testcaseStatus }}
+                    </span>
+                  </td>
+                  <td><span class="exec-status">{{ tc.executionStatus || '—' }}</span></td>
+                  <td>
+                    <div class="action-buttons-inline">
+                      <button class="btn-exec-action btn-exec-pass" (click)="quickExecute(tc, 'PASS')" type="button" title="Mark PASS">
+                        <i class="fa-solid fa-check"></i>
+                      </button>
+                      <button class="btn-exec-action btn-exec-fail" (click)="quickExecute(tc, 'FAIL')" type="button" title="Mark FAIL">
+                        <i class="fa-solid fa-xmark"></i>
+                      </button>
+                      <button class="btn-exec-action btn-exec-descope" (click)="quickExecute(tc, 'DESCOPE')" type="button" title="Mark DESCOPE">
+                        <i class="fa-solid fa-ban"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Footer -->
+          <div class="table-pagination-footer" *ngIf="tcTotalPages > 1">
+            <span class="pagination-info">Page {{ tcPage + 1 }} of {{ tcTotalPages }} ({{ tcTotalElements }} items)</span>
+            <div class="pagination-controls">
+              <button class="btn-page-nav" [disabled]="tcPage === 0" (click)="prevTcPage()" type="button">
+                <i class="fa-solid fa-chevron-left"></i> Previous
+              </button>
+              <button class="btn-page-nav" [disabled]="tcPage + 1 >= tcTotalPages" (click)="nextTcPage()" type="button">
+                Next <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ================= 5. DEFECT MANAGEMENT VIEW ================= -->
+      <ng-container *ngIf="activeSidebarItem === 'Defect Management'">
+        <section class="dashboard-page-header">
+          <div class="header-titles">
+            <h1 class="page-title">Defect Management</h1>
+            <p class="page-subtitle">
+              Triage defects, update lifecycle status, and assign issues to active development personnel.
+            </p>
+          </div>
+          <div class="header-actions">
+            <button class="header-action-btn" (click)="loadDefectManagementData()" type="button" title="Refresh defects list">
+              <i class="fa-solid fa-rotate" [class.fa-spin]="isBugsLoading"></i>
+              <span>Refresh</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Defect Metrics Cards -->
+        <div class="system-stats-grid">
+          <div class="sys-stat-card">
+            <div class="sys-stat-icon text-blue"><i class="fa-solid fa-bug"></i></div>
+            <div class="sys-stat-info">
+              <span class="sys-stat-val">{{ bugsList.length }}</span>
+              <span class="sys-stat-lbl">Total Logged Defects</span>
+            </div>
+          </div>
+          <div class="sys-stat-card highlight-critical" *ngIf="criticalBugsCount > 0">
+            <div class="sys-stat-icon text-red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div class="sys-stat-info">
+              <span class="sys-stat-val">{{ criticalBugsCount }}</span>
+              <span class="sys-stat-lbl">Critical / High Severity</span>
+            </div>
+          </div>
+          <div class="sys-stat-card">
+            <div class="sys-stat-icon text-amber"><i class="fa-solid fa-circle-exclamation"></i></div>
+            <div class="sys-stat-info">
+              <span class="sys-stat-val">{{ openBugsCount }}</span>
+              <span class="sys-stat-lbl">Open Defects</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Defect Management Panel -->
+        <div class="view-panel-container">
+          <div class="tab-toolbar">
+            <div class="search-input-wrapper">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" [(ngModel)]="bugSearchTerm" placeholder="Search defects by bug ID, summary, assignee..." />
+            </div>
+
+            <!-- Severity Filter -->
+            <div class="filter-dropdown-wrap">
+              <select class="toolbar-select" [(ngModel)]="bugSeverityFilter">
+                <option value="ALL">All Severities</option>
+                <option value="CRITICAL">Critical</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+              </select>
+            </div>
+
+            <!-- Status Filter -->
+            <div class="filter-dropdown-wrap">
+              <select class="toolbar-select" [(ngModel)]="bugStatusFilter">
+                <option value="ALL">All Statuses</option>
+                <option value="OPEN">Open</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="RESOLVED">Resolved</option>
+                <option value="CLOSED">Closed</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="panel-loading-state" *ngIf="isBugsLoading">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span>Loading defects catalog...</span>
+          </div>
+
+          <div class="panel-empty-state" *ngIf="!isBugsLoading && bugsList.length === 0">
+            <i class="fa-solid fa-shield-virus text-muted"></i>
+            <h3>No defects recorded</h3>
+            <p>No bugs have been reported in the system.</p>
+          </div>
+
+          <div class="table-responsive" *ngIf="!isBugsLoading && bugsList.length > 0">
+            <table class="manager-data-table">
+              <thead>
+                <tr>
+                  <th>Bug ID</th>
+                  <th>Summary</th>
+                  <th>Severity</th>
+                  <th>Status</th>
+                  <th>Assignee</th>
+                  <th>Reported By</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let b of filteredBugsList">
+                  <td><code class="text-bug-id">{{ b.bugFormatId }}</code></td>
+                  <td class="font-semibold">{{ b.title }}</td>
+                  <td>
+                    <span class="severity-tag" [class.sev-critical]="b.severity === 'CRITICAL'"
+                                              [class.sev-high]="b.severity === 'HIGH'"
+                                              [class.sev-medium]="b.severity === 'MEDIUM'"
+                                              [class.sev-low]="b.severity === 'LOW'">
+                      {{ b.severity }}
+                    </span>
+                  </td>
+                  <td>
+                    <select class="table-inline-select" [ngModel]="b.status" (ngModelChange)="onUpdateBugStatus(b, $event)">
+                      <option value="OPEN">OPEN</option>
+                      <option value="IN_PROGRESS">IN_PROGRESS</option>
+                      <option value="RESOLVED">RESOLVED</option>
+                      <option value="CLOSED">CLOSED</option>
+                    </select>
+                  </td>
+                  <td>
+                    <select class="table-inline-select" [ngModel]="b.assignedToId || ''" (ngModelChange)="onUpdateBugAssignee(b, $event)">
+                      <option value="">{{ b.assignedTo || 'Unassigned' }}</option>
+                      <option *ngFor="let dev of developersList" [value]="dev.userId">
+                        {{ dev.fullName || dev.username }}
+                      </option>
+                    </select>
+                  </td>
+                  <td>{{ b.reportedBy || 'Tester' }}</td>
+                </tr>
+                <tr *ngIf="filteredBugsList.length === 0">
+                  <td colspan="6" class="text-center py-4 text-muted">No defects matched your filter criteria.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ================= 6. AUTOMATION REPORTS VIEW ================= -->
+      <ng-container *ngIf="activeSidebarItem === 'Automation Reports'">
+        <section class="dashboard-page-header">
+          <div class="header-titles">
+            <h1 class="page-title">Automation Reports</h1>
+            <p class="page-subtitle">
+              Automation feasibility breakdown, test suite reports, and direct Excel export generators.
+            </p>
+          </div>
+          <div class="header-actions">
+            <button class="header-action-btn" (click)="loadAutomationReportsData()" type="button" title="Refresh automation report data">
+              <i class="fa-solid fa-rotate" [class.fa-spin]="isReportsLoading"></i>
+              <span>Refresh</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- Reports Hub Panel -->
+        <div class="view-panel-container">
+          <div class="tab-toolbar">
+            <div class="filter-dropdown-wrap">
+              <select class="toolbar-select" [(ngModel)]="reportSelectedProjectId">
+                <option [ngValue]="null">All Projects</option>
+                <option *ngFor="let p of allProjects" [ngValue]="p.projectId">{{ p.projectName }}</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="panel-loading-state" *ngIf="isReportsLoading">
+            <i class="fa-solid fa-spinner fa-spin"></i>
+            <span>Loading automation reports...</span>
+          </div>
+
+          <div class="table-responsive" *ngIf="!isReportsLoading && automationFeatures.length > 0">
+            <table class="manager-data-table">
+              <thead>
+                <tr>
+                  <th>Feature ID</th>
+                  <th>Feature Name</th>
+                  <th>Sprint</th>
+                  <th>Summary Report</th>
+                  <th>Testcase Template</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngFor="let f of filteredAutomationFeatures">
+                  <td><code>#{{ f.featureId }}</code></td>
+                  <td class="font-semibold">{{ f.featureName }}</td>
+                  <td><span class="sprint-pill">Sprint {{ f.sprint }}</span></td>
+                  <td>
+                    <button class="btn-table-action btn-export-excel" (click)="downloadFeatureSummaryReport(f.featureId, f.featureName)" type="button">
+                      <i class="fa-solid fa-download"></i>
+                      <span>Download QA Summary (.xlsx)</span>
+                    </button>
+                  </td>
+                  <td>
+                    <button class="btn-table-action btn-export-template" (click)="downloadFeatureTemplate(f.featureId)" type="button">
+                      <i class="fa-solid fa-file-excel"></i>
+                      <span>Template (.xlsx)</span>
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- ================= 7. CREATE DASHBOARD VIEW ================= -->
+      <ng-container *ngIf="activeSidebarItem === 'Create dashboard'">
+        <!-- Cockpit Header -->
+        <div class="dashboard-page-header">
+          <div class="header-titles">
+            <h1 class="page-title">Custom Dashboards</h1>
+            <p class="page-subtitle">Configure and manage tailored dashboard views for projects and analytical reporting.</p>
+          </div>
+          <div class="header-actions">
+            <button class="header-action-btn btn-primary-action" (click)="openCreateDashboardModal()" type="button">
+              <i class="fa-solid fa-plus"></i>
+              <span>Create Dashboard</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Persistence Notice -->
+        <div class="modal-notice-banner mb-4">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>
+            Custom dashboards configured here are maintained for your active session. (Note: Persistent server-side dashboard storage can be linked once a backend API endpoint is implemented).
+          </span>
+        </div>
+
+        <!-- Dashboards List / Empty State -->
+        <div class="dashboards-list-container" *ngIf="customDashboards.length > 0">
+          <div class="custom-dashboard-card" *ngFor="let d of customDashboards; let idx = index">
+            <div class="custom-dash-card-header">
+              <div class="dash-title-group">
+                <i class="fa-solid fa-chart-line text-primary"></i>
+                <h3 class="custom-dash-title">{{ d.name }}</h3>
+              </div>
+              <button class="btn-icon-danger" (click)="deleteCustomDashboard(idx)" type="button" title="Remove dashboard">
+                <i class="fa-solid fa-trash-can"></i>
+              </button>
+            </div>
+            <p class="custom-dash-desc">{{ d.description || 'No description provided.' }}</p>
+            <div class="custom-dash-meta">
+              <span class="dash-meta-badge"><i class="fa-solid fa-folder"></i> {{ getProjectName(d.projectId) }}</span>
+              <span class="dash-meta-badge"><i class="fa-solid fa-calendar"></i> {{ d.createdAt }}</span>
+            </div>
+            <div class="custom-dash-widgets">
+              <span class="widget-tag" *ngIf="d.widgets.metrics"><i class="fa-solid fa-check"></i> Test Metrics</span>
+              <span class="widget-tag" *ngIf="d.widgets.defects"><i class="fa-solid fa-check"></i> Defects</span>
+              <span class="widget-tag" *ngIf="d.widgets.automation"><i class="fa-solid fa-check"></i> Automation</span>
+              <span class="widget-tag" *ngIf="d.widgets.burndown"><i class="fa-solid fa-check"></i> Burndown</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-empty-state" *ngIf="customDashboards.length === 0">
+          <i class="fa-solid fa-chart-pie"></i>
+          <h3>No Custom Dashboards Yet</h3>
+          <p>Create tailored dashboards with specific project scopes and widget configurations.</p>
+          <button class="btn-primary-action mt-3" (click)="openCreateDashboardModal()" type="button">
+            <i class="fa-solid fa-plus"></i>
+            <span>Create First Dashboard</span>
+          </button>
+        </div>
+      </ng-container>
+
+    </main>
+  </div>
+
+  <!-- ================= 7. CREATE DASHBOARD MODAL ================= -->
+  <div class="dashboard-modal-backdrop" *ngIf="showCreateDashboardModal" (click)="closeCreateDashboardModal()">
+    <div class="dashboard-modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-card-header">
+        <div class="modal-header-title">
+          <i class="fa-solid fa-chart-line text-primary"></i>
+          <h3>Create Custom Dashboard</h3>
+        </div>
+        <button class="modal-close-btn" (click)="closeCreateDashboardModal()" type="button">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-card-body">
+        <div class="modal-notice-banner">
+          <i class="fa-solid fa-circle-info"></i>
+          <span>
+            Custom dashboards configured here are maintained for your active session. (Note: Persistent server-side dashboard storage is not currently implemented by the backend API).
+          </span>
+        </div>
+
+        <div class="form-group-modal">
+          <label class="form-label-modal">Dashboard Name <span class="text-danger">*</span></label>
+          <input type="text" class="form-input-modal" [(ngModel)]="newDashboardName" placeholder="e.g. Sprint 4 Readiness Cockpit" />
+        </div>
+
+        <div class="form-group-modal">
+          <label class="form-label-modal">Description</label>
+          <textarea class="form-textarea-modal" [(ngModel)]="newDashboardDescription" rows="2" placeholder="Brief summary of metrics tracked in this dashboard"></textarea>
+        </div>
+
+        <div class="form-group-modal">
+          <label class="form-label-modal">Primary Project</label>
+          <select class="form-input-modal" [(ngModel)]="newDashboardProjectId">
+            <option [ngValue]="null">All Projects</option>
+            <option *ngFor="let p of allProjects" [ngValue]="p.projectId">{{ p.projectName }}</option>
+          </select>
+        </div>
+
+        <div class="form-group-modal">
+          <label class="form-label-modal">Select Widgets to Include <span class="text-danger">*</span></label>
+          <div class="widgets-checkbox-grid">
+            <label class="checkbox-pill" [class.selected]="newDashboardWidgets.metrics">
+              <input type="checkbox" [(ngModel)]="newDashboardWidgets.metrics" />
+              <div class="widget-pill-info">
+                <span class="widget-pill-title">Test Metrics Summary</span>
+                <span class="widget-pill-desc">Summary cards for test cases and pass/fail counts</span>
+              </div>
+            </label>
+            <label class="checkbox-pill" [class.selected]="newDashboardWidgets.defects">
+              <input type="checkbox" [(ngModel)]="newDashboardWidgets.defects" />
+              <div class="widget-pill-info">
+                <span class="widget-pill-title">Defect Management</span>
+                <span class="widget-pill-desc">Active defect trends and severity counts</span>
+              </div>
+            </label>
+            <label class="checkbox-pill" [class.selected]="newDashboardWidgets.automation">
+              <input type="checkbox" [(ngModel)]="newDashboardWidgets.automation" />
+              <div class="widget-pill-info">
+                <span class="widget-pill-title">Automation Reports</span>
+                <span class="widget-pill-desc">Automated test execution and pass rates</span>
+              </div>
+            </label>
+            <label class="checkbox-pill" [class.selected]="newDashboardWidgets.burndown">
+              <input type="checkbox" [(ngModel)]="newDashboardWidgets.burndown" />
+              <div class="widget-pill-info">
+                <span class="widget-pill-title">Sprint Burndown</span>
+                <span class="widget-pill-desc">Sprint execution velocity and remaining work</span>
+              </div>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-card-footer">
+        <button class="btn-modal-cancel" (click)="closeCreateDashboardModal()" type="button">Cancel</button>
+        <button class="btn-modal-submit" (click)="createCustomDashboard()" type="button">Create Dashboard</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 8. CONFIRM PROJECT STATUS CHANGE MODAL ================= -->
+  <div class="dashboard-modal-backdrop status-confirm-backdrop" *ngIf="showStatusConfirmModal" (click)="cancelStatusConfirm()">
+    <div class="dashboard-modal-card status-confirm-modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-card-header">
+        <div class="modal-header-title">
+          <i class="fa-solid fa-triangle-exclamation text-amber" *ngIf="targetProjectStatus === 'INACTIVE'"></i>
+          <i class="fa-solid fa-circle-check text-success" *ngIf="targetProjectStatus === 'ACTIVE'"></i>
+          <h3>Confirm Status Change</h3>
+        </div>
+        <button class="modal-close-btn" (click)="cancelStatusConfirm()" type="button" [disabled]="isUpdatingStatus" aria-label="Close dialog">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-card-body">
+        <div class="status-confirm-project-box" *ngIf="projectForStatusChange">
+          <div class="confirm-project-details">
+            <span class="confirm-project-id">#{{ projectForStatusChange.projectId }}</span>
+            <span class="confirm-project-name">{{ projectForStatusChange.projectName }}</span>
+          </div>
+          <div class="confirm-status-flow">
+            <span class="confirm-badge-current" [class.badge-active]="(projectForStatusChange.status || 'ACTIVE').toUpperCase() === 'ACTIVE'" [class.badge-inactive]="(projectForStatusChange.status || 'ACTIVE').toUpperCase() !== 'ACTIVE'">
+              {{ projectForStatusChange.status || 'ACTIVE' }}
+            </span>
+            <i class="fa-solid fa-arrow-right confirm-flow-arrow"></i>
+            <span class="confirm-badge-target" [class.badge-active]="targetProjectStatus === 'ACTIVE'" [class.badge-inactive]="targetProjectStatus !== 'ACTIVE'">
+              {{ targetProjectStatus }}
+            </span>
+          </div>
+        </div>
+
+        <p class="status-confirm-dynamic-msg">
+          <ng-container *ngIf="targetProjectStatus === 'INACTIVE'">
+            Are you sure you want to make this project <strong>inactive</strong>?
+          </ng-container>
+          <ng-container *ngIf="targetProjectStatus === 'ACTIVE'">
+            Are you sure you want to make this project <strong>active</strong>?
+          </ng-container>
+        </p>
+
+        <p class="status-confirm-subtext text-muted">
+          <ng-container *ngIf="targetProjectStatus === 'INACTIVE'">
+            Changing this status to INACTIVE will pause test operations and bug tracking associated with this project.
+          </ng-container>
+          <ng-container *ngIf="targetProjectStatus === 'ACTIVE'">
+            Changing this status to ACTIVE will resume all testing activities and workspace operations for this project.
+          </ng-container>
+        </p>
+
+        <div class="status-update-error-banner" *ngIf="statusUpdateError">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span>{{ statusUpdateError }}</span>
+        </div>
+      </div>
+
+      <div class="modal-card-footer">
+        <button class="btn-modal-cancel" (click)="cancelStatusConfirm()" type="button" [disabled]="isUpdatingStatus">
+          Cancel
+        </button>
+        <button class="btn-modal-submit"
+                [class.btn-status-confirm-inactive]="targetProjectStatus === 'INACTIVE'"
+                [class.btn-status-confirm-active]="targetProjectStatus === 'ACTIVE'"
+                (click)="confirmStatusChange()"
+                type="button"
+                [disabled]="isUpdatingStatus">
+          <i class="fa-solid fa-spinner fa-spin" *ngIf="isUpdatingStatus"></i>
+          <span>{{ isUpdatingStatus ? 'Updating Status...' : 'Yes, Change Status' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 7. EXPANDED CHART VISUALIZATION MODAL ================= -->
+  <div class="qa-modal-backdrop" *ngIf="expandedWidget" (click)="closeExpandModal()">
+    <div class="qa-modal-card expanded-chart-modal" (click)="$event.stopPropagation()">
+      <!-- Modal Header -->
+      <div class="qa-modal-header">
+        <div class="qa-modal-header-titles">
+          <span class="qa-modal-icon-badge" [class.badge-defects]="expandedWidget === 'defects'">
+            <i class="fa-solid" [ngClass]="expandedWidget === 'defects' ? 'fa-bug' : 'fa-chart-pie'"></i>
+          </span>
+          <div>
+            <h2 class="qa-modal-title">
+              {{ expandedWidget === 'defects' ? 'Defects by Severity — Visualization' : 'Test Execution Progress — Visualization' }}
+            </h2>
+            <p class="qa-modal-subtitle">
+              <span>Detailed distribution & category breakdown</span>
+              <span class="qa-scope-pill"><i class="fa-solid fa-filter"></i> {{ activeFilterDescription }}</span>
+            </p>
+          </div>
+        </div>
+        <button class="qa-modal-close-btn" (click)="closeExpandModal()" type="button" title="Close (Esc)">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="qa-modal-body expanded-chart-modal-body">
+        <!-- Enlarged Donut Visualization -->
+        <div class="expanded-donut-section">
+          <div class="expanded-donut-wrapper">
+            <svg viewBox="0 0 160 160" class="expanded-donut-svg">
+              <circle
+                *ngIf="(expandedWidget === 'defects' ? qaOpenDefectsCount : totalCount) === 0"
+                cx="80"
+                cy="80"
+                r="60"
+                fill="transparent"
+                stroke="#ebecf0"
+                stroke-width="16"
+              ></circle>
+              <ng-container *ngIf="expandedWidget === 'defects'">
+                <circle
+                  *ngFor="let seg of expandedDefectsSegments"
+                  cx="80"
+                  cy="80"
+                  r="60"
+                  fill="transparent"
+                  [attr.stroke]="seg.color"
+                  stroke-width="16"
+                  [attr.stroke-dasharray]="seg.dasharray"
+                  [attr.stroke-dashoffset]="seg.dashoffset"
+                  transform="rotate(-90 80 80)"
+                  stroke-linecap="butt"
+                ></circle>
+              </ng-container>
+              <ng-container *ngIf="expandedWidget === 'testExecution'">
+                <circle
+                  *ngFor="let seg of expandedTestExecutionSegments"
+                  cx="80"
+                  cy="80"
+                  r="60"
+                  fill="transparent"
+                  [attr.stroke]="seg.color"
+                  stroke-width="16"
+                  [attr.stroke-dasharray]="seg.dasharray"
+                  [attr.stroke-dashoffset]="seg.dashoffset"
+                  transform="rotate(-90 80 80)"
+                  stroke-linecap="butt"
+                ></circle>
+              </ng-container>
+            </svg>
+
+            <!-- Center Content -->
+            <div class="expanded-donut-center">
+              <div class="expanded-donut-count">
+                {{ (expandedWidget === 'defects' ? qaOpenDefectsCount : totalCount) | number }}
+              </div>
+              <div class="expanded-donut-label">
+                {{ expandedWidget === 'defects' ? 'Open Defects' : 'Total Test Cases' }}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Breakdown Cards & Statistics -->
+        <div class="expanded-breakdown-section">
+          <h4 class="expanded-breakdown-heading">Category Breakdown & Distribution</h4>
+          
+          <!-- Defects Breakdown -->
+          <div class="expanded-breakdown-grid" *ngIf="expandedWidget === 'defects'">
+            <div class="breakdown-stat-card border-critical">
+              <div class="stat-card-top">
+                <span class="legend-color-box bg-chart-red"></span>
+                <span class="stat-card-label">Critical</span>
+              </div>
+              <div class="stat-card-val">{{ qaCriticalCount | number }}</div>
+              <div class="stat-card-pct">{{ qaCriticalPercent }}% of open defects</div>
+            </div>
+
+            <div class="breakdown-stat-card border-high">
+              <div class="stat-card-top">
+                <span class="legend-color-box bg-chart-orange"></span>
+                <span class="stat-card-label">High</span>
+              </div>
+              <div class="stat-card-val">{{ qaHighCount | number }}</div>
+              <div class="stat-card-pct">{{ qaHighPercent }}% of open defects</div>
+            </div>
+
+            <div class="breakdown-stat-card border-medium">
+              <div class="stat-card-top">
+                <span class="legend-color-box bg-chart-yellow"></span>
+                <span class="stat-card-label">Medium</span>
+              </div>
+              <div class="stat-card-val">{{ qaMediumCount | number }}</div>
+              <div class="stat-card-pct">{{ qaMediumPercent }}% of open defects</div>
+            </div>
+
+            <div class="breakdown-stat-card border-low">
+              <div class="stat-card-top">
+                <span class="legend-color-box bg-chart-blue"></span>
+                <span class="stat-card-label">Low</span>
+              </div>
+              <div class="stat-card-val">{{ qaLowCount | number }}</div>
+              <div class="stat-card-pct">{{ qaLowPercent }}% of open defects</div>
+            </div>
+          </div>
+
+          <!-- Test Execution Breakdown -->
+          <div class="expanded-breakdown-grid" *ngIf="expandedWidget === 'testExecution'">
+            <div class="breakdown-stat-card border-passed">
+              <div class="stat-card-top">
+                <span class="legend-color-box bg-chart-green"></span>
+                <span class="stat-card-label">Passed</span>
+              </div>
+              <div class="stat-card-val">{{ passedCount | number }}</div>
+              <div class="stat-card-pct">{{ passedPercent }}% of test cases</div>
+            </div>
+
+            <div class="breakdown-stat-card border-failed">
+              <div class="stat-card-top">
+                <span class="legend-color-box bg-chart-red"></span>
+                <span class="stat-card-label">Failed</span>
+              </div>
+              <div class="stat-card-val">{{ failedCount | number }}</div>
+              <div class="stat-card-pct">{{ failedPercent }}% of test cases</div>
+            </div>
+
+            <div class="breakdown-stat-card border-blocked">
+              <div class="stat-card-top">
+                <span class="legend-color-box bg-chart-grey"></span>
+                <span class="stat-card-label">Blocked</span>
+              </div>
+              <div class="stat-card-val">{{ blockedCount | number }}</div>
+              <div class="stat-card-pct">{{ blockedPercent }}% of test cases</div>
+            </div>
+
+            <div class="breakdown-stat-card border-norun">
+              <div class="stat-card-top">
+                <span class="legend-color-box bg-chart-blue"></span>
+                <span class="stat-card-label">Not Executed</span>
+              </div>
+              <div class="stat-card-val">{{ notExecutedCount | number }}</div>
+              <div class="stat-card-pct">{{ notExecutedPercent }}% of test cases</div>
+            </div>
+          </div>
+
+          <div class="expanded-meta-note">
+            <i class="fa-solid fa-circle-info"></i>
+            <span>Live metrics derived strictly from authenticated backend records matching the current filter scope.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="qa-modal-footer">
+        <span class="esc-hint">Press <kbd>Esc</kbd> or click outside to dismiss</span>
+        <button class="btn btn-secondary btn-sm" (click)="closeExpandModal()" type="button">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 8. ACTIVE FILTERS MODAL ================= -->
+  <div class="qa-modal-backdrop" *ngIf="activeFiltersModalChart" (click)="closeActiveFiltersModal()">
+    <div class="qa-modal-card active-filters-modal" (click)="$event.stopPropagation()">
+      <div class="qa-modal-header">
+        <div class="qa-modal-header-titles">
+          <span class="qa-modal-icon-badge badge-filters">
+            <i class="fa-solid fa-sliders"></i>
+          </span>
+          <div>
+            <h2 class="qa-modal-title">Active Filter Scope</h2>
+            <p class="qa-modal-subtitle">Current filter criteria for <strong>{{ activeFiltersModalChart }}</strong></p>
+          </div>
+        </div>
+        <button class="qa-modal-close-btn" (click)="closeActiveFiltersModal()" type="button" title="Close (Esc)">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="qa-modal-body">
+        <div class="active-filter-details-grid">
+          <div class="filter-item-card">
+            <div class="filter-item-icon"><i class="fa-solid fa-folder-tree"></i></div>
+            <div class="filter-item-content">
+              <span class="filter-item-label">Project</span>
+              <span class="filter-item-val">{{ getSelectedProjectName() }}</span>
+            </div>
+          </div>
+
+          <div class="filter-item-card">
+            <div class="filter-item-icon"><i class="fa-regular fa-folder"></i></div>
+            <div class="filter-item-content">
+              <span class="filter-item-label">Feature</span>
+              <span class="filter-item-val">{{ getSelectedFeatureName() }}</span>
+            </div>
+          </div>
+
+          <div class="filter-item-card">
+            <div class="filter-item-icon"><i class="fa-solid fa-bolt"></i></div>
+            <div class="filter-item-content">
+              <span class="filter-item-label">Sprint</span>
+              <span class="filter-item-val">{{ selectedSprint ? 'Sprint ' + selectedSprint : 'All Sprints' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="active-filter-summary-box">
+          <div class="filter-summary-heading">
+            <i class="fa-solid fa-circle-check text-emerald"></i>
+            <span>Active Scope: <strong>{{ activeFilterDescription }}</strong></span>
+          </div>
+          <p class="filter-summary-text">
+            All donut slices, totals, percentages, and drilldown records reflect this scope. To change filters, use the filter dropdowns in the dashboard header.
+          </p>
+        </div>
+      </div>
+
+      <div class="qa-modal-footer">
+        <button class="btn btn-secondary btn-sm" *ngIf="hasActiveFilters()" (click)="resetFilters(); closeActiveFiltersModal()" type="button">
+          <i class="fa-solid fa-arrow-rotate-left"></i> Reset All Filters
+        </button>
+        <button class="btn btn-primary btn-sm" (click)="closeActiveFiltersModal()" type="button">
+          Done
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= 9. IN-APP NOTIFICATIONS MODAL (Reused from Tester Workspace) ================= -->
+  <app-notifications-modal
+    [isOpen]="isNotificationsModalOpen"
+    [notifications]="notifications"
+    [unreadCount]="unreadNotificationCount"
+    (close)="isNotificationsModalOpen = false"
+    (toggleRead)="handleToggleNotificationRead($event)"
+    (dismiss)="handleDismissNotification($event)"
+    (markAllRead)="handleMarkAllNotificationsRead()">
+  </app-notifications-modal>
+</div>

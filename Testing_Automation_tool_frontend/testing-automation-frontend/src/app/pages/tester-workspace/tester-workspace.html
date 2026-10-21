@@ -3,6 +3,8 @@
   <app-workspace-navbar [userName]="userName" [userRole]="userRole" [userInitials]="userInitials"
     [unreadNotificationCount]="unreadNotificationCount" [activeProject]="activeProject" [activeFeature]="activeFeature"
     [featureAttachmentCount]="featureAttachmentCount" [selectedRegion]="selectedRegion" [isOverviewLoading]="isOverviewLoading"
+    [isManagerUser]="isManager"
+    (backToManager)="navigateToManagerDashboard()"
     (toggleSidebar)="isSidebarOpen = !isSidebarOpen"
     (openNotifications)="openNotificationsModal()" (openOverview)="clearActiveFeatureToOverview('projects')"
     (openOverviewTab)="clearActiveFeatureToOverview($event)"

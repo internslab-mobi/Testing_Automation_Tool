@@ -60,7 +60,9 @@ export class Login implements OnInit {
         console.log('Login successful:', response);
         const cachedUser = this.authService.currentUser();
         const role = (cachedUser?.role || "").toUpperCase();
-        if (role.includes('TESTER')) {
+        if (role.includes('MANAGER')) {
+          this.router.navigate(['/manager-dashboard']);
+        } else if (role.includes('TESTER')) {
           this.router.navigate(['/tester-workspace']);
         } else {
           this.router.navigate(['/tester-workspace']);
