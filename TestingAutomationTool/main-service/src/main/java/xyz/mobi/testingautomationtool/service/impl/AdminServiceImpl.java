@@ -53,8 +53,6 @@ public class AdminServiceImpl implements AdminService {
     @Transactional
     public ManagerResponse createManager(CreateManagerRequest request) {
 
-        User currentAdmin = authService.getCurrentUser();
-
         if (userRepository.existsByUsername(request.getUsername())) {
             throw new DuplicateResourceException(
                     "Username already exists: " + request.getUsername()
@@ -75,7 +73,7 @@ public class AdminServiceImpl implements AdminService {
                         ));
 
 
-        String rawPassword = generateRandomPassword(10);
+        String rawPassword = generateRandomPassword();
 
         String encodedPassword =
                 passwordEncoder.encode(rawPassword);
@@ -104,15 +102,6 @@ public class AdminServiceImpl implements AdminService {
         return adminMapper.toResponse(savedManager);
 
     }
-
-    @Transactional
-    @Override
-    public ManagerResponse updateManager(
-            Integer userId,
-            CreateManagerRequest request) {
-        return updateUser(userId, request);
-    }
-
     @Transactional
     @Override
     public ManagerResponse updateUser(
@@ -213,9 +202,6 @@ public class AdminServiceImpl implements AdminService {
         if (request.getSkills() != null) {
             manager.setSkills(request.getSkills());
         }
-
-        User updatedManager = userRepository.save(manager);
-
         return "Manager updated successfully";
     }
 
@@ -369,15 +355,15 @@ public class AdminServiceImpl implements AdminService {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
-    private String generateRandomPassword(int length) {
+    private String generateRandomPassword() {
         String characters =
                 "ABCDEFGHIJKLMNOPQRSTUVWXYZ" +
                         "abcdefghijklmnopqrstuvwxyz" +
                         "0123456789@#$!";
 
-        StringBuilder password = new StringBuilder(length);
+        StringBuilder password = new StringBuilder(10);
 
-        for (int i = 0; i < length; i++) {
+        for (int i = 0; i < 10; i++) {
             password.append(
                     characters.charAt(
                             SECURE_RANDOM.nextInt(characters.length())

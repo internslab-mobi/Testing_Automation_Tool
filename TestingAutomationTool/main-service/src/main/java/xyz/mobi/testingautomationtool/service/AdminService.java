@@ -12,11 +12,6 @@ public interface AdminService {
     ManagerResponse createManager(CreateManagerRequest request);
 
     @Transactional
-    ManagerResponse updateManager(
-            Integer userId,
-            CreateManagerRequest request);
-
-    @Transactional
     ManagerResponse updateUser(
             Integer userId,
             CreateManagerRequest request);
