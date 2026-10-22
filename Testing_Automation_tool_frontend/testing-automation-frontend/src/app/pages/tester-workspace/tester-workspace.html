@@ -3,7 +3,7 @@
   <app-workspace-navbar [userName]="userName" [userRole]="userRole" [userInitials]="userInitials"
     [unreadNotificationCount]="unreadNotificationCount" [activeProject]="activeProject" [activeFeature]="activeFeature"
     [featureAttachmentCount]="featureAttachmentCount" [selectedRegion]="selectedRegion" [isOverviewLoading]="isOverviewLoading"
-    [isManagerUser]="isManager"
+    [isManagerUser]="isManager" [isOverviewMode]="isOverviewMode"
     (backToManager)="navigateToManagerDashboard()"
     (toggleSidebar)="isSidebarOpen = !isSidebarOpen"
     (openNotifications)="openNotificationsModal()" (openOverview)="clearActiveFeatureToOverview('projects')"
@@ -21,7 +21,8 @@
       [availableRegions]="availableRegions" [selectedRegion]="selectedRegion" [projects]="projects"
       [activeProject]="activeProject" [features]="features" [activeFeature]="activeFeature"
       [projectAttachmentCount]="projectAttachmentCount" [featureAttachmentCount]="featureAttachmentCount"
-      (regionChange)="onRegionChange($event)" (selectProject)="selectProject($event, true)"
+      [isOverviewMode]="isOverviewMode"
+      (regionChange)="onRegionChange($event)" (selectProject)="selectProject($event, false)"
       (createProject)="openCreateProjectModal()" (editProject)="openEditProject($event)"
       (openProjectAttachments)="openAttachments('project', $event.projectId, 'Project Attachments: ' + $event.projectName)"
       (selectFeature)="selectFeature($event)" (createFeature)="openCreateFeatureModal()"
@@ -40,26 +41,22 @@
       </button>
 
       <!-- INACTIVE PROJECT BARRIER (If project is INACTIVE, contents cannot be accessible) -->
-      <div class="project-inactive-barrier" *ngIf="activeProject?.status === 'INACTIVE'">
+      <div class="project-inactive-barrier" *ngIf="!isOverviewMode && activeProject?.status === 'INACTIVE'">
         <div class="barrier-icon-wrap">
           <i class="fa-solid fa-shield-halved"></i>
         </div>
         <div class="barrier-content">
           <h3>Project Contents Locked</h3>
           <p>
-            The project <strong>{{ activeProject?.projectName }}</strong> is currently set to <strong>INACTIVE</strong>.
-            Features, test suites, executions, and defect logging cannot be accessed or modified while inactive.
+            The project <strong>{{ activeProject?.projectName }}</strong> is currently set to <strong>INACTIVE</strong>. Content locked by manager or admin.
           </p>
-          <div class="barrier-actions">
-            <button class="btn btn-primary btn-sm" (click)="openEditProject(activeProject!)">
-              <i class="fa-solid fa-pen-to-square"></i> Edit Project Status
-            </button>
-          </div>
         </div>
       </div>
 
-      <!-- Quick Metrics Ribbon (Only accessible when Project is ACTIVE) -->
-      <div class="metrics-ribbon" *ngIf="activeFeature && activeProject?.status !== 'INACTIVE'">
+      <!-- ACTIVE PROJECT CONTENT WRAPPER (Inaccessible when project is INACTIVE) -->
+      <ng-container *ngIf="!isOverviewMode && activeProject && activeProject.status !== 'INACTIVE'">
+        <!-- Quick Metrics Ribbon (Only accessible when Project is ACTIVE) -->
+        <div class="metrics-ribbon" *ngIf="activeFeature">
         <div class="metric-card total-metric"
           (click)="activeSubTab = 'testcases'; tcFilterStatus = 'ALL'; onTestCaseFilterChange()">
           <div class="metric-icon"><i class="fa-solid fa-vial"></i></div>
@@ -134,12 +131,6 @@
 
         <!-- Suite Actions Strip -->
         <div class="cockpit-tab-actions" *ngIf="activeSubTab === 'testcases'">
-          <button class="btn btn-warning btn-sm" *ngIf="selectedTestCaseIds.size > 0" (click)="openMoveTestCasesModal()" title="Map selected test cases to another feature">
-            <i class="fa-solid fa-arrow-right-arrow-left"></i> Map to Feature ({{ selectedTestCaseIds.size }})
-          </button>
-          <button class="btn btn-secondary btn-sm" *ngIf="selectedTestCaseIds.size > 0" (click)="clearSelectedTestCases()" title="Clear Selection">
-            <i class="fa-solid fa-xmark"></i> Clear
-          </button>
           <button class="btn btn-primary btn-sm" (click)="openCreateTestCaseModal()">
             <i class="fa-solid fa-plus"></i> Add Test Case
           </button>
@@ -518,8 +509,21 @@
         </div>
       </div>
 
-      <!-- VIEW 3: GLOBAL OVERVIEW DIRECTORY (When No Feature is Selected) -->
-      <ng-container *ngIf="!activeFeature">
+      <!-- Empty State when Active Project has no Features yet -->
+      <div class="view-panel empty-feature-panel" *ngIf="!activeFeature">
+          <div class="empty-list-msg" style="padding: 48px 16px; text-align: center;">
+            <i class="fa-solid fa-cubes text-emerald" style="font-size: 36px; margin-bottom: 12px; display: block;"></i>
+            <h3 style="font-size: 16px; font-weight: 700; color: #334155; margin-bottom: 6px;">No Feature Selected</h3>
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Select a feature from the sidebar to view test suites, or create a new feature for {{ activeProject.projectName }}.</p>
+            <button class="btn btn-primary btn-sm" (click)="openCreateFeatureModal()">
+              <i class="fa-solid fa-plus"></i> Create Feature
+            </button>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- VIEW 3: GLOBAL OVERVIEW DIRECTORY (When in Overview Mode OR No Feature is Selected) -->
+      <ng-container *ngIf="isOverviewMode || (!activeProject && !activeFeature)">
         <!-- Overview Sub-Navigation Tabs Bar (Top-level like Feature Tabs) -->
         <div class="cockpit-tabs-bar overview-tabs-bar">
           <div class="tabs-group">
@@ -565,7 +569,7 @@
               <select class="form-control filter-select" [(ngModel)]="allProjStatusFilter">
                 <option value="ALL">All Statuses</option>
                 <option value="ACTIVE">ACTIVE</option>
-                <option value="ARCHIVED">ARCHIVED</option>
+                <option value="INACTIVE">INACTIVE</option>
               </select>
             </div>
           </div>
@@ -1228,15 +1232,6 @@
           <input type="text" class="form-control" [(ngModel)]="editProjectForm.projectName">
         </div>
 
-        <!-- Project Status Toggle (Active vs Inactive) -->
-        <div class="form-group">
-          <label><i class="fa-solid fa-toggle-on text-emerald"></i> Status *</label>
-          <select class="form-control" [(ngModel)]="editProjectForm.status">
-            <option value="ACTIVE">ACTIVE (Contents Accessible)</option>
-            <option value="INACTIVE">INACTIVE (Contents Locked)</option>
-          </select>
-        </div>
-
         <!-- Region Dropdown -->
         <div class="form-group">
           <label><i class="fa-solid fa-location-dot text-emerald"></i> Region / Location</label>
@@ -1249,17 +1244,31 @@
         <div class="form-grid-2">
           <div class="form-group">
             <label><i class="fa-solid fa-layer-group text-emerald"></i> Module</label>
-            <select class="form-control" [(ngModel)]="editSelectedModuleId" (ngModelChange)="loadSubModulesForModule($event)">
+            <select class="form-control" [ngModel]="editSelectedModuleId" (ngModelChange)="onEditModuleChange($event)">
+              <option [ngValue]="null" disabled>-- Select Module --</option>
               <option *ngFor="let m of dbModules" [ngValue]="m.moduleId">{{ m.moduleName }}</option>
             </select>
           </div>
           <div class="form-group">
-            <label><i class="fa-solid fa-cubes text-emerald"></i> Sub-Module</label>
-            <select class="form-control" [(ngModel)]="editProjectForm.subModule" *ngIf="dbSubModules.length > 0">
-              <option *ngFor="let sm of dbSubModules" [value]="sm.subModuleName">{{ sm.subModuleName }}</option>
+            <div class="label-row-with-action">
+              <label><i class="fa-solid fa-cubes text-emerald"></i> Sub-Module</label>
+              <button type="button" class="btn-link-action" *ngIf="!isAddingNewSubModuleEdit && editSelectedModuleId" (click)="isAddingNewSubModuleEdit = true; newSubModuleNameInputEdit = ''">
+                <i class="fa-solid fa-plus"></i> Add Sub-Module
+              </button>
+            </div>
+            <select class="form-control" [(ngModel)]="editSelectedSubModuleId" *ngIf="!isAddingNewSubModuleEdit" [disabled]="!editSelectedModuleId">
+              <option [ngValue]="null" disabled>{{ editSelectedModuleId ? (editSubModules.length > 0 ? '-- Select Sub-Module --' : 'No sub-modules found (Click Add)') : '-- Select Module First --' }}</option>
+              <option *ngFor="let sm of editSubModules" [ngValue]="sm.subModuleId">{{ sm.subModuleName }}</option>
             </select>
-            <input type="text" class="form-control" [(ngModel)]="editProjectForm.subModule" *ngIf="dbSubModules.length === 0"
-              placeholder="e.g. ID Portal">
+            <div class="inline-create-row" *ngIf="isAddingNewSubModuleEdit">
+              <input type="text" class="form-control" placeholder="Enter new sub-module name..." [(ngModel)]="newSubModuleNameInputEdit" (keydown.enter)="saveNewSubModuleInlineEdit()">
+              <button type="button" class="btn btn-sm btn-primary" (click)="saveNewSubModuleInlineEdit()">
+                <i class="fa-solid fa-check"></i> Add
+              </button>
+              <button type="button" class="btn btn-sm btn-secondary" (click)="isAddingNewSubModuleEdit = false">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
           </div>
         </div>
 
@@ -1277,9 +1286,6 @@
 
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="isProjectEditModalOpen = false">Cancel</button>
-        <button class="btn btn-secondary-outline" (click)="saveProjectEdit(true)" title="Save all project fields">
-          <i class="fa-solid fa-arrows-rotate"></i> Update All
-        </button>
         <button class="btn btn-primary" (click)="saveProjectEdit(false)" title="Save changes">
           <i class="fa-solid fa-floppy-disk"></i> Save Changes
         </button>
@@ -1376,9 +1382,6 @@
 
       <div class="modal-footer">
         <button class="btn btn-secondary" (click)="isFeatureEditModalOpen = false">Cancel</button>
-        <button class="btn btn-secondary-outline" (click)="saveFeatureEdit(true)" title="Save all feature fields">
-          <i class="fa-solid fa-arrows-rotate"></i> Update All
-        </button>
         <button class="btn btn-primary" (click)="saveFeatureEdit(false)" title="Save changes">
           <i class="fa-solid fa-floppy-disk"></i> Save Changes
         </button>
@@ -1722,7 +1725,7 @@
   </div>
 
   <!-- MAP / MOVE TEST CASES TO ANOTHER FEATURE MODAL -->
-  <div class="modal-backdrop" *ngIf="isMoveTestCasesModalOpen" (click)="closeMoveTestCasesModal()">
+  <div class="modal-overlay" *ngIf="isMoveTestCasesModalOpen" (click)="closeMoveTestCasesModal()">
     <div class="modal-card modal-md" (click)="$event.stopPropagation()">
       <div class="modal-header">
         <div class="modal-title-wrap">

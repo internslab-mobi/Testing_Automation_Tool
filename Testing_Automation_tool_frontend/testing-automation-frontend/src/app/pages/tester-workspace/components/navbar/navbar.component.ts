@@ -30,6 +30,7 @@ export class NavbarComponent {
   @Input() selectedRegion = 'India';
   @Input() isOverviewLoading = false;
   @Input() isManagerUser = false;
+  @Input() isOverviewMode = false;
 
   @Output() toggleSidebar = new EventEmitter<void>();
   @Output() openNotifications = new EventEmitter<void>();

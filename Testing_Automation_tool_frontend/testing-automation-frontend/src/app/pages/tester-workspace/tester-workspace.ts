@@ -132,6 +132,7 @@ export class TesterWorkspace implements OnInit {
   editSelectedModuleId: number | null = null;
   editSelectedSubModuleId: number | null = null;
   editSelectedRegionId: number | null = null;
+  editSubModules: SubModuleItem[] = [];
 
   // Inline Creation Triggers & Inputs
   isAddingNewModule = false;
@@ -140,6 +141,10 @@ export class TesterWorkspace implements OnInit {
   newSubModuleNameInput = '';
   isAddingNewRegion = false;
   newRegionNameInput = '';
+
+  // Inline Creation Triggers for Edit Project
+  isAddingNewSubModuleEdit = false;
+  newSubModuleNameInputEdit = '';
 
   // Features
   features: Feature[] = [];
@@ -156,6 +161,7 @@ export class TesterWorkspace implements OnInit {
   allTestCasesList: (TestCase & { featureName?: string; projectName?: string })[] = [];
   allBugsList: (Bug & { featureName?: string; projectName?: string })[] = [];
   isOverviewLoading = false;
+  isOverviewMode = false;
 
   // Search & Filter for All-Entity Lists
   allProjSearch = '';
@@ -888,9 +894,20 @@ export class TesterWorkspace implements OnInit {
   }
 
   selectProject(p: Project, openDetailsModal = false): void {
+    this.isOverviewMode = false;
     this.activeProject = p;
     this.loadProjectAttachmentCount(p.projectId);
-    this.loadFeatures(p.projectId);
+    if (p.status === 'INACTIVE') {
+      this.features = [];
+      this.activeFeature = null;
+      this.testcases = [];
+      this.filteredTestCases = [];
+      this.bugs = [];
+      this.filteredBugs = [];
+      this.updateMetrics();
+    } else {
+      this.loadFeatures(p.projectId);
+    }
     if (openDetailsModal) {
       this.isProjectDetailsModalOpen = true;
     }
@@ -995,7 +1012,7 @@ export class TesterWorkspace implements OnInit {
         this.showToast(`Project "${created.projectName}" created successfully!`, 'success');
         this.isProjectCreateModalOpen = false;
         this.loadProjects();
-        this.selectProject(created, true);
+        this.selectProject(created, false);
         this.cdr.markForCheck();
       },
       error: (err) => {
@@ -1009,23 +1026,35 @@ export class TesterWorkspace implements OnInit {
   openEditProject(p: Project): void {
     this.isProjectDetailsModalOpen = false;
     this.refreshAvailableRegions();
+    if (this.dbModules.length === 0) {
+      this.loadModules();
+    }
+    if (this.dbRegions.length === 0) {
+      this.loadRegions();
+    }
+
     // Find matching region id
-    const reg = this.dbRegions.find(r => (r.countryName || '').toLowerCase() === (p.region || '').toLowerCase());
-    this.editSelectedRegionId = reg ? reg.countryId : (this.dbRegions.length > 0 ? this.dbRegions[0].countryId : null);
+    const reg = this.dbRegions.find(r => (r.countryName || '').toLowerCase() === (p.region || '').toLowerCase() || r.countryId === p.regionId);
+    this.editSelectedRegionId = reg ? reg.countryId : (this.dbRegions.length > 0 ? this.dbRegions[0].countryId : 1);
 
     // Find matching module id
-    const mod = this.dbModules.find(m => m.moduleName.toLowerCase() === (p.module || '').toLowerCase());
-    this.editSelectedModuleId = mod ? mod.moduleId : null;
+    const mod = this.dbModules.find(m => m.moduleName.toLowerCase() === (p.module || '').toLowerCase() || m.moduleId === p.moduleId);
+    this.editSelectedModuleId = mod ? mod.moduleId : (this.dbModules.length > 0 ? this.dbModules[0].moduleId : null);
+
+    this.editSelectedSubModuleId = null;
+    this.editSubModules = [];
+    this.isAddingNewSubModuleEdit = false;
+    this.newSubModuleNameInputEdit = '';
 
     if (this.editSelectedModuleId) {
-      this.loadSubModulesForModule(this.editSelectedModuleId);
+      this.loadSubModulesForEditProject(this.editSelectedModuleId, p.subModule, p.subModuleId);
     }
 
     this.editProjectForm = {
       projectName: p.projectName,
-      region: this.editSelectedRegionId || p.region,
-      module: this.editSelectedModuleId || p.module || '',
-      subModule: p.subModule || '',
+      region: this.editSelectedRegionId,
+      module: this.editSelectedModuleId,
+      subModule: '',
       description: p.description || '',
       comments: p.comments || '',
       status: p.status || 'ACTIVE'
@@ -1034,36 +1063,92 @@ export class TesterWorkspace implements OnInit {
     this.cdr.markForCheck();
   }
 
+  loadSubModulesForEditProject(moduleId: number, targetSubModuleName?: string, targetSubModuleId?: number): void {
+    if (!moduleId) {
+      this.editSubModules = [];
+      this.editSelectedSubModuleId = null;
+      this.cdr.markForCheck();
+      return;
+    }
+    this.projectService.getSubModules(moduleId).subscribe({
+      next: (subs) => {
+        this.editSubModules = subs && Array.isArray(subs) ? subs : [];
+        if (this.editSubModules.length > 0) {
+          const found = this.editSubModules.find(s =>
+            (targetSubModuleId && s.subModuleId === targetSubModuleId) ||
+            (targetSubModuleName && s.subModuleName.toLowerCase() === targetSubModuleName.toLowerCase())
+          );
+          this.editSelectedSubModuleId = found ? found.subModuleId : this.editSubModules[0].subModuleId;
+        } else {
+          this.editSelectedSubModuleId = null;
+        }
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.editSubModules = [];
+        this.editSelectedSubModuleId = null;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  onEditModuleChange(moduleId: number): void {
+    this.editSelectedModuleId = moduleId ? Number(moduleId) : null;
+    if (this.editSelectedModuleId) {
+      this.loadSubModulesForEditProject(this.editSelectedModuleId);
+    } else {
+      this.editSubModules = [];
+      this.editSelectedSubModuleId = null;
+    }
+    this.cdr.markForCheck();
+  }
+
+  saveNewSubModuleInlineEdit(): void {
+    const name = (this.newSubModuleNameInputEdit || '').trim();
+    if (!name) return;
+    if (!this.editSelectedModuleId) {
+      this.showToast('Please select a module first', 'warning');
+      return;
+    }
+    this.projectService.createSubModule(this.editSelectedModuleId, name).subscribe({
+      next: (created) => {
+        this.showToast(`Sub-module "${created.subModuleName}" created successfully!`, 'success');
+        this.editSubModules.push(created);
+        this.editSelectedSubModuleId = created.subModuleId;
+        this.newSubModuleNameInputEdit = '';
+        this.isAddingNewSubModuleEdit = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Failed to create sub-module:', err);
+        this.showToast(err?.error?.message || 'Failed to create sub-module', 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
   saveProjectEdit(forcePut: boolean = false): void {
     if (!this.activeProject) return;
 
     const handleSuccess = (msg: string = 'Project updated successfully!') => {
       this.showToast(msg, 'success');
       this.isProjectEditModalOpen = false;
+      const targetStatus = this.editProjectForm.status || 'ACTIVE';
+      this.activeProject!.status = targetStatus;
+      if (targetStatus === 'INACTIVE') {
+        this.features = [];
+        this.activeFeature = null;
+        this.testcases = [];
+        this.filteredTestCases = [];
+        this.bugs = [];
+        this.filteredBugs = [];
+        this.updateMetrics();
+      } else {
+        this.loadFeatures(this.activeProject!.projectId);
+      }
       this.loadProjects();
       this.cdr.markForCheck();
     };
-
-    if (forcePut) {
-      const req: any = {
-        projectName: this.editProjectForm.projectName,
-        region: this.editSelectedRegionId || this.editProjectForm.region,
-        module: this.editSelectedModuleId || this.editProjectForm.module,
-        subModule: this.editSelectedSubModuleId || this.editProjectForm.subModule,
-        description: this.editProjectForm.description,
-        comments: this.editProjectForm.comments,
-        status: this.editProjectForm.status
-      };
-      this.projectService.updateProject(this.activeProject.projectId, req).subscribe({
-        next: () => handleSuccess('Project updated successfully!'),
-        error: (putErr) => {
-          console.error('Error updating project:', putErr);
-          this.showToast(putErr?.error?.message || 'Failed to update project', 'error');
-          this.cdr.markForCheck();
-        }
-      });
-      return;
-    }
 
     const patchReq: ProjectPatchRequest = {};
 
@@ -1086,16 +1171,35 @@ export class TesterWorkspace implements OnInit {
       patchReq.description = this.editProjectForm.description;
     }
 
-    if (this.editSelectedRegionId && this.editSelectedRegionId !== this.activeProject.regionId) {
-      patchReq.region = this.editSelectedRegionId;
+    // Ensure numeric Integer IDs
+    if (this.editSelectedRegionId) {
+      const currentReg = this.dbRegions.find(r => (r.countryName || '').toLowerCase() === (this.activeProject!.region || '').toLowerCase());
+      const currentRegId = this.activeProject.regionId || (currentReg ? currentReg.countryId : null);
+      if (Number(this.editSelectedRegionId) !== currentRegId) {
+        patchReq.region = Number(this.editSelectedRegionId);
+      }
     }
 
-    if (this.editSelectedModuleId && this.editSelectedModuleId !== this.activeProject.moduleId) {
-      patchReq.module = this.editSelectedModuleId;
+    let moduleChanged = false;
+    if (this.editSelectedModuleId) {
+      const currentMod = this.dbModules.find(m => m.moduleName.toLowerCase() === (this.activeProject!.module || '').toLowerCase());
+      const currentModId = this.activeProject.moduleId || (currentMod ? currentMod.moduleId : null);
+      if (Number(this.editSelectedModuleId) !== currentModId) {
+        patchReq.module = Number(this.editSelectedModuleId);
+        moduleChanged = true;
+      }
     }
 
-    if (this.editSelectedSubModuleId && this.editSelectedSubModuleId !== this.activeProject.subModuleId) {
-      patchReq.subModule = this.editSelectedSubModuleId;
+    if (this.editSelectedSubModuleId) {
+      const currentSub = this.editSubModules.find(s => s.subModuleName.toLowerCase() === (this.activeProject!.subModule || '').toLowerCase());
+      const currentSubId = this.activeProject.subModuleId || (currentSub ? currentSub.subModuleId : null);
+      if (Number(this.editSelectedSubModuleId) !== currentSubId || moduleChanged) {
+        patchReq.subModule = Number(this.editSelectedSubModuleId);
+        // Backend requires module whenever subModule is patched to validate submodule belongs to module
+        if (this.editSelectedModuleId) {
+          patchReq.module = Number(this.editSelectedModuleId);
+        }
+      }
     }
 
     const statusChanged = this.editProjectForm.status && this.editProjectForm.status !== this.activeProject.status;
@@ -1118,27 +1222,39 @@ export class TesterWorkspace implements OnInit {
       return;
     }
 
-    // Use PATCH endpoint for partial updates (e.g. comments only)
+    // Use PATCH endpoint for partial updates
     this.projectService.patchProject(this.activeProject.projectId, patchReq).subscribe({
       next: () => {
         if (statusChanged) {
-          this.projectService.patchProjectAccess(this.activeProject!.projectId, this.editProjectForm.status as any).subscribe();
+          this.projectService.patchProjectAccess(this.activeProject!.projectId, this.editProjectForm.status as any).subscribe({
+            next: () => handleSuccess('Project updated successfully!'),
+            error: () => handleSuccess('Project updated successfully!')
+          });
+        } else {
+          handleSuccess('Project updated successfully!');
         }
-        handleSuccess('Project updated successfully!');
       },
       error: (err) => {
-        // Fallback to updateProject (PUT) if PATCH is rejected
+        // Fallback to updateProject (PUT) with strictly numeric IDs if PATCH is rejected
         const req: any = {
           projectName: this.editProjectForm.projectName,
-          region: this.editSelectedRegionId || this.editProjectForm.region,
-          module: this.editSelectedModuleId || this.editProjectForm.module,
-          subModule: this.editSelectedSubModuleId || this.editProjectForm.subModule,
+          region: this.editSelectedRegionId ? Number(this.editSelectedRegionId) : 1,
+          module: this.editSelectedModuleId ? Number(this.editSelectedModuleId) : 1,
+          subModule: this.editSelectedSubModuleId ? Number(this.editSelectedSubModuleId) : 1,
           description: this.editProjectForm.description,
-          comments: this.editProjectForm.comments,
-          status: this.editProjectForm.status
+          comments: this.editProjectForm.comments
         };
         this.projectService.updateProject(this.activeProject!.projectId, req).subscribe({
-          next: () => handleSuccess('Project updated successfully!'),
+          next: () => {
+            if (statusChanged) {
+              this.projectService.patchProjectAccess(this.activeProject!.projectId, this.editProjectForm.status as any).subscribe({
+                next: () => handleSuccess('Project updated successfully!'),
+                error: () => handleSuccess('Project updated successfully!')
+              });
+            } else {
+              handleSuccess('Project updated successfully!');
+            }
+          },
           error: (putErr) => {
             console.error('Error updating project:', putErr);
             this.showToast(putErr?.error?.message || err?.error?.message || 'Failed to update project', 'error');
@@ -1203,6 +1319,14 @@ export class TesterWorkspace implements OnInit {
   }
 
   selectFeature(f: Feature): void {
+    this.isOverviewMode = false;
+    if (this.activeProject?.status === 'INACTIVE') {
+      this.activeFeature = null;
+      this.testcases = [];
+      this.bugs = [];
+      this.cdr.markForCheck();
+      return;
+    }
     this.activeFeature = f;
     this.loadFeatureAttachmentCount(f.featureId);
     this.loadTestCases(f.featureId);
@@ -1224,7 +1348,10 @@ export class TesterWorkspace implements OnInit {
   }
 
   openCreateFeatureModal(): void {
-    if (!this.activeProject) return;
+    if (!this.activeProject || this.activeProject.status === 'INACTIVE') {
+      this.showToast('Cannot create features for an INACTIVE project.', 'warning');
+      return;
+    }
     this.newFeatureForm = {
       projectId: this.activeProject.projectId,
       featureName: '',
@@ -2364,6 +2491,8 @@ export class TesterWorkspace implements OnInit {
   // ALL-ENTITIES OVERVIEW METHODS & GETTERS
   // ==========================================
   clearActiveFeatureToOverview(tab: 'projects' | 'features' | 'testcases' | 'bugs' = 'projects'): void {
+    this.isOverviewMode = true;
+    this.activeProject = null;
     this.activeFeature = null;
     this.activeOverviewTab = tab;
     this.loadAllOverviewData();
@@ -2527,6 +2656,7 @@ export class TesterWorkspace implements OnInit {
 
   // Quick navigation from all-entities view to a feature
   navigateToFeature(featureId: number): void {
+    this.isOverviewMode = false;
     const foundFeat = this.allFeaturesList.find(f => f.featureId === featureId);
     if (foundFeat) {
       const foundProj = this.projects.find(p => p.projectId === foundFeat.projectId);
@@ -2539,6 +2669,7 @@ export class TesterWorkspace implements OnInit {
 
   // Quick navigation to project
   navigateToProject(p: Project): void {
+    this.isOverviewMode = false;
     this.selectProject(p);
   }
 

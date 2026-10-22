@@ -9,8 +9,8 @@
       </div>
     </div>
 
-    <!-- 1. Feature Info Bar (When a Feature is Active) -->
-    <div class="navbar-feature-center" *ngIf="activeFeature">
+    <!-- 1. Feature Info Bar (When a Feature is Active and NOT in Overview Mode) -->
+    <div class="navbar-feature-center" *ngIf="activeFeature && !isOverviewMode">
       <div class="navbar-feature-meta">
         <div class="navbar-breadcrumb">
           <span>{{ activeProject?.region || 'India' }}</span>
@@ -35,8 +35,8 @@
       </div>
     </div>
 
-    <!-- 2. Project Info Bar (When Project is Selected and No Feature Active) -->
-    <div class="navbar-feature-center navbar-project-center" *ngIf="!activeFeature && activeProject">
+    <!-- 2. Project Info Bar (When Project is Selected, No Feature Active, and NOT in Overview Mode) -->
+    <div class="navbar-feature-center navbar-project-center" *ngIf="!activeFeature && activeProject && !isOverviewMode">
       <div class="navbar-feature-meta">
         <div class="navbar-breadcrumb">
           <span><i class="fa-solid fa-location-dot"></i> {{ activeProject.region || 'General' }}</span>
@@ -44,7 +44,7 @@
           <span class="active-crumb">{{ activeProject.projectName }}</span>
         </div>
         <div class="navbar-feature-heading">
-          <h2 class="navbar-feat-title" (click)="viewProjectDetails.emit(activeProject)" style="cursor: pointer;" title="Click to view Project Details">
+          <h2 class="navbar-feat-title" (click)="activeProject.status !== 'INACTIVE' && viewProjectDetails.emit(activeProject)" [style.cursor]="activeProject.status === 'INACTIVE' ? 'default' : 'pointer'" title="Click to view Project Details">
             {{ activeProject.projectName }}
           </h2>
           <span class="proj-status-badge-nav" [class.inactive]="activeProject.status === 'INACTIVE'">
@@ -62,7 +62,7 @@
           <i class="fa-regular fa-comment-dots text-emerald"></i> {{ activeProject.comments }}
         </div>
       </div>
-      <div class="navbar-overview-actions">
+      <div class="navbar-overview-actions" *ngIf="activeProject.status !== 'INACTIVE'">
         <button class="btn btn-primary btn-xs" (click)="viewProjectDetails.emit(activeProject)" title="View Full Project Details">
           <i class="fa-solid fa-circle-info"></i> Project Details
         </button>
@@ -72,13 +72,13 @@
       </div>
     </div>
 
-    <!-- 3. Master Directory Overview Banner (When in Master Directory / No Project Selected) -->
-    <div class="navbar-overview-center" *ngIf="!activeFeature && !activeProject">
+    <!-- 3. Master Directory Overview Banner (When in Overview Mode) -->
+    <div class="navbar-overview-center" *ngIf="isOverviewMode">
       <div class="navbar-overview-meta">
         <div class="navbar-breadcrumb">
           <span class="text-emerald font-semibold">{{ selectedRegion === 'ALL' ? 'Global' : selectedRegion }}</span>
           <i class="fa-solid fa-chevron-right"></i>
-          <span>QA Overview Directory</span>
+          <span>QA Master Directory</span>
         </div>
         <div class="navbar-feature-heading">
           <h2 class="navbar-feat-title">Master Entities & Suites Directory</h2>

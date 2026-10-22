@@ -22,6 +22,7 @@ export class SidebarComponent {
   @Input() activeFeature: Feature | null = null;
   @Input() projectAttachmentCount = 0;
   @Input() featureAttachmentCount = 0;
+  @Input() isOverviewMode = false;
 
   @Output() regionChange = new EventEmitter<string>();
   @Output() selectProject = new EventEmitter<Project>();
@@ -37,6 +38,8 @@ export class SidebarComponent {
 
   projectSearch = '';
   featureSearch = '';
+  selectedModule = 'ALL';
+  selectedSubModule = 'ALL';
 
   // Track comments toggled on touch / tap
   touchedCommentProjectId: number | null = null;
@@ -66,10 +69,62 @@ export class SidebarComponent {
   featurePage = 1;
   featurePageSize = 5;
 
+  get displayModules(): string[] {
+    const set = new Set<string>();
+    const isGlobalRegion = !this.selectedRegion || this.selectedRegion === 'ALL' || this.selectedRegion.toUpperCase() === 'GLOBAL';
+    const regionProjects = this.projects.filter(p =>
+      isGlobalRegion || (p.region || '').trim().toLowerCase() === this.selectedRegion.trim().toLowerCase()
+    );
+    for (const p of regionProjects) {
+      const m = (p.module || '').trim();
+      if (m) {
+        set.add(m);
+      }
+    }
+    return Array.from(set).sort();
+  }
+
+  get displaySubModules(): string[] {
+    const set = new Set<string>();
+    const isGlobalRegion = !this.selectedRegion || this.selectedRegion === 'ALL' || this.selectedRegion.toUpperCase() === 'GLOBAL';
+    const isGlobalModule = !this.selectedModule || this.selectedModule === 'ALL';
+    const filtered = this.projects.filter(p => {
+      const matchReg = isGlobalRegion || (p.region || '').trim().toLowerCase() === this.selectedRegion.trim().toLowerCase();
+      const matchMod = isGlobalModule || (p.module || '').trim().toLowerCase() === this.selectedModule.trim().toLowerCase();
+      return matchReg && matchMod;
+    });
+    for (const p of filtered) {
+      const sm = (p.subModule || '').trim();
+      if (sm) {
+        set.add(sm);
+      }
+    }
+    return Array.from(set).sort();
+  }
+
+  onModuleSelected(moduleName: string): void {
+    this.selectedModule = moduleName;
+    this.selectedSubModule = 'ALL';
+    this.projectPage = 1;
+    this.cdr.markForCheck();
+  }
+
+  onSubModuleSelected(subModuleName: string): void {
+    this.selectedSubModule = subModuleName;
+    this.projectPage = 1;
+    this.cdr.markForCheck();
+  }
+
   get filteredProjects(): Project[] {
     const s = this.projectSearch.toLowerCase().trim();
+    const isGlobalRegion = !this.selectedRegion || this.selectedRegion === 'ALL' || this.selectedRegion.toUpperCase() === 'GLOBAL';
+    const isGlobalModule = !this.selectedModule || this.selectedModule === 'ALL';
+    const isGlobalSubModule = !this.selectedSubModule || this.selectedSubModule === 'ALL';
+
     return this.projects.filter(p => {
-      const matchRegion = (this.selectedRegion === 'ALL') || !p.region || p.region.toLowerCase() === this.selectedRegion.toLowerCase();
+      const matchRegion = isGlobalRegion || !p.region || p.region.trim().toLowerCase() === this.selectedRegion.trim().toLowerCase();
+      const matchModule = isGlobalModule || !p.module || p.module.trim().toLowerCase() === this.selectedModule.trim().toLowerCase();
+      const matchSubModule = isGlobalSubModule || !p.subModule || p.subModule.trim().toLowerCase() === this.selectedSubModule.trim().toLowerCase();
       const matchSearch = !s ||
         p.projectName.toLowerCase().includes(s) ||
         (p.region && p.region.toLowerCase().includes(s)) ||
@@ -77,7 +132,7 @@ export class SidebarComponent {
         (p.subModule && p.subModule.toLowerCase().includes(s)) ||
         (p.comments && p.comments.toLowerCase().includes(s)) ||
         (p.description && p.description.toLowerCase().includes(s));
-      return matchRegion && matchSearch;
+      return matchRegion && matchModule && matchSubModule && matchSearch;
     });
   }
 
@@ -161,6 +216,8 @@ export class SidebarComponent {
 
   onRegionSelected(region: string): void {
     this.selectedRegion = region;
+    this.selectedModule = 'ALL';
+    this.selectedSubModule = 'ALL';
     this.projectPage = 1;
     this.regionChange.emit(region);
     this.cdr.markForCheck();

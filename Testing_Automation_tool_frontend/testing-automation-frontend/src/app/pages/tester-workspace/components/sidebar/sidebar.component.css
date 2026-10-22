@@ -126,6 +126,19 @@
   box-shadow: 0 2px 6px rgba(22, 101, 52, 0.12);
 }
 
+.btn-sidebar-overview.active {
+  background: #166534;
+  border-color: #15803d;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(22, 101, 52, 0.25);
+}
+
+.btn-sidebar-overview.active i.fa-layer-group,
+.btn-sidebar-overview.active .overview-arrow {
+  color: #ffffff;
+  opacity: 1;
+}
+
 .btn-sidebar-overview i.fa-layer-group {
   font-size: 13px;
 }
@@ -143,6 +156,21 @@
 .region-section {
   background: #f8fafc;
   flex-shrink: 0;
+}
+
+.filter-cascading-section {
+  background: #f8fafc;
+  flex-shrink: 0;
+  padding: 6px 10px 8px;
+}
+
+.sidebar-filter-row {
+  display: flex;
+  flex-direction: column;
+}
+
+.mt-15 {
+  margin-top: 6px;
 }
 
 .section-label {

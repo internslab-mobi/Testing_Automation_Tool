@@ -11,7 +11,7 @@
 
   <!-- Master Directory Button Section (Above Region) -->
   <div class="sidebar-section overview-action-section">
-    <button class="btn-sidebar-overview" (click)="openOverview.emit()" title="Open Master Directory (View All Projects, Features, Test Cases, Bugs)">
+    <button class="btn-sidebar-overview" [class.active]="isOverviewMode" (click)="openOverview.emit()" title="Open Master Directory (View All Projects, Features, Test Cases, Bugs)">
       <i class="fa-solid fa-layer-group text-emerald"></i>
       <span>Master Directory</span>
       <i class="fa-solid fa-arrow-up-right-from-square overview-arrow"></i>
@@ -27,6 +27,29 @@
       <option value="ALL">All Regions (Global)</option>
       <option *ngFor="let reg of displayRegions" [value]="reg">{{ reg }}</option>
     </select>
+  </div>
+
+  <!-- Dynamic Module and Sub-Module Filters below Region -->
+  <div class="sidebar-section filter-cascading-section">
+    <div class="sidebar-filter-row">
+      <div class="section-label">
+        <span><i class="fa-solid fa-layer-group text-emerald"></i> Module</span>
+      </div>
+      <select class="form-control select-module" [ngModel]="selectedModule" (ngModelChange)="onModuleSelected($event)">
+        <option value="ALL">All Modules</option>
+        <option *ngFor="let mod of displayModules" [value]="mod">{{ mod }}</option>
+      </select>
+    </div>
+
+    <div class="sidebar-filter-row mt-15">
+      <div class="section-label">
+        <span><i class="fa-solid fa-cubes text-emerald"></i> Sub-Module</span>
+      </div>
+      <select class="form-control select-submodule" [ngModel]="selectedSubModule" (ngModelChange)="onSubModuleSelected($event)">
+        <option value="ALL">All Sub-Modules</option>
+        <option *ngFor="let sm of displaySubModules" [value]="sm">{{ sm }}</option>
+      </select>
+    </div>
   </div>
 
   <!-- Projects Section -->
@@ -51,7 +74,7 @@
     <div class="project-items-list">
       <div *ngIf="filteredProjects.length === 0" class="empty-list-msg">
         <i class="fa-solid fa-folder-open"></i>
-        <span>No projects found in region</span>
+        <span>No projects found matching filter</span>
       </div>
 
       <div
@@ -85,7 +108,7 @@
         </div>
         <div class="proj-sub-row">
           <span class="proj-status">{{ p.status || 'ACTIVE' }}</span>
-          <div class="proj-actions" *ngIf="activeProject?.projectId === p.projectId">
+          <div class="proj-actions" *ngIf="activeProject?.projectId === p.projectId && p.status !== 'INACTIVE'">
             <button class="btn-item-action" (click)="$event.stopPropagation(); editProject.emit(p)" title="Edit Project">
               <i class="fa-solid fa-pen-to-square"></i>
             </button>
@@ -115,14 +138,14 @@
   <div class="sidebar-section features-section">
     <div class="section-header">
       <div class="section-title">
-        <span>Features ({{ filteredFeatures.length }})</span>
+        <span>Features ({{ activeProject?.status === 'INACTIVE' ? 0 : filteredFeatures.length }})</span>
       </div>
-      <button class="btn-add-icon" [disabled]="!activeProject" (click)="createFeature.emit()" title="Create New Feature">
+      <button class="btn-add-icon" [disabled]="!activeProject || activeProject?.status === 'INACTIVE'" (click)="activeProject?.status !== 'INACTIVE' && createFeature.emit()" title="Create New Feature">
         <i class="fa-solid fa-plus"></i>
       </button>
     </div>
 
-    <div class="search-box">
+    <div class="search-box" *ngIf="activeProject && activeProject.status !== 'INACTIVE'">
       <i class="fa-solid fa-magnifying-glass search-icon"></i>
       <input type="text" placeholder="Search features..." [(ngModel)]="featureSearch">
       <button *ngIf="featureSearch" class="btn-clear-search" (click)="featureSearch = ''" title="Clear search">
@@ -136,56 +159,63 @@
         <span>Select a project first</span>
       </div>
 
-      <div *ngIf="activeProject && filteredFeatures.length === 0" class="empty-list-msg">
+      <div *ngIf="activeProject?.status === 'INACTIVE'" class="empty-list-msg">
+        <i class="fa-solid fa-lock" style="color: #ef4444;"></i>
+        <span>Project is INACTIVE. Contents locked.</span>
+      </div>
+
+      <div *ngIf="activeProject && activeProject.status !== 'INACTIVE' && filteredFeatures.length === 0" class="empty-list-msg">
         <i class="fa-solid fa-list-check"></i>
         <span>No features configured</span>
       </div>
 
-      <div
-        *ngFor="let f of paginatedFeatures; trackBy: trackByFeatureId"
-        class="feature-item-card"
-        [class.active]="activeFeature?.featureId === f.featureId"
-        (click)="onSelectFeature(f)"
-      >
-        <div class="feat-main-row">
-          <span class="feat-name">
-            {{ f.featureName }}
-            <button
-              type="button"
-              class="btn-comment-indicator"
-              *ngIf="f.comments"
-              (click)="toggleFeatureComment(f.featureId, $event)"
-              title="Click to toggle or hover to view notes: {{ f.comments }}"
-            >
-              <i class="fa-regular fa-comment-dots"></i>
-            </button>
-          </span>
-          <span class="feat-version-tag">{{ f.featureVersion || 'v1.0' }}</span>
-        </div>
+      <ng-container *ngIf="activeProject && activeProject.status !== 'INACTIVE'">
         <div
-          class="feat-comments-snippet"
-          *ngIf="f.comments"
-          [class.show-touched]="touchedCommentFeatureId === f.featureId"
-          [title]="f.comments"
+          *ngFor="let f of paginatedFeatures; trackBy: trackByFeatureId"
+          class="feature-item-card"
+          [class.active]="activeFeature?.featureId === f.featureId"
+          (click)="onSelectFeature(f)"
         >
-          <i class="fa-regular fa-comment-dots"></i> {{ f.comments }}
-        </div>
-        <div class="feat-sub-row">
-          <span class="sprint-badge">Sprint {{ f.sprint || 1 }}</span>
-          <div class="feat-actions" *ngIf="activeFeature?.featureId === f.featureId">
-            <button class="btn-item-action" (click)="$event.stopPropagation(); editFeature.emit(f)" title="Edit Feature">
-              <i class="fa-solid fa-pen-to-square"></i>
-            </button>
-            <button class="btn-item-action" (click)="$event.stopPropagation(); openFeatureAttachments.emit(f)" title="Feature Documentation & Files">
-              <i class="fa-solid fa-paperclip"></i>
-            </button>
+          <div class="feat-main-row">
+            <span class="feat-name">
+              {{ f.featureName }}
+              <button
+                type="button"
+                class="btn-comment-indicator"
+                *ngIf="f.comments"
+                (click)="toggleFeatureComment(f.featureId, $event)"
+                title="Click to toggle or hover to view notes: {{ f.comments }}"
+              >
+                <i class="fa-regular fa-comment-dots"></i>
+              </button>
+            </span>
+            <span class="feat-version-tag">{{ f.featureVersion || 'v1.0' }}</span>
+          </div>
+          <div
+            class="feat-comments-snippet"
+            *ngIf="f.comments"
+            [class.show-touched]="touchedCommentFeatureId === f.featureId"
+            [title]="f.comments"
+          >
+            <i class="fa-regular fa-comment-dots"></i> {{ f.comments }}
+          </div>
+          <div class="feat-sub-row">
+            <span class="sprint-badge">Sprint {{ f.sprint || 1 }}</span>
+            <div class="feat-actions" *ngIf="activeFeature?.featureId === f.featureId">
+              <button class="btn-item-action" (click)="$event.stopPropagation(); editFeature.emit(f)" title="Edit Feature">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+              <button class="btn-item-action" (click)="$event.stopPropagation(); openFeatureAttachments.emit(f)" title="Feature Documentation & Files">
+                <i class="fa-solid fa-paperclip"></i>
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </ng-container>
     </div>
 
     <!-- Sidebar Mini Pagination for Features (Size 5) -->
-    <div class="sidebar-pagination-bar" *ngIf="filteredFeatures.length > featurePageSize">
+    <div class="sidebar-pagination-bar" *ngIf="activeProject?.status !== 'INACTIVE' && filteredFeatures.length > featurePageSize">
       <span class="sidebar-page-info">Pg {{ featurePage }}/{{ totalFeaturePages }} ({{ filteredFeatures.length }})</span>
       <div class="sidebar-page-btns">
         <button class="btn-sidebar-page" [disabled]="featurePage <= 1" (click)="prevFeaturePage()" title="Previous Features">
