@@ -106,66 +106,37 @@ export class AuthService {
   }
 
   /**
-   * Retrieves the current access token from memory or localStorage.
+   * Retrieves the current access token from memory only (avoiding localStorage to prevent XSS leakage).
    */
   getAccessToken(): string | null {
-    if (this.inMemoryAccessToken) {
-      return this.inMemoryAccessToken;
-    }
-    if (typeof localStorage !== 'undefined') {
-      const stored = localStorage.getItem('token') || localStorage.getItem('jwt');
-      if (stored) {
-        this.inMemoryAccessToken = stored;
-        return stored;
-      }
-    }
-    return null;
+    return this.inMemoryAccessToken;
   }
 
   /**
-   * Sets or clears the current access token.
+   * Sets or clears the current access token in memory only.
    */
   setAccessToken(token: string | null): void {
     this.inMemoryAccessToken = token;
     if (typeof localStorage !== 'undefined') {
-      if (token) {
-        localStorage.setItem('token', token);
-        localStorage.setItem('jwt', token);
-      } else {
-        localStorage.removeItem('token');
-        localStorage.removeItem('jwt');
-      }
+      localStorage.removeItem('token');
+      localStorage.removeItem('jwt');
     }
   }
 
   /**
-   * Retrieves the current refresh token from memory or localStorage.
+   * Retrieves the current refresh token from memory only.
    */
   getRefreshToken(): string | null {
-    if (this.inMemoryRefreshToken) {
-      return this.inMemoryRefreshToken;
-    }
-    if (typeof localStorage !== 'undefined') {
-      const stored = localStorage.getItem('refresh_token');
-      if (stored) {
-        this.inMemoryRefreshToken = stored;
-        return stored;
-      }
-    }
-    return null;
+    return this.inMemoryRefreshToken;
   }
 
   /**
-   * Sets or clears the current refresh token.
+   * Sets or clears the current refresh token in memory only.
    */
   setRefreshToken(refreshToken: string | null): void {
     this.inMemoryRefreshToken = refreshToken;
     if (typeof localStorage !== 'undefined') {
-      if (refreshToken) {
-        localStorage.setItem('refresh_token', refreshToken);
-      } else {
-        localStorage.removeItem('refresh_token');
-      }
+      localStorage.removeItem('refresh_token');
     }
   }
 
@@ -231,48 +202,6 @@ export class AuthService {
     );
 
     return this.refreshInProgress$;
-  }
-
-  /**
-   * Calls /auth/refresh and returns the full ApiResponse<AuthResponse> Observable.
-   */
-  refreshAccessToken(explicitToken?: string): Observable<ApiResponse<AuthResponse>> {
-    const currentRefreshToken = explicitToken || this.getRefreshToken();
-    const payload: RefreshTokenRequest = currentRefreshToken ? { refreshToken: currentRefreshToken } : {};
-
-    return this.http.post<ApiResponse<AuthResponse>>(`${this.authUrl}/refresh`, payload, {
-      withCredentials: true
-    }).pipe(
-      tap((res) => {
-        if (res?.data?.token) {
-          this.setAccessToken(res.data.token);
-        }
-        if (res?.data?.refreshToken) {
-          this.setRefreshToken(res.data.refreshToken);
-        }
-        if (res?.data) {
-          if (res.data.username && typeof localStorage !== 'undefined') {
-            localStorage.setItem('tat_user_name', res.data.username);
-          }
-          if (res.data.fullName && typeof localStorage !== 'undefined') {
-            localStorage.setItem('tat_user_fullname', res.data.fullName);
-          }
-          if (res.data.userId && typeof localStorage !== 'undefined') {
-            localStorage.setItem('tat_user_id', String(res.data.userId));
-          }
-          if (res.data.role && typeof localStorage !== 'undefined') {
-            localStorage.setItem('tat_user_role', res.data.role);
-          }
-          this.currentUserSignal.set({
-            userId: res.data.userId,
-            username: res.data.username,
-            fullName: res.data.fullName,
-            role: res.data.role,
-            designation: res.data.designation
-          });
-        }
-      })
-    );
   }
 
   login(request: LoginRequest): Observable<ApiResponse<AuthResponse>> {
@@ -354,9 +283,14 @@ export class AuthService {
 
   /**
    * Initializes the CSRF cookie token from the backend.
+   * Proactively hits the main-service CSRF endpoint (and falls back to auth-service)
+   * to ensure XSRF-TOKEN is placed in cookies before any state-changing action.
    */
   initCsrfToken(): Observable<any> {
-    return this.http.get<ApiResponse<string>>(`${this.authUrl}/csrf`, { withCredentials: true }).pipe(
+    const mainCsrfUrl = `${environment.apiGatewayUrl}/csrf`;
+    const authCsrfUrl = `${this.authUrl}/csrf`;
+    return this.http.get<ApiResponse<string>>(mainCsrfUrl, { withCredentials: true }).pipe(
+      catchError(() => this.http.get<ApiResponse<string>>(authCsrfUrl, { withCredentials: true })),
       catchError((err) => {
         console.warn('Could not initialize CSRF token:', err);
         return throwError(() => err);

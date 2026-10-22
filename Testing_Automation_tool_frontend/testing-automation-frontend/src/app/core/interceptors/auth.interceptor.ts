@@ -95,9 +95,23 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
         );
       }
 
-      if (err.status === 403) {
-        console.error(
-          '403 Forbidden: inspect CSRF validation and user permissions.'
+      if (err.status === 403 && !isAuthEndpoint) {
+        // CSRF token mismatch or missing token causes 403 Forbidden on initial action.
+        // Proactively refresh the CSRF cookie and seamlessly retry the request once.
+        return authService.initCsrfToken().pipe(
+          switchMap(() => {
+            const freshCsrf = getCookie('XSRF-TOKEN');
+            const retryHeaders = { ...headersConfig };
+            if (freshCsrf) {
+              retryHeaders['X-XSRF-TOKEN'] = freshCsrf;
+            }
+            const retriedReq = req.clone({
+              withCredentials: true,
+              setHeaders: retryHeaders
+            });
+            return next(retriedReq);
+          }),
+          catchError(() => throwError(() => err))
         );
       }
 

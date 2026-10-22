@@ -26,7 +26,7 @@ export class Login implements OnInit {
 
   ngOnInit(): void {
     this.authService.initCsrfToken().subscribe({
-      next: () => console.log('CSRF initialized'),
+      next: () => {},
       error: (e) => console.warn('CSRF init failed (will retry on demand)', e)
     });
   }
@@ -55,9 +55,10 @@ export class Login implements OnInit {
     };
 
     this.authService.login(request).subscribe({
-      next: (response) => {
+      next: () => {
         this.isLoading = false;
-        console.log('Login successful:', response);
+        // Warm up CSRF token for downstream services so initial actions are immediately permitted
+        this.authService.initCsrfToken().subscribe({ error: () => {} });
         const cachedUser = this.authService.currentUser();
         const role = (cachedUser?.role || "").toUpperCase();
         if (role.includes('ADMIN')) {

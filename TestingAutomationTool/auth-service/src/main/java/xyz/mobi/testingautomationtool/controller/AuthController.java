@@ -67,10 +67,12 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(
             @Valid @RequestBody LoginRequest request,
+            HttpServletRequest httpRequest,
             HttpServletResponse httpResponse
     ) {
         AuthResponse response = authService.login(request);
         setAuthCookies(httpResponse, response.getToken(), response.getRefreshToken());
+        resolveCsrfToken(httpRequest);
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
     }
 
@@ -98,6 +100,7 @@ public class AuthController {
 
         AuthResponse response = authService.refreshToken(resolvedRequest);
         setAuthCookies(httpResponse, response.getToken(), response.getRefreshToken());
+        resolveCsrfToken(httpRequest);
         return ResponseEntity.ok(ApiResponse.success("Token refreshed successfully", response));
     }
 
@@ -125,10 +128,12 @@ public class AuthController {
     @PostMapping("/reset-password")
     public ResponseEntity<ApiResponse<AuthResponse>> resetPassword(
             @Valid @RequestBody ResetPasswordRequest request,
+            HttpServletRequest httpRequest,
             HttpServletResponse httpResponse
     ) {
         AuthResponse response = authService.resetPassword(request);
         setAuthCookies(httpResponse, response.getToken(), response.getRefreshToken());
+        resolveCsrfToken(httpRequest);
         return ResponseEntity.ok(ApiResponse.success("Password reset successfully", response));
     }
 
@@ -215,5 +220,20 @@ public class AuthController {
         ResponseCookie deleteRefresh = CookieUtils.deleteRefreshTokenCookie(cookieSecure, cookieSameSite, "/");
         response.addHeader(HttpHeaders.SET_COOKIE, deleteAccess.toString());
         response.addHeader(HttpHeaders.SET_COOKIE, deleteRefresh.toString());
+    }
+
+    /**
+     * Helper to force deferred CSRF token resolution so Set-Cookie: XSRF-TOKEN is sent to the client.
+     */
+    private void resolveCsrfToken(HttpServletRequest request) {
+        if (request != null) {
+            CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
+            if (csrfToken == null) {
+                csrfToken = (CsrfToken) request.getAttribute("_csrf");
+            }
+            if (csrfToken != null) {
+                csrfToken.getToken();
+            }
+        }
     }
 }

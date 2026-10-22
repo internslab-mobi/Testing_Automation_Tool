@@ -157,58 +157,6 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   qaDrilldownBugs: Bug[] = [];
   qaScopedOpenBugs: Bug[] = [];
 
-  // Compatibility properties for existing methods
-  get isQaDrilldownLoading(): boolean {
-    return this.isQaTestLoading || this.isQaDefectsLoading;
-  }
-  set isQaDrilldownLoading(val: boolean) {
-    this.isQaTestLoading = val;
-  }
-  get qaDrilldownError(): string {
-    return this.qaTestError;
-  }
-  set qaDrilldownError(val: string) {
-    this.qaTestError = val;
-  }
-  get qaDrilldownSearchTerm(): string {
-    return this.qaTestSearchTerm || this.qaDefectSearchTerm;
-  }
-  set qaDrilldownSearchTerm(val: string) {
-    this.qaTestSearchTerm = val;
-    this.qaDefectSearchTerm = val;
-  }
-  get qaDrilldownPage(): number {
-    return this.qaTestDrilldown?.active ? this.qaTestPage : this.qaDefectPage;
-  }
-  set qaDrilldownPage(val: number) {
-    this.qaTestPage = val;
-    this.qaDefectPage = val;
-  }
-  readonly qaDrilldownPageSize = 8;
-
-  get qaDrilldown(): {
-    active: boolean;
-    type: 'testcase' | 'defect';
-    statusKey: string;
-    title: string;
-    badgeClass: string;
-    badgeLabel: string;
-  } | null {
-    if (this.qaTestDrilldown?.active) {
-      return { ...this.qaTestDrilldown, type: 'testcase' };
-    }
-    if (this.qaDefectDrilldown?.active) {
-      return { ...this.qaDefectDrilldown, type: 'defect' };
-    }
-    return null;
-  }
-  set qaDrilldown(val: any) {
-    if (!val) {
-      this.qaTestDrilldown = null;
-      this.qaDefectDrilldown = null;
-    }
-  }
-
   // Active Performance Role View ('TESTER' | 'DEVELOPER')
   activePerformanceTab: 'TESTER' | 'DEVELOPER' = 'TESTER';
 
@@ -1954,8 +1902,6 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   }
 
   private applyDefectSeverityFilter(severity: string): void {
-    this.isQaDrilldownLoading = false;
-    this.qaDrilldownError = '';
     this.qaDrilldownBugs = this.qaScopedOpenBugs.filter(b => {
       const s = (b.severity || 'MEDIUM').toUpperCase();
       if (severity === 'CRITICAL') return s === 'CRITICAL' || s === 'BLOCKER';
@@ -1968,8 +1914,8 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   }
 
   loadQaTestCasesDrilldown(status: string): void {
-    this.isQaDrilldownLoading = true;
-    this.qaDrilldownError = '';
+    this.isQaTestLoading = true;
+    this.qaTestError = '';
     this.qaDrilldownTestCases = [];
     this.cdr.markForCheck();
 
@@ -1989,7 +1935,7 @@ export class ManagerDashboard implements OnInit, OnDestroy {
 
       if (matching.length === 0) {
         this.qaDrilldownTestCases = [];
-        this.isQaDrilldownLoading = false;
+        this.isQaTestLoading = false;
         this.cdr.markForCheck();
         return;
       }
@@ -2016,13 +1962,13 @@ export class ManagerDashboard implements OnInit, OnDestroy {
             }
           }
           this.qaDrilldownTestCases = allList;
-          this.isQaDrilldownLoading = false;
+          this.isQaTestLoading = false;
           this.cdr.markForCheck();
         },
         error: (err) => {
           console.error('Failed to load multi-feature test cases for drilldown:', err);
-          this.qaDrilldownError = 'Unable to load test cases for selected filters.';
-          this.isQaDrilldownLoading = false;
+          this.qaTestError = 'Unable to load test cases for selected filters.';
+          this.isQaTestLoading = false;
           this.cdr.markForCheck();
         }
       });
@@ -2043,12 +1989,12 @@ export class ManagerDashboard implements OnInit, OnDestroy {
         const pageData = res?.data || res;
         const items = pageData?.content || (Array.isArray(pageData) ? pageData : []);
         this.qaDrilldownTestCases = items.map((item: any) => this.mapToTestCase(item));
-        this.isQaDrilldownLoading = false;
+        this.isQaTestLoading = false;
         this.cdr.markForCheck();
       },
       error: () => {
-        this.qaDrilldownError = 'Failed to load test cases.';
-        this.isQaDrilldownLoading = false;
+        this.qaTestError = 'Failed to load test cases.';
+        this.isQaTestLoading = false;
         this.cdr.markForCheck();
       }
     });
@@ -2094,20 +2040,6 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     } as TestCase;
   }
 
-  closeQaDrilldown(): void {
-    this.closeQaTestDrilldown();
-    this.closeQaDefectDrilldown();
-  }
-
-  refreshCurrentDrilldown(): void {
-    this.refreshQaTestDrilldown();
-    this.refreshQaDefectDrilldown();
-  }
-
-  private scrollToDrilldownTable(): void {
-    // Left for compatibility
-  }
-
   get filteredQaTestCases(): TestCase[] {
     const s = this.qaTestSearchTerm.toLowerCase().trim();
     if (!s) return this.qaDrilldownTestCases;
@@ -2149,14 +2081,6 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   get qaDefectTotalPages(): number {
     return Math.ceil(this.filteredQaBugs.length / this.qaDefectPageSize) || 1;
   }
-
-  // Compatibility getters for legacy references
-  get filteredQaDrilldownTestCases(): TestCase[] { return this.filteredQaTestCases; }
-  get pagedQaDrilldownTestCases(): TestCase[] { return this.pagedQaTestCases; }
-  get qaTestCasesTotalPages(): number { return this.qaTestTotalPages; }
-  get filteredQaDrilldownBugs(): Bug[] { return this.filteredQaBugs; }
-  get pagedQaDrilldownBugs(): Bug[] { return this.pagedQaBugs; }
-  get qaBugsTotalPages(): number { return this.qaDefectTotalPages; }
 
   min(a: number, b: number): number {
     return Math.min(a, b);

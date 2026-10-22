@@ -84,20 +84,5 @@ export class FeatureService {
       responseType: 'blob'
     });
   }
-
-  deleteAttachment(attachmentId: number): Observable<any> {
-    return this.http.delete<any>(`${this.baseUrl}/attachments/${attachmentId}`);
-  }
-
-  downloadSingleAttachment(attachmentId: number): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/attachments/${attachmentId}/download`, {
-      responseType: 'blob'
-    });
-  }
-
-  exportFeatureSummary(featureId: number): Observable<Blob> {
-    return this.http.get(`${this.baseUrl}/feature/${featureId}/export`, {
-      responseType: 'blob'
-    });
-  }
 }
+

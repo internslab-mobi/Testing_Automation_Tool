@@ -412,10 +412,8 @@ export class TesterWorkspace implements OnInit {
       return;
     }
     if (typeof localStorage !== 'undefined') {
-      const token = localStorage.getItem('token') || localStorage.getItem('jwt');
-      this.isAuthenticated = !!token;
-      this.userName = localStorage.getItem('tat_user_fullname') || localStorage.getItem('tat_user_name') || 'Arjun Kumar';
-      const storedRole = (localStorage.getItem('tat_user_role') || localStorage.getItem('role') || 'TESTER').toUpperCase();
+      this.userName = localStorage.getItem('tat_user_fullname') || localStorage.getItem('tat_user_name') || 'Tester';
+      const storedRole = (localStorage.getItem('tat_user_role') || 'TESTER').toUpperCase();
       this.userRole = storedRole.includes('MANAGER') ? 'Manager' : storedRole.includes('ADMIN') ? 'Admin' : 'TESTER';
       this.userInitials = this.computeInitials(this.userName);
     }
@@ -429,7 +427,7 @@ export class TesterWorkspace implements OnInit {
       return;
     }
 
-    // Attempt to verify session using profile API (prevents overwriting manager session)
+    // Attempt to verify session using profile API (HttpOnly cookies sent via withCredentials)
     this.authService.getProfile().subscribe({
       next: (res) => {
         if (res?.data) {
@@ -437,39 +435,11 @@ export class TesterWorkspace implements OnInit {
           if (onReady) onReady();
           this.cdr.markForCheck();
         } else {
-          this.fallbackAutoLogin(onReady);
+          this.router.navigate(['/login']);
         }
       },
       error: () => {
-        this.fallbackAutoLogin(onReady);
-      }
-    });
-  }
-
-  private fallbackAutoLogin(onReady?: () => void): void {
-    if (typeof localStorage === 'undefined') {
-      if (onReady) onReady();
-      return;
-    }
-    const token = localStorage.getItem('token') || localStorage.getItem('jwt');
-    const storedRole = (localStorage.getItem('tat_user_role') || localStorage.getItem('role') || '').toUpperCase();
-    if (token || storedRole.includes('MANAGER') || storedRole.includes('ADMIN')) {
-      if (onReady) onReady();
-      return;
-    }
-    // Auto-authenticate with tester account only if completely unauthenticated with no session/role
-    this.authService.login({
-      usernameOrEmail: 'Vikramraajak@gmail.com',
-      password: 'Vikram@123'
-    }).subscribe({
-      next: () => {
-        this.initUserProfile();
-        if (onReady) onReady();
-        this.cdr.markForCheck();
-      },
-      error: (e) => {
-        console.warn('Auto auth check failed:', e);
-        if (onReady) onReady();
+        this.router.navigate(['/login']);
       }
     });
   }

@@ -43,10 +43,6 @@ export class BugService {
     );
   }
 
-  getAssignedBugs(assignedToId?: number): Observable<Bug[]> {
-    return this.getAllBugs(assignedToId);
-  }
-
   private mapBugEntity(item: any): Bug {
     const b = item.bug || item;
     const tc = item.testCase || b.testCase || {};
@@ -197,10 +193,6 @@ export class BugService {
     return this.http.get(`${this.baseUrl}/bug/${bugId}/attachments/download`, {
       responseType: 'blob'
     });
-  }
-
-  deleteAttachment(attachmentId: number): Observable<any> {
-    return this.http.delete<any>(`${this.baseUrl}/attachments/${attachmentId}`);
   }
 
   exportBugs(featureId: number): Observable<Blob> {
