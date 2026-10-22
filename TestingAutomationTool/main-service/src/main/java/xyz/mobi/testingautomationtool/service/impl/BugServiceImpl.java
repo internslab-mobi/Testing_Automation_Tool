@@ -596,6 +596,19 @@ public class BugServiceImpl implements BugService {
             bug.setResolvedAt(null);
         }
 
+        if(bug.getStatus() == BugStatus.REOPENED){
+
+            Integer testCaseId = bug.getTestCase().getTestcaseId();
+
+            TestingExecution execution = testingExecutionRepository.findByTestCase_TestcaseId(testCaseId).orElseThrow(
+                    ()-> new ResourceNotFoundException("Execution not found with id: " + testCaseId)
+            );
+
+            execution.setBugsCount(execution.getBugsCount()+1);
+
+            testingExecutionRepository.save(execution);
+        }
+
         if (updatedFields.isEmpty()) {
             throw new IllegalArgumentException(
                     "At least one field must be provided for update");
@@ -664,16 +677,73 @@ public class BugServiceImpl implements BugService {
         Bug bug = bugRepository.findById(bugId)
                 .orElseThrow(() -> new ResourceNotFoundException("Bug not found with ID: " + bugId));
 
+
+        if (!bug.isDeleted()) {
+            return;
+        }
+
+        Integer testCaseId = bug.getTestCase().getTestcaseId();
+
+        TestingExecution testingExecution =
+                testingExecutionRepository.findById(testCaseId)
+                        .orElseThrow(() ->
+                                new ResourceNotFoundException(
+                                        "Testing execution not found with ID: "
+                                                + testCaseId));
+
+        int occurrence = bug.getBugOccurrence() != null
+                ? bug.getBugOccurrence()
+                : 0;
+
+        int currentCount = testingExecution.getBugsCount() != null
+                ? testingExecution.getBugsCount()
+                : 0;
+
         bug.setDeleted(true);
         bug.setActive(false);
         bug.setUpdatedBy(authService.getCurrentUser());
         bugRepository.save(bug);
+
+        testingExecution.setBugsCount(
+                Math.max(0, currentCount - occurrence));
+
+        testingExecutionRepository.save(testingExecution);
     }
 
     @Override
+    @Transactional
     public void hardDelete(Integer bugId) {
+
         Bug bug = bugRepository.findById(bugId)
-                .orElseThrow(() -> new ResourceNotFoundException("Bug not found with ID: " + bugId));
+                .orElseThrow(() ->
+                        new ResourceNotFoundException(
+                                "Bug not found with ID: " + bugId));
+
+        if (!bug.isDeleted()) {
+
+            Integer testCaseId = bug.getTestCase().getTestcaseId();
+
+            TestingExecution testingExecution =
+                    testingExecutionRepository.findById(testCaseId)
+                            .orElseThrow(() ->
+                                    new ResourceNotFoundException(
+                                            "Testing execution not found with ID: "
+                                                    + testCaseId));
+
+            int occurrence = bug.getBugOccurrence() != null
+                    ? bug.getBugOccurrence()
+                    : 0;
+
+            int currentCount = testingExecution.getBugsCount() != null
+                    ? testingExecution.getBugsCount()
+                    : 0;
+
+            testingExecution.setBugsCount(
+                    Math.max(0, currentCount - occurrence));
+
+            testingExecutionRepository.save(testingExecution);
+        }
+
         bugRepository.delete(bug);
     }
 
