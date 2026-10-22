@@ -3116,14 +3116,17 @@
   text-align: center;
 }
 
-/* ================= Attached Drilldown Styles ================= */
-.chart-attached-drilldown {
-  border-top: 1px solid #e2e8f0;
-  background: #f8fafc;
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+/* ================= QA Chart Full-Width Drilldown Panel Styles ================= */
+.qa-chart-fullwidth-drilldown {
+  width: 100%;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.03);
+  padding: 16px 20px;
+  margin-top: 0;
+  margin-bottom: 16px;
+  box-sizing: border-box;
   animation: fadeInDrilldown 0.2s ease-out;
 }
 
@@ -3142,26 +3145,30 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 16px;
   flex-wrap: wrap;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 14px;
 }
 
 .drilldown-title-group {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .drilldown-icon-circle {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 13px;
+  font-size: 14px;
   color: #ffffff;
   background: #0052cc;
+  flex-shrink: 0;
 }
 
 .drilldown-icon-circle.sev-critical { background: #de350b; }
@@ -3176,40 +3183,43 @@
 .drilldown-titles {
   display: flex;
   flex-direction: column;
+  gap: 2px;
 }
 
 .drilldown-main-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .drilldown-main-title h4 {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 700;
   color: #0f172a;
+  letter-spacing: -0.2px;
 }
 
 .drilldown-count-pill {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   color: #475569;
-  background: #e2e8f0;
-  padding: 1px 7px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 2px 8px;
   border-radius: 12px;
 }
 
 .drilldown-subtitle {
-  margin: 1px 0 0 0;
-  font-size: 11px;
+  margin: 0;
+  font-size: 11.5px;
   color: #64748b;
 }
 
 .drilldown-actions {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .drilldown-search-box {
@@ -3220,50 +3230,57 @@
 
 .drilldown-search-box i.fa-magnifying-glass {
   position: absolute;
-  left: 8px;
-  font-size: 10.5px;
+  left: 10px;
+  font-size: 11px;
   color: #94a3b8;
   pointer-events: none;
 }
 
 .drilldown-search-box input {
-  padding: 4px 22px 4px 24px;
-  font-size: 11.5px;
+  padding: 6px 26px 6px 30px;
+  font-size: 12px;
   border: 1px solid #cbd5e1;
-  border-radius: 5px;
+  border-radius: 6px;
   background: #ffffff;
   color: #0f172a;
   outline: none;
-  width: 140px;
+  width: 200px;
   transition: all 0.15s ease;
 }
 
 .drilldown-search-box input:focus {
   border-color: #0052cc;
   box-shadow: 0 0 0 2px rgba(0, 82, 204, 0.12);
-  width: 170px;
+  width: 240px;
 }
 
 .btn-clear-search {
   position: absolute;
-  right: 5px;
+  right: 6px;
   background: none;
   border: none;
   color: #94a3b8;
   cursor: pointer;
-  font-size: 10px;
-  padding: 2px;
+  font-size: 11px;
+  padding: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-clear-search:hover {
+  color: #475569;
 }
 
 .btn-close-drilldown {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   background: #ffffff;
   border: 1px solid #cbd5e1;
-  padding: 4px 10px;
-  border-radius: 5px;
-  font-size: 11.5px;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
   font-weight: 600;
   color: #475569;
   cursor: pointer;
@@ -3276,24 +3293,84 @@
   border-color: #fca5a5;
 }
 
-.compact-chart-table {
-  font-size: 11.5px;
+/* QA Drilldown Full-Width Table */
+.qa-drilldown-table {
   width: 100%;
-  min-width: 580px;
+  min-width: 820px;
   background: #ffffff;
+  border-collapse: collapse;
+  font-size: 12.5px;
 }
 
-.compact-chart-table th,
-.compact-chart-table td {
-  padding: 6px 10px;
+.qa-drilldown-table th,
+.qa-drilldown-table td {
+  padding: 10px 14px;
+  vertical-align: middle;
 }
 
-.compact-chart-table th {
-  background: #f1f5f9;
-  font-size: 10.5px;
+.qa-drilldown-table th {
+  background: #f8fafc;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.5px;
   color: #475569;
+  border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+}
+
+.qa-drilldown-table td {
+  border-bottom: 1px solid #f1f5f9;
+  color: #0f172a;
+}
+
+.qa-drilldown-table tr:hover td {
+  background-color: #f8fafc;
+}
+
+.qa-drilldown-table .col-tc-id,
+.qa-drilldown-table .col-bug-id {
+  width: 120px;
+  white-space: nowrap;
+}
+
+.qa-drilldown-table .col-title {
+  min-width: 220px;
+  word-break: break-word;
+}
+
+.qa-drilldown-table .col-feature {
+  width: 160px;
+  min-width: 140px;
+}
+
+.qa-drilldown-table .col-type {
+  width: 90px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.qa-drilldown-table .col-priority,
+.qa-drilldown-table .col-severity {
+  width: 110px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.qa-drilldown-table .col-status {
+  width: 130px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.qa-drilldown-table .col-assignee {
+  width: 150px;
+  white-space: nowrap;
+}
+
+.qa-drilldown-table .col-comments,
+.qa-drilldown-table .col-desc {
+  min-width: 200px;
 }
 
 .donut-legend-container {

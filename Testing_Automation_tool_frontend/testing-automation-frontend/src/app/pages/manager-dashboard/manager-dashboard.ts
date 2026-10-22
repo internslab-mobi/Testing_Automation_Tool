@@ -513,6 +513,12 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     if (this.showProfileMenu) {
       this.showProfileMenu = false;
     }
+    if (this.qaTestDrilldown?.active) {
+      this.closeQaTestDrilldown();
+    }
+    if (this.qaDefectDrilldown?.active) {
+      this.closeQaDefectDrilldown();
+    }
   }
 
   loadUserProfile(): void {
@@ -1831,6 +1837,7 @@ export class ManagerDashboard implements OnInit, OnDestroy {
       this.closeQaTestDrilldown();
       return;
     }
+    this.closeQaDefectDrilldown();
 
     const badgeMap: Record<string, { title: string; badgeClass: string; badgeLabel: string }> = {
       PASSED: { title: 'Test Execution Details', badgeClass: 'badge-passed', badgeLabel: 'Passed' },
@@ -1871,6 +1878,7 @@ export class ManagerDashboard implements OnInit, OnDestroy {
       this.closeQaDefectDrilldown();
       return;
     }
+    this.closeQaTestDrilldown();
 
     const badgeMap: Record<string, { title: string; badgeClass: string; badgeLabel: string }> = {
       CRITICAL: { title: 'Open Defects Breakdown', badgeClass: 'sev-critical', badgeLabel: 'Critical' },

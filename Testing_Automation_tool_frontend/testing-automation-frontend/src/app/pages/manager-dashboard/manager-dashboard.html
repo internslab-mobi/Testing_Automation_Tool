@@ -588,161 +588,6 @@
               </div>
             </div>
           </div>
-
-          <!-- ================= ATTACHED DRILLDOWN FOR TEST CASES ================= -->
-          <div class="chart-attached-drilldown" *ngIf="qaTestDrilldown?.active" id="qa-testcase-details-section">
-            <div class="drilldown-header-bar">
-              <div class="drilldown-title-group">
-                <span class="drilldown-icon-circle" [ngClass]="qaTestDrilldown?.badgeClass">
-                  <i class="fa-solid fa-list-check"></i>
-                </span>
-                <div class="drilldown-titles">
-                  <div class="drilldown-main-title">
-                    <h4>Test Cases: {{ qaTestDrilldown?.badgeLabel }}</h4>
-                    <span class="drilldown-count-pill">
-                      {{ filteredQaTestCases.length }} {{ filteredQaTestCases.length === 1 ? 'Record' : 'Records' }}
-                    </span>
-                  </div>
-                  <p class="drilldown-subtitle">
-                    <span>Scope: <strong>{{ activeFilterDescription }}</strong></span>
-                  </p>
-                </div>
-              </div>
-
-              <div class="drilldown-actions">
-                <div class="drilldown-search-box">
-                  <i class="fa-solid fa-magnifying-glass"></i>
-                  <input
-                    type="text"
-                    [(ngModel)]="qaTestSearchTerm"
-                    (ngModelChange)="qaTestPage = 0"
-                    placeholder="Filter test cases..."
-                  />
-                  <button
-                    *ngIf="qaTestSearchTerm"
-                    (click)="qaTestSearchTerm = ''; qaTestPage = 0"
-                    class="btn-clear-search"
-                    type="button"
-                    title="Clear search"
-                  >
-                    <i class="fa-solid fa-xmark"></i>
-                  </button>
-                </div>
-
-                <button
-                  class="btn-close-drilldown"
-                  (click)="closeQaTestDrilldown()"
-                  type="button"
-                  title="Close details"
-                >
-                  <i class="fa-solid fa-xmark"></i>
-                  <span>Close</span>
-                </button>
-              </div>
-            </div>
-
-            <!-- Loading State -->
-            <div class="panel-loading-state" *ngIf="isQaTestLoading">
-              <i class="fa-solid fa-circle-notch fa-spin"></i>
-              <p>Loading test cases...</p>
-            </div>
-
-            <!-- Error State -->
-            <div class="dashboard-error-banner" *ngIf="!isQaTestLoading && qaTestError">
-              <i class="fa-solid fa-triangle-exclamation"></i>
-              <span>{{ qaTestError }}</span>
-              <button class="btn-retry" (click)="refreshQaTestDrilldown()" type="button">
-                <i class="fa-solid fa-arrows-rotate"></i> Retry
-              </button>
-            </div>
-
-            <!-- Test Cases Table -->
-            <ng-container *ngIf="!isQaTestLoading && !qaTestError">
-              <div class="table-responsive" *ngIf="filteredQaTestCases.length > 0">
-                <table class="manager-data-table compact-chart-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 100px;">TC ID</th>
-                      <th>Title</th>
-                      <th style="width: 110px;">Feature</th>
-                      <th style="width: 75px;">Type</th>
-                      <th style="width: 85px;">Priority</th>
-                      <th style="width: 100px;">Status</th>
-                      <th>Comments</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let tc of pagedQaTestCases">
-                      <td><code>{{ tc.testcaseFormatId || ('TC_' + tc.testcaseId) }}</code></td>
-                      <td class="font-medium text-dark">{{ tc.title }}</td>
-                      <td>
-                        <span class="feature-tag">
-                          <i class="fa-solid fa-cube text-slate"></i>
-                          {{ getFeatureName(tc.featureId) }}
-                        </span>
-                      </td>
-                      <td>
-                        <span class="type-badge">{{ tc.testType || 'UI' }}</span>
-                      </td>
-                      <td>
-                        <span
-                          class="priority-pill"
-                          [ngClass]="{
-                            'priority-critical': tc.testPriority === 'CRITICAL',
-                            'priority-high': tc.testPriority === 'HIGH',
-                            'priority-medium': tc.testPriority === 'MEDIUM',
-                            'priority-low': tc.testPriority === 'LOW'
-                          }"
-                        >
-                          {{ tc.testPriority || 'MEDIUM' }}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          class="tc-status-badge"
-                          [ngClass]="{
-                            'tc-passed': tc.testcaseStatus === 'PASSED',
-                            'tc-failed': tc.testcaseStatus === 'FAILED',
-                            'tc-blocked': tc.testcaseStatus === 'BLOCKED',
-                            'tc-norun': tc.testcaseStatus === 'NO_RUN' || tc.testcaseStatus === 'DESCOPE'
-                          }"
-                        >
-                          {{ tc.testcaseStatus === 'NO_RUN' ? 'NOT EXECUTED' : tc.testcaseStatus }}
-                        </span>
-                      </td>
-                      <td class="comments-cell" [title]="tc.comments || 'No comments'">
-                        {{ tc.comments || '—' }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Empty State -->
-              <div class="panel-empty-state" *ngIf="filteredQaTestCases.length === 0">
-                <i class="fa-solid fa-list-check"></i>
-                <h4>No Test Cases Found</h4>
-                <p *ngIf="qaTestSearchTerm">No test cases match your search term "{{ qaTestSearchTerm }}".</p>
-                <p *ngIf="!qaTestSearchTerm">There are currently no test cases with status <strong>{{ qaTestDrilldown?.badgeLabel }}</strong> in the selected scope.</p>
-              </div>
-
-              <!-- Pagination -->
-              <div class="table-pagination-footer" *ngIf="filteredQaTestCases.length > qaTestPageSize">
-                <span class="pagination-info">
-                  {{ qaTestPage * qaTestPageSize + 1 }}-{{ min(qaTestPage * qaTestPageSize + qaTestPageSize, filteredQaTestCases.length) }} of {{ filteredQaTestCases.length }}
-                </span>
-                <div class="pagination-controls">
-                  <button class="btn-page-nav" [disabled]="qaTestPage === 0" (click)="qaTestPage = qaTestPage - 1" type="button">
-                    <i class="fa-solid fa-chevron-left"></i>
-                  </button>
-                  <span class="page-number-display">{{ qaTestPage + 1 }} / {{ qaTestTotalPages }}</span>
-                  <button class="btn-page-nav" [disabled]="qaTestPage + 1 >= qaTestTotalPages" (click)="qaTestPage = qaTestPage + 1" type="button">
-                    <i class="fa-solid fa-chevron-right"></i>
-                  </button>
-                </div>
-              </div>
-            </ng-container>
-          </div>
         </article>
 
         <!-- Chart 2: Defects by Severity -->
@@ -856,150 +701,317 @@
               </div>
             </div>
           </div>
+        </article>
+      </section>
 
-          <!-- ================= ATTACHED DRILLDOWN FOR DEFECTS ================= -->
-          <div class="chart-attached-drilldown" *ngIf="qaDefectDrilldown?.active" id="qa-defect-details-section">
-            <div class="drilldown-header-bar">
-              <div class="drilldown-title-group">
-                <span class="drilldown-icon-circle" [ngClass]="qaDefectDrilldown?.badgeClass">
-                  <i class="fa-solid fa-bug"></i>
-                </span>
-                <div class="drilldown-titles">
-                  <div class="drilldown-main-title">
-                    <h4>Open Defects: {{ qaDefectDrilldown?.badgeLabel }}</h4>
-                    <span class="drilldown-count-pill">
-                      {{ filteredQaBugs.length }} {{ filteredQaBugs.length === 1 ? 'Defect' : 'Defects' }}
-                    </span>
-                  </div>
-                  <p class="drilldown-subtitle">
-                    <span>Scope: <strong>{{ activeFilterDescription }}</strong></span>
-                  </p>
+      <!-- ================= FULL-WIDTH QA CHART DRILLDOWN DETAILS PANEL ================= -->
+      <section
+        class="qa-chart-fullwidth-drilldown"
+        *ngIf="qaTestDrilldown?.active || qaDefectDrilldown?.active"
+      >
+        <!-- Test Cases Drilldown -->
+        <div *ngIf="qaTestDrilldown?.active" id="qa-testcase-details-section">
+          <div class="drilldown-header-bar">
+            <div class="drilldown-title-group">
+              <span class="drilldown-icon-circle" [ngClass]="qaTestDrilldown?.badgeClass">
+                <i class="fa-solid fa-list-check"></i>
+              </span>
+              <div class="drilldown-titles">
+                <div class="drilldown-main-title">
+                  <h4>Test Cases: {{ qaTestDrilldown?.badgeLabel }}</h4>
+                  <span class="drilldown-count-pill">
+                    {{ filteredQaTestCases.length }} {{ filteredQaTestCases.length === 1 ? 'Record' : 'Records' }}
+                  </span>
                 </div>
-              </div>
-
-              <div class="drilldown-actions">
-                <div class="drilldown-search-box">
-                  <i class="fa-solid fa-magnifying-glass"></i>
-                  <input
-                    type="text"
-                    [(ngModel)]="qaDefectSearchTerm"
-                    (ngModelChange)="qaDefectPage = 0"
-                    placeholder="Filter defects..."
-                  />
-                  <button
-                    *ngIf="qaDefectSearchTerm"
-                    (click)="qaDefectSearchTerm = ''; qaDefectPage = 0"
-                    class="btn-clear-search"
-                    type="button"
-                    title="Clear search"
-                  >
-                    <i class="fa-solid fa-xmark"></i>
-                  </button>
-                </div>
-
-                <button
-                  class="btn-close-drilldown"
-                  (click)="closeQaDefectDrilldown()"
-                  type="button"
-                  title="Close details"
-                >
-                  <i class="fa-solid fa-xmark"></i>
-                  <span>Close</span>
-                </button>
+                <p class="drilldown-subtitle">
+                  <span>Scope: <strong>{{ activeFilterDescription }}</strong></span>
+                </p>
               </div>
             </div>
 
-            <!-- DEFECTS TABLE -->
-            <ng-container *ngIf="!isQaDefectsLoading">
-              <div class="table-responsive" *ngIf="filteredQaBugs.length > 0">
-                <table class="manager-data-table compact-chart-table">
-                  <thead>
-                    <tr>
-                      <th style="width: 100px;">Bug ID</th>
-                      <th>Title</th>
-                      <th style="width: 110px;">Feature</th>
-                      <th style="width: 85px;">Severity</th>
-                      <th style="width: 95px;">Status</th>
-                      <th style="width: 110px;">Assigned To</th>
-                      <th>Description / Notes</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr *ngFor="let bug of pagedQaBugs">
-                      <td>
-                        <code class="text-bug-id">
-                          <i class="fa-solid fa-bug" style="margin-right: 4px;"></i>{{ bug.bugFormatId || ('BUG_' + bug.bugId) }}
-                        </code>
-                      </td>
-                      <td class="font-medium text-dark">{{ bug.title }}</td>
-                      <td>
-                        <span class="feature-tag">
-                          <i class="fa-solid fa-cube text-slate"></i>
-                          {{ getFeatureName(bug.featureId) }}
-                        </span>
-                      </td>
-                      <td>
-                        <span
-                          class="severity-tag"
-                          [ngClass]="{
-                            'sev-critical': bug.severity === 'CRITICAL' || bug.severity === 'BLOCKER',
-                            'sev-high': bug.severity === 'HIGH',
-                            'sev-medium': bug.severity === 'MEDIUM',
-                            'sev-low': bug.severity === 'LOW' || bug.severity === 'TRIVIAL'
-                          }"
-                        >
-                          {{ bug.severity || 'MEDIUM' }}
-                        </span>
-                      </td>
-                      <td>
-                        <span class="status-pill-active" *ngIf="bug.status === 'OPEN' || bug.status === 'IN_PROGRESS' || bug.status === 'REOPENED'">
-                          <span class="dot-active" [style.background-color]="bug.status === 'OPEN' ? '#de350b' : '#ff8b00'"></span>
-                          {{ bug.status }}
-                        </span>
-                        <span class="badge-neutral" *ngIf="bug.status !== 'OPEN' && bug.status !== 'IN_PROGRESS' && bug.status !== 'REOPENED'">
-                          {{ bug.status }}
-                        </span>
-                      </td>
-                      <td>
-                        <span class="assignee-cell">
-                          <i class="fa-solid fa-user-circle text-slate"></i>
-                          {{ bug.assignedTo || 'Unassigned' }}
-                        </span>
-                      </td>
-                      <td class="comments-cell" [title]="bug.description || bug.comments || 'No description'">
-                        {{ bug.description || bug.comments || '—' }}
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+            <div class="drilldown-actions">
+              <div class="drilldown-search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input
+                  type="text"
+                  [(ngModel)]="qaTestSearchTerm"
+                  (ngModelChange)="qaTestPage = 0"
+                  placeholder="Filter test cases..."
+                />
+                <button
+                  *ngIf="qaTestSearchTerm"
+                  (click)="qaTestSearchTerm = ''; qaTestPage = 0"
+                  class="btn-clear-search"
+                  type="button"
+                  title="Clear search"
+                >
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
               </div>
 
-              <!-- Empty State -->
-              <div class="panel-empty-state" *ngIf="filteredQaBugs.length === 0">
-                <i class="fa-solid fa-bug-slash"></i>
-                <h4>No Open Defects Found</h4>
-                <p *ngIf="qaDefectSearchTerm">No defects match your search term "{{ qaDefectSearchTerm }}".</p>
-                <p *ngIf="!qaDefectSearchTerm">There are currently no open defects with severity <strong>{{ qaDefectDrilldown?.badgeLabel }}</strong> in the selected scope.</p>
-              </div>
-
-              <!-- Pagination -->
-              <div class="table-pagination-footer" *ngIf="filteredQaBugs.length > qaDefectPageSize">
-                <span class="pagination-info">
-                  {{ qaDefectPage * qaDefectPageSize + 1 }}-{{ min(qaDefectPage * qaDefectPageSize + qaDefectPageSize, filteredQaBugs.length) }} of {{ filteredQaBugs.length }}
-                </span>
-                <div class="pagination-controls">
-                  <button class="btn-page-nav" [disabled]="qaDefectPage === 0" (click)="qaDefectPage = qaDefectPage - 1" type="button">
-                    <i class="fa-solid fa-chevron-left"></i>
-                  </button>
-                  <span class="page-number-display">{{ qaDefectPage + 1 }} / {{ qaDefectTotalPages }}</span>
-                  <button class="btn-page-nav" [disabled]="qaDefectPage + 1 >= qaDefectTotalPages" (click)="qaDefectPage = qaDefectPage + 1" type="button">
-                    <i class="fa-solid fa-chevron-right"></i>
-                  </button>
-                </div>
-              </div>
-            </ng-container>
+              <button
+                class="btn-close-drilldown"
+                (click)="closeQaTestDrilldown()"
+                type="button"
+                title="Close details"
+              >
+                <i class="fa-solid fa-xmark"></i>
+                <span>Close</span>
+              </button>
+            </div>
           </div>
-        </article>
+
+          <!-- Loading State -->
+          <div class="panel-loading-state" *ngIf="isQaTestLoading">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+            <p>Loading test cases...</p>
+          </div>
+
+          <!-- Error State -->
+          <div class="dashboard-error-banner" *ngIf="!isQaTestLoading && qaTestError">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+            <span>{{ qaTestError }}</span>
+            <button class="btn-retry" (click)="refreshQaTestDrilldown()" type="button">
+              <i class="fa-solid fa-arrows-rotate"></i> Retry
+            </button>
+          </div>
+
+          <!-- Test Cases Table -->
+          <ng-container *ngIf="!isQaTestLoading && !qaTestError">
+            <div class="table-responsive" *ngIf="filteredQaTestCases.length > 0">
+              <table class="manager-data-table qa-drilldown-table">
+                <thead>
+                  <tr>
+                    <th class="col-tc-id">TC ID</th>
+                    <th class="col-title">Title</th>
+                    <th class="col-feature">Feature</th>
+                    <th class="col-type">Type</th>
+                    <th class="col-priority">Priority</th>
+                    <th class="col-status">Status</th>
+                    <th class="col-comments">Comments</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let tc of pagedQaTestCases">
+                    <td class="col-tc-id"><code>{{ tc.testcaseFormatId || ('TC_' + tc.testcaseId) }}</code></td>
+                    <td class="col-title font-medium text-dark">{{ tc.title }}</td>
+                    <td class="col-feature">
+                      <span class="feature-tag">
+                        <i class="fa-solid fa-cube text-slate"></i>
+                        {{ getFeatureName(tc.featureId) }}
+                      </span>
+                    </td>
+                    <td class="col-type">
+                      <span class="type-badge">{{ tc.testType || 'UI' }}</span>
+                    </td>
+                    <td class="col-priority">
+                      <span
+                        class="priority-pill"
+                        [ngClass]="{
+                          'priority-critical': tc.testPriority === 'CRITICAL',
+                          'priority-high': tc.testPriority === 'HIGH',
+                          'priority-medium': tc.testPriority === 'MEDIUM',
+                          'priority-low': tc.testPriority === 'LOW'
+                        }"
+                      >
+                        {{ tc.testPriority || 'MEDIUM' }}
+                      </span>
+                    </td>
+                    <td class="col-status">
+                      <span
+                        class="tc-status-badge"
+                        [ngClass]="{
+                          'tc-passed': tc.testcaseStatus === 'PASSED',
+                          'tc-failed': tc.testcaseStatus === 'FAILED',
+                          'tc-blocked': tc.testcaseStatus === 'BLOCKED',
+                          'tc-norun': tc.testcaseStatus === 'NO_RUN' || tc.testcaseStatus === 'DESCOPE'
+                        }"
+                      >
+                        {{ tc.testcaseStatus === 'NO_RUN' ? 'NOT EXECUTED' : tc.testcaseStatus }}
+                      </span>
+                    </td>
+                    <td class="col-comments comments-cell" [title]="tc.comments || 'No comments'">
+                      {{ tc.comments || '—' }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Empty State -->
+            <div class="panel-empty-state" *ngIf="filteredQaTestCases.length === 0">
+              <i class="fa-solid fa-list-check"></i>
+              <h4>No Test Cases Found</h4>
+              <p *ngIf="qaTestSearchTerm">No test cases match your search term "{{ qaTestSearchTerm }}".</p>
+              <p *ngIf="!qaTestSearchTerm">There are currently no test cases with status <strong>{{ qaTestDrilldown?.badgeLabel }}</strong> in the selected scope.</p>
+            </div>
+
+            <!-- Pagination -->
+            <div class="table-pagination-footer" *ngIf="filteredQaTestCases.length > qaTestPageSize">
+              <span class="pagination-info">
+                {{ qaTestPage * qaTestPageSize + 1 }}-{{ min(qaTestPage * qaTestPageSize + qaTestPageSize, filteredQaTestCases.length) }} of {{ filteredQaTestCases.length }}
+              </span>
+              <div class="pagination-controls">
+                <button class="btn-page-nav" [disabled]="qaTestPage === 0" (click)="qaTestPage = qaTestPage - 1" type="button">
+                  <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <span class="page-number-display">{{ qaTestPage + 1 }} / {{ qaTestTotalPages }}</span>
+                <button class="btn-page-nav" [disabled]="qaTestPage + 1 >= qaTestTotalPages" (click)="qaTestPage = qaTestPage + 1" type="button">
+                  <i class="fa-solid fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- Defects Drilldown -->
+        <div *ngIf="qaDefectDrilldown?.active" id="qa-defect-details-section">
+          <div class="drilldown-header-bar">
+            <div class="drilldown-title-group">
+              <span class="drilldown-icon-circle" [ngClass]="qaDefectDrilldown?.badgeClass">
+                <i class="fa-solid fa-bug"></i>
+              </span>
+              <div class="drilldown-titles">
+                <div class="drilldown-main-title">
+                  <h4>Open Defects: {{ qaDefectDrilldown?.badgeLabel }}</h4>
+                  <span class="drilldown-count-pill">
+                    {{ filteredQaBugs.length }} {{ filteredQaBugs.length === 1 ? 'Defect' : 'Defects' }}
+                  </span>
+                </div>
+                <p class="drilldown-subtitle">
+                  <span>Scope: <strong>{{ activeFilterDescription }}</strong></span>
+                </p>
+              </div>
+            </div>
+
+            <div class="drilldown-actions">
+              <div class="drilldown-search-box">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input
+                  type="text"
+                  [(ngModel)]="qaDefectSearchTerm"
+                  (ngModelChange)="qaDefectPage = 0"
+                  placeholder="Filter defects..."
+                />
+                <button
+                  *ngIf="qaDefectSearchTerm"
+                  (click)="qaDefectSearchTerm = ''; qaDefectPage = 0"
+                  class="btn-clear-search"
+                  type="button"
+                  title="Clear search"
+                >
+                  <i class="fa-solid fa-xmark"></i>
+                </button>
+              </div>
+
+              <button
+                class="btn-close-drilldown"
+                (click)="closeQaDefectDrilldown()"
+                type="button"
+                title="Close details"
+              >
+                <i class="fa-solid fa-xmark"></i>
+                <span>Close</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Loading State -->
+          <div class="panel-loading-state" *ngIf="isQaDefectsLoading">
+            <i class="fa-solid fa-circle-notch fa-spin"></i>
+            <p>Loading defects...</p>
+          </div>
+
+          <!-- DEFECTS TABLE -->
+          <ng-container *ngIf="!isQaDefectsLoading">
+            <div class="table-responsive" *ngIf="filteredQaBugs.length > 0">
+              <table class="manager-data-table qa-drilldown-table">
+                <thead>
+                  <tr>
+                    <th class="col-bug-id">Bug ID</th>
+                    <th class="col-title">Title</th>
+                    <th class="col-feature">Feature</th>
+                    <th class="col-severity">Severity</th>
+                    <th class="col-status">Status</th>
+                    <th class="col-assignee">Assigned To</th>
+                    <th class="col-desc">Description / Notes</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let bug of pagedQaBugs">
+                    <td class="col-bug-id">
+                      <code class="text-bug-id">
+                        <i class="fa-solid fa-bug" style="margin-right: 4px;"></i>{{ bug.bugFormatId || ('BUG_' + bug.bugId) }}
+                      </code>
+                    </td>
+                    <td class="col-title font-medium text-dark">{{ bug.title }}</td>
+                    <td class="col-feature">
+                      <span class="feature-tag">
+                        <i class="fa-solid fa-cube text-slate"></i>
+                        {{ getFeatureName(bug.featureId) }}
+                      </span>
+                    </td>
+                    <td class="col-severity">
+                      <span
+                        class="severity-tag"
+                        [ngClass]="{
+                          'sev-critical': bug.severity === 'CRITICAL' || bug.severity === 'BLOCKER',
+                          'sev-high': bug.severity === 'HIGH',
+                          'sev-medium': bug.severity === 'MEDIUM',
+                          'sev-low': bug.severity === 'LOW' || bug.severity === 'TRIVIAL'
+                        }"
+                      >
+                        {{ bug.severity || 'MEDIUM' }}
+                      </span>
+                    </td>
+                    <td class="col-status">
+                      <span class="status-pill-active" *ngIf="bug.status === 'OPEN' || bug.status === 'IN_PROGRESS' || bug.status === 'REOPENED'">
+                        <span class="dot-active" [style.background-color]="bug.status === 'OPEN' ? '#de350b' : '#ff8b00'"></span>
+                        {{ bug.status }}
+                      </span>
+                      <span class="badge-neutral" *ngIf="bug.status !== 'OPEN' && bug.status !== 'IN_PROGRESS' && bug.status !== 'REOPENED'">
+                        {{ bug.status }}
+                      </span>
+                    </td>
+                    <td class="col-assignee">
+                      <span class="assignee-cell">
+                        <i class="fa-solid fa-user-circle text-slate"></i>
+                        {{ bug.assignedTo || 'Unassigned' }}
+                      </span>
+                    </td>
+                    <td class="col-desc comments-cell" [title]="bug.description || bug.comments || 'No description'">
+                      {{ bug.description || bug.comments || '—' }}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Empty State -->
+            <div class="panel-empty-state" *ngIf="filteredQaBugs.length === 0">
+              <i class="fa-solid fa-bug-slash"></i>
+              <h4>No Open Defects Found</h4>
+              <p *ngIf="qaDefectSearchTerm">No defects match your search term "{{ qaDefectSearchTerm }}".</p>
+              <p *ngIf="!qaDefectSearchTerm">There are currently no open defects with severity <strong>{{ qaDefectDrilldown?.badgeLabel }}</strong> in the selected scope.</p>
+            </div>
+
+            <!-- Pagination -->
+            <div class="table-pagination-footer" *ngIf="filteredQaBugs.length > qaDefectPageSize">
+              <span class="pagination-info">
+                {{ qaDefectPage * qaDefectPageSize + 1 }}-{{ min(qaDefectPage * qaDefectPageSize + qaDefectPageSize, filteredQaBugs.length) }} of {{ filteredQaBugs.length }}
+              </span>
+              <div class="pagination-controls">
+                <button class="btn-page-nav" [disabled]="qaDefectPage === 0" (click)="qaDefectPage = qaDefectPage - 1" type="button">
+                  <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <span class="page-number-display">{{ qaDefectPage + 1 }} / {{ qaDefectTotalPages }}</span>
+                <button class="btn-page-nav" [disabled]="qaDefectPage + 1 >= qaDefectTotalPages" (click)="qaDefectPage = qaDefectPage + 1" type="button">
+                  <i class="fa-solid fa-chevron-right"></i>
+                </button>
+              </div>
+            </div>
+          </ng-container>
+        </div>
       </section>
 
       <!-- ================= SPLIT: TESTER PERFORMANCE & RECENT BUGS ================= -->
