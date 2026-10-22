@@ -730,22 +730,62 @@
             </div>
 
             <div class="drilldown-actions">
-              <div class="drilldown-search-box">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input
-                  type="text"
-                  [(ngModel)]="qaTestSearchTerm"
-                  (ngModelChange)="qaTestPage = 0"
-                  placeholder="Filter test cases..."
-                />
+              <div class="drilldown-filters-group">
+                <!-- Feature Filter -->
+                <div class="drilldown-select-wrapper" title="Filter by Feature">
+                  <select
+                    class="drilldown-filter-select"
+                    [(ngModel)]="qaTestFilterFeature"
+                    (ngModelChange)="qaTestPage = 0"
+                    aria-label="Filter test cases by Feature"
+                  >
+                    <option value="">All Features</option>
+                    <option *ngFor="let opt of qaTestCaseFeatureOptions" [value]="opt.id">
+                      {{ opt.name }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- Type Filter -->
+                <div class="drilldown-select-wrapper" title="Filter by Type">
+                  <select
+                    class="drilldown-filter-select"
+                    [(ngModel)]="qaTestFilterType"
+                    (ngModelChange)="qaTestPage = 0"
+                    aria-label="Filter test cases by Type"
+                  >
+                    <option value="">All Types</option>
+                    <option *ngFor="let t of qaTestCaseTypeOptions" [value]="t">
+                      {{ t }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- Priority Filter -->
+                <div class="drilldown-select-wrapper" title="Filter by Priority">
+                  <select
+                    class="drilldown-filter-select"
+                    [(ngModel)]="qaTestFilterPriority"
+                    (ngModelChange)="qaTestPage = 0"
+                    aria-label="Filter test cases by Priority"
+                  >
+                    <option value="">All Priorities</option>
+                    <option *ngFor="let p of qaTestCasePriorityOptions" [value]="p">
+                      {{ p }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- Reset Filters Button -->
                 <button
-                  *ngIf="qaTestSearchTerm"
-                  (click)="qaTestSearchTerm = ''; qaTestPage = 0"
-                  class="btn-clear-search"
+                  *ngIf="hasActiveQaTestFilters()"
+                  class="btn-reset-drilldown-filters"
                   type="button"
-                  title="Clear search"
+                  (click)="resetQaTestFilters()"
+                  title="Reset all filters"
                 >
-                  <i class="fa-solid fa-xmark"></i>
+                  <i class="fa-solid fa-arrow-rotate-left"></i>
+                  <span>Reset</span>
                 </button>
               </div>
 
@@ -842,8 +882,8 @@
             <div class="panel-empty-state" *ngIf="filteredQaTestCases.length === 0">
               <i class="fa-solid fa-list-check"></i>
               <h4>No Test Cases Found</h4>
-              <p *ngIf="qaTestSearchTerm">No test cases match your search term "{{ qaTestSearchTerm }}".</p>
-              <p *ngIf="!qaTestSearchTerm">There are currently no test cases with status <strong>{{ qaTestDrilldown?.badgeLabel }}</strong> in the selected scope.</p>
+              <p *ngIf="hasActiveQaTestFilters()">No test cases match the selected filter criteria.</p>
+              <p *ngIf="!hasActiveQaTestFilters()">There are currently no test cases with status <strong>{{ qaTestDrilldown?.badgeLabel }}</strong> in the selected scope.</p>
             </div>
 
             <!-- Pagination -->
@@ -885,22 +925,47 @@
             </div>
 
             <div class="drilldown-actions">
-              <div class="drilldown-search-box">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input
-                  type="text"
-                  [(ngModel)]="qaDefectSearchTerm"
-                  (ngModelChange)="qaDefectPage = 0"
-                  placeholder="Filter defects..."
-                />
+              <div class="drilldown-filters-group">
+                <!-- Severity Filter -->
+                <div class="drilldown-select-wrapper">
+                  <select
+                    [(ngModel)]="qaDefectFilterSeverity"
+                    (ngModelChange)="qaDefectPage = 0"
+                    class="drilldown-filter-select"
+                    aria-label="Filter defects by Severity"
+                  >
+                    <option value="">All Severities</option>
+                    <option *ngFor="let s of qaDefectSeverityOptions" [value]="s">
+                      {{ s }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="drilldown-select-wrapper">
+                  <select
+                    [(ngModel)]="qaDefectFilterStatus"
+                    (ngModelChange)="qaDefectPage = 0"
+                    class="drilldown-filter-select"
+                    aria-label="Filter defects by Status"
+                  >
+                    <option value="">All Statuses</option>
+                    <option *ngFor="let st of qaDefectStatusOptions" [value]="st">
+                      {{ st }}
+                    </option>
+                  </select>
+                </div>
+
+                <!-- Reset Filters Button -->
                 <button
-                  *ngIf="qaDefectSearchTerm"
-                  (click)="qaDefectSearchTerm = ''; qaDefectPage = 0"
-                  class="btn-clear-search"
+                  *ngIf="hasActiveQaDefectFilters()"
+                  class="btn-reset-drilldown-filters"
                   type="button"
-                  title="Clear search"
+                  (click)="resetQaDefectFilters()"
+                  title="Reset all filters"
                 >
-                  <i class="fa-solid fa-xmark"></i>
+                  <i class="fa-solid fa-arrow-rotate-left"></i>
+                  <span>Reset</span>
                 </button>
               </div>
 
@@ -991,8 +1056,8 @@
             <div class="panel-empty-state" *ngIf="filteredQaBugs.length === 0">
               <i class="fa-solid fa-bug-slash"></i>
               <h4>No Open Defects Found</h4>
-              <p *ngIf="qaDefectSearchTerm">No defects match your search term "{{ qaDefectSearchTerm }}".</p>
-              <p *ngIf="!qaDefectSearchTerm">There are currently no open defects with severity <strong>{{ qaDefectDrilldown?.badgeLabel }}</strong> in the selected scope.</p>
+              <p *ngIf="hasActiveQaDefectFilters()">No defects match the selected filter criteria.</p>
+              <p *ngIf="!hasActiveQaDefectFilters()">There are currently no open defects with severity <strong>{{ qaDefectDrilldown?.badgeLabel }}</strong> in the selected scope.</p>
             </div>
 
             <!-- Pagination -->

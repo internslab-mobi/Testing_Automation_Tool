@@ -137,6 +137,9 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   isQaTestLoading = false;
   qaTestError = '';
   qaTestSearchTerm = '';
+  qaTestFilterFeature: string = '';
+  qaTestFilterType: string = '';
+  qaTestFilterPriority: string = '';
   qaTestPage = 0;
   readonly qaTestPageSize = 8;
   qaDrilldownTestCases: TestCase[] = [];
@@ -149,6 +152,8 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     badgeLabel: string;
   } | null = null;
   qaDefectSearchTerm = '';
+  qaDefectFilterSeverity: string = '';
+  qaDefectFilterStatus: string = '';
   qaDefectPage = 0;
   readonly qaDefectPageSize = 8;
   qaDrilldownBugs: Bug[] = [];
@@ -1855,6 +1860,9 @@ export class ManagerDashboard implements OnInit, OnDestroy {
       badgeLabel: config.badgeLabel
     };
     this.qaTestSearchTerm = '';
+    this.qaTestFilterFeature = '';
+    this.qaTestFilterType = '';
+    this.qaTestFilterPriority = '';
     this.qaTestPage = 0;
     this.loadQaTestCasesDrilldown(status);
   }
@@ -1863,6 +1871,9 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     this.qaTestDrilldown = null;
     this.qaDrilldownTestCases = [];
     this.qaTestSearchTerm = '';
+    this.qaTestFilterFeature = '';
+    this.qaTestFilterType = '';
+    this.qaTestFilterPriority = '';
     this.qaTestPage = 0;
     this.cdr.markForCheck();
   }
@@ -1896,6 +1907,8 @@ export class ManagerDashboard implements OnInit, OnDestroy {
       badgeLabel: config.badgeLabel
     };
     this.qaDefectSearchTerm = '';
+    this.qaDefectFilterSeverity = '';
+    this.qaDefectFilterStatus = '';
     this.qaDefectPage = 0;
     this.applyDefectSeverityFilter(severity);
   }
@@ -1904,6 +1917,8 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     this.qaDefectDrilldown = null;
     this.qaDrilldownBugs = [];
     this.qaDefectSearchTerm = '';
+    this.qaDefectFilterSeverity = '';
+    this.qaDefectFilterStatus = '';
     this.qaDefectPage = 0;
     this.cdr.markForCheck();
   }
@@ -2053,16 +2068,81 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     } as TestCase;
   }
 
+  // =========================================================================
+  // QA DRILLDOWN DYNAMIC FILTER OPTIONS & GETTERS
+  // =========================================================================
+  get qaTestCaseFeatureOptions(): Array<{ id: number; name: string }> {
+    const map = new Map<number, string>();
+    for (const tc of this.qaDrilldownTestCases) {
+      if (tc.featureId != null && !map.has(tc.featureId)) {
+        map.set(tc.featureId, this.getFeatureName(tc.featureId));
+      }
+    }
+    return Array.from(map.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }
+
+  get qaTestCaseTypeOptions(): string[] {
+    const set = new Set<string>();
+    for (const tc of this.qaDrilldownTestCases) {
+      if (tc.testType && tc.testType.trim()) {
+        set.add(tc.testType.trim().toUpperCase());
+      }
+    }
+    return Array.from(set).sort();
+  }
+
+  get qaTestCasePriorityOptions(): string[] {
+    const set = new Set<string>();
+    for (const tc of this.qaDrilldownTestCases) {
+      if (tc.testPriority && tc.testPriority.trim()) {
+        set.add(tc.testPriority.trim().toUpperCase());
+      }
+    }
+    const priorityOrder = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
+    return Array.from(set).sort((a, b) => {
+      const ia = priorityOrder.indexOf(a);
+      const ib = priorityOrder.indexOf(b);
+      if (ia !== -1 && ib !== -1) return ia - ib;
+      if (ia !== -1) return -1;
+      if (ib !== -1) return 1;
+      return a.localeCompare(b);
+    });
+  }
+
+  hasActiveQaTestFilters(): boolean {
+    return (this.qaTestFilterFeature !== '' && this.qaTestFilterFeature != null) ||
+      !!this.qaTestFilterType ||
+      !!this.qaTestFilterPriority;
+  }
+
+  resetQaTestFilters(): void {
+    this.qaTestFilterFeature = '';
+    this.qaTestFilterType = '';
+    this.qaTestFilterPriority = '';
+    this.qaTestPage = 0;
+    this.cdr.markForCheck();
+  }
+
   get filteredQaTestCases(): TestCase[] {
-    const s = this.qaTestSearchTerm.toLowerCase().trim();
-    if (!s) return this.qaDrilldownTestCases;
-    return this.qaDrilldownTestCases.filter(tc =>
-      (tc.testcaseFormatId && tc.testcaseFormatId.toLowerCase().includes(s)) ||
-      (tc.title && tc.title.toLowerCase().includes(s)) ||
-      (tc.testType && tc.testType.toLowerCase().includes(s)) ||
-      (tc.testPriority && tc.testPriority.toLowerCase().includes(s)) ||
-      (tc.comments && tc.comments.toLowerCase().includes(s))
-    );
+    let result = this.qaDrilldownTestCases;
+
+    if (this.qaTestFilterFeature !== '' && this.qaTestFilterFeature != null) {
+      result = result.filter(tc => String(tc.featureId) === String(this.qaTestFilterFeature));
+    }
+
+    if (this.qaTestFilterType) {
+      const type = this.qaTestFilterType.toUpperCase();
+      result = result.filter(tc => (tc.testType || '').trim().toUpperCase() === type);
+    }
+
+    if (this.qaTestFilterPriority) {
+      const prio = this.qaTestFilterPriority.toUpperCase();
+      result = result.filter(tc => (tc.testPriority || '').trim().toUpperCase() === prio);
+    }
+
+    return result;
   }
 
   get pagedQaTestCases(): TestCase[] {
@@ -2074,16 +2154,64 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     return Math.ceil(this.filteredQaTestCases.length / this.qaTestPageSize) || 1;
   }
 
+  get qaDefectSeverityOptions(): string[] {
+    const set = new Set<string>();
+    for (const b of this.qaDrilldownBugs) {
+      if (b.severity && b.severity.trim()) {
+        set.add(b.severity.trim().toUpperCase());
+      }
+    }
+    const order = ['CRITICAL', 'BLOCKER', 'HIGH', 'MEDIUM', 'LOW', 'TRIVIAL'];
+    return Array.from(set).sort((a, b) => {
+      const ia = order.indexOf(a);
+      const ib = order.indexOf(b);
+      if (ia !== -1 && ib !== -1) return ia - ib;
+      if (ia !== -1) return -1;
+      if (ib !== -1) return 1;
+      return a.localeCompare(b);
+    });
+  }
+
+  get qaDefectStatusOptions(): string[] {
+    const set = new Set<string>();
+    for (const b of this.qaDrilldownBugs) {
+      if (b.status && b.status.trim()) {
+        set.add(b.status.trim().toUpperCase());
+      }
+    }
+    return Array.from(set).sort();
+  }
+
+  hasActiveQaDefectFilters(): boolean {
+    return !!this.qaDefectFilterSeverity || !!this.qaDefectFilterStatus;
+  }
+
+  resetQaDefectFilters(): void {
+    this.qaDefectFilterSeverity = '';
+    this.qaDefectFilterStatus = '';
+    this.qaDefectPage = 0;
+    this.cdr.markForCheck();
+  }
+
   get filteredQaBugs(): Bug[] {
-    const s = this.qaDefectSearchTerm.toLowerCase().trim();
-    if (!s) return this.qaDrilldownBugs;
-    return this.qaDrilldownBugs.filter(b =>
-      (b.bugFormatId && b.bugFormatId.toLowerCase().includes(s)) ||
-      (b.title && b.title.toLowerCase().includes(s)) ||
-      (b.assignedTo && b.assignedTo.toLowerCase().includes(s)) ||
-      (b.status && b.status.toLowerCase().includes(s)) ||
-      (b.description && b.description.toLowerCase().includes(s))
-    );
+    let result = this.qaDrilldownBugs;
+
+    if (this.qaDefectFilterSeverity) {
+      const sev = this.qaDefectFilterSeverity.toUpperCase();
+      result = result.filter(b => {
+        const s = (b.severity || '').trim().toUpperCase();
+        if (sev === 'CRITICAL') return s === 'CRITICAL' || s === 'BLOCKER';
+        if (sev === 'LOW') return s === 'LOW' || s === 'TRIVIAL';
+        return s === sev;
+      });
+    }
+
+    if (this.qaDefectFilterStatus) {
+      const stat = this.qaDefectFilterStatus.toUpperCase();
+      result = result.filter(b => (b.status || '').trim().toUpperCase() === stat);
+    }
+
+    return result;
   }
 
   get pagedQaBugs(): Bug[] {
