@@ -28,11 +28,142 @@
     </div>
 
     <div class="header-right">
-      <!-- In-App Notifications Bell (from Tester Workspace) -->
-      <button class="btn-header-icon" (click)="openNotificationsModal()" title="System Notifications" type="button">
-        <i class="fa-regular fa-bell"></i>
-        <span class="notif-badge" *ngIf="unreadNotificationCount > 0">{{ unreadNotificationCount }}</span>
-      </button>
+      <!-- In-App Notifications Bell Wrapper (Manager Registration Approvals & Alerts) -->
+      <div class="header-notif-wrapper">
+        <button class="btn-header-icon" 
+                (click)="toggleNotificationsDropdown($event)" 
+                [title]="'Notifications' + (pendingApprovalsCount > 0 ? ' (' + pendingApprovalsCount + ' pending approvals)' : '')" 
+                type="button"
+                id="manager-notification-bell">
+          <i class="fa-regular fa-bell"></i>
+          <span class="notif-badge" *ngIf="unreadNotificationCount + pendingApprovalsCount > 0">
+            {{ unreadNotificationCount + pendingApprovalsCount }}
+          </span>
+        </button>
+
+        <!-- Manager Notifications Dropdown / Panel -->
+        <div class="manager-notif-dropdown" *ngIf="isNotificationsDropdownOpen" (click)="$event.stopPropagation()">
+          <div class="notif-dropdown-header">
+            <div class="notif-header-title">
+              <i class="fa-regular fa-bell text-indigo"></i>
+              <span>Notifications</span>
+              <span class="badge-total-count" *ngIf="unreadNotificationCount + pendingApprovalsCount > 0">
+                {{ unreadNotificationCount + pendingApprovalsCount }}
+              </span>
+            </div>
+            <div class="notif-header-actions">
+              <button class="btn-notif-icon-action" (click)="refreshAllNotifications()" title="Refresh notifications" type="button">
+                <i class="fa-solid fa-rotate-right" [class.fa-spin]="isRefreshingNotifs"></i>
+              </button>
+              <button class="btn-notif-close" (click)="isNotificationsDropdownOpen = false" title="Close" type="button">
+                &times;
+              </button>
+            </div>
+          </div>
+
+          <!-- Tabs / Filter -->
+          <div class="notif-dropdown-tabs">
+            <button class="notif-pill-tab" 
+                    [class.active]="activeNotifTab === 'ALL'" 
+                    (click)="activeNotifTab = 'ALL'" 
+                    type="button">
+              All ({{ unreadNotificationCount + pendingApprovalsCount }})
+            </button>
+            <button class="notif-pill-tab" 
+                    [class.active]="activeNotifTab === 'APPROVALS'" 
+                    (click)="activeNotifTab = 'APPROVALS'" 
+                    type="button">
+              Approvals ({{ pendingApprovalsCount }})
+            </button>
+            <button class="notif-pill-tab" 
+                    [class.active]="activeNotifTab === 'SYSTEM'" 
+                    (click)="activeNotifTab = 'SYSTEM'" 
+                    type="button">
+              System ({{ unreadNotificationCount }})
+            </button>
+          </div>
+
+          <!-- Notifications List -->
+          <div class="notif-dropdown-body">
+            <!-- Empty state -->
+            <div *ngIf="displayedNotificationCount === 0" class="notif-empty-state">
+              <i class="fa-solid fa-bell-slash"></i>
+              <p>No notifications or pending approvals</p>
+            </div>
+
+            <!-- 1. PENDING REGISTRATION APPROVALS SECTION -->
+            <ng-container *ngIf="activeNotifTab === 'ALL' || activeNotifTab === 'APPROVALS'">
+              <div *ngFor="let u of pendingUsers" 
+                   class="notif-dropdown-item notif-approval-item" 
+                   (click)="navigateToPendingApprovals(u)"
+                   title="Click to review and approve {{ u.fullName || u.username }}">
+                <div class="notif-item-icon bg-amber-soft">
+                  <i class="fa-solid fa-user-clock text-amber"></i>
+                </div>
+                <div class="notif-item-content">
+                  <div class="notif-item-top">
+                    <span class="notif-type-tag tag-approval">Approval Request</span>
+                    <span class="badge-pending-pill">Pending</span>
+                  </div>
+                  <div class="notif-item-title">
+                    Registration request: <strong>{{ u.fullName || u.username }}</strong>
+                  </div>
+                  <div class="notif-item-meta">
+                    <span class="meta-email" *ngIf="u.email"><i class="fa-regular fa-envelope"></i> {{ u.email }}</span>
+                    <span class="meta-role" *ngIf="u.role"><i class="fa-solid fa-id-badge"></i> {{ u.role?.role || u.role }}</span>
+                  </div>
+                  <div class="notif-item-cta">
+                    <i class="fa-solid fa-arrow-right"></i> Review & Approve in System Dashboard
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+
+            <!-- 2. SYSTEM IN-APP NOTIFICATIONS SECTION -->
+            <ng-container *ngIf="activeNotifTab === 'ALL' || activeNotifTab === 'SYSTEM'">
+              <div *ngFor="let n of notifications" 
+                   class="notif-dropdown-item" 
+                   [class.unread]="n.notificationStatus === 'UNREAD'"
+                   (click)="handleNotificationItemClick(n)">
+                <div class="notif-item-icon" 
+                     [ngClass]="n.type === 'FIXED' ? 'bg-emerald-soft' : n.type === 'COMMENT' ? 'bg-indigo-soft' : 'bg-rose-soft'">
+                  <i class="fa-solid" 
+                     [ngClass]="n.type === 'FIXED' ? 'fa-circle-check text-emerald' : n.type === 'COMMENT' ? 'fa-comment-dots text-indigo' : 'fa-triangle-exclamation text-rose'">
+                  </i>
+                </div>
+                <div class="notif-item-content">
+                  <div class="notif-item-top">
+                    <span class="notif-type-tag" *ngIf="n.bugFormatId">{{ n.bugFormatId }}</span>
+                    <span class="new-dot" *ngIf="n.notificationStatus === 'UNREAD'">● NEW</span>
+                    <span class="notif-time" *ngIf="n.createdAt">{{ n.createdAt | date:'short' }}</span>
+                  </div>
+                  <div class="notif-item-title">{{ n.message }}</div>
+                </div>
+                <div class="notif-item-actions">
+                  <button class="btn-dismiss-mini" (click)="handleDismissNotification(n); $event.stopPropagation()" title="Dismiss">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+
+          <!-- Footer -->
+          <div class="notif-dropdown-footer">
+            <button class="btn-view-all-approvals" (click)="navigateToPendingApprovals()" type="button">
+              <i class="fa-regular fa-compass"></i>
+              <span>Open System Approvals ({{ pendingApprovalsCount }})</span>
+            </button>
+            <button class="btn-mark-all" 
+                    *ngIf="unreadNotificationCount > 0" 
+                    (click)="handleMarkAllNotificationsRead()" 
+                    type="button">
+              <i class="fa-solid fa-check-double"></i>
+              <span>Mark system read</span>
+            </button>
+          </div>
+        </div>
+      </div>
 
       <!-- User Profile & Dropdown (Aligned with Tester Workspace) -->
       <div class="profile-avatar-wrapper">
@@ -48,7 +179,7 @@
         </div>
 
         <!-- Dropdown Menu -->
-        <div class="profile-dropdown-card" *ngIf="showProfileMenu">
+        <div class="profile-dropdown-card" *ngIf="showProfileMenu" (click)="$event.stopPropagation()">
           <div class="profile-card-header">
             <div class="dropdown-avatar">{{ userInitials || 'M' }}</div>
             <div class="dropdown-user-details">
@@ -57,8 +188,24 @@
               <span class="dropdown-user-email" *ngIf="userEmail">{{ userEmail }}</span>
             </div>
           </div>
+          <div class="profile-card-body">
+            <button class="profile-menu-item" (click)="goToProfile($event)" type="button" title="View & edit profile settings">
+              <i class="fa-regular fa-user text-indigo"></i>
+              <div class="item-text">
+                <span class="item-title">Profile Settings</span>
+                <span class="item-desc">Account details & credentials</span>
+              </div>
+            </button>
+            <button class="profile-menu-item" (click)="navigateToTesterWorkspace($event)" type="button" title="Open Tester Workspace">
+              <i class="fa-solid fa-vial-circle-check text-emerald"></i>
+              <div class="item-text">
+                <span class="item-title">Tester Workspace</span>
+                <span class="item-desc">Test execution & defect reporting</span>
+              </div>
+            </button>
+          </div>
           <div class="profile-card-actions">
-            <button class="btn-dropdown-logout" (click)="onLogout()" type="button">
+            <button class="btn-dropdown-logout" (click)="onLogout()" type="button" title="Sign out of session">
               <i class="fa-solid fa-right-from-bracket"></i>
               <span>Log out</span>
             </button>
@@ -90,6 +237,11 @@
         >
           <i [class]="item.icon + ' sidebar-item-icon'"></i>
           <span class="sidebar-item-label">{{ item.label }}</span>
+          <span class="sidebar-badge-count" 
+                *ngIf="item.id === 'system-dashboard' && pendingApprovalsCount > 0" 
+                [title]="pendingApprovalsCount + ' Pending Registration Approvals'">
+            {{ pendingApprovalsCount }}
+          </span>
         </button>
       </nav>
     </aside>
@@ -2085,7 +2237,6 @@
                   <th class="th-proj-region">Region</th>
                   <th class="th-proj-module">Module / Submodule</th>
                   <th class="th-proj-status">Status</th>
-                  <th class="th-proj-actions">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -2116,18 +2267,9 @@
                       </button>
                     </div>
                   </td>
-                  <td class="td-proj-actions">
-                    <button class="btn-table-action btn-export-excel" 
-                            (click)="downloadProjectSummary(p.projectId, p.projectName)" 
-                            type="button" 
-                            title="Download Project Summary Excel (.xlsx)">
-                      <i class="fa-solid fa-file-excel"></i>
-                      <span>Export</span>
-                    </button>
-                  </td>
                 </tr>
                 <tr *ngIf="filteredProjectsList.length === 0">
-                  <td colspan="6" class="text-center py-4 text-muted">No projects found matching the criteria.</td>
+                  <td colspan="5" class="text-center py-4 text-muted">No projects found matching the criteria.</td>
                 </tr>
               </tbody>
             </table>
@@ -2941,7 +3083,9 @@
     </div>
   </div>
 
-  <!-- ================= 9. IN-APP NOTIFICATIONS MODAL (Reused from Tester Workspace) ================= -->
+
+
+  <!-- ================= 10. IN-APP NOTIFICATIONS MODAL (Reused from Tester Workspace) ================= -->
   <app-notifications-modal
     [isOpen]="isNotificationsModalOpen"
     [notifications]="notifications"

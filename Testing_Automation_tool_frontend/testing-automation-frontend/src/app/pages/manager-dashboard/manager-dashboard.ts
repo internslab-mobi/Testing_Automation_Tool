@@ -1,9 +1,9 @@
 import { Component, OnInit, OnDestroy, inject, signal, ChangeDetectorRef, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, NavigationEnd } from '@angular/router';
+import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { forkJoin, of, Subscription, Observable } from 'rxjs';
+import { forkJoin, of, Subscription, Observable, interval } from 'rxjs';
 import { catchError, filter, map } from 'rxjs/operators';
 import { AuthService } from '../../core/services/authService';
 import { ProjectService } from '../../core/services/project.service';
@@ -76,7 +76,7 @@ export interface DeveloperPerformance {
 @Component({
   selector: 'app-manager-dashboard',
   standalone: true,
-  imports: [CommonModule, FormsModule, NotificationsModalComponent],
+  imports: [CommonModule, FormsModule, RouterModule, NotificationsModalComponent],
   templateUrl: './manager-dashboard.html',
   styleUrl: './manager-dashboard.css'
 })
@@ -208,12 +208,15 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   showProfileMenu = false;
   showExportDropdown = false;
 
-  // Sidebar & Notifications State (Aligned with Tester Workspace)
+  // Header Notifications & Dropdown (Aligned with Manager Workflows)
   isSidebarOpen = true;
   notifications: InAppNotification[] = [];
   unreadNotificationCount = 0;
   isNotificationsModalOpen = false;
-
+  isNotificationsDropdownOpen = false;
+  activeNotifTab: 'ALL' | 'APPROVALS' | 'SYSTEM' = 'ALL';
+  isRefreshingNotifs = false;
+  private pollingSub?: Subscription;
   // Active Navigation
   activeSidebarItem = 'QA Dashboard';
   activeHeaderNav = 'Dashboards';
@@ -238,17 +241,42 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     isCreateAction: false
   };
 
+  get pendingApprovalsCount(): number {
+    return this.pendingUsers ? this.pendingUsers.length : 0;
+  }
+
+  get totalNotificationCount(): number {
+    return this.unreadNotificationCount + this.pendingApprovalsCount;
+  }
+
+  get displayedNotificationCount(): number {
+    if (this.activeNotifTab === 'APPROVALS') {
+      return this.pendingApprovalsCount;
+    }
+    if (this.activeNotifTab === 'SYSTEM') {
+      return this.notifications.length;
+    }
+    return this.pendingApprovalsCount + this.notifications.length;
+  }
+
   ngOnInit(): void {
     this.loadUserProfile();
     this.loadFilterData();
     this.loadDashboardMetrics();
     this.loadNotifications();
+    this.loadPendingApprovals();
     this.syncRouteWithView();
 
     this.routerSub = this.router.events.pipe(
       filter((e): e is NavigationEnd => e instanceof NavigationEnd)
     ).subscribe(() => {
       this.syncRouteWithView();
+    });
+
+    // Gentle polling for pending approval updates and system notifications (every 60s)
+    this.pollingSub = interval(60000).subscribe(() => {
+      this.loadPendingApprovals(true);
+      this.loadNotifications(true);
     });
   }
 
@@ -261,9 +289,9 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   }
 
   // ==========================================
-  // IN-APP NOTIFICATIONS (Reused from Tester Workspace)
+  // NOTIFICATIONS & PENDING APPROVAL REQUESTS
   // ==========================================
-  loadNotifications(): void {
+  loadNotifications(silent = false): void {
     this.notificationService.getNotifications().subscribe({
       next: (notifs) => {
         this.notifications = notifs;
@@ -271,14 +299,94 @@ export class ManagerDashboard implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       },
       error: () => {
-        this.notifications = [];
-        this.unreadNotificationCount = 0;
+        if (!silent) {
+          this.notifications = [];
+          this.unreadNotificationCount = 0;
+        }
         this.cdr.markForCheck();
       }
     });
   }
 
+  loadPendingApprovals(silent = false): void {
+    this.http.get<any>(`${this.apiBase}/manager/users/pending`).pipe(
+      catchError(err => {
+        if (!silent) console.warn('Failed to load pending users for notifications:', err);
+        return of({ data: [] });
+      })
+    ).subscribe({
+      next: (res) => {
+        const rawPending = res?.data || res || [];
+        this.pendingUsers = Array.isArray(rawPending) ? rawPending : [];
+        this.pendingUsers.forEach(u => {
+          if (!this.pendingRoleSelections[u.userId]) {
+            this.pendingRoleSelections[u.userId] = 'TESTER';
+          }
+        });
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  toggleNotificationsDropdown(event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.isNotificationsDropdownOpen = !this.isNotificationsDropdownOpen;
+    if (this.isNotificationsDropdownOpen) {
+      this.showProfileMenu = false;
+      this.showFiltersDropdown = false;
+      this.showExportDropdown = false;
+      this.loadPendingApprovals(true);
+      this.loadNotifications(true);
+    }
+    this.cdr.markForCheck();
+  }
+
+  refreshAllNotifications(): void {
+    this.isRefreshingNotifs = true;
+    this.loadPendingApprovals(true);
+    this.loadNotifications(true);
+    setTimeout(() => {
+      this.isRefreshingNotifs = false;
+      this.cdr.markForCheck();
+    }, 600);
+  }
+
+  navigateToPendingApprovals(user?: any): void {
+    this.isNotificationsDropdownOpen = false;
+    this.isNotificationsModalOpen = false;
+    this.activeSidebarItem = 'System Dashboard';
+    this.systemTab = 'pending';
+    this.router.navigate(['/manager/system-dashboard']);
+    this.loadSystemDashboardData();
+
+    if (user && user.userId) {
+      setTimeout(() => {
+        const row = document.getElementById(`pending-user-row-${user.userId}`);
+        if (row) {
+          row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          row.classList.add('highlight-pulse');
+          setTimeout(() => row.classList.remove('highlight-pulse'), 3000);
+        }
+      }, 350);
+    }
+  }
+
+  handleNotificationItemClick(n: InAppNotification): void {
+    if (n.notificationStatus === 'UNREAD') {
+      this.handleToggleNotificationRead(n);
+    }
+    if (n.bugId || n.bugFormatId) {
+      this.isNotificationsDropdownOpen = false;
+      this.activeSidebarItem = 'Defect Management';
+      this.loadDefectManagementData();
+      this.router.navigate(['/manager/defect-management']);
+    }
+  }
+
   openNotificationsModal(): void {
+    this.isNotificationsDropdownOpen = false;
     this.isNotificationsModalOpen = true;
     this.cdr.markForCheck();
   }
@@ -310,13 +418,37 @@ export class ManagerDashboard implements OnInit, OnDestroy {
       }
     });
     this.unreadNotificationCount = 0;
-    this.showToast('All notifications marked as read');
+    this.showToast('All system notifications marked as read');
     this.cdr.markForCheck();
+  }
+
+  // ==========================================
+  // PROFILE MENU NAVIGATION (Same as Tester Workspace)
+  // ==========================================
+  goToProfile(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.showProfileMenu = false;
+    this.router.navigate(['/profile']);
+  }
+
+  navigateToTesterWorkspace(event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.showProfileMenu = false;
+    this.router.navigate(['/tester-workspace']);
   }
 
   ngOnDestroy(): void {
     if (this.routerSub) {
       this.routerSub.unsubscribe();
+    }
+    if (this.pollingSub) {
+      this.pollingSub.unsubscribe();
     }
     if (this.toastTimer) {
       clearTimeout(this.toastTimer);
@@ -359,6 +491,7 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     const target = event.target as HTMLElement;
     const filterWrapper = this.elementRef.nativeElement.querySelector('.filters-nav-wrapper');
     const profileWrapper = this.elementRef.nativeElement.querySelector('.profile-avatar-wrapper');
+    const notifWrapper = this.elementRef.nativeElement.querySelector('.header-notif-wrapper');
     const exportWrapper = this.elementRef.nativeElement.querySelector('.export-dropdown-wrapper');
 
     if (filterWrapper && !filterWrapper.contains(target)) {
@@ -366,6 +499,9 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     }
     if (profileWrapper && !profileWrapper.contains(target)) {
       this.showProfileMenu = false;
+    }
+    if (notifWrapper && !notifWrapper.contains(target)) {
+      this.isNotificationsDropdownOpen = false;
     }
     if (exportWrapper && !exportWrapper.contains(target)) {
       this.showExportDropdown = false;
@@ -377,6 +513,12 @@ export class ManagerDashboard implements OnInit, OnDestroy {
 
   @HostListener('document:keydown.escape')
   onKeydownEscape(): void {
+    if (this.isNotificationsDropdownOpen) {
+      this.isNotificationsDropdownOpen = false;
+    }
+    if (this.showProfileMenu) {
+      this.showProfileMenu = false;
+    }
     if (this.expandedWidget) {
       this.closeExpandModal();
     }
@@ -1159,24 +1301,13 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     this.openStatusConfirmModal(project);
   }
 
-  downloadProjectSummary(projectId: number, projectName: string): void {
-    this.showToast(`Preparing QA summary report for ${projectName}...`);
-    this.http.get(`${this.apiBase}/project/${projectId}/export`, { responseType: 'blob' }).subscribe({
-      next: (blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `QA_Summary_Report_${projectName.replace(/\s+/g, '_')}_${projectId}.xlsx`;
-        a.click();
-        window.URL.revokeObjectURL(url);
-        this.showToast(`Download complete: ${projectName} QA Summary.`);
-      },
-      error: (err) => {
-        console.error('Failed to export project summary:', err);
-        this.showToast('Failed to download project summary report.');
-      }
-    });
-  }
+
+
+
+
+
+
+
 
   get filteredProjectsList(): Project[] {
     const s = this.projectSearchTerm.toLowerCase().trim();
