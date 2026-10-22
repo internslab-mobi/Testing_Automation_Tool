@@ -26,6 +26,12 @@
             <artifactId>spring-cloud-starter-gateway-server-webflux</artifactId>
         </dependency>
 
+        <!-- Spring Boot Starter Security (Reactive for Spring Cloud Gateway) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-security</artifactId>
+        </dependency>
+
 
         <!-- Lombok -->
         <dependency>

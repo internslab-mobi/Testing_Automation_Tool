@@ -18,6 +18,7 @@ export class NotificationsModalComponent {
 
   @Output() close = new EventEmitter<void>();
   @Output() toggleRead = new EventEmitter<InAppNotification>();
+  @Output() selectNotification = new EventEmitter<InAppNotification>();
   @Output() dismiss = new EventEmitter<InAppNotification>();
   @Output() markAllRead = new EventEmitter<void>();
 
@@ -38,6 +39,11 @@ export class NotificationsModalComponent {
 
   setFilter(filter: 'ALL' | 'UNREAD' | 'FIXED' | 'COMMENT'): void {
     this.activeFilter = filter;
+    this.cdr.markForCheck();
+  }
+
+  onNotificationClick(n: InAppNotification): void {
+    this.selectNotification.emit(n);
     this.cdr.markForCheck();
   }
 

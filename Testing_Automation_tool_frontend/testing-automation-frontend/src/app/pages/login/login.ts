@@ -57,8 +57,6 @@ export class Login implements OnInit {
     this.authService.login(request).subscribe({
       next: () => {
         this.isLoading = false;
-        // Warm up CSRF token for downstream services so initial actions are immediately permitted
-        this.authService.initCsrfToken().subscribe({ error: () => {} });
         const cachedUser = this.authService.currentUser();
         const role = (cachedUser?.role || "").toUpperCase();
         if (role.includes('ADMIN')) {

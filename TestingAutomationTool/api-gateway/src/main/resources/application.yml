@@ -57,7 +57,7 @@ spring:
             - id: main-service-business
               uri: ${services.main-service.url}
               predicates:
-                - Path=/csrf, /manager/**, /project/**, /projects/**, /feature/**, /features/**, /testcases/**, /testcase/**, /bugs/**, /bug/**, /comments/**, /attachments/**, /in-app-notifications/**, /notifications/**, /admin/**
+                - Path=/manager/**, /project/**, /projects/**, /feature/**, /features/**, /testcases/**, /testcase/**, /bugs/**, /bug/**, /comments/**, /attachments/**, /in-app-notifications/**, /notifications/**, /admin/**
               metadata:
                 response-timeout: 30000
 

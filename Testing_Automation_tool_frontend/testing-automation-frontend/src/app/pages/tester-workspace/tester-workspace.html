@@ -1095,7 +1095,9 @@
   <!-- MODAL: IN-APP NOTIFICATIONS -->
   <app-notifications-modal [isOpen]="isNotificationsModalOpen" [notifications]="notifications"
     [unreadCount]="unreadNotificationCount" (close)="isNotificationsModalOpen = false"
-    (toggleRead)="handleToggleNotificationRead($event)" (dismiss)="handleDismissNotification($event)"
+    (toggleRead)="handleToggleNotificationRead($event)"
+    (selectNotification)="handleNotificationClick($event)"
+    (dismiss)="handleDismissNotification($event)"
     (markAllRead)="handleMarkAllNotificationsRead()"></app-notifications-modal>
 
   <!-- SEPARATE COMPONENT MODAL: PROJECT DETAILS -->

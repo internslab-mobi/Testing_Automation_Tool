@@ -580,6 +580,7 @@ export class DeveloperWorkspace implements OnInit {
       creatorName: this.userName,
       createdByFullName: this.userName,
       createdByUsername: this.currentUser?.username || 'developer',
+      createdByUserId: this.currentUserId ? Number(this.currentUserId) : undefined,
       createdAt: new Date().toISOString()
     };
     this.bugComments.push(tempComment);
@@ -606,16 +607,36 @@ export class DeveloperWorkspace implements OnInit {
   }
 
   isMyComment(c: BugComment): boolean {
-    const creator = (c.creatorName || c.createdByFullName || c.createdByUsername || '').toLowerCase();
-    const myName = this.userName.toLowerCase();
-    return creator.includes(myName) || creator.includes('developer') || creator.includes('dev');
+    if (!c) return false;
+
+    // Check by user ID
+    const commentUserId = c.createdByUserId || (typeof c.createdBy === 'number' ? c.createdBy : null);
+    if (commentUserId && this.currentUserId) {
+      return Number(commentUserId) === Number(this.currentUserId);
+    }
+
+    // Check by exact username match
+    const myUsername = (this.currentUser?.username || '').trim().toLowerCase();
+    const commentUsername = (c.createdByUsername || '').trim().toLowerCase();
+    if (myUsername && commentUsername) {
+      return myUsername === commentUsername;
+    }
+
+    // Check by exact full name match (excluding generic defaults)
+    const myFullName = (this.userName || '').trim().toLowerCase();
+    const commentFullName = (c.creatorName || c.createdByFullName || '').trim().toLowerCase();
+    if (myFullName && commentFullName && myFullName !== 'developer' && myFullName !== 'team member') {
+      return myFullName === commentFullName;
+    }
+
+    return false;
   }
 
   getCommentRole(c: BugComment): string {
-    const text = (c.creatorName || c.createdByFullName || c.createdByUsername || '').toLowerCase();
-    if (text.includes('qa') || text.includes('tester')) return 'QA Tester';
-    if (text.includes('lead') || text.includes('manager')) return 'QA Lead';
-    return 'Developer';
+    if (this.isMyComment(c)) {
+      return 'Developer';
+    }
+    return 'QA';
   }
 
   private scrollChatToBottom(): void {

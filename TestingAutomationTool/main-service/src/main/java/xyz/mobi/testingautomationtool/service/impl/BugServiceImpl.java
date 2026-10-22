@@ -619,7 +619,7 @@ public class BugServiceImpl implements BugService {
 
         bug = bugRepository.save(bug);
 
-        if (statusChanged && bug.getStatus() == BugStatus.FIXED) {
+        if (statusChanged && (bug.getStatus() == BugStatus.FIXED || bug.getStatus() == BugStatus.NOT_A_BUG)) {
             eventPublisher.publishEvent(new BugFixedEvent(bug));
         }
 

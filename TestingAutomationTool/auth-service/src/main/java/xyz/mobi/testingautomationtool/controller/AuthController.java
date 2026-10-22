@@ -17,7 +17,6 @@ import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.util.StringUtils;
-import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 import xyz.mobi.testingautomationtool.dto.ApiResponse;
 import xyz.mobi.testingautomationtool.dto.AuthDTO.*;
@@ -41,16 +40,6 @@ public class AuthController {
     @Value("${app.jwt.cookie.same-site:Lax}")
     private String cookieSameSite;
 
-    @Operation(summary = "Initialize CSRF cookie token", description = "Generates and sends the XSRF-TOKEN cookie for the frontend client.")
-    @GetMapping("/csrf")
-    public ResponseEntity<ApiResponse<String>> getCsrfToken(HttpServletRequest request) {
-        CsrfToken token = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
-        if (token == null) {
-            token = (CsrfToken) request.getAttribute("_csrf");
-        }
-        String tokenValue = token != null ? token.getToken() : "OK";
-        return ResponseEntity.ok(ApiResponse.success("CSRF token initialized", tokenValue));
-    }
 
     @Operation(summary = "Register a new user", description = "Allows user registration with specific roles: MANAGER, TESTER, DEVELOPER, ADMIN")
     @PostMapping("/register")
@@ -72,7 +61,6 @@ public class AuthController {
     ) {
         AuthResponse response = authService.login(request);
         setAuthCookies(httpResponse, response.getToken(), response.getRefreshToken());
-        resolveCsrfToken(httpRequest);
         return ResponseEntity.ok(ApiResponse.success("Login successful", response));
     }
 
@@ -100,7 +88,6 @@ public class AuthController {
 
         AuthResponse response = authService.refreshToken(resolvedRequest);
         setAuthCookies(httpResponse, response.getToken(), response.getRefreshToken());
-        resolveCsrfToken(httpRequest);
         return ResponseEntity.ok(ApiResponse.success("Token refreshed successfully", response));
     }
 
@@ -133,7 +120,6 @@ public class AuthController {
     ) {
         AuthResponse response = authService.resetPassword(request);
         setAuthCookies(httpResponse, response.getToken(), response.getRefreshToken());
-        resolveCsrfToken(httpRequest);
         return ResponseEntity.ok(ApiResponse.success("Password reset successfully", response));
     }
 
@@ -222,18 +208,5 @@ public class AuthController {
         response.addHeader(HttpHeaders.SET_COOKIE, deleteRefresh.toString());
     }
 
-    /**
-     * Helper to force deferred CSRF token resolution so Set-Cookie: XSRF-TOKEN is sent to the client.
-     */
-    private void resolveCsrfToken(HttpServletRequest request) {
-        if (request != null) {
-            CsrfToken csrfToken = (CsrfToken) request.getAttribute(CsrfToken.class.getName());
-            if (csrfToken == null) {
-                csrfToken = (CsrfToken) request.getAttribute("_csrf");
-            }
-            if (csrfToken != null) {
-                csrfToken.getToken();
-            }
-        }
-    }
+
 }

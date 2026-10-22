@@ -267,6 +267,8 @@ export interface BugComment {
   creatorName?: string;
   createdByFullName?: string;
   createdByUsername?: string;
+  createdByUserId?: number | string;
+  createdBy?: number | string;
   createdAt?: string;
 }
 

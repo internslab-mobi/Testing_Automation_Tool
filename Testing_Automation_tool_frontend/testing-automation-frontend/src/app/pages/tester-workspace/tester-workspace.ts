@@ -2390,6 +2390,79 @@ export class TesterWorkspace implements OnInit {
     this.cdr.markForCheck();
   }
 
+  handleNotificationClick(n: InAppNotification): void {
+    if (!n) return;
+
+    // 1. Mark as read immediately if it's currently UNREAD
+    if (n.notificationStatus === 'UNREAD') {
+      n.notificationStatus = 'READ';
+      this.unreadNotificationCount = this.notifications.filter(item => item.notificationStatus === 'UNREAD').length;
+      this.notificationService.markAsRead(n.notificationId).subscribe();
+    }
+
+    // 2. Close notifications modal
+    this.isNotificationsModalOpen = false;
+    this.cdr.markForCheck();
+
+    // 3. Navigate directly to the specific defect / bug
+    if (n.bugId) {
+      const bugIdNum = Number(n.bugId);
+      // Check if the bug is already in our loaded bugs list or overview bugs list
+      const existingBug = this.bugs.find(b => Number(b.bugId) === bugIdNum || (n.bugFormatId && b.bugFormatId === n.bugFormatId))
+        || this.allBugsList.find(b => Number(b.bugId) === bugIdNum || (n.bugFormatId && b.bugFormatId === n.bugFormatId));
+
+      if (existingBug) {
+        this.navigateToBug(existingBug);
+      } else {
+        // Fetch bug by ID and navigate to the defect
+        this.bugService.getBugById(bugIdNum).subscribe({
+          next: (bug) => {
+            if (bug) {
+              this.navigateToBug(bug);
+            }
+          },
+          error: (err) => {
+            console.error('Failed to load defect for notification:', err);
+            this.showToast('Could not load defect details', 'error');
+          }
+        });
+      }
+    }
+  }
+
+  navigateToBug(bug: Bug): void {
+    if (!bug) return;
+
+    // Switch context to feature & defects tab if featureId is known
+    if (bug.featureId) {
+      if (this.allFeaturesList && this.allFeaturesList.length > 0) {
+        const foundFeat = this.allFeaturesList.find(f => f.featureId === bug.featureId);
+        if (foundFeat) {
+          const foundProj = this.projects.find(p => p.projectId === foundFeat.projectId);
+          if (foundProj) {
+            this.activeProject = foundProj;
+          }
+          if (!this.activeFeature || this.activeFeature.featureId !== foundFeat.featureId) {
+            this.selectFeature(foundFeat);
+          }
+        }
+      } else if (this.features && this.features.length > 0) {
+        const foundFeat = this.features.find(f => f.featureId === bug.featureId);
+        if (foundFeat) {
+          if (!this.activeFeature || this.activeFeature.featureId !== foundFeat.featureId) {
+            this.selectFeature(foundFeat);
+          }
+        }
+      }
+      this.isOverviewMode = false;
+      this.activeSubTab = 'bugs';
+    }
+
+    // Open the defect detail card modal
+    this.viewDefectDetail(bug);
+    this.cdr.markForCheck();
+  }
+
   handleToggleNotificationRead(n: InAppNotification): void {
     n.notificationStatus = n.notificationStatus === 'UNREAD' ? 'READ' : 'UNREAD';
     this.unreadNotificationCount = this.notifications.filter(item => item.notificationStatus === 'UNREAD').length;

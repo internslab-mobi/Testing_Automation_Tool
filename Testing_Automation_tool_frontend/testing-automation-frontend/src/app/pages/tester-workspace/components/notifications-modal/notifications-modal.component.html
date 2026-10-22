@@ -30,7 +30,8 @@
         *ngFor="let n of filteredNotifications; trackBy: trackByNotificationId"
         class="notif-card"
         [class.unread]="n.notificationStatus === 'UNREAD'"
-        (click)="onToggle(n)"
+        (click)="onNotificationClick(n)"
+        [title]="n.bugId ? 'Click to view defect ' + (n.bugFormatId || 'Bug #' + n.bugId) : 'Click to mark as read'"
       >
         <div class="notif-icon-col">
           <i
@@ -46,6 +47,9 @@
             <span class="notif-time" *ngIf="n.createdAt">{{ n.createdAt | date:'short' }}</span>
           </div>
           <div class="notif-message">{{ n.message }}</div>
+          <div class="notif-action-hint" *ngIf="n.bugId">
+            <i class="fa-solid fa-arrow-up-right-from-square"></i> View Defect
+          </div>
         </div>
 
         <div class="notif-action-col">

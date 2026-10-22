@@ -287,12 +287,10 @@ export class AuthService {
    * to ensure XSRF-TOKEN is placed in cookies before any state-changing action.
    */
   initCsrfToken(): Observable<any> {
-    const mainCsrfUrl = `${environment.apiGatewayUrl}/csrf`;
-    const authCsrfUrl = `${this.authUrl}/csrf`;
-    return this.http.get<ApiResponse<string>>(mainCsrfUrl, { withCredentials: true }).pipe(
-      catchError(() => this.http.get<ApiResponse<string>>(authCsrfUrl, { withCredentials: true })),
+    const csrfUrl = `${environment.apiGatewayUrl}/csrf`;
+    return this.http.get<ApiResponse<string>>(csrfUrl, { withCredentials: true }).pipe(
       catchError((err) => {
-        console.warn('Could not initialize CSRF token:', err);
+        console.warn('Could not initialize CSRF token from API Gateway:', err);
         return throwError(() => err);
       })
     );
