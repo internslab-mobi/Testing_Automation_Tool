@@ -7,6 +7,7 @@ import { ResetPassword } from './pages/reset-password/reset-password';
 import { TesterWorkspace } from './pages/tester-workspace/tester-workspace';
 import { ManagerDashboard } from './pages/manager-dashboard/manager-dashboard';
 import { managerGuard } from './core/guards/manager.guard';
+import { authGuard } from './core/guards/auth.guard';
 import { DeveloperWorkspace } from './pages/developer-workspace/developer-workspace';
 import { AdminWorkspace } from './pages/admin-workspace/admin-workspace';
 import { Profile } from './pages/profile/profile';
@@ -23,12 +24,13 @@ export const routes: Routes = [
   },
   {
     path: 'profile',
-    component: Profile
+    component: Profile,
+    canActivate: [authGuard]
   },
   {
     path: 'manager-dashboard',
     component: ManagerDashboard,
-    canActivate: [managerGuard]
+    canActivate: [authGuard, managerGuard]
   },
   {
     path: 'manager',
@@ -72,7 +74,8 @@ export const routes: Routes = [
   },
   {
     path: 'tester-workspace',
-    component: TesterWorkspace
+    component: TesterWorkspace,
+    canActivate: [authGuard]
   },
   {
     path: 'tester',
@@ -81,7 +84,8 @@ export const routes: Routes = [
   },
   {
     path: 'developer-workspace',
-    component: DeveloperWorkspace
+    component: DeveloperWorkspace,
+    canActivate: [authGuard]
   },
   {
     path: 'developer',
@@ -90,7 +94,8 @@ export const routes: Routes = [
   },
   {
     path: 'admin-workspace',
-    component: AdminWorkspace
+    component: AdminWorkspace,
+    canActivate: [authGuard]
   },
   {
     path: 'admin',
