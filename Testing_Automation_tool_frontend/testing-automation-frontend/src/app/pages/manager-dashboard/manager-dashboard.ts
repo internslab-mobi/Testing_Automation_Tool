@@ -210,6 +210,23 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   showProfileMenu = false;
   showExportDropdown = false;
 
+  get isManager(): boolean {
+    const signalUser = this.currentUser();
+    const signalRole = (signalUser?.role || '').toUpperCase();
+    if (signalRole) {
+      return signalRole.includes('MANAGER') || signalRole.includes('ADMIN');
+    }
+    const storedRole = (
+      (typeof localStorage !== 'undefined' ? (localStorage.getItem('tat_user_role') || localStorage.getItem('role')) : '') ||
+      ''
+    ).toUpperCase();
+    if (storedRole) {
+      return storedRole.includes('MANAGER') || storedRole.includes('ADMIN');
+    }
+    const currentRole = (this.userRole || '').toUpperCase();
+    return currentRole.includes('MANAGER') || currentRole.includes('ADMIN');
+  }
+
   // Header Notifications & Dropdown (Aligned with Manager Workflows)
   isSidebarOpen = true;
   notifications: InAppNotification[] = [];
@@ -1221,7 +1238,10 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     this.projectsError = '';
     this.projectService.getProjects().subscribe({
       next: (projects) => {
-        this.projectsList = projects;
+        const rawProjs = projects || [];
+        this.projectsList = this.isManager
+          ? rawProjs
+          : rawProjs.filter(p => (p.status || 'ACTIVE').toUpperCase() === 'ACTIVE' && p.isActive !== false);
         this.isProjectsLoading = false;
         this.cdr.markForCheck();
       },
@@ -1241,6 +1261,7 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   statusUpdateError = '';
 
   openStatusConfirmModal(project: Project): void {
+    if (!this.isManager) return;
     if (this.isUpdatingStatus) return;
     this.projectForStatusChange = project;
     const current = (project.status || 'ACTIVE').toUpperCase();
@@ -1259,6 +1280,7 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   }
 
   confirmStatusChange(): void {
+    if (!this.isManager) return;
     if (!this.projectForStatusChange || this.isUpdatingStatus) return;
 
     const project = this.projectForStatusChange;
@@ -1308,6 +1330,9 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   get filteredProjectsList(): Project[] {
     const s = this.projectSearchTerm.toLowerCase().trim();
     return this.projectsList.filter(p => {
+      if (!this.isManager && ((p.status || 'ACTIVE').toUpperCase() !== 'ACTIVE' || p.isActive === false)) {
+        return false;
+      }
       const matchStatus = this.projectStatusFilter === 'ALL' || (p.status || 'ACTIVE').toUpperCase() === this.projectStatusFilter;
       const matchRegion = this.projectRegionFilter === 'ALL' || (p.region || 'DEFAULT').toUpperCase() === this.projectRegionFilter;
       const matchSearch = !s ||
