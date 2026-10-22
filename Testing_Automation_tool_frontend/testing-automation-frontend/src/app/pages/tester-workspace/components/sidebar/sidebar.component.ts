@@ -17,7 +17,18 @@ export class SidebarComponent {
   @Input() availableRegions: string[] = [];
   @Input() selectedRegion = 'India';
   @Input() projects: Project[] = [];
-  @Input() activeProject: Project | null = null;
+  private _activeProject: Project | null = null;
+  @Input()
+  get activeProject(): Project | null {
+    return this._activeProject;
+  }
+  set activeProject(val: Project | null) {
+    const changed = this._activeProject?.projectId !== val?.projectId;
+    this._activeProject = val;
+    if (changed && val) {
+      this.showProjectsPicker = false;
+    }
+  }
   @Input() features: Feature[] = [];
   @Input() activeFeature: Feature | null = null;
   @Input() projectAttachmentCount = 0;
@@ -35,6 +46,24 @@ export class SidebarComponent {
   @Output() openFeatureAttachments = new EventEmitter<Feature>();
   @Output() closeSidebar = new EventEmitter<void>();
   @Output() openOverview = new EventEmitter<void>();
+
+  isFilterExpanded = true;
+  showProjectsPicker = false;
+
+  toggleFilters(): void {
+    this.isFilterExpanded = !this.isFilterExpanded;
+    this.cdr.markForCheck();
+  }
+
+  openProjectsPicker(): void {
+    this.showProjectsPicker = true;
+    this.cdr.markForCheck();
+  }
+
+  closeProjectsPicker(): void {
+    this.showProjectsPicker = false;
+    this.cdr.markForCheck();
+  }
 
   projectSearch = '';
   featureSearch = '';
@@ -224,6 +253,7 @@ export class SidebarComponent {
   }
 
   onSelectProject(p: Project): void {
+    this.showProjectsPicker = false;
     this.selectProject.emit(p);
     this.cdr.markForCheck();
   }

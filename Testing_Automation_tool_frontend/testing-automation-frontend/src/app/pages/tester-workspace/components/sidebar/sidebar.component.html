@@ -18,124 +18,187 @@
     </button>
   </div>
 
-  <!-- Dynamic Region Selection from DB -->
-  <div class="sidebar-section region-section">
-    <div class="section-label">
-      <span><i class="fa-solid fa-globe"></i> Database Region</span>
-    </div>
-    <select class="form-control select-region" [ngModel]="selectedRegion" (ngModelChange)="onRegionSelected($event)">
-      <option value="ALL">All Regions (Global)</option>
-      <option *ngFor="let reg of displayRegions" [value]="reg">{{ reg }}</option>
-    </select>
-  </div>
-
-  <!-- Dynamic Module and Sub-Module Filters below Region -->
-  <div class="sidebar-section filter-cascading-section">
-    <div class="sidebar-filter-row">
-      <div class="section-label">
-        <span><i class="fa-solid fa-layer-group text-emerald"></i> Module</span>
+  <!-- ACTIVE PROJECT BANNER (Shown when project is chosen to give full space to Features) -->
+  <div class="sidebar-section active-project-banner" *ngIf="activeProject && !showProjectsPicker">
+    <div class="active-proj-top">
+      <div class="active-proj-title-group">
+        <span class="active-proj-tag-label"><i class="fa-solid fa-folder-open text-emerald"></i> ACTIVE PROJECT</span>
+        <h4 class="active-proj-heading" [title]="activeProject.projectName">{{ activeProject.projectName }}</h4>
       </div>
-      <select class="form-control select-module" [ngModel]="selectedModule" (ngModelChange)="onModuleSelected($event)">
-        <option value="ALL">All Modules</option>
-        <option *ngFor="let mod of displayModules" [value]="mod">{{ mod }}</option>
-      </select>
-    </div>
-
-    <div class="sidebar-filter-row mt-15">
-      <div class="section-label">
-        <span><i class="fa-solid fa-cubes text-emerald"></i> Sub-Module</span>
-      </div>
-      <select class="form-control select-submodule" [ngModel]="selectedSubModule" (ngModelChange)="onSubModuleSelected($event)">
-        <option value="ALL">All Sub-Modules</option>
-        <option *ngFor="let sm of displaySubModules" [value]="sm">{{ sm }}</option>
-      </select>
-    </div>
-  </div>
-
-  <!-- Projects Section -->
-  <div class="sidebar-section projects-section">
-    <div class="section-header">
-      <div class="section-title">
-        <span>Projects ({{ filteredProjects.length }})</span>
-      </div>
-      <button class="btn-add-icon" (click)="createProject.emit()" title="Create New Project">
-        <i class="fa-solid fa-plus"></i>
+      <button class="btn-switch-project" (click)="openProjectsPicker()" title="Switch or choose another project">
+        <i class="fa-solid fa-repeat"></i> Change
       </button>
     </div>
 
-    <div class="search-box">
-      <i class="fa-solid fa-magnifying-glass search-icon"></i>
-      <input type="text" placeholder="Search projects by name..." [(ngModel)]="projectSearch">
-      <button *ngIf="projectSearch" class="btn-clear-search" (click)="projectSearch = ''" title="Clear search">
-        <i class="fa-solid fa-xmark"></i>
+    <div class="active-proj-meta-row">
+      <span class="proj-region-tag" [title]="'Region: ' + (activeProject.region || 'General')">
+        <i class="fa-solid fa-location-dot"></i> {{ activeProject.region || 'General' }}
+      </span>
+      <span class="proj-module-tag" *ngIf="activeProject.module" [title]="'Module: ' + activeProject.module + (activeProject.subModule ? ' > ' + activeProject.subModule : '')">
+        <i class="fa-solid fa-layer-group"></i> {{ activeProject.module }}
+      </span>
+      <span class="proj-status" [class.inactive]="activeProject.status === 'INACTIVE'">
+        {{ activeProject.status || 'ACTIVE' }}
+      </span>
+      <div class="active-proj-actions" *ngIf="activeProject.status !== 'INACTIVE'">
+        <button class="btn-item-action" (click)="$event.stopPropagation(); editProject.emit(activeProject)" title="Edit Project">
+          <i class="fa-solid fa-pen-to-square"></i>
+        </button>
+        <button class="btn-item-action" (click)="$event.stopPropagation(); openProjectAttachments.emit(activeProject)" title="Project Attachments">
+          <i class="fa-solid fa-paperclip"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROJECT PICKER WRAPPER (Shown when choosing a project or when no project is active) -->
+  <ng-container *ngIf="!activeProject || showProjectsPicker">
+    <!-- Header when switching projects -->
+    <div class="sidebar-picker-header" *ngIf="activeProject && showProjectsPicker">
+      <span class="picker-title"><i class="fa-solid fa-list-check text-emerald"></i> Switch Project</span>
+      <button class="btn-picker-back" (click)="closeProjectsPicker()" title="Back to Features of {{ activeProject.projectName }}">
+        <i class="fa-solid fa-arrow-left"></i> Features
       </button>
     </div>
 
-    <div class="project-items-list">
-      <div *ngIf="filteredProjects.length === 0" class="empty-list-msg">
-        <i class="fa-solid fa-folder-open"></i>
-        <span>No projects found matching filter</span>
-      </div>
-
-      <div
-        *ngFor="let p of paginatedProjects; trackBy: trackByProjectId"
-        class="project-item-card"
-        [class.active]="activeProject?.projectId === p.projectId"
-        (click)="onSelectProject(p)"
-      >
-        <div class="proj-main-row">
-          <span class="proj-name">
-            {{ p.projectName }}
-            <button
-              type="button"
-              class="btn-comment-indicator"
-              *ngIf="p.comments"
-              (click)="toggleProjectComment(p.projectId, $event)"
-              title="Click to toggle or hover to view notes: {{ p.comments }}"
-            >
-              <i class="fa-regular fa-comment-dots"></i>
-            </button>
+    <!-- Collapsible Database, Module & Sub-Module Filters -->
+    <div class="sidebar-section filter-toggle-header">
+      <button class="btn-filter-toggle" (click)="toggleFilters()" title="Click to hide or show Database, Module and Sub-Module filters">
+        <span class="filter-toggle-label">
+          <i class="fa-solid fa-sliders text-emerald"></i>
+          <span>Filters</span>
+          <span class="filter-summary-pill" *ngIf="!isFilterExpanded">
+            {{ selectedRegion === 'ALL' ? 'Global' : selectedRegion }}{{ selectedModule !== 'ALL' ? ' • ' + selectedModule : '' }}
           </span>
-          <span class="proj-region-tag">{{ p.region || 'General' }}</span>
+        </span>
+        <span class="filter-toggle-action">
+          <span class="toggle-text">{{ isFilterExpanded ? 'Hide' : 'Show' }}</span>
+          <i class="fa-solid" [class.fa-chevron-up]="isFilterExpanded" [class.fa-chevron-down]="!isFilterExpanded"></i>
+        </span>
+      </button>
+    </div>
+
+    <div class="collapsible-filter-body" *ngIf="isFilterExpanded">
+      <!-- Dynamic Region Selection from DB -->
+      <div class="sidebar-section region-section">
+        <div class="section-label">
+          <span><i class="fa-solid fa-globe"></i> Database Region</span>
         </div>
+        <select class="form-control select-region" [ngModel]="selectedRegion" (ngModelChange)="onRegionSelected($event)">
+          <option value="ALL">All Regions (Global)</option>
+          <option *ngFor="let reg of displayRegions" [value]="reg">{{ reg }}</option>
+        </select>
+      </div>
+
+      <!-- Dynamic Module and Sub-Module Filters below Region -->
+      <div class="sidebar-section filter-cascading-section">
+        <div class="sidebar-filter-row">
+          <div class="section-label">
+            <span><i class="fa-solid fa-layer-group text-emerald"></i> Module</span>
+          </div>
+          <select class="form-control select-module" [ngModel]="selectedModule" (ngModelChange)="onModuleSelected($event)">
+            <option value="ALL">All Modules</option>
+            <option *ngFor="let mod of displayModules" [value]="mod">{{ mod }}</option>
+          </select>
+        </div>
+
+        <div class="sidebar-filter-row mt-15">
+          <div class="section-label">
+            <span><i class="fa-solid fa-cubes text-emerald"></i> Sub-Module</span>
+          </div>
+          <select class="form-control select-submodule" [ngModel]="selectedSubModule" (ngModelChange)="onSubModuleSelected($event)">
+            <option value="ALL">All Sub-Modules</option>
+            <option *ngFor="let sm of displaySubModules" [value]="sm">{{ sm }}</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Projects Section -->
+    <div class="sidebar-section projects-section flex-grow-section">
+      <div class="section-header">
+        <div class="section-title">
+          <span>Projects ({{ filteredProjects.length }})</span>
+        </div>
+        <button class="btn-add-icon" (click)="createProject.emit()" title="Create New Project">
+          <i class="fa-solid fa-plus"></i>
+        </button>
+      </div>
+
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input type="text" placeholder="Search projects by name..." [(ngModel)]="projectSearch">
+        <button *ngIf="projectSearch" class="btn-clear-search" (click)="projectSearch = ''" title="Clear search">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="project-items-list">
+        <div *ngIf="filteredProjects.length === 0" class="empty-list-msg">
+          <i class="fa-solid fa-folder-open"></i>
+          <span>No projects found matching filter</span>
+        </div>
+
         <div
-          class="proj-comments-snippet"
-          *ngIf="p.comments"
-          [class.show-touched]="touchedCommentProjectId === p.projectId"
-          [title]="p.comments"
+          *ngFor="let p of paginatedProjects; trackBy: trackByProjectId"
+          class="project-item-card"
+          [class.active]="activeProject?.projectId === p.projectId"
+          (click)="onSelectProject(p)"
         >
-          <i class="fa-regular fa-comment-dots"></i> {{ p.comments }}
-        </div>
-        <div class="proj-sub-row">
-          <span class="proj-status">{{ p.status || 'ACTIVE' }}</span>
-          <div class="proj-actions" *ngIf="activeProject?.projectId === p.projectId && p.status !== 'INACTIVE'">
-            <button class="btn-item-action" (click)="$event.stopPropagation(); editProject.emit(p)" title="Edit Project">
-              <i class="fa-solid fa-pen-to-square"></i>
-            </button>
-            <button class="btn-item-action" (click)="$event.stopPropagation(); openProjectAttachments.emit(p)" title="Project Attachments">
-              <i class="fa-solid fa-paperclip"></i>
-            </button>
+          <div class="proj-main-row">
+            <span class="proj-name">
+              {{ p.projectName }}
+              <button
+                type="button"
+                class="btn-comment-indicator"
+                *ngIf="p.comments"
+                (click)="toggleProjectComment(p.projectId, $event)"
+                title="Click to toggle or hover to view notes: {{ p.comments }}"
+              >
+                <i class="fa-regular fa-comment-dots"></i>
+              </button>
+            </span>
+            <span class="proj-region-tag">{{ p.region || 'General' }}</span>
+          </div>
+          <div
+            class="proj-comments-snippet"
+            *ngIf="p.comments"
+            [class.show-touched]="touchedCommentProjectId === p.projectId"
+            [title]="p.comments"
+          >
+            <i class="fa-regular fa-comment-dots"></i> {{ p.comments }}
+          </div>
+          <div class="proj-sub-row">
+            <span class="proj-status">{{ p.status || 'ACTIVE' }}</span>
+            <div class="proj-actions" *ngIf="activeProject?.projectId === p.projectId && p.status !== 'INACTIVE'">
+              <button class="btn-item-action" (click)="$event.stopPropagation(); editProject.emit(p)" title="Edit Project">
+                <i class="fa-solid fa-pen-to-square"></i>
+              </button>
+              <button class="btn-item-action" (click)="$event.stopPropagation(); openProjectAttachments.emit(p)" title="Project Attachments">
+                <i class="fa-solid fa-paperclip"></i>
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
 
-    <!-- Sidebar Mini Pagination for Projects (Size 5) -->
-    <div class="sidebar-pagination-bar" *ngIf="filteredProjects.length > projectPageSize">
-      <span class="sidebar-page-info">Pg {{ projectPage }}/{{ totalProjectPages }} ({{ filteredProjects.length }})</span>
-      <div class="sidebar-page-btns">
-        <button class="btn-sidebar-page" [disabled]="projectPage <= 1" (click)="prevProjectPage()" title="Previous Projects">
-          <i class="fa-solid fa-chevron-left"></i>
-        </button>
-        <button class="btn-sidebar-page" [disabled]="projectPage >= totalProjectPages" (click)="nextProjectPage()" title="Next Projects">
-          <i class="fa-solid fa-chevron-right"></i>
-        </button>
+      <!-- Sidebar Mini Pagination for Projects (Size 5) -->
+      <div class="sidebar-pagination-bar" *ngIf="filteredProjects.length > projectPageSize">
+        <span class="sidebar-page-info">Pg {{ projectPage }}/{{ totalProjectPages }} ({{ filteredProjects.length }})</span>
+        <div class="sidebar-page-btns">
+          <button class="btn-sidebar-page" [disabled]="projectPage <= 1" (click)="prevProjectPage()" title="Previous Projects">
+            <i class="fa-solid fa-chevron-left"></i>
+          </button>
+          <button class="btn-sidebar-page" [disabled]="projectPage >= totalProjectPages" (click)="nextProjectPage()" title="Next Projects">
+            <i class="fa-solid fa-chevron-right"></i>
+          </button>
+        </div>
       </div>
     </div>
-  </div>
+  </ng-container>
 
-  <!-- Features Section -->
-  <div class="sidebar-section features-section">
+  <!-- Features Section (Visible when active project is chosen and not in project picker) -->
+  <div class="sidebar-section features-section flex-grow-section" *ngIf="activeProject && !showProjectsPicker">
     <div class="section-header">
       <div class="section-title">
         <span>Features ({{ activeProject?.status === 'INACTIVE' ? 0 : filteredFeatures.length }})</span>
