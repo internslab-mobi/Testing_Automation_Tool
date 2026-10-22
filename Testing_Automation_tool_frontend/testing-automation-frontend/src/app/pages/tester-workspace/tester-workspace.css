@@ -878,6 +878,11 @@ app-workspace-sidebar.collapsed {
   color: #b45309;
 }
 
+.badge-status-assigned {
+  background: #fef3c7;
+  color: #b45309;
+}
+
 .badge-status-resolved {
   background: #e0e7ff;
   color: #4338ca;

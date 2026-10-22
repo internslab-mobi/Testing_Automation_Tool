@@ -56,13 +56,19 @@ export class DeveloperWorkspace implements OnInit {
   bugs: Bug[] = [];
   isLoading = false;
 
-  // Workflow Categorization Tabs: OPEN vs (FIXED, NOT_A_BUG)
-  defectCategoryTab: 'OPEN' | 'RESOLVED' | 'ALL' = 'OPEN';
+  // Workflow Categorization Tabs: ACTIVE vs (FIXED, NOT_A_BUG, CLOSED) vs ALL
+  defectCategoryTab: 'ACTIVE' | 'RESOLVED' | 'ALL' = 'ACTIVE';
 
   // Search Filter & Severity Filter
   bugSearch = '';
   bugFilterSeverity = 'ALL';
-  readonly developerStatuses = ['OPEN', 'FIXED', 'NOT_A_BUG'];
+  readonly developerStatuses = ['IN_PROGRESS', 'FIXED', 'NOT_A_BUG'];
+
+  isBugFrozen(bug: Bug | null): boolean {
+    if (!bug || !bug.status) return false;
+    const s = bug.status.toUpperCase().trim();
+    return s === 'FIXED' || s === 'CLOSED' || s === 'RESOLVED' || s === 'NOT_A_BUG';
+  }
 
   // Pagination
   bugCurrentPage = 1;
@@ -301,31 +307,29 @@ export class DeveloperWorkspace implements OnInit {
     return this.bugs.filter((b) => this.isAssignedToMe(b));
   }
 
-  // Count of OPEN defects
+  // Count of active defects (OPEN, IN_PROGRESS, ASSIGNED, REOPENED)
+  get activeBugsCount(): number {
+    return this.myAssignedBugs.filter((b) => !this.isBugFrozen(b)).length;
+  }
+
   get openBugsCount(): number {
-    return this.myAssignedBugs.filter((b) => (b.status || '').toUpperCase() === 'OPEN').length;
+    return this.activeBugsCount;
   }
 
-  // Count of FIXED & NOT_A_BUG defects
+  // Count of FIXED, CLOSED, NOT_A_BUG & RESOLVED defects (Frozen)
   get resolvedBugsCount(): number {
-    return this.myAssignedBugs.filter((b) => {
-      const st = (b.status || '').toUpperCase();
-      return st === 'FIXED' || st === 'NOT_A_BUG' || st === 'RESOLVED';
-    }).length;
+    return this.myAssignedBugs.filter((b) => this.isBugFrozen(b)).length;
   }
 
-  // Filtered bugs based on Category Tab (OPEN vs FIXED/NOT_A_BUG), Severity, and Search
+  // Filtered bugs based on Category Tab (ACTIVE vs RESOLVED/FROZEN), Severity, and Search
   get filteredBugs(): Bug[] {
     let list = this.myAssignedBugs;
 
     // 1. Filter by Workflow Categorization Tab
-    if (this.defectCategoryTab === 'OPEN') {
-      list = list.filter((b) => (b.status || '').toUpperCase() === 'OPEN');
+    if (this.defectCategoryTab === 'ACTIVE') {
+      list = list.filter((b) => !this.isBugFrozen(b));
     } else if (this.defectCategoryTab === 'RESOLVED') {
-      list = list.filter((b) => {
-        const st = (b.status || '').toUpperCase();
-        return st === 'FIXED' || st === 'NOT_A_BUG' || st === 'RESOLVED';
-      });
+      list = list.filter((b) => this.isBugFrozen(b));
     }
 
     // 2. Filter by Severity
@@ -353,7 +357,7 @@ export class DeveloperWorkspace implements OnInit {
     return list;
   }
 
-  setCategoryTab(tab: 'OPEN' | 'RESOLVED' | 'ALL'): void {
+  setCategoryTab(tab: 'ACTIVE' | 'RESOLVED' | 'ALL'): void {
     this.defectCategoryTab = tab;
     this.bugCurrentPage = 1;
     this.cdr.markForCheck();
@@ -480,6 +484,13 @@ export class DeveloperWorkspace implements OnInit {
 
     const targetBugId = bugId || this.activeBugForDetail?.bugId || this.activeBugForAttachments?.bugId;
     if (!targetBugId) return;
+
+    const targetBug = this.bugs.find((b) => b.bugId === targetBugId);
+    if (targetBug && this.isBugFrozen(targetBug)) {
+      this.showToast('Defect is frozen. Files cannot be uploaded to a frozen defect.');
+      input.value = '';
+      return;
+    }
 
     const filesArray = Array.from(input.files);
     this.isUploadingAttachment = true;
@@ -648,16 +659,32 @@ export class DeveloperWorkspace implements OnInit {
     }, 60);
   }
 
-  // --- Status Transitions (PATCH Status Only: OPEN, FIXED, NOT_A_BUG) ---
+  // --- Status Transitions (PATCH Status: IN_PROGRESS, FIXED, NOT_A_BUG) ---
 
   onStatusSelect(bug: Bug, event: Event): void {
     const select = event.target as HTMLSelectElement;
     if (!select || !select.value) return;
     const newStatus = select.value;
+    if (this.isBugFrozen(bug)) {
+      this.showToast('Defect is frozen. Only a tester can re-open or change its status.');
+      select.value = bug.status || 'FIXED';
+      return;
+    }
     this.applyStatusUpdate(bug.bugId, newStatus);
   }
 
   applyStatusUpdate(bugId: number, status: string): void {
+    const target = this.bugs.find((b) => b.bugId === bugId);
+    if (target && this.isBugFrozen(target)) {
+      this.showToast('Defect is frozen. Only a tester can re-open or reassign it.');
+      return;
+    }
+
+    if (status === 'OPEN') {
+      this.showToast('Developers cannot reopen defect to OPEN. Retest is handled by tester.');
+      return;
+    }
+
     this.bugService
       .patchBug(bugId, {
         status
@@ -673,9 +700,11 @@ export class DeveloperWorkspace implements OnInit {
           }
 
           if (status === 'FIXED') {
-            this.showToast(`Defect marked as FIXED. In-app notification sent to QA tester.`);
+            this.showToast(`Defect marked as FIXED and frozen. QA tester notified for retest.`);
           } else if (status === 'NOT_A_BUG') {
-            this.showToast(`Defect marked as NOT A BUG. In-app notification sent to QA tester.`);
+            this.showToast(`Defect marked as NOT A BUG and frozen. QA tester notified.`);
+          } else if (status === 'IN_PROGRESS') {
+            this.showToast(`Defect status updated to IN_PROGRESS.`);
           } else {
             this.showToast(`Defect status updated to ${status}.`);
           }
@@ -686,6 +715,8 @@ export class DeveloperWorkspace implements OnInit {
           this.updateLocalBugStatus(bugId, status);
           if (status === 'FIXED') {
             this.showToast(`Status updated to FIXED.`);
+          } else {
+            this.showToast(`Defect status updated to ${status}.`);
           }
           this.cdr.markForCheck();
         }

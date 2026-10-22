@@ -43,25 +43,25 @@
       <!-- Workflow Categorization Tabs (Open vs Fixed / Not a Bug) -->
       <div class="category-tabs-bar">
         <div class="category-tabs-group">
-          <!-- Tab 1: OPEN Defects -->
+          <!-- Tab 1: ACTIVE Defects (IN_PROGRESS, ASSIGNED, OPEN, REOPENED) -->
           <button
             class="cat-tab"
-            [class.active]="defectCategoryTab === 'OPEN'"
-            (click)="setCategoryTab('OPEN')"
+            [class.active]="defectCategoryTab === 'ACTIVE'"
+            (click)="setCategoryTab('ACTIVE')"
           >
             <i class="fa-solid fa-fire text-amber"></i>
-            <span>Active & Open</span>
-            <span class="cat-badge badge-open">{{ openBugsCount }}</span>
+            <span>Active / In Progress</span>
+            <span class="cat-badge badge-open">{{ activeBugsCount }}</span>
           </button>
 
-          <!-- Tab 2: FIXED & NOT_A_BUG Defects -->
+          <!-- Tab 2: FIXED, CLOSED & NOT_A_BUG Defects (Frozen) -->
           <button
             class="cat-tab"
             [class.active]="defectCategoryTab === 'RESOLVED'"
             (click)="setCategoryTab('RESOLVED')"
           >
-            <i class="fa-solid fa-circle-check text-emerald"></i>
-            <span>Fixed & Not a Bug</span>
+            <i class="fa-solid fa-lock text-emerald"></i>
+            <span>Fixed & Closed (Frozen)</span>
             <span class="cat-badge badge-resolved">{{ resolvedBugsCount }}</span>
           </button>
 
@@ -197,20 +197,30 @@
                   </span>
                 </td>
 
-                <!-- Status & Status Patch Control (OPEN, FIXED, NOT_A_BUG) -->
+                <!-- Status & Status Patch Control (IN_PROGRESS, FIXED, NOT_A_BUG) -->
                 <td (click)="$event.stopPropagation()">
                   <div class="status-patch-container">
                     <span class="badge-tag" [ngClass]="'badge-status-' + (b.status?.toLowerCase() || 'open')">
                       {{ b.status }}
                     </span>
 
+                    <!-- If bug is frozen (FIXED, CLOSED, RESOLVED, NOT_A_BUG), show locked indicator -->
+                    <span *ngIf="isBugFrozen(b)" class="badge-frozen-tag" title="Defect is frozen. Only tester can reopen or reassign.">
+                      <i class="fa-solid fa-lock"></i> Frozen
+                    </span>
+
+                    <!-- If bug is active / availed, allow developer transitions: IN_PROGRESS, FIXED, NOT_A_BUG -->
                     <select
+                      *ngIf="!isBugFrozen(b)"
                       class="status-patch-select"
                       [ngModel]="b.status"
                       (change)="onStatusSelect(b, $event)"
-                      title="Update Status (Sends in-app notification to tester)"
+                      title="Update Status (IN_PROGRESS, FIXED, NOT_A_BUG)"
                     >
-                      <option value="OPEN">OPEN</option>
+                      <option *ngIf="b.status === 'OPEN' || b.status === 'REOPENED'" [value]="b.status" disabled>
+                        {{ b.status }}
+                      </option>
+                      <option value="IN_PROGRESS">IN_PROGRESS</option>
                       <option value="FIXED">FIXED</option>
                       <option value="NOT_A_BUG">NOT_A_BUG</option>
                     </select>
@@ -311,34 +321,40 @@
         </div>
 
         <div class="header-modal-actions">
-          <!-- Quick Status Actions (OPEN, FIXED, NOT_A_BUG) -->
+          <!-- Quick Status Actions (Only when defect is NOT frozen) -->
           <ng-container *ngIf="activeBugForDetail">
-            <button
-              *ngIf="activeBugForDetail.status !== 'FIXED'"
-              class="btn btn-emerald btn-xs"
-              (click)="applyStatusUpdate(activeBugForDetail.bugId, 'FIXED')"
-              title="Mark as FIXED (Sends in-app notification to tester)"
-            >
-              <i class="fa-solid fa-check"></i> Mark FIXED
-            </button>
+            <span *ngIf="isBugFrozen(activeBugForDetail)" class="frozen-status-chip" title="Defect is frozen. Only tester can re-open or change status.">
+              <i class="fa-solid fa-lock"></i> Frozen (Awaiting QA Retest)
+            </span>
 
-            <button
-              *ngIf="activeBugForDetail.status !== 'NOT_A_BUG'"
-              class="btn btn-secondary btn-xs"
-              (click)="applyStatusUpdate(activeBugForDetail.bugId, 'NOT_A_BUG')"
-              title="Mark as NOT A BUG (Sends in-app notification to tester)"
-            >
-              <i class="fa-solid fa-ban text-rose"></i> NOT A BUG
-            </button>
+            <ng-container *ngIf="!isBugFrozen(activeBugForDetail)">
+              <button
+                *ngIf="activeBugForDetail.status !== 'IN_PROGRESS'"
+                class="btn btn-primary btn-xs"
+                (click)="applyStatusUpdate(activeBugForDetail.bugId, 'IN_PROGRESS')"
+                title="Mark as IN_PROGRESS"
+              >
+                <i class="fa-solid fa-spinner"></i> IN PROGRESS
+              </button>
 
-            <button
-              *ngIf="activeBugForDetail.status !== 'OPEN'"
-              class="btn btn-secondary btn-xs"
-              (click)="applyStatusUpdate(activeBugForDetail.bugId, 'OPEN')"
-              title="Reopen defect"
-            >
-              <i class="fa-solid fa-rotate-left"></i> Reopen (OPEN)
-            </button>
+              <button
+                *ngIf="activeBugForDetail.status !== 'FIXED'"
+                class="btn btn-emerald btn-xs"
+                (click)="applyStatusUpdate(activeBugForDetail.bugId, 'FIXED')"
+                title="Mark as FIXED (Sends in-app notification to tester)"
+              >
+                <i class="fa-solid fa-check"></i> Mark FIXED
+              </button>
+
+              <button
+                *ngIf="activeBugForDetail.status !== 'NOT_A_BUG'"
+                class="btn btn-secondary btn-xs"
+                (click)="applyStatusUpdate(activeBugForDetail.bugId, 'NOT_A_BUG')"
+                title="Mark as NOT A BUG (Sends in-app notification to tester)"
+              >
+                <i class="fa-solid fa-ban text-rose"></i> NOT A BUG
+              </button>
+            </ng-container>
           </ng-container>
 
           <!-- Chat Trigger from Inspector -->
@@ -355,6 +371,13 @@
       </div>
 
       <div class="modal-body-pad" *ngIf="activeBugForDetail">
+        <!-- Frozen Defect Notice Banner -->
+        <div *ngIf="isBugFrozen(activeBugForDetail)" class="frozen-alert-banner">
+          <i class="fa-solid fa-lock text-muted"></i>
+          <div>
+            <strong>Defect Frozen & Locked:</strong> This defect is currently in <code>{{ activeBugForDetail.status }}</code> status. Developer status modifications are frozen until the QA tester verifies or reopens it to <code>IN_PROGRESS</code> or reassigns it.
+          </div>
+        </div>
         <!-- Project, Feature & Sprint Hierarchy Meta Strip (Moved from Navbar) -->
         <div class="detail-context-strip">
           <span class="detail-context-pill pill-proj" title="Project">
@@ -520,7 +543,11 @@
             <span class="comments-counter">{{ activeBugAttachments.length }} files</span>
 
             <!-- Attach Files Button -->
-            <label class="btn btn-primary btn-xs btn-upload-inline" title="Attach screenshots, logs, or error traces">
+            <label
+              *ngIf="!isBugFrozen(activeBugForDetail)"
+              class="btn btn-primary btn-xs btn-upload-inline"
+              title="Attach screenshots, logs, or error traces"
+            >
               <i class="fa-solid fa-upload" [class.fa-spin]="isUploadingAttachment"></i>
               <span>{{ isUploadingAttachment ? 'Uploading...' : 'Attach Files' }}</span>
               <input
@@ -531,6 +558,9 @@
                 style="display: none;"
               >
             </label>
+            <span *ngIf="isBugFrozen(activeBugForDetail)" class="badge-frozen-tag" title="Attachments locked for frozen defect">
+              <i class="fa-solid fa-lock text-muted"></i> Locked
+            </span>
           </div>
 
           <div *ngIf="isAttachmentsLoading" class="loading-state-mini">
@@ -596,22 +626,40 @@
 
         <div class="header-modal-actions">
           <!-- Quick Status Actions Inside Chat -->
-          <button
-            *ngIf="activeBugForChat && activeBugForChat.status !== 'FIXED'"
-            class="btn btn-emerald btn-xs"
-            (click)="applyStatusUpdate(activeBugForChat.bugId, 'FIXED')"
-            title="Mark as FIXED"
-          >
-            <i class="fa-solid fa-check"></i> Mark FIXED
-          </button>
-          <button
-            *ngIf="activeBugForChat && activeBugForChat.status !== 'NOT_A_BUG'"
-            class="btn btn-secondary btn-xs"
-            (click)="applyStatusUpdate(activeBugForChat.bugId, 'NOT_A_BUG')"
-            title="Mark as NOT A BUG"
-          >
-            <i class="fa-solid fa-ban text-rose"></i> NOT A BUG
-          </button>
+          <ng-container *ngIf="activeBugForChat">
+            <span *ngIf="isBugFrozen(activeBugForChat)" class="frozen-status-chip" title="Defect is frozen. Only tester can re-open or change status.">
+              <i class="fa-solid fa-lock"></i> Frozen
+            </span>
+
+            <ng-container *ngIf="!isBugFrozen(activeBugForChat)">
+              <button
+                *ngIf="activeBugForChat.status !== 'IN_PROGRESS'"
+                class="btn btn-primary btn-xs"
+                (click)="applyStatusUpdate(activeBugForChat.bugId, 'IN_PROGRESS')"
+                title="Mark as IN_PROGRESS"
+              >
+                <i class="fa-solid fa-spinner"></i> IN PROGRESS
+              </button>
+
+              <button
+                *ngIf="activeBugForChat.status !== 'FIXED'"
+                class="btn btn-emerald btn-xs"
+                (click)="applyStatusUpdate(activeBugForChat.bugId, 'FIXED')"
+                title="Mark as FIXED"
+              >
+                <i class="fa-solid fa-check"></i> Mark FIXED
+              </button>
+
+              <button
+                *ngIf="activeBugForChat.status !== 'NOT_A_BUG'"
+                class="btn btn-secondary btn-xs"
+                (click)="applyStatusUpdate(activeBugForChat.bugId, 'NOT_A_BUG')"
+                title="Mark as NOT A BUG"
+              >
+                <i class="fa-solid fa-ban text-rose"></i> NOT A BUG
+              </button>
+            </ng-container>
+          </ng-container>
 
           <button class="modal-close" (click)="closeBugChat()">&times;</button>
         </div>
@@ -704,7 +752,7 @@
 
       <div class="modal-body-pad">
         <div class="attachments-upload-bar">
-          <label class="btn btn-primary btn-xs">
+          <label *ngIf="!isBugFrozen(activeBugForAttachments)" class="btn btn-primary btn-xs">
             <i class="fa-solid fa-upload" [class.fa-spin]="isUploadingAttachment"></i>
             <span>{{ isUploadingAttachment ? 'Uploading...' : 'Upload Evidence / Logs' }}</span>
             <input
@@ -715,6 +763,9 @@
               style="display: none;"
             >
           </label>
+          <span *ngIf="isBugFrozen(activeBugForAttachments)" class="frozen-status-chip">
+            <i class="fa-solid fa-lock"></i> Upload locked (Defect is frozen)
+          </span>
         </div>
 
         <div *ngIf="isAttachmentsLoading" class="loading-state">

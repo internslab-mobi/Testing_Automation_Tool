@@ -6,19 +6,17 @@ import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.jpa.domain.Specification;
-import org.springframework.http.MediaType;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.multipart.MultipartFile;
 import xyz.mobi.testingautomationtool.dto.AttachmentDTO.*;
 import xyz.mobi.testingautomationtool.dto.BugDTO.*;
 import xyz.mobi.testingautomationtool.dto.NotificationDTO.NotificationRequest;
 import xyz.mobi.testingautomationtool.entity.*;
 import xyz.mobi.testingautomationtool.enums.*;
 import xyz.mobi.testingautomationtool.event.BugFixedEvent;
-import xyz.mobi.testingautomationtool.exception.AttachmentProcessingException;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.mapper.BugMapper;
 import xyz.mobi.testingautomationtool.repository.*;
@@ -27,12 +25,8 @@ import xyz.mobi.testingautomationtool.service.BugService;
 import xyz.mobi.testingautomationtool.service.NotificationService;
 import xyz.mobi.testingautomationtool.specification.BugSpecification;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.time.*;
 import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 @Slf4j
 @Service
@@ -49,9 +43,7 @@ public class BugServiceImpl implements BugService {
     private final NotificationService notificationService;
     private final BugMapper bugMapper;
     private final AuthService authService;
-    private final AttachmentRepository attachmentRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final RoleRepository roleRepository;
 
     @Override
     @Transactional
@@ -243,7 +235,7 @@ public class BugServiceImpl implements BugService {
     @Override
     @Transactional(readOnly = true)
     public Page<BugResponse> getAllBugs(Integer assignedTo, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         User currentUser = null;
         try {
             currentUser = authService.getCurrentUser();
@@ -269,7 +261,7 @@ public class BugServiceImpl implements BugService {
     @Override
     @Transactional(readOnly = true)
     public Page<BugResponse> getBugsByFeature(Integer featureId, int page, int size) {
-        Pageable pageable = PageRequest.of(page, size, org.springframework.data.domain.Sort.by(org.springframework.data.domain.Sort.Direction.DESC, "createdAt"));
+        Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         User currentUser = null;
         try {
             currentUser = authService.getCurrentUser();
@@ -398,7 +390,7 @@ public class BugServiceImpl implements BugService {
 
             BugHistory history = BugHistory.builder()
                     .bug(bug)
-                    .executedBy(currentUser.getUserId())
+                    .executedBy(currentUser != null ? currentUser.getUserId() : null)
                     .bugStatus(bug.getStatus())
                     .assignedTo(newAssignedUserId)
                     .createdAt(Instant.now())
@@ -414,7 +406,7 @@ public class BugServiceImpl implements BugService {
 
                 notificationService.createNotification(
                         NotificationRequest.builder()
-                                .employeeId(currentUser.getUserId())
+                                .employeeId(currentUser != null ? currentUser.getUserId() : null)
                                 .assignedId(newAssignedUserId)
                                 .bugId(bug.getBugId())
                                 .build()
@@ -627,7 +619,7 @@ public class BugServiceImpl implements BugService {
 
             BugHistory history = BugHistory.builder()
                     .bug(bug)
-                    .executedBy(currentUser.getUserId())
+                    .executedBy(currentUser != null ? currentUser.getUserId() : null)
                     .bugStatus(bug.getStatus())
                     .assignedTo(newAssignedUserId)
                     .createdAt(Instant.now())
@@ -646,7 +638,7 @@ public class BugServiceImpl implements BugService {
                 notificationService.createNotification(
                         NotificationRequest.builder()
                                 .employeeId(
-                                        currentUser.getUserId()
+                                        currentUser != null ? currentUser.getUserId() : null
                                 )
                                 .assignedId(
                                         newAssignedUserId
@@ -678,7 +670,7 @@ public class BugServiceImpl implements BugService {
                 .orElseThrow(() -> new ResourceNotFoundException("Bug not found with ID: " + bugId));
 
 
-        if (!bug.isDeleted()) {
+        if (bug.isDeleted()) {
             return;
         }
 
