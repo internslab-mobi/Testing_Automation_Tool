@@ -2231,7 +2231,7 @@
               <i class="fa-solid fa-magnifying-glass"></i>
               <input type="text" [(ngModel)]="projectSearchTerm" placeholder="Search projects by name, module, region..." />
             </div>
-            <div class="filter-dropdown-wrap">
+            <div class="filter-dropdown-wrap" *ngIf="isManager">
               <select class="toolbar-select" [(ngModel)]="projectStatusFilter">
                 <option value="ALL">All Statuses</option>
                 <option value="ACTIVE">Active Only</option>
@@ -2286,7 +2286,8 @@
                         <span class="dot"></span>
                         <span>{{ p.status || 'ACTIVE' }}</span>
                       </span>
-                      <button class="btn-edit-status"
+                      <button *ngIf="isManager"
+                              class="btn-edit-status"
                               (click)="openStatusConfirmModal(p)"
                               type="button"
                               [disabled]="isUpdatingStatus && projectForStatusChange?.projectId === p.projectId"
@@ -2792,7 +2793,7 @@
   </div>
 
   <!-- ================= 8. CONFIRM PROJECT STATUS CHANGE MODAL ================= -->
-  <div class="dashboard-modal-backdrop status-confirm-backdrop" *ngIf="showStatusConfirmModal" (click)="cancelStatusConfirm()">
+  <div class="dashboard-modal-backdrop status-confirm-backdrop" *ngIf="showStatusConfirmModal && isManager" (click)="cancelStatusConfirm()">
     <div class="dashboard-modal-card status-confirm-modal-card" (click)="$event.stopPropagation()">
       <div class="modal-card-header">
         <div class="modal-header-title">
