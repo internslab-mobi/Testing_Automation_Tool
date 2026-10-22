@@ -26,6 +26,13 @@ export class DefectDetailModalComponent {
   @Output() changeAssignee = new EventEmitter<{ bugId: number; assignedTo: number }>();
   @Output() openChat = new EventEmitter<Bug>();
   @Output() openAttachments = new EventEmitter<Bug>();
+  @Output() navigateToTestCase = new EventEmitter<Bug>();
+
+  goToTestCase(b: Bug | null): void {
+    if (b) {
+      this.navigateToTestCase.emit(b);
+    }
+  }
 
   isEditMode = false;
   isAssigneeUnlocked = false;

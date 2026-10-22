@@ -60,6 +60,21 @@
   margin-top: 2px;
 }
 
+.clickable-tc-link {
+  color: #4f46e5;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  transition: color 0.15s ease;
+}
+
+.clickable-tc-link:hover {
+  color: #3730a3;
+}
+
 .header-actions {
   display: flex;
   align-items: center;

@@ -150,6 +150,7 @@ export class TesterWorkspace implements OnInit {
   features: Feature[] = [];
   activeFeature: Feature | null = null;
   featureAttachmentCount = 0;
+  isLoadingFeatures = true;
 
   // Active Workspace Sub-Tab ('testcases' | 'bugs')
   activeSubTab: 'testcases' | 'bugs' = 'testcases';
@@ -226,6 +227,7 @@ export class TesterWorkspace implements OnInit {
   tcFilterType = 'ALL';
   tcFilterPriority = 'ALL';
   tcFilterStatus = 'ALL';
+  isLoadingTestCases = false;
 
   // Defects / Bugs
   bugs: Bug[] = [];
@@ -234,6 +236,7 @@ export class TesterWorkspace implements OnInit {
   bugFilterSeverity = 'ALL';
   bugFilterStatus = 'ALL';
   developers: DeveloperUser[] = [];
+  isLoadingBugs = false;
 
   // Pagination: Test Cases
   tcCurrentPage = 1;
@@ -859,12 +862,15 @@ export class TesterWorkspace implements OnInit {
         if (this.projects.length > 0 && !this.activeProject) {
           const indiaProj = this.projects.find(p => (p.region || '').toLowerCase() === this.selectedRegion.toLowerCase()) || this.projects[0];
           this.selectProject(indiaProj, false);
+        } else if (this.projects.length === 0) {
+          this.isLoadingFeatures = false;
         }
         this.cdr.markForCheck();
       },
       error: (err) => {
         console.error('Failed to load projects:', err);
         this.projects = [];
+        this.isLoadingFeatures = false;
         this.refreshAvailableRegions();
         this.cdr.markForCheck();
       }
@@ -888,6 +894,7 @@ export class TesterWorkspace implements OnInit {
       this.filteredTestCases = [];
       this.bugs = [];
       this.filteredBugs = [];
+      this.isLoadingFeatures = false;
       this.updateMetrics();
     }
     this.cdr.markForCheck();
@@ -904,8 +911,10 @@ export class TesterWorkspace implements OnInit {
       this.filteredTestCases = [];
       this.bugs = [];
       this.filteredBugs = [];
+      this.isLoadingFeatures = false;
       this.updateMetrics();
     } else {
+      this.isLoadingFeatures = true;
       this.loadFeatures(p.projectId);
     }
     if (openDetailsModal) {
@@ -1295,9 +1304,13 @@ export class TesterWorkspace implements OnInit {
         this.filteredBugs = [];
         this.updateMetrics();
       }
+      this.isLoadingFeatures = false;
       this.cdr.markForCheck();
       return;
     }
+
+    this.isLoadingFeatures = true;
+    this.cdr.markForCheck();
 
     this.featureService.getFeaturesByProject(projectId).subscribe({
       next: (feats) => {
@@ -1306,13 +1319,28 @@ export class TesterWorkspace implements OnInit {
         this.featureCache.set(projectId, list);
         if (this.features.length > 0) {
           this.selectFeature(this.features[0]);
+        } else {
+          this.activeFeature = null;
+          this.testcases = [];
+          this.filteredTestCases = [];
+          this.bugs = [];
+          this.filteredBugs = [];
+          this.updateMetrics();
         }
+        this.isLoadingFeatures = false;
         this.cdr.markForCheck();
       },
       error: () => {
         const list: Feature[] = [];
         this.features = list;
         this.featureCache.set(projectId, list);
+        this.activeFeature = null;
+        this.testcases = [];
+        this.filteredTestCases = [];
+        this.bugs = [];
+        this.filteredBugs = [];
+        this.updateMetrics();
+        this.isLoadingFeatures = false;
         this.cdr.markForCheck();
       }
     });
@@ -1498,9 +1526,13 @@ export class TesterWorkspace implements OnInit {
       this.testcases = this.testcaseCache.get(featureId)!;
       this.applyTestCaseFilters();
       this.updateMetrics();
+      this.isLoadingTestCases = false;
       this.cdr.markForCheck();
       return;
     }
+
+    this.isLoadingTestCases = true;
+    this.cdr.markForCheck();
 
     this.testCaseService.getTestCases(featureId).subscribe({
       next: (cases) => {
@@ -1509,6 +1541,7 @@ export class TesterWorkspace implements OnInit {
         this.testcaseCache.set(featureId, list);
         this.applyTestCaseFilters();
         this.updateMetrics();
+        this.isLoadingTestCases = false;
         this.cdr.markForCheck();
       },
       error: () => {
@@ -1517,6 +1550,7 @@ export class TesterWorkspace implements OnInit {
         this.testcaseCache.set(featureId, list);
         this.applyTestCaseFilters();
         this.updateMetrics();
+        this.isLoadingTestCases = false;
         this.cdr.markForCheck();
       }
     });
@@ -1849,9 +1883,13 @@ export class TesterWorkspace implements OnInit {
       this.bugs = this.bugCache.get(featureId)!;
       this.applyBugFilters();
       this.updateMetrics();
+      this.isLoadingBugs = false;
       this.cdr.markForCheck();
       return;
     }
+
+    this.isLoadingBugs = true;
+    this.cdr.markForCheck();
 
     this.bugService.getBugsByFeature(featureId).subscribe({
       next: (bList) => {
@@ -1860,6 +1898,7 @@ export class TesterWorkspace implements OnInit {
         this.bugCache.set(featureId, list);
         this.applyBugFilters();
         this.updateMetrics();
+        this.isLoadingBugs = false;
         this.cdr.markForCheck();
       },
       error: (err) => {
@@ -1869,6 +1908,7 @@ export class TesterWorkspace implements OnInit {
         this.bugCache.set(featureId, list);
         this.applyBugFilters();
         this.updateMetrics();
+        this.isLoadingBugs = false;
         this.cdr.markForCheck();
       }
     });
@@ -1877,7 +1917,30 @@ export class TesterWorkspace implements OnInit {
   applyBugFilters(): void {
     const s = this.bugSearch.toLowerCase().trim();
     this.filteredBugs = this.bugs.filter(b => {
-      const matchSearch = !s || b.title.toLowerCase().includes(s) || (b.bugFormatId && b.bugFormatId.toLowerCase().includes(s));
+      if (!s) {
+        const matchSev = this.bugFilterSeverity === 'ALL' || b.severity === this.bugFilterSeverity;
+        const matchStatus = this.bugFilterStatus === 'ALL' || b.status === this.bugFilterStatus;
+        return matchSev && matchStatus;
+      }
+
+      // 1. Defect own fields
+      const matchTitle = b.title ? b.title.toLowerCase().includes(s) : false;
+      const matchBugFormat = b.bugFormatId ? b.bugFormatId.toLowerCase().includes(s) : false;
+      const matchBugId = b.bugId ? ('bug_' + b.bugId).toLowerCase().includes(s) || String(b.bugId) === s : false;
+      const matchDesc = b.description ? b.description.toLowerCase().includes(s) : false;
+
+      // 2. Mapped testcase fields on bug entity
+      const matchTcFormat = b.testcaseFormatId ? b.testcaseFormatId.toLowerCase().includes(s) : false;
+      const matchTcId = b.testcaseId ? ('tc_' + b.testcaseId).toLowerCase().includes(s) || String(b.testcaseId) === s : false;
+
+      // 3. Mapped testcase title/name from loaded testcases suite
+      const linkedTc = b.testcaseId
+        ? this.testcases.find(t => t.testcaseId === b.testcaseId)
+        : (b.testcaseFormatId ? this.testcases.find(t => t.testcaseFormatId?.toLowerCase() === b.testcaseFormatId?.toLowerCase()) : null);
+      const matchTcName = linkedTc?.title ? linkedTc.title.toLowerCase().includes(s) : false;
+      const matchLinkedTcFormat = linkedTc?.testcaseFormatId ? linkedTc.testcaseFormatId.toLowerCase().includes(s) : false;
+
+      const matchSearch = matchTitle || matchBugFormat || matchBugId || matchDesc || matchTcFormat || matchTcId || matchTcName || matchLinkedTcFormat;
       const matchSev = this.bugFilterSeverity === 'ALL' || b.severity === this.bugFilterSeverity;
       const matchStatus = this.bugFilterStatus === 'ALL' || b.status === this.bugFilterStatus;
       return matchSearch && matchSev && matchStatus;
@@ -1887,6 +1950,69 @@ export class TesterWorkspace implements OnInit {
   onBugFilterChange(): void {
     this.applyBugFilters();
     this.cdr.markForCheck();
+  }
+
+  filterDefectsByTestCase(tc: TestCase): void {
+    if (!tc) return;
+    this.activeSubTab = 'bugs';
+    this.bugFilterSeverity = 'ALL';
+    this.bugFilterStatus = 'ALL';
+    this.bugSearch = tc.testcaseFormatId || ('TC_' + tc.testcaseId);
+    this.bugCurrentPage = 1;
+    this.applyBugFilters();
+    this.cdr.markForCheck();
+  }
+
+  navigateToTestCaseFromBug(b: Bug): void {
+    if (!b) return;
+
+    // Close defect detail modal if open
+    this.isDefectDetailModalOpen = false;
+
+    // If bug belongs to a feature different from current, switch to it
+    if (b.featureId && (!this.activeFeature || this.activeFeature.featureId !== b.featureId)) {
+      const feat = this.features.find(f => f.featureId === b.featureId)
+        || this.allFeaturesList.find(f => f.featureId === b.featureId);
+      if (feat) {
+        this.selectFeature(feat);
+      }
+    }
+
+    // Switch to Test Cases tab and reset type/priority/status filters to ALL
+    this.activeSubTab = 'testcases';
+    this.tcFilterType = 'ALL';
+    this.tcFilterPriority = 'ALL';
+    this.tcFilterStatus = 'ALL';
+
+    // Find testcase in loaded suite
+    const targetTc = (b.testcaseId ? this.testcases.find(t => t.testcaseId === b.testcaseId) : null)
+      || (b.testcaseFormatId ? this.testcases.find(t => t.testcaseFormatId?.toLowerCase() === b.testcaseFormatId?.toLowerCase()) : null);
+
+    this.tcSearch = b.testcaseFormatId || targetTc?.testcaseFormatId || targetTc?.title || '';
+    this.tcCurrentPage = 1;
+    this.applyTestCaseFilters();
+
+    // Open detail card for the test case
+    if (targetTc) {
+      this.viewTestCaseDetail(targetTc);
+    } else if (b.testcaseId) {
+      this.testCaseService.getTestCases(b.featureId || this.activeFeature?.featureId || 0).subscribe({
+        next: (cases) => {
+          const found = cases?.find(t => t.testcaseId === b.testcaseId);
+          if (found) {
+            this.viewTestCaseDetail(found);
+          }
+        }
+      });
+    }
+    this.cdr.markForCheck();
+  }
+
+  getLinkedTestCaseTitle(b: Bug): string {
+    if (!b) return '';
+    const tc = (b.testcaseId ? this.testcases.find(t => t.testcaseId === b.testcaseId) : null)
+      || (b.testcaseFormatId ? this.testcases.find(t => t.testcaseFormatId?.toLowerCase() === b.testcaseFormatId?.toLowerCase()) : null);
+    return tc?.title || '';
   }
 
   // Log Defect (Multiple bugs per testcase supported!)
@@ -2670,7 +2796,16 @@ export class TesterWorkspace implements OnInit {
   get filteredAllFeatures(): (Feature & { projectName?: string; region?: string })[] {
     const s = this.allFeatSearch.toLowerCase().trim();
     return this.allFeaturesList.filter(f => {
-      const matchSearch = !s || f.featureName.toLowerCase().includes(s) || (f.projectName && f.projectName.toLowerCase().includes(s)) || (f.description && f.description.toLowerCase().includes(s));
+      const sprintNum = f.sprint != null ? String(f.sprint) : '';
+      const sprintFormatted = sprintNum ? `sprint ${sprintNum}` : '';
+      const sprintCompact = sprintNum ? `sprint${sprintNum}` : '';
+      const matchSprint = sprintNum.includes(s) || sprintFormatted.includes(s) || sprintCompact.includes(s);
+
+      const matchSearch = !s || f.featureName.toLowerCase().includes(s) ||
+        (f.projectName && f.projectName.toLowerCase().includes(s)) ||
+        (f.description && f.description.toLowerCase().includes(s)) ||
+        (f.featureVersion && f.featureVersion.toLowerCase().includes(s)) ||
+        matchSprint;
       const matchProj = this.allFeatProjFilter === 'ALL' || (f.projectName && f.projectName === this.allFeatProjFilter);
       const matchRegion = this.selectedRegion === 'ALL' || (f.region || '').trim().toLowerCase() === this.selectedRegion.trim().toLowerCase();
       return matchSearch && matchProj && matchRegion;
@@ -2711,7 +2846,14 @@ export class TesterWorkspace implements OnInit {
   get filteredAllBugs(): (Bug & { featureName?: string; projectName?: string })[] {
     const s = this.allBugSearch.toLowerCase().trim();
     return this.allBugsList.filter(b => {
-      const matchSearch = !s || b.title.toLowerCase().includes(s) || (b.bugFormatId && b.bugFormatId.toLowerCase().includes(s)) || (b.description && b.description.toLowerCase().includes(s)) || (b.testcaseFormatId && b.testcaseFormatId.toLowerCase().includes(s));
+      const matchSearch = !s || b.title.toLowerCase().includes(s) ||
+        (b.bugFormatId && b.bugFormatId.toLowerCase().includes(s)) ||
+        (b.bugId && (('bug_' + b.bugId).toLowerCase().includes(s) || String(b.bugId) === s)) ||
+        (b.description && b.description.toLowerCase().includes(s)) ||
+        (b.testcaseFormatId && b.testcaseFormatId.toLowerCase().includes(s)) ||
+        (b.testcaseId && (('tc_' + b.testcaseId).toLowerCase().includes(s) || String(b.testcaseId) === s)) ||
+        (b.featureName && b.featureName.toLowerCase().includes(s)) ||
+        (b.projectName && b.projectName.toLowerCase().includes(s));
       const matchSev = this.allBugSevFilter === 'ALL' || b.severity === this.allBugSevFilter;
       const matchStatus = this.allBugStatusFilter === 'ALL' || b.status === this.allBugStatusFilter;
       return matchSearch && matchSev && matchStatus;

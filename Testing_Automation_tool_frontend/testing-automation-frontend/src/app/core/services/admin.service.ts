@@ -54,4 +54,16 @@ export class AdminService {
   hardDeleteUser(userId: number): Observable<ApiResponse<string>> {
     return this.http.delete<ApiResponse<string>>(`${this.baseUrl}/admin/users/${userId}/permanent`);
   }
+
+  getPendingUsers(): Observable<ApiResponse<any[]>> {
+    return this.http.get<ApiResponse<any[]>>(`${this.baseUrl}/manager/users/pending`);
+  }
+
+  confirmUser(userId: number, role: string): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${this.baseUrl}/manager/userConfirmation`, { userId, role });
+  }
+
+  rejectUser(userId: number): Observable<ApiResponse<string>> {
+    return this.http.delete<ApiResponse<string>>(`${this.baseUrl}/manager/userRejection/${userId}`);
+  }
 }

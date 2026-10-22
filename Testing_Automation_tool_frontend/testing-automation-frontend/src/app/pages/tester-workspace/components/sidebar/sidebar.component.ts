@@ -34,6 +34,7 @@ export class SidebarComponent {
   @Input() projectAttachmentCount = 0;
   @Input() featureAttachmentCount = 0;
   @Input() isOverviewMode = false;
+  @Input() isLoadingFeatures = false;
 
   @Output() regionChange = new EventEmitter<string>();
   @Output() selectProject = new EventEmitter<Project>();
@@ -191,7 +192,15 @@ export class SidebarComponent {
   get filteredFeatures(): Feature[] {
     const s = this.featureSearch.toLowerCase().trim();
     return this.features.filter(f => {
-      return !s || f.featureName.toLowerCase().includes(s) || (f.featureVersion && f.featureVersion.toLowerCase().includes(s));
+      if (!s) return true;
+      const matchName = f.featureName ? f.featureName.toLowerCase().includes(s) : false;
+      const matchVersion = f.featureVersion ? f.featureVersion.toLowerCase().includes(s) : false;
+      const matchDesc = f.description ? f.description.toLowerCase().includes(s) : false;
+      const sprintNum = f.sprint != null ? String(f.sprint) : '';
+      const sprintFormatted = sprintNum ? `sprint ${sprintNum}` : '';
+      const sprintCompact = sprintNum ? `sprint${sprintNum}` : '';
+      const matchSprint = sprintNum.includes(s) || sprintFormatted.includes(s) || sprintCompact.includes(s);
+      return matchName || matchVersion || matchDesc || matchSprint;
     });
   }
 

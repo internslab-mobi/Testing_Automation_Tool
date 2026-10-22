@@ -31,7 +31,7 @@ public class InAppNotification {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(
             name = "bug_id",
-            nullable = false,
+            nullable = true,
             foreignKey = @ForeignKey(name = "fk_in_app_notification_bug")
     )
     private Bug bug;

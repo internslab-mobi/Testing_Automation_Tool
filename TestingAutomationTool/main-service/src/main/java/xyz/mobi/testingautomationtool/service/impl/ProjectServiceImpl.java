@@ -2,6 +2,7 @@ package xyz.mobi.testingautomationtool.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.cache.annotation.Cacheable;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -11,6 +12,7 @@ import xyz.mobi.testingautomationtool.dto.ProjectDTO.*;
 import xyz.mobi.testingautomationtool.entity.*;
 import xyz.mobi.testingautomationtool.entity.Module;
 import xyz.mobi.testingautomationtool.enums.ProjectStatus;
+import xyz.mobi.testingautomationtool.event.ProjectInactiveEvent;
 import xyz.mobi.testingautomationtool.exception.DuplicateResourceException;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.mapper.ProjectMapper;
@@ -40,6 +42,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final SummaryExportClient summaryExportClient;
     private final ModuleRepository moduleRepository;
     private final SubModuleRepository subModuleRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     @Transactional
@@ -338,7 +341,11 @@ public class ProjectServiceImpl implements ProjectService {
             attachmentRepository.deactivateAttachmentsByProjectId(id);
             testCaseRepository.deactivateTestCasesByProjectId(id);
             featureRepository.deactivateFeaturesByProjectId(id);
+
+            eventPublisher.publishEvent(new ProjectInactiveEvent(project));
         }
+
+        projectRepository.save(project);
 
         return "Project with ID " + id +
                 " active status changed to " + isActive +
@@ -410,6 +417,8 @@ public class ProjectServiceImpl implements ProjectService {
         attachmentRepository.deactivateAttachmentsByProjectId(id);
         testCaseRepository.deactivateTestCasesByProjectId(id);
         featureRepository.deactivateFeaturesByProjectId(id);
+
+        eventPublisher.publishEvent(new ProjectInactiveEvent(project));
 
         return PatchProjectDeleteResponse.builder()
                 .projectId(id)

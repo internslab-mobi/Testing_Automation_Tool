@@ -40,4 +40,18 @@ public class InAppNotificationEventListener {
                     event.getComment().getCommentId(), ex.getMessage(), ex);
         }
     }
+
+    @EventListener
+    public void handleProjectInactiveEvent(ProjectInactiveEvent event) {
+        if (event == null || event.getProject() == null) {
+            return;
+        }
+        log.info("Handling ProjectInactiveEvent for Project ID: {}", event.getProject().getProjectId());
+        try {
+            inAppNotificationService.createProjectInactiveNotification(event.getProject());
+        } catch (Exception ex) {
+            log.error("Failed to create project inactive in-app notification for Project ID {}: {}",
+                    event.getProject().getProjectId(), ex.getMessage(), ex);
+        }
+    }
 }

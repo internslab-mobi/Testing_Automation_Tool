@@ -6,7 +6,7 @@
           <i class="fa-solid fa-bug text-rose"></i>
           Defect Card: {{ bug?.bugFormatId || ('BUG_' + bug?.bugId) }}
         </h3>
-        <span class="sub-info">Origin Test Case: <strong>{{ bug?.testcaseFormatId || 'TC_GENERAL' }}</strong></span>
+        <span class="sub-info">Origin Test Case: <strong class="clickable-tc-link" (click)="goToTestCase(bug)" [title]="'Click to show test case in suite: ' + (bug?.testcaseFormatId || 'TC_GENERAL')"><i class="fa-solid fa-arrow-up-right-from-square"></i> {{ bug?.testcaseFormatId || 'TC_GENERAL' }}</strong></span>
       </div>
       <div class="header-actions">
         <button *ngIf="!isEditMode" class="btn btn-secondary btn-sm" (click)="startEdit()">
@@ -48,12 +48,12 @@
         <div class="status-change-box" *ngIf="isStatusUnlocked">
           <select class="form-control select-sm" [(ngModel)]="selectedNewStatus">
             <option value="OPEN">OPEN</option>
-            <option value="IN_PROGRESS">IN_PROGRESS</option>
+            <option value="IN_PROGRESS">IN PROGRESS</option>
             <option value="RESOLVED">RESOLVED</option>
             <option value="FIXED">FIXED</option>
             <option value="CLOSED">CLOSED</option>
             <option value="REOPENED">REOPENED</option>
-            <option value="NOT_A_BUG">NOT_A_BUG</option>
+            <option value="NOT_A_BUG">NOT A BUG</option>
             <option value="DEFERRED">DEFERRED</option>
           </select>
           <button class="btn btn-primary btn-xs" (click)="confirmStatusChange()">Apply</button>
@@ -170,12 +170,12 @@
           <label>Status</label>
           <select class="form-control" [(ngModel)]="editForm.status">
             <option value="OPEN">OPEN</option>
-            <option value="IN_PROGRESS">IN_PROGRESS</option>
+            <option value="IN_PROGRESS">IN PROGRESS</option>
             <option value="RESOLVED">RESOLVED</option>
             <option value="FIXED">FIXED</option>
             <option value="CLOSED">CLOSED</option>
             <option value="REOPENED">REOPENED</option>
-            <option value="NOT_A_BUG">NOT_A_BUG</option>
+            <option value="NOT_A_BUG">NOT A BUG</option>
             <option value="DEFERRED">DEFERRED</option>
           </select>
         </div>

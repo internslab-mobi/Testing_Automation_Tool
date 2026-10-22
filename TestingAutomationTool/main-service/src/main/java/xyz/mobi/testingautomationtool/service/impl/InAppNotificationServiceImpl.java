@@ -7,12 +7,15 @@ import xyz.mobi.testingautomationtool.dto.NotificationDTO.*;
 import xyz.mobi.testingautomationtool.entity.Bug;
 import xyz.mobi.testingautomationtool.entity.Comment;
 import xyz.mobi.testingautomationtool.entity.InAppNotification;
+import xyz.mobi.testingautomationtool.entity.Project;
 import xyz.mobi.testingautomationtool.entity.User;
 import xyz.mobi.testingautomationtool.enums.BugStatus;
 import xyz.mobi.testingautomationtool.enums.InAppNotificationStatus;
+import xyz.mobi.testingautomationtool.enums.UserRole;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.mapper.NotificationMapper;
 import xyz.mobi.testingautomationtool.repository.InAppNotificationRepository;
+import xyz.mobi.testingautomationtool.repository.UserRepository;
 import xyz.mobi.testingautomationtool.service.AuthService;
 import xyz.mobi.testingautomationtool.service.InAppNotificationService;
 
@@ -27,6 +30,7 @@ public class InAppNotificationServiceImpl implements InAppNotificationService {
     private final InAppNotificationRepository inAppNotificationRepository;
     private final NotificationMapper notificationMapper;
     private final AuthService authService;
+    private final UserRepository userRepository;
 
     @Transactional
     @Override
@@ -144,5 +148,36 @@ public class InAppNotificationServiceImpl implements InAppNotificationService {
                 .build();
 
         inAppNotificationRepository.save(notification);
+    }
+
+    @Transactional
+    @Override
+    public void createProjectInactiveNotification(Project project) {
+        if (project == null) {
+            return;
+        }
+
+        List<User> targetUsers = userRepository.findAllByRoleRoleInAndIsActiveTrue(
+                List.of(UserRole.TESTER.name(), UserRole.MANAGER.name()));
+
+        if (targetUsers == null || targetUsers.isEmpty()) {
+            return;
+        }
+
+        String projectName = project.getProjectName() != null ? project.getProjectName() : "ID #" + project.getProjectId();
+        String message = "Project '" + projectName + "' has been set to INACTIVE";
+        Instant now = Instant.now();
+
+        List<InAppNotification> notifications = targetUsers.stream()
+                .map(user -> InAppNotification.builder()
+                        .employee(user)
+                        .bug(null)
+                        .message(message)
+                        .notificationStatus(InAppNotificationStatus.UNREAD)
+                        .createdAt(now)
+                        .build())
+                .toList();
+
+        inAppNotificationRepository.saveAll(notifications);
     }
 }

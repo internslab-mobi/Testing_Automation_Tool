@@ -8,6 +8,7 @@ import xyz.mobi.testingautomationtool.entity.Role;
 import xyz.mobi.testingautomationtool.entity.User;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -35,4 +36,6 @@ public interface UserRepository extends JpaRepository<User, Integer> {
     List<User> findAllByRoleRoleAndIsActiveTrue(String user);
 
     List<User> findAllByRoleAndIsActiveTrue(Role role);
+    @Query("SELECT u FROM User u WHERE u.role.role IN :roles AND u.isActive = true")
+    List<User> findAllByRoleRoleInAndIsActiveTrue(@Param("roles") Collection<String> roles);
 }

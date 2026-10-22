@@ -30,7 +30,8 @@
   <!-- Notification Toast Banner -->
   <div class="toast-banner" *ngIf="toastMessage" [class.toast-error]="toastType === 'error'">
     <div class="toast-content">
-      <i class="fa-solid" [ngClass]="toastType === 'success' ? 'fa-circle-check text-emerald' : 'fa-circle-exclamation text-rose'"></i>
+      <i class="fa-solid"
+        [ngClass]="toastType === 'success' ? 'fa-circle-check text-emerald' : 'fa-circle-exclamation text-rose'"></i>
       <span>{{ toastMessage }}</span>
     </div>
     <button class="btn-close-toast" (click)="toastMessage = ''">&times;</button>
@@ -43,27 +44,21 @@
       <div class="sidebar-top">
         <div class="sidebar-section-title">Administration Modules</div>
 
-        <!-- Tab 1: User Directory -->
-        <button
-          class="nav-tab-btn"
-          [class.active]="activeTab === 'directory'"
-          (click)="setTab('directory')"
-          title="Users & Managers Directory"
-        >
+        <!-- Tab 1: User Management -->
+        <button class="nav-tab-btn" [class.active]="activeTab === 'directory'" (click)="setTab('directory')"
+          title="User Management & Approvals">
           <div class="nav-tab-content">
-            <i class="fa-solid fa-users nav-tab-icon text-emerald"></i>
-            <span>Users & Managers</span>
+            <i class="fa-solid fa-users-gear nav-tab-icon text-emerald"></i>
+            <span>User Management</span>
           </div>
-          <span class="tab-count-pill">{{ totalUsersCount }}</span>
+          <span class="tab-count-pill" *ngIf="pendingUsers.length === 0">{{ totalUsersCount }}</span>
+          <span class="tab-badge-pending-sidebar" *ngIf="pendingUsers.length > 0">{{ pendingUsers.length }}
+            Pending</span>
         </button>
 
         <!-- Tab 2: Create Manager -->
-        <button
-          class="nav-tab-btn"
-          [class.active]="activeTab === 'create'"
-          (click)="setTab('create')"
-          title="Create New Manager"
-        >
+        <button class="nav-tab-btn" [class.active]="activeTab === 'create'" (click)="setTab('create')"
+          title="Create New Manager">
           <div class="nav-tab-content">
             <i class="fa-solid fa-user-plus nav-tab-icon text-emerald"></i>
             <span>Create Manager</span>
@@ -73,6 +68,12 @@
         <!-- Role Overview Section -->
         <div class="sidebar-section-title" style="margin-top: 24px;">Role Distribution</div>
         <div class="stats-card">
+          <div class="stat-row" (click)="setRoleFilter('ADMIN'); setTab('directory')">
+            <span class="stat-label">
+              <span class="role-dot dot-admin"></span> Administrators
+            </span>
+            <span class="stat-value font-mono">{{ adminsCount }}</span>
+          </div>
           <div class="stat-row" (click)="setRoleFilter('MANAGER'); setTab('directory')">
             <span class="stat-label">
               <span class="role-dot dot-manager"></span> Managers
@@ -117,66 +118,22 @@
            TAB 1: USERS & MANAGERS DIRECTORY
            ===================================================================== -->
       <section *ngIf="activeTab === 'directory'" class="panel-section">
-        <!-- Toolbar & Filter Controls -->
-        <div class="toolbar-card">
-          <div class="toolbar-left">
+        <!-- Page Title & Top Actions Bar -->
+        <div class="page-header-row">
+          <div class="header-titles">
             <h2 class="panel-title">
-              <i class="fa-solid fa-users text-emerald"></i>
-              Users & Managers Directory
+              <i class="fa-solid fa-users-gear text-emerald"></i>
+              User Management
             </h2>
-            <!-- Role Filter Pills -->
-            <div class="role-tabs-group">
-              <button
-                class="role-tab"
-                [class.active]="roleFilter === 'ALL'"
-                (click)="setRoleFilter('ALL')"
-              >
-                All ({{ totalUsersCount }})
-              </button>
-              <button
-                class="role-tab"
-                [class.active]="roleFilter === 'MANAGER'"
-                (click)="setRoleFilter('MANAGER')"
-              >
-                Managers ({{ managersCount }})
-              </button>
-              <button
-                class="role-tab"
-                [class.active]="roleFilter === 'TESTER'"
-                (click)="setRoleFilter('TESTER')"
-              >
-                Testers ({{ testersCount }})
-              </button>
-              <button
-                class="role-tab"
-                [class.active]="roleFilter === 'DEVELOPER'"
-                (click)="setRoleFilter('DEVELOPER')"
-              >
-                Developers ({{ developersCount }})
-              </button>
-            </div>
+            <p class="panel-subtitle">
+              Platform administration, user onboarding approvals, active accounts, and directory.
+            </p>
           </div>
-
-          <div class="toolbar-right">
-            <!-- Search Field -->
-            <div class="search-box">
-              <i class="fa-solid fa-magnifying-glass search-icon"></i>
-              <input
-                type="text"
-                class="search-input"
-                placeholder="Search by name, username, email, skills..."
-                [(ngModel)]="searchQuery"
-              >
-              <button *ngIf="searchQuery" class="btn-clear-search" (click)="searchQuery = ''">&times;</button>
-            </div>
-
-            <!-- Refresh Button -->
-            <button class="btn btn-secondary btn-sm" (click)="loadUsers()" title="Refresh Users">
-              <i class="fa-solid fa-rotate" [class.fa-spin]="isLoading"></i>
+          <div class="header-actions-right">
+            <button class="btn btn-secondary btn-sm" (click)="loadUsers()" title="Refresh Users & Pending Approvals">
+              <i class="fa-solid fa-rotate" [class.fa-spin]="isLoading || isPendingLoading"></i>
               <span>Refresh</span>
             </button>
-
-            <!-- Create Manager Shortcut -->
             <button class="btn btn-emerald btn-sm" (click)="setTab('create')" title="Create New Manager">
               <i class="fa-solid fa-user-plus"></i>
               <span>New Manager</span>
@@ -184,115 +141,257 @@
           </div>
         </div>
 
-        <!-- Users Table Card -->
-        <div class="table-card">
-          <div class="table-responsive">
-            <table class="admin-table">
-              <thead>
-                <tr>
-                  <th style="width: 80px;">User ID</th>
-                  <th>User Profile</th>
-                  <th>Email Address</th>
-                  <th style="width: 190px;">System Role</th>
-                  <th>Designation & Skills</th>
-                  <th style="width: 170px; text-align: right;">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                <!-- Loading State -->
-                <tr *ngIf="isLoading">
-                  <td colspan="6" class="table-state-cell">
-                    <i class="fa-solid fa-spinner fa-spin text-emerald"></i>
-                    <span>Loading users directory from main-service...</span>
-                  </td>
-                </tr>
+        <!-- System Stats Row (Duplicated from User Management) -->
+        <div class="system-stats-grid sys-stats-2col">
+          <div class="sys-stat-card">
+            <div class="sys-stat-icon text-blue"><i class="fa-solid fa-users"></i></div>
+            <div class="sys-stat-info">
+              <span class="sys-stat-val font-mono">{{ totalUsersCount }}</span>
+              <span class="sys-stat-lbl">Active Platform Users</span>
+            </div>
+          </div>
+          <div class="sys-stat-card" [class.highlight-pending]="pendingUsers.length > 0">
+            <div class="sys-stat-icon text-amber"><i class="fa-solid fa-user-clock"></i></div>
+            <div class="sys-stat-info">
+              <span class="sys-stat-val font-mono">{{ pendingUsers.length }}</span>
+              <span class="sys-stat-lbl">Pending Registration Approvals</span>
+            </div>
+          </div>
+        </div>
 
-                <!-- Empty State -->
-                <tr *ngIf="!isLoading && filteredUsers.length === 0">
-                  <td colspan="6" class="table-state-cell">
-                    <i class="fa-solid fa-user-slash text-muted"></i>
-                    <span>No users found matching the selected filter criteria</span>
-                  </td>
-                </tr>
+        <!-- Subnav Tabs: Pending Approvals / Active Users Directory -->
+        <div class="subnav-tabs">
+          <button class="subnav-tab-btn" [class.active]="userSubTab === 'pending'" (click)="setUserSubTab('pending')"
+            type="button">
+            <i class="fa-solid fa-user-clock"></i>
+            <span>Pending Approvals</span>
+            <span class="tab-badge" *ngIf="pendingUsers.length > 0">{{ pendingUsers.length }}</span>
+          </button>
+          <button class="subnav-tab-btn" [class.active]="userSubTab === 'directory'"
+            (click)="setUserSubTab('directory')" type="button">
+            <i class="fa-solid fa-users-gear"></i>
+            <span>Active Users Directory</span>
+            <span class="tab-badge tab-badge-neutral">{{ totalUsersCount }}</span>
+          </button>
+        </div>
 
-                <!-- Data Rows -->
-                <tr *ngFor="let u of filteredUsers; trackBy: trackByUserId">
-                  <!-- ID -->
-                  <td>
-                    <span class="user-id-badge font-mono">#{{ u.userId }}</span>
-                  </td>
+        <!-- ================= SUBTAB 1: PENDING APPROVALS ================= -->
+        <div class="tab-content-area" *ngIf="userSubTab === 'pending'">
+          <div class="tab-header-bar">
+            <div class="tab-header-left">
+              <span class="tab-section-title">Users Awaiting Authorization</span>
+              <span class="tab-section-subtitle">Assign appropriate role and confirm access to testing automation
+                tools.</span>
+            </div>
+          </div>
 
-                  <!-- User Profile -->
-                  <td>
-                    <div class="user-profile-cell">
-                      <div class="avatar-cell" [ngClass]="'avatar-role-' + (u.role?.toLowerCase() || 'user')">
-                        {{ (u.fullName || u.username).substring(0, 2).toUpperCase() }}
+          <!-- Loading State -->
+          <div class="panel-loading-state" *ngIf="isPendingLoading">
+            <i class="fa-solid fa-spinner fa-spin text-emerald"></i>
+            <span>Loading pending registrations...</span>
+          </div>
+
+          <!-- Empty State -->
+          <div class="panel-empty-state" *ngIf="!isPendingLoading && pendingUsers.length === 0">
+            <i class="fa-solid fa-circle-check text-emerald"></i>
+            <h3>All registrations processed</h3>
+            <p>There are no pending user approvals at this time.</p>
+          </div>
+
+          <!-- Pending Users Table -->
+          <div class="table-card" *ngIf="!isPendingLoading && pendingUsers.length > 0">
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th style="width: 80px;">User ID</th>
+                    <th>Full Name</th>
+                    <th>Username</th>
+                    <th>Email Address</th>
+                    <th style="width: 170px;">Assign Role</th>
+                    <th style="width: 190px; text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr *ngFor="let u of pendingUsers">
+                    <td>
+                      <span class="user-id-badge font-mono">#{{ u.userId }}</span>
+                    </td>
+                    <td>
+                      <span class="user-name-cell">{{ u.fullName || u.username }}</span>
+                    </td>
+                    <td>
+                      <span class="username-handle font-mono">&#64;{{ u.username }}</span>
+                    </td>
+                    <td>
+                      <span class="email-text">{{ u.email || '—' }}</span>
+                    </td>
+                    <td>
+                      <select class="table-inline-select" [(ngModel)]="pendingRoleSelections[u.userId]">
+                        <option value="TESTER">Tester</option>
+                        <option value="DEVELOPER">Developer</option>
+                      </select>
+                    </td>
+                    <td style="text-align: right;">
+                      <div class="action-buttons-inline" style="justify-content: flex-end;">
+                        <button class="btn-table-action btn-approve" (click)="approvePendingUser(u)" type="button"
+                          title="Authorize and activate user">
+                          <i class="fa-solid fa-check"></i>
+                          <span>Approve</span>
+                        </button>
+                        <button class="btn-table-action btn-reject" (click)="rejectPendingUser(u)" type="button"
+                          title="Reject registration">
+                          <i class="fa-solid fa-xmark"></i>
+                          <span>Reject</span>
+                        </button>
                       </div>
-                      <div class="user-meta-cell">
-                        <span class="user-name-cell">{{ u.fullName || u.username }}</span>
-                        <span class="username-handle font-mono">&#64;{{ u.username }}</span>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ================= SUBTAB 2: ACTIVE USERS DIRECTORY ================= -->
+        <div class="tab-content-area" *ngIf="userSubTab === 'directory'">
+          <!-- Toolbar & Filter Controls -->
+          <div class="toolbar-card">
+            <div class="toolbar-left">
+              <div class="role-tabs-group">
+                <button class="role-tab" [class.active]="roleFilter === 'ALL'" (click)="setRoleFilter('ALL')">
+                  All ({{ totalUsersCount }})
+                </button>
+                <button class="role-tab" [class.active]="roleFilter === 'ADMIN'" (click)="setRoleFilter('ADMIN')">
+                  Admins ({{ adminsCount }})
+                </button>
+                <button class="role-tab" [class.active]="roleFilter === 'MANAGER'" (click)="setRoleFilter('MANAGER')">
+                  Managers ({{ managersCount }})
+                </button>
+                <button class="role-tab" [class.active]="roleFilter === 'TESTER'" (click)="setRoleFilter('TESTER')">
+                  Testers ({{ testersCount }})
+                </button>
+                <button class="role-tab" [class.active]="roleFilter === 'DEVELOPER'"
+                  (click)="setRoleFilter('DEVELOPER')">
+                  Developers ({{ developersCount }})
+                </button>
+              </div>
+            </div>
+
+            <div class="toolbar-right">
+              <!-- Search Field -->
+              <div class="search-box">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" class="search-input" placeholder="Search by name, username, email, skills..."
+                  [(ngModel)]="searchQuery">
+                <button *ngIf="searchQuery" class="btn-clear-search" (click)="searchQuery = ''">&times;</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Users Table Card -->
+          <div class="table-card">
+            <div class="table-responsive">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th style="width: 80px;">User ID</th>
+                    <th>User Profile</th>
+                    <th>Email Address</th>
+                    <th style="width: 190px;">System Role</th>
+                    <th>Designation & Skills</th>
+                    <th style="width: 170px; text-align: right;">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- Loading State -->
+                  <tr *ngIf="isLoading">
+                    <td colspan="6" class="table-state-cell">
+                      <i class="fa-solid fa-spinner fa-spin text-emerald"></i>
+                      <span>Loading users directory from main-service...</span>
+                    </td>
+                  </tr>
+
+                  <!-- Empty State -->
+                  <tr *ngIf="!isLoading && filteredUsers.length === 0">
+                    <td colspan="6" class="table-state-cell">
+                      <i class="fa-solid fa-user-slash text-muted"></i>
+                      <span>No users found matching the selected filter criteria</span>
+                    </td>
+                  </tr>
+
+                  <!-- Data Rows -->
+                  <tr *ngFor="let u of filteredUsers; trackBy: trackByUserId">
+                    <!-- ID -->
+                    <td>
+                      <span class="user-id-badge font-mono">#{{ u.userId }}</span>
+                    </td>
+
+                    <!-- User Profile -->
+                    <td>
+                      <div class="user-profile-cell">
+                        <div class="avatar-cell" [ngClass]="'avatar-role-' + (u.role?.toLowerCase() || 'user')">
+                          {{ (u.fullName || u.username).substring(0, 2).toUpperCase() }}
+                        </div>
+                        <div class="user-meta-cell">
+                          <span class="user-name-cell">{{ u.fullName || u.username }}</span>
+                          <span class="username-handle font-mono">&#64;{{ u.username }}</span>
+                        </div>
                       </div>
-                    </div>
-                  </td>
+                    </td>
 
-                  <!-- Email Address -->
-                  <td>
-                    <span class="email-text">{{ u.email }}</span>
-                  </td>
+                    <!-- Email Address -->
+                    <td>
+                      <span class="email-text">{{ u.email }}</span>
+                    </td>
 
-                  <!-- Role Pill -->
-                  <td>
-                    <span class="role-pill" [attr.data-role]="u.role">
-                      <i class="fa-solid" [ngClass]="{
-                        'fa-user-tie': (u.role || '').includes('MANAGER'),
-                        'fa-user-shield': (u.role || '').includes('TESTER'),
-                        'fa-laptop-code': (u.role || '').includes('DEV'),
-                        'fa-shield-halved': (u.role || '').includes('ADMIN')
-                      }"></i>
-                      {{ u.role || 'USER' }}
-                    </span>
-                  </td>
+                    <!-- Role Pill -->
+                    <td>
+                      <span class="role-pill" [attr.data-role]="u.role">
+                        <i class="fa-solid" [ngClass]="{
+                          'fa-user-tie': (u.role || '').includes('MANAGER'),
+                          'fa-user-shield': (u.role || '').includes('TESTER'),
+                          'fa-laptop-code': (u.role || '').includes('DEV'),
+                          'fa-shield-halved': (u.role || '').includes('ADMIN')
+                        }"></i>
+                        {{ u.role || 'USER' }}
+                      </span>
+                    </td>
 
-                  <!-- Designation & Skills -->
-                  <td>
-                    <div class="skills-cell">
-                      <span class="designation-text">{{ u.designation || 'Specialist' }}</span>
-                      <div class="skills-snippet" *ngIf="u.skills" [title]="u.skills">
-                        <i class="fa-solid fa-code text-cyan"></i>
-                        <span>{{ u.skills }}</span>
+                    <!-- Designation & Skills -->
+                    <td>
+                      <div class="skills-cell">
+                        <span class="designation-text">{{ u.designation || 'Specialist' }}</span>
+                        <div class="skills-snippet" *ngIf="u.skills" [title]="u.skills">
+                          <i class="fa-solid fa-code text-cyan"></i>
+                          <span>{{ u.skills }}</span>
+                        </div>
                       </div>
-                    </div>
-                  </td>
+                    </td>
 
-                  <!-- Actions -->
-                  <td style="text-align: right;">
-                    <div class="row-actions">
-                      <!-- Edit User Profile Button (Available for Users & Managers, excluded for Admin) -->
-                      <button
-                        *ngIf="!(u.role || '').toUpperCase().includes('ADMIN')"
-                        class="btn-row-action btn-edit"
-                        (click)="openEditModal(u)"
-                        title="Edit User Profile"
-                      >
-                        <i class="fa-solid fa-user-pen"></i>
-                        <span>Edit</span>
-                      </button>
+                    <!-- Actions -->
+                    <td style="text-align: right;">
+                      <div class="row-actions">
+                        <!-- Edit User Profile Button (Available for Users & Managers, excluded for Admin) -->
+                        <button *ngIf="!(u.role || '').toUpperCase().includes('ADMIN')" class="btn-row-action btn-edit"
+                          (click)="openEditModal(u)" title="Edit User Profile">
+                          <i class="fa-solid fa-user-pen"></i>
+                          <span>Edit</span>
+                        </button>
 
-                      <!-- Delete User Button -->
-                      <button
-                        *ngIf="!(u.role || '').toUpperCase().includes('ADMIN')"
-                        class="btn-row-action btn-delete"
-                        (click)="openDeleteModal(u)"
-                        title="Deactivate or Delete User"
-                      >
-                        <i class="fa-solid fa-trash-can"></i>
-                        <span>Delete</span>
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+                        <!-- Delete User Button -->
+                        <button *ngIf="!(u.role || '').toUpperCase().includes('ADMIN')"
+                          class="btn-row-action btn-delete" (click)="openDeleteModal(u)"
+                          title="Deactivate or Delete User">
+                          <i class="fa-solid fa-trash-can"></i>
+                          <span>Delete</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </section>
@@ -306,7 +405,8 @@
             <div class="form-header-icon"><i class="fa-solid fa-user-plus text-emerald"></i></div>
             <div>
               <h2 class="form-title">Create New Manager</h2>
-              <p class="form-subtitle">Provision manager credentials with project oversight and QA team leadership permissions</p>
+              <p class="form-subtitle">Provision manager credentials with project oversight and QA team leadership
+                permissions</p>
             </div>
           </div>
 
@@ -315,7 +415,9 @@
             <div class="notice-banner">
               <i class="fa-solid fa-shield-halved text-emerald"></i>
               <div class="notice-text">
-                <strong>Automatic Secure Credential Delivery:</strong> Password generation is managed securely by the backend server. A high-entropy temporary password will be automatically generated and dispatched to the user's email address upon creation.
+                <strong>Automatic Secure Credential Delivery:</strong> Password generation is managed securely by the
+                backend server. A high-entropy temporary password will be automatically generated and dispatched to the
+                user's email address upon creation.
               </div>
             </div>
 
@@ -327,16 +429,9 @@
                 </label>
                 <div class="input-wrapper">
                   <i class="fa-regular fa-user input-icon"></i>
-                  <input
-                    type="text"
-                    id="mFullName"
-                    name="mFullName"
-                    class="form-control"
-                    [(ngModel)]="newManager.fullName"
-                    (input)="onFullNameInput()"
-                    placeholder="e.g. Rahul Sharma"
-                    required
-                  >
+                  <input type="text" id="mFullName" name="mFullName" class="form-control"
+                    [(ngModel)]="newManager.fullName" (input)="onFullNameInput()" placeholder="e.g. Rahul Sharma"
+                    required>
                 </div>
               </div>
 
@@ -347,15 +442,8 @@
                 </label>
                 <div class="input-wrapper">
                   <i class="fa-solid fa-at input-icon"></i>
-                  <input
-                    type="text"
-                    id="mUsername"
-                    name="mUsername"
-                    class="form-control font-mono"
-                    [(ngModel)]="newManager.username"
-                    placeholder="e.g. rahul.sharma"
-                    required
-                  >
+                  <input type="text" id="mUsername" name="mUsername" class="form-control font-mono"
+                    [(ngModel)]="newManager.username" placeholder="e.g. rahul.sharma" required>
                 </div>
               </div>
 
@@ -366,15 +454,8 @@
                 </label>
                 <div class="input-wrapper">
                   <i class="fa-regular fa-envelope input-icon"></i>
-                  <input
-                    type="email"
-                    id="mEmail"
-                    name="mEmail"
-                    class="form-control"
-                    [(ngModel)]="newManager.email"
-                    placeholder="e.g. rahul.sharma@mobi.xyz"
-                    required
-                  >
+                  <input type="email" id="mEmail" name="mEmail" class="form-control" [(ngModel)]="newManager.email"
+                    placeholder="e.g. rahul.sharma@mobi.xyz" required>
                 </div>
               </div>
 
@@ -385,14 +466,8 @@
                 </label>
                 <div class="input-wrapper">
                   <i class="fa-solid fa-briefcase input-icon"></i>
-                  <input
-                    type="text"
-                    id="mDesignation"
-                    name="mDesignation"
-                    class="form-control"
-                    [(ngModel)]="newManager.designation"
-                    placeholder="e.g. QA Lead / QA Manager"
-                  >
+                  <input type="text" id="mDesignation" name="mDesignation" class="form-control"
+                    [(ngModel)]="newManager.designation" placeholder="e.g. QA Lead / QA Manager">
                 </div>
               </div>
 
@@ -403,35 +478,20 @@
                 </label>
                 <div class="input-wrapper">
                   <i class="fa-solid fa-code input-icon"></i>
-                  <input
-                    type="text"
-                    id="mSkills"
-                    name="mSkills"
-                    class="form-control"
-                    [(ngModel)]="newManager.skills"
-                    placeholder="e.g. QA Leadership, Defect Triage, API Automation"
-                  >
+                  <input type="text" id="mSkills" name="mSkills" class="form-control" [(ngModel)]="newManager.skills"
+                    placeholder="e.g. QA Leadership, Defect Triage, API Automation">
                 </div>
               </div>
             </div>
 
             <!-- Form Actions -->
             <div class="form-actions-bar">
-              <button
-                type="button"
-                class="btn btn-secondary"
-                (click)="resetCreateForm()"
-                [disabled]="isCreating"
-              >
+              <button type="button" class="btn btn-secondary" (click)="resetCreateForm()" [disabled]="isCreating">
                 <i class="fa-solid fa-rotate-left"></i>
                 <span>Reset Form</span>
               </button>
 
-              <button
-                type="submit"
-                class="btn btn-emerald"
-                [disabled]="isCreating"
-              >
+              <button type="submit" class="btn btn-emerald" [disabled]="isCreating">
                 <i class="fa-solid fa-user-plus" *ngIf="!isCreating"></i>
                 <i class="fa-solid fa-circle-notch fa-spin" *ngIf="isCreating"></i>
                 <span>{{ isCreating ? 'Creating Manager...' : 'Create Manager Account' }}</span>
@@ -476,13 +536,8 @@
             <label class="form-label">Full Name <span class="required">*</span></label>
             <div class="input-wrapper">
               <i class="fa-regular fa-user input-icon"></i>
-              <input
-                type="text"
-                class="form-control"
-                [(ngModel)]="editManagerData.fullName"
-                name="editFullName"
-                required
-              >
+              <input type="text" class="form-control" [(ngModel)]="editManagerData.fullName" name="editFullName"
+                required>
             </div>
           </div>
 
@@ -490,13 +545,8 @@
             <label class="form-label">Username <span class="required">*</span></label>
             <div class="input-wrapper">
               <i class="fa-solid fa-at input-icon"></i>
-              <input
-                type="text"
-                class="form-control font-mono"
-                [(ngModel)]="editManagerData.username"
-                name="editUsername"
-                required
-              >
+              <input type="text" class="form-control font-mono" [(ngModel)]="editManagerData.username"
+                name="editUsername" required>
             </div>
           </div>
         </div>
@@ -505,13 +555,7 @@
           <label class="form-label">Email Address <span class="required">*</span></label>
           <div class="input-wrapper">
             <i class="fa-regular fa-envelope input-icon"></i>
-            <input
-              type="email"
-              class="form-control"
-              [(ngModel)]="editManagerData.email"
-              name="editEmail"
-              required
-            >
+            <input type="email" class="form-control" [(ngModel)]="editManagerData.email" name="editEmail" required>
           </div>
         </div>
 
@@ -519,13 +563,8 @@
           <label class="form-label">Designation / Title</label>
           <div class="input-wrapper">
             <i class="fa-solid fa-briefcase input-icon"></i>
-            <input
-              type="text"
-              class="form-control"
-              [(ngModel)]="editManagerData.designation"
-              name="editDesignation"
-              placeholder="e.g. Senior QA Engineer"
-            >
+            <input type="text" class="form-control" [(ngModel)]="editManagerData.designation" name="editDesignation"
+              placeholder="e.g. Senior QA Engineer">
           </div>
         </div>
 
@@ -533,13 +572,8 @@
           <label class="form-label">Skills & Specializations</label>
           <div class="input-wrapper">
             <i class="fa-solid fa-code input-icon"></i>
-            <input
-              type="text"
-              class="form-control"
-              [(ngModel)]="editManagerData.skills"
-              name="editSkills"
-              placeholder="e.g. Selenium, Cypress, RestAssured, Postman"
-            >
+            <input type="text" class="form-control" [(ngModel)]="editManagerData.skills" name="editSkills"
+              placeholder="e.g. Selenium, Cypress, RestAssured, Postman">
           </div>
         </div>
 
@@ -572,8 +606,10 @@
 
       <div class="modal-body" *ngIf="userToDelete">
         <div class="delete-warning-box">
-          <p>Are you sure you want to delete or deactivate account <strong>{{ userToDelete.fullName || userToDelete.username }}</strong> (#{{ userToDelete.userId }})?</p>
-          <p class="sub-warning">Role: <strong>{{ userToDelete.role }}</strong> • Email: <strong>{{ userToDelete.email }}</strong></p>
+          <p>Are you sure you want to delete or deactivate account <strong>{{ userToDelete.fullName ||
+              userToDelete.username }}</strong> (#{{ userToDelete.userId }})?</p>
+          <p class="sub-warning">Role: <strong>{{ userToDelete.role }}</strong> • Email: <strong>{{ userToDelete.email
+              }}</strong></p>
         </div>
 
         <div class="delete-options-grid">
@@ -583,12 +619,7 @@
               <h4>Deactivate (Soft Delete)</h4>
             </div>
             <p>Deactivates the user so they can no longer log in. Records and test activities are preserved.</p>
-            <button
-              type="button"
-              class="btn btn-amber btn-sm"
-              (click)="executeSoftDelete()"
-              [disabled]="isDeleting"
-            >
+            <button type="button" class="btn btn-amber btn-sm" (click)="executeSoftDelete()" [disabled]="isDeleting">
               <i class="fa-solid fa-ban"></i> Deactivate User
             </button>
           </div>
@@ -599,12 +630,7 @@
               <h4>Permanent Delete</h4>
             </div>
             <p>Irreversibly deletes user credentials, refresh tokens, and entity linkages from the database.</p>
-            <button
-              type="button"
-              class="btn btn-danger btn-sm"
-              (click)="executeHardDelete()"
-              [disabled]="isDeleting"
-            >
+            <button type="button" class="btn btn-danger btn-sm" (click)="executeHardDelete()" [disabled]="isDeleting">
               <i class="fa-solid fa-trash-can"></i> Hard Delete
             </button>
           </div>

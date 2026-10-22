@@ -228,7 +228,6 @@ public class AdminServiceImpl implements AdminService {
         return userRepository
                 .findAllByIsActiveTrue()
                 .stream()
-                .filter(u -> u.getRole() == null || (!"ADMIN".equalsIgnoreCase(u.getRole().getRole()) && !"ROLE_ADMIN".equalsIgnoreCase(u.getRole().getRole())))
                 .map(adminMapper::toResponse)
                 .toList();
     }

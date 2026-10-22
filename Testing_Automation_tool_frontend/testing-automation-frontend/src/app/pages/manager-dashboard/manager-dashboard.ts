@@ -246,8 +246,8 @@ export class ManagerDashboard implements OnInit, OnDestroy {
 
   // Sidebar navigation configuration
   readonly sidebarNavItems: SidebarNavItem[] = [
-    { id: 'system-dashboard', label: 'System Dashboard', icon: 'fa-regular fa-compass', route: '/manager/system-dashboard' },
-    { id: 'project-dashboard', label: 'Project Dashboard', icon: 'fa-solid fa-table-columns', route: '/manager/project-dashboard' },
+    { id: 'system-dashboard', label: 'User Management', icon: 'fa-regular fa-compass', route: '/manager/system-dashboard' },
+    { id: 'project-dashboard', label: 'Project Management', icon: 'fa-solid fa-table-columns', route: '/manager/project-dashboard' },
     { id: 'qa-dashboard', label: 'QA Dashboard', icon: 'fa-regular fa-square-check', route: '/manager-dashboard' },
     { id: 'tester-workspace', label: 'Tester Workspace', icon: 'fa-solid fa-vial-circle-check', route: '/tester-workspace' }
   ];
@@ -375,7 +375,7 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   navigateToPendingApprovals(user?: any): void {
     this.isNotificationsDropdownOpen = false;
     this.isNotificationsModalOpen = false;
-    this.activeSidebarItem = 'System Dashboard';
+    this.activeSidebarItem = 'User Management';
     this.systemTab = 'pending';
     this.router.navigate(['/manager/system-dashboard']);
     this.loadSystemDashboardData();
@@ -396,8 +396,8 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     if (n.notificationStatus === 'UNREAD') {
       this.handleToggleNotificationRead(n);
     }
+    this.isNotificationsDropdownOpen = false;
     if (n.bugId || n.bugFormatId) {
-      this.isNotificationsDropdownOpen = false;
       this.activeSidebarItem = 'Defect Management';
       this.loadDefectManagementData();
       this.router.navigate(['/manager/defect-management']);
@@ -480,10 +480,10 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   private syncRouteWithView(): void {
     const url = this.router.url;
     if (url.includes('system-dashboard')) {
-      this.activeSidebarItem = 'System Dashboard';
+      this.activeSidebarItem = 'User Management';
       this.loadSystemDashboardData();
     } else if (url.includes('project-dashboard')) {
-      this.activeSidebarItem = 'Project Dashboard';
+      this.activeSidebarItem = 'Project Management';
       this.loadProjectDashboardData();
     } else if (url.includes('tester-workspace')) {
       this.activeSidebarItem = 'Tester Workspace';
@@ -1087,7 +1087,7 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   }
 
   // =========================================================================
-  // 1. SYSTEM DASHBOARD (Platform Approvals, User Directory, Health)
+  // 1. User Management (Platform Approvals, User Directory, Health)
   // =========================================================================
   activeUsers: any[] = [];
   pendingUsers: any[] = [];
@@ -1119,10 +1119,18 @@ export class ManagerDashboard implements OnInit, OnDestroy {
       next: (res) => {
         const rawActive = res.active?.data || res.active || [];
         const rawPending = res.pending?.data || res.pending || [];
-        this.activeUsers = Array.isArray(rawActive) ? rawActive : [];
+        const activeList = Array.isArray(rawActive) ? rawActive : [];
+        // Only list Tester, Developer, and Manager (exclude Admin)
+        this.activeUsers = activeList.filter(u => {
+          const roleStr = typeof u.role === 'object'
+            ? (u.role?.role || u.role?.roleName || '')
+            : (u.role || '');
+          const roleUpper = roleStr.toUpperCase();
+          return !roleUpper.includes('ADMIN') && (roleUpper.includes('TESTER') || roleUpper.includes('DEVELOPER') || roleUpper.includes('DEV') || roleUpper.includes('MANAGER'));
+        });
         this.pendingUsers = Array.isArray(rawPending) ? rawPending : [];
 
-        // Pre-fill default role for pending users
+        // Pre-fill default role for pending users (default to TESTER)
         this.pendingUsers.forEach(u => {
           if (!this.pendingRoleSelections[u.userId]) {
             this.pendingRoleSelections[u.userId] = 'TESTER';
@@ -1133,7 +1141,7 @@ export class ManagerDashboard implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       },
       error: (err) => {
-        console.error('Failed to load system dashboard users:', err);
+        console.error('Failed to load User Management users:', err);
         this.systemError = 'Unable to retrieve user directory or pending approvals.';
         this.isSystemLoading = false;
         this.cdr.markForCheck();
@@ -1224,7 +1232,7 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   }
 
   // =========================================================================
-  // 2. PROJECT DASHBOARD (Directory, Module Structure, Regional Status)
+  // 2. Project Management (Directory, Module Structure, Regional Status)
   // =========================================================================
   projectsList: Project[] = [];
   isProjectsLoading = false;

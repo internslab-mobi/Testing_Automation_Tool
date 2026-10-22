@@ -22,13 +22,17 @@ export class AdminWorkspace implements OnInit {
   // Active Main Navigation Tab
   activeTab: 'directory' | 'create' = 'directory';
 
-  // Role Filtering in User Directory (Excludes ADMIN)
-  roleFilter: 'ALL' | 'MANAGER' | 'TESTER' | 'DEVELOPER' = 'ALL';
+  // Role Filtering in User Directory
+  roleFilter: 'ALL' | 'ADMIN' | 'MANAGER' | 'TESTER' | 'DEVELOPER' = 'ALL';
   searchQuery = '';
 
   // Data State
   users: ManagerResponse[] = [];
+  pendingUsers: any[] = [];
   isLoading = false;
+  isPendingLoading = false;
+  pendingRoleSelections: { [userId: number]: string } = {};
+  userSubTab: 'pending' | 'directory' = 'directory';
   toastMessage = '';
   toastType: 'success' | 'error' = 'success';
 
@@ -68,6 +72,7 @@ export class AdminWorkspace implements OnInit {
   ngOnInit(): void {
     this.initAdminInfo();
     this.loadUsers();
+    this.loadPendingUsers();
   }
 
   private initAdminInfo(): void {
@@ -90,8 +95,8 @@ export class AdminWorkspace implements OnInit {
     this.adminService.getAllUsers().subscribe({
       next: (res) => {
         this.isLoading = false;
-        // Exclude other admin accounts from user directory
-        this.users = (res?.data || []).filter(u => !(u.role || '').toUpperCase().includes('ADMIN'));
+        // Store all accounts including admins in user directory
+        this.users = res?.data || [];
         this.cd.markForCheck();
       },
       error: (err) => {
@@ -100,11 +105,75 @@ export class AdminWorkspace implements OnInit {
         this.cd.markForCheck();
       }
     });
+    this.loadPendingUsers();
+  }
+
+  // Load Pending Users Awaiting Registration Approval
+  loadPendingUsers(): void {
+    this.isPendingLoading = true;
+    this.adminService.getPendingUsers().subscribe({
+      next: (res) => {
+        this.isPendingLoading = false;
+        const raw = res?.data || res || [];
+        this.pendingUsers = Array.isArray(raw) ? raw : [];
+        this.pendingUsers.forEach(u => {
+          if (!this.pendingRoleSelections[u.userId]) {
+            this.pendingRoleSelections[u.userId] = 'TESTER';
+          }
+        });
+        if (this.pendingUsers.length > 0 && this.userSubTab !== 'directory') {
+          this.userSubTab = 'pending';
+        }
+        this.cd.markForCheck();
+      },
+      error: (err) => {
+        this.isPendingLoading = false;
+        console.warn('Failed to load pending users:', err);
+        this.cd.markForCheck();
+      }
+    });
+  }
+
+  // Authorize & Confirm User Registration
+  approvePendingUser(user: any): void {
+    const role = this.pendingRoleSelections[user.userId] || 'TESTER';
+    this.adminService.confirmUser(user.userId, role).subscribe({
+      next: (res) => {
+        this.showToast(res?.message || `User ${user.fullName || user.username} approved as ${role} successfully.`, 'success');
+        this.loadPendingUsers();
+        this.loadUsers();
+      },
+      error: (err) => {
+        this.showToast(err?.error?.message || 'Failed to approve user registration.', 'error');
+      }
+    });
+  }
+
+  // Reject & Discard User Registration
+  rejectPendingUser(user: any): void {
+    if (!confirm(`Are you sure you want to reject registration for ${user.fullName || user.username}?`)) {
+      return;
+    }
+    this.adminService.rejectUser(user.userId).subscribe({
+      next: (res) => {
+        this.showToast(res?.message || `User ${user.fullName || user.username} registration rejected.`, 'success');
+        this.loadPendingUsers();
+      },
+      error: (err) => {
+        this.showToast(err?.error?.message || 'Failed to reject user registration.', 'error');
+      }
+    });
+  }
+
+  // Subtab switching inside User Management
+  setUserSubTab(subTab: 'pending' | 'directory'): void {
+    this.userSubTab = subTab;
+    this.cd.markForCheck();
   }
 
   // Filtered Users List
   get filteredUsers(): ManagerResponse[] {
-    let list = this.users.filter(u => !(u.role || '').toUpperCase().includes('ADMIN'));
+    let list = [...this.users];
 
     // Filter by role
     if (this.roleFilter !== 'ALL') {
@@ -135,6 +204,10 @@ export class AdminWorkspace implements OnInit {
     return this.users.length;
   }
 
+  get adminsCount(): number {
+    return this.users.filter(u => (u.role || '').toUpperCase().includes('ADMIN')).length;
+  }
+
   get managersCount(): number {
     return this.users.filter(u => (u.role || '').toUpperCase().includes('MANAGER')).length;
   }
@@ -153,7 +226,7 @@ export class AdminWorkspace implements OnInit {
     this.cd.markForCheck();
   }
 
-  setRoleFilter(filter: 'ALL' | 'MANAGER' | 'TESTER' | 'DEVELOPER'): void {
+  setRoleFilter(filter: 'ALL' | 'ADMIN' | 'MANAGER' | 'TESTER' | 'DEVELOPER'): void {
     this.roleFilter = filter;
     this.cd.markForCheck();
   }

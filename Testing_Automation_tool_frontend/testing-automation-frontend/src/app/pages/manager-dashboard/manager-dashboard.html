@@ -113,7 +113,7 @@
                     <span class="meta-role" *ngIf="u.role"><i class="fa-solid fa-id-badge"></i> {{ u.role?.role || u.role }}</span>
                   </div>
                   <div class="notif-item-cta">
-                    <i class="fa-solid fa-arrow-right"></i> Review & Approve in System Dashboard
+                    <i class="fa-solid fa-arrow-right"></i> Review & Approve in User Management
                   </div>
                 </div>
               </div>
@@ -134,6 +134,7 @@
                 <div class="notif-item-content">
                   <div class="notif-item-top">
                     <span class="notif-type-tag" *ngIf="n.bugFormatId">{{ n.bugFormatId }}</span>
+                    <span class="notif-type-tag" *ngIf="!n.bugFormatId" style="background:#ffedd5; color:#c2410c;">PROJECT</span>
                     <span class="new-dot" *ngIf="n.notificationStatus === 'UNREAD'">● NEW</span>
                     <span class="notif-time" *ngIf="n.createdAt">{{ n.createdAt | date:'short' }}</span>
                   </div>
@@ -1999,11 +2000,11 @@
 
       </ng-container>
 
-      <!-- ================= 1. SYSTEM DASHBOARD VIEW ================= -->
-      <ng-container *ngIf="activeSidebarItem === 'System Dashboard'">
+      <!-- ================= 1. User Management VIEW ================= -->
+      <ng-container *ngIf="activeSidebarItem === 'User Management'">
         <section class="dashboard-page-header">
           <div class="header-titles">
-            <h1 class="page-title">System Dashboard</h1>
+            <h1 class="page-title">User Management</h1>
             <p class="page-subtitle">
               Platform administration, user onboarding approvals, active accounts, and gateway status.
             </p>
@@ -2094,7 +2095,6 @@
                       <select class="table-inline-select" [(ngModel)]="pendingRoleSelections[u.userId]">
                         <option value="TESTER">Tester</option>
                         <option value="DEVELOPER">Developer</option>
-                        <option value="MANAGER">Manager</option>
                       </select>
                     </td>
                     <td>
@@ -2128,7 +2128,6 @@
                   <option value="TESTER">Testers</option>
                   <option value="DEVELOPER">Developers</option>
                   <option value="MANAGER">Managers</option>
-                  <option value="ADMIN">Admins</option>
                 </select>
               </div>
             </div>
@@ -2175,11 +2174,11 @@
         </div>
       </ng-container>
 
-      <!-- ================= 2. PROJECT DASHBOARD VIEW ================= -->
-      <ng-container *ngIf="activeSidebarItem === 'Project Dashboard'">
+      <!-- ================= 2. Project Management VIEW ================= -->
+      <ng-container *ngIf="activeSidebarItem === 'Project Management'">
         <section class="dashboard-page-header">
           <div class="header-titles">
-            <h1 class="page-title">Project Dashboard</h1>
+            <h1 class="page-title">Project Management</h1>
             <p class="page-subtitle">
               Portfolio directory, active module structures, regional coverage and project summary exports.
             </p>

@@ -3761,6 +3761,9 @@
         if (n.type === 'FIXED' || (n.message || '').toLowerCase().includes('resolved') || (n.message || '').toLowerCase().includes('fixed')) {
           iconClass = 'notif-icon-fixed';
           icon = 'fa-circle-check';
+        } else if ((n.message || '').toLowerCase().includes('inactive')) {
+          iconClass = 'notif-icon-warning';
+          icon = 'fa-triangle-exclamation';
         } else if (n.type === 'TC') {
           iconClass = 'notif-icon-tc';
           icon = 'fa-vial';
@@ -3770,7 +3773,7 @@
           <div class="notif-icon-bubble ${iconClass}"><i class="fa-solid ${icon}"></i></div>
           <div class="notif-card-content">
             <div class="notif-card-title">
-              <span>${escapeHtml(n.bugFormatId ? `Defect: ${n.bugFormatId}` : 'Automation Alert')}</span>
+              <span>${escapeHtml(n.bugFormatId ? `Defect: ${n.bugFormatId}` : 'Project Alert')}</span>
               ${isUnread ? `<span style="font-size: 10px; color: var(--rose-600); font-weight: 700;">● NEW</span>` : ''}
             </div>
             <div class="notif-card-msg">${escapeHtml(n.message)}</div>

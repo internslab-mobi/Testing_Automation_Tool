@@ -201,7 +201,7 @@
   <div class="sidebar-section features-section flex-grow-section" *ngIf="activeProject && !showProjectsPicker">
     <div class="section-header">
       <div class="section-title">
-        <span>Features ({{ activeProject?.status === 'INACTIVE' ? 0 : filteredFeatures.length }})</span>
+        <span>Features ({{ activeProject?.status === 'INACTIVE' ? 0 : (isLoadingFeatures ? '...' : filteredFeatures.length) }})</span>
       </div>
       <button class="btn-add-icon" [disabled]="!activeProject || activeProject?.status === 'INACTIVE'" (click)="activeProject?.status !== 'INACTIVE' && createFeature.emit()" title="Create New Feature">
         <i class="fa-solid fa-plus"></i>
@@ -227,12 +227,25 @@
         <span>Project is INACTIVE. Contents locked.</span>
       </div>
 
-      <div *ngIf="activeProject && activeProject.status !== 'INACTIVE' && filteredFeatures.length === 0" class="empty-list-msg">
+      <!-- Feature items skeleton when loading -->
+      <div *ngIf="activeProject && activeProject.status !== 'INACTIVE' && isLoadingFeatures" class="sidebar-features-skeleton">
+        <div class="skeleton-feat-card" *ngFor="let s of [1, 2, 3]">
+          <div class="sk-feat-top">
+            <div class="sk-feat-name"></div>
+            <div class="sk-feat-tag"></div>
+          </div>
+          <div class="sk-feat-bottom">
+            <div class="sk-feat-badge"></div>
+          </div>
+        </div>
+      </div>
+
+      <div *ngIf="activeProject && activeProject.status !== 'INACTIVE' && !isLoadingFeatures && filteredFeatures.length === 0" class="empty-list-msg">
         <i class="fa-solid fa-list-check"></i>
         <span>No features configured</span>
       </div>
 
-      <ng-container *ngIf="activeProject && activeProject.status !== 'INACTIVE'">
+      <ng-container *ngIf="activeProject && activeProject.status !== 'INACTIVE' && !isLoadingFeatures">
         <div
           *ngFor="let f of paginatedFeatures; trackBy: trackByFeatureId"
           class="feature-item-card"
@@ -278,7 +291,7 @@
     </div>
 
     <!-- Sidebar Mini Pagination for Features (Size 5) -->
-    <div class="sidebar-pagination-bar" *ngIf="activeProject?.status !== 'INACTIVE' && filteredFeatures.length > featurePageSize">
+    <div class="sidebar-pagination-bar" *ngIf="activeProject?.status !== 'INACTIVE' && !isLoadingFeatures && filteredFeatures.length > featurePageSize">
       <span class="sidebar-page-info">Pg {{ featurePage }}/{{ totalFeaturePages }} ({{ filteredFeatures.length }})</span>
       <div class="sidebar-page-btns">
         <button class="btn-sidebar-page" [disabled]="featurePage <= 1" (click)="prevFeaturePage()" title="Previous Features">

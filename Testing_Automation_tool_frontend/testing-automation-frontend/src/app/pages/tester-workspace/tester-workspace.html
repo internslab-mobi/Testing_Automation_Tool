@@ -21,7 +21,7 @@
       [availableRegions]="availableRegions" [selectedRegion]="selectedRegion" [projects]="projects"
       [activeProject]="activeProject" [features]="features" [activeFeature]="activeFeature"
       [projectAttachmentCount]="projectAttachmentCount" [featureAttachmentCount]="featureAttachmentCount"
-      [isOverviewMode]="isOverviewMode"
+      [isOverviewMode]="isOverviewMode" [isLoadingFeatures]="isLoadingFeatures"
       (regionChange)="onRegionChange($event)" (selectProject)="selectProject($event, false)"
       (createProject)="openCreateProjectModal()" (editProject)="openEditProject($event)"
       (openProjectAttachments)="openAttachments('project', $event.projectId, 'Project Attachments: ' + $event.projectName)"
@@ -48,7 +48,7 @@
         <div class="barrier-content">
           <h3>Project Contents Locked</h3>
           <p>
-            The project <strong>{{ activeProject?.projectName }}</strong> is currently set to <strong>INACTIVE</strong>. Content locked by manager or admin.
+            The project <strong>{{ activeProject?.projectName }}</strong> is currently set to <strong>INACTIVE</strong>.
           </p>
         </div>
       </div>
@@ -230,7 +230,13 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngIf="paginatedTestCases.length === 0">
+              <tr *ngIf="isLoadingTestCases">
+                <td colspan="6" class="table-loading-cell">
+                  <i class="fa-solid fa-circle-notch fa-spin text-emerald"></i>
+                  <span>Loading test cases...</span>
+                </td>
+              </tr>
+              <tr *ngIf="!isLoadingTestCases && paginatedTestCases.length === 0">
                 <td colspan="6" class="empty-table-cell">
                   <i class="fa-solid fa-vial-circle-check"></i>
                   <span>No test cases match filter criteria</span>
@@ -288,7 +294,7 @@
                     </select>
                     <!-- Multiple Linked Bugs Count Badge -->
                     <span *ngIf="getLinkedDefects(tc.testcaseId).length > 0" class="badge-linked-bugs"
-                      (click)="$event.stopPropagation(); activeSubTab = 'bugs'; bugSearch = tc.testcaseFormatId || ''; onBugFilterChange()"
+                      (click)="$event.stopPropagation(); filterDefectsByTestCase(tc)"
                       title="View linked defects">
                       <i class="fa-solid fa-bug"></i> {{ getLinkedDefects(tc.testcaseId).length }} Defects
                     </span>
@@ -379,12 +385,12 @@
             <select class="form-control filter-select" [(ngModel)]="bugFilterStatus" (change)="onBugFilterChange()">
               <option value="ALL">All Statuses</option>
               <option value="OPEN">OPEN</option>
-              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="IN_PROGRESS">IN PROGRESS</option>
               <option value="RESOLVED">RESOLVED</option>
               <option value="FIXED">FIXED</option>
               <option value="CLOSED">CLOSED</option>
               <option value="REOPENED">REOPENED</option>
-              <option value="NOT_A_BUG">NOT_A_BUG</option>
+              <option value="NOT_A_BUG">NOT A BUG</option>
               <option value="DEFERRED">DEFERRED</option>
             </select>
           </div>
@@ -404,7 +410,13 @@
               </tr>
             </thead>
             <tbody>
-              <tr *ngIf="paginatedBugs.length === 0">
+              <tr *ngIf="isLoadingBugs">
+                <td colspan="6" class="table-loading-cell">
+                  <i class="fa-solid fa-circle-notch fa-spin text-emerald"></i>
+                  <span>Loading defects and issues...</span>
+                </td>
+              </tr>
+              <tr *ngIf="!isLoadingBugs && paginatedBugs.length === 0">
                 <td colspan="6" class="empty-table-cell">
                   <i class="fa-solid fa-shield-virus"></i>
                   <span>No defects recorded matching filter</span>
@@ -415,7 +427,13 @@
                 (click)="viewDefectDetail(b)" title="Click to view detailed card, edit, or soft delete">
                 <td>
                   <span class="bug-id-pill">{{ b.bugFormatId || ('BUG_' + b.bugId) }}</span>
-                  <span class="sub-tc-link" *ngIf="b.testcaseFormatId">{{ b.testcaseFormatId }}</span>
+                  <span class="sub-tc-link clickable-tc-link"
+                    *ngIf="b.testcaseFormatId || b.testcaseId"
+                    (click)="$event.stopPropagation(); navigateToTestCaseFromBug(b)"
+                    [title]="'Click to view test case in suite: ' + (getLinkedTestCaseTitle(b) || b.testcaseFormatId || ('TC_' + b.testcaseId))">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    {{ b.testcaseFormatId || ('TC_' + b.testcaseId) }}
+                  </span>
                 </td>
 
                 <td>
@@ -511,8 +529,34 @@
         </div>
       </div>
 
-      <!-- Empty State when Active Project has no Features yet -->
-      <div class="view-panel empty-feature-panel" *ngIf="!activeFeature">
+      <!-- Loading Skeleton State when Features are Loading -->
+      <div class="view-panel workspace-skeleton-panel" *ngIf="isLoadingFeatures">
+        <div class="skeleton-ribbon-row">
+          <div class="skeleton-card" *ngFor="let i of [1,2,3,4,5,6]">
+            <div class="sk-icon"></div>
+            <div class="sk-lines">
+              <div class="sk-line sk-val"></div>
+              <div class="sk-line sk-lbl"></div>
+            </div>
+          </div>
+        </div>
+        <div class="skeleton-body-content">
+          <div class="skeleton-tab-strip">
+            <div class="sk-tab"></div>
+            <div class="sk-tab"></div>
+          </div>
+          <div class="skeleton-table-mock">
+            <div class="sk-table-toolbar">
+              <div class="sk-search"></div>
+              <div class="sk-select"></div>
+            </div>
+            <div class="sk-table-row" *ngFor="let r of [1,2,3]"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Empty State when Active Project has no Features yet (and not loading) -->
+      <div class="view-panel empty-feature-panel" *ngIf="!isLoadingFeatures && !activeFeature">
           <div class="empty-list-msg" style="padding: 48px 16px; text-align: center;">
             <i class="fa-solid fa-cubes text-emerald" style="font-size: 36px; margin-bottom: 12px; display: block;"></i>
             <h3 style="font-size: 16px; font-weight: 700; color: #334155; margin-bottom: 6px;">No Feature Selected</h3>
@@ -521,7 +565,7 @@
               <i class="fa-solid fa-plus"></i> Create Feature
             </button>
           </div>
-        </div>
+      </div>
       </ng-container>
 
       <!-- VIEW 3: GLOBAL OVERVIEW DIRECTORY (When in Overview Mode OR No Feature is Selected) -->
@@ -977,7 +1021,13 @@
                   (click)="viewDefectDetail(b)">
                   <td>
                     <span class="bug-id-pill">{{ b.bugFormatId || ('BUG_' + b.bugId) }}</span>
-                    <span class="sub-tc-link" *ngIf="b.testcaseFormatId">{{ b.testcaseFormatId }}</span>
+                    <span class="sub-tc-link clickable-tc-link"
+                      *ngIf="b.testcaseFormatId || b.testcaseId"
+                      (click)="$event.stopPropagation(); navigateToTestCaseFromBug(b)"
+                      [title]="'Click to view test case in suite: ' + (getLinkedTestCaseTitle(b) || b.testcaseFormatId || ('TC_' + b.testcaseId))">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                      {{ b.testcaseFormatId || ('TC_' + b.testcaseId) }}
+                    </span>
                   </td>
                   <td>
                     <div class="bug-content-box">
@@ -1080,6 +1130,7 @@
     (patchBug)="handlePatchBug($event)"
     (softDeleteBug)="handleSoftDeleteBug($event)" (changeStatus)="handleChangeBugStatus($event)"
     (changeAssignee)="handleChangeBugAssignee($event)" (openChat)="openBugChat($event)"
+    (navigateToTestCase)="navigateToTestCaseFromBug($event)"
     (openAttachments)="openAttachments('bug', $event.bugId, 'Defect Evidence: ' + $event.bugFormatId)"></app-defect-detail-modal>
 
   <!-- MODAL: BUG CHAT / COMMENTS -->
@@ -1656,8 +1707,8 @@
           <div class="form-group">
             <label>Category (BugCategory)</label>
             <select class="form-control" [(ngModel)]="newBugForm.category">
-              <option value="PRE_PRODUCTION">PRE_PRODUCTION</option>
-              <option value="POST_PRODUCTION">POST_PRODUCTION</option>
+              <option value="PRE_PRODUCTION">PRE PRODUCTION</option>
+              <option value="POST_PRODUCTION">POST PRODUCTION</option>
               <option value="ENHANCED">ENHANCED</option>
             </select>
           </div>
@@ -1665,12 +1716,12 @@
             <label>Status (BugStatus)</label>
             <select class="form-control" [(ngModel)]="newBugForm.status">
               <option value="OPEN">OPEN</option>
-              <option value="IN_PROGRESS">IN_PROGRESS</option>
+              <option value="IN_PROGRESS">IN PROGRESS</option>
               <option value="FIXED">FIXED</option>
               <option value="RESOLVED">RESOLVED</option>
               <option value="CLOSED">CLOSED</option>
               <option value="REOPENED">REOPENED</option>
-              <option value="NOT_A_BUG">NOT_A_BUG</option>
+              <option value="NOT_A_BUG">NOT A BUG</option>
               <option value="DEFERRED">DEFERRED</option>
             </select>
           </div>

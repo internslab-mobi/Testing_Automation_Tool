@@ -36,13 +36,14 @@
         <div class="notif-icon-col">
           <i
             class="fa-solid"
-            [ngClass]="n.type === 'FIXED' ? 'fa-circle-check text-emerald' : n.type === 'COMMENT' ? 'fa-comment-dots text-indigo' : 'fa-bell text-rose'"
+            [ngClass]="n.type === 'FIXED' ? 'fa-circle-check text-emerald' : n.type === 'COMMENT' ? 'fa-comment-dots text-indigo' : (n.message && n.message.toLowerCase().includes('inactive')) ? 'fa-triangle-exclamation text-amber' : 'fa-bell text-rose'"
           ></i>
         </div>
 
         <div class="notif-content-col">
           <div class="notif-top-row">
             <span class="notif-tag" *ngIf="n.bugFormatId">{{ n.bugFormatId }}</span>
+            <span class="notif-tag notif-tag-project" *ngIf="!n.bugFormatId">PROJECT</span>
             <span class="new-dot" *ngIf="n.notificationStatus === 'UNREAD'">● NEW</span>
             <span class="notif-time" *ngIf="n.createdAt">{{ n.createdAt | date:'short' }}</span>
           </div>
