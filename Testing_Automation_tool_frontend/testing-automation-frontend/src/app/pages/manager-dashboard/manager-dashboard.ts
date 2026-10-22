@@ -125,9 +125,6 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   qaMediumPercent = 0;
   qaLowPercent = 0;
   isQaDefectsLoading = false;
-  expandedWidget: 'testExecution' | 'defects' | null = null;
-  activeChartMenu: 'testExecution' | 'defects' | null = null;
-  activeFiltersModalChart: string | null = null;
 
   // QA Dashboard Chart Drilldown Details Table State (Dedicated per chart)
   qaTestDrilldown: {
@@ -506,9 +503,6 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     if (exportWrapper && !exportWrapper.contains(target)) {
       this.showExportDropdown = false;
     }
-    if (this.activeChartMenu && target && !target.closest('.chart-menu-container')) {
-      this.closeChartMenu();
-    }
   }
 
   @HostListener('document:keydown.escape')
@@ -518,15 +512,6 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     }
     if (this.showProfileMenu) {
       this.showProfileMenu = false;
-    }
-    if (this.expandedWidget) {
-      this.closeExpandModal();
-    }
-    if (this.activeFiltersModalChart) {
-      this.closeActiveFiltersModal();
-    }
-    if (this.activeChartMenu) {
-      this.closeChartMenu();
     }
   }
 
@@ -1837,117 +1822,6 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     return segments;
   }
 
-  toggleWidgetExpand(widget: 'testExecution' | 'defects'): void {
-    this.openExpandModal(widget);
-  }
-
-  openExpandModal(widget: 'testExecution' | 'defects'): void {
-    this.expandedWidget = widget;
-    this.cdr.markForCheck();
-  }
-
-  closeExpandModal(): void {
-    this.expandedWidget = null;
-    this.cdr.markForCheck();
-  }
-
-  toggleChartMenu(widget: 'testExecution' | 'defects', event?: MouseEvent): void {
-    if (event) {
-      event.stopPropagation();
-    }
-    this.activeChartMenu = this.activeChartMenu === widget ? null : widget;
-    this.cdr.markForCheck();
-  }
-
-  closeChartMenu(): void {
-    this.activeChartMenu = null;
-    this.cdr.markForCheck();
-  }
-
-  viewChartDetails(widget: 'testExecution' | 'defects'): void {
-    this.closeChartMenu();
-    this.openExpandModal(widget);
-  }
-
-  viewActiveFilters(chartTitle: string): void {
-    this.closeChartMenu();
-    this.activeFiltersModalChart = chartTitle;
-    this.cdr.markForCheck();
-  }
-
-  closeActiveFiltersModal(): void {
-    this.activeFiltersModalChart = null;
-    this.cdr.markForCheck();
-  }
-
-  refreshChart(widget: 'testExecution' | 'defects'): void {
-    this.closeChartMenu();
-    if (widget === 'defects') {
-      this.isQaDefectsLoading = true;
-      this.cdr.markForCheck();
-      this.loadQaDefectSeverityMetrics();
-      this.showToast('Defects by Severity chart refreshed.');
-    } else {
-      this.isLoading = true;
-      this.cdr.markForCheck();
-      this.loadDashboardMetrics();
-      this.showToast('Test Execution Progress chart refreshed.');
-    }
-  }
-
-  getSelectedProjectName(): string {
-    if (this.selectedProjectId == null) return 'All Projects';
-    const found = this.allProjects.find(p => p.projectId === this.selectedProjectId);
-    return found ? found.projectName : 'Project #' + this.selectedProjectId;
-  }
-
-  getSelectedFeatureName(): string {
-    if (this.selectedFeatureId == null) return 'All Features';
-    const found = this.allFeatures.find(f => f.featureId === this.selectedFeatureId);
-    return found ? found.featureName : 'Feature #' + this.selectedFeatureId;
-  }
-
-  computeDonutSegmentsForRadius(slices: Array<{ value: number; color: string; key?: string }>, r: number): Array<{ color: string; dasharray: string; dashoffset: number; key?: string }> {
-    const total = slices.reduce((sum, s) => sum + (s.value > 0 ? s.value : 0), 0);
-    if (total <= 0) return [];
-    const circumference = 2 * Math.PI * r;
-    const nonZeroCount = slices.filter(s => s.value > 0).length;
-    const gap = nonZeroCount > 1 ? 3 : 0;
-    let currentOffset = 0;
-    const segments: Array<{ color: string; dasharray: string; dashoffset: number; key?: string }> = [];
-    for (const slice of slices) {
-      if (slice.value <= 0) continue;
-      const fraction = slice.value / total;
-      const length = fraction * circumference;
-      const visibleLength = Math.max(0.1, length - gap);
-      segments.push({
-        color: slice.color,
-        dasharray: `${visibleLength.toFixed(2)} ${(circumference - visibleLength).toFixed(2)}`,
-        dashoffset: -currentOffset,
-        key: slice.key
-      });
-      currentOffset += length;
-    }
-    return segments;
-  }
-
-  get expandedDefectsSegments(): Array<{ color: string; dasharray: string; dashoffset: number; key?: string }> {
-    return this.computeDonutSegmentsForRadius([
-      { value: this.qaCriticalCount, color: '#de350b', key: 'CRITICAL' },
-      { value: this.qaHighCount, color: '#e86328', key: 'HIGH' },
-      { value: this.qaMediumCount, color: '#f5a623', key: 'MEDIUM' },
-      { value: this.qaLowCount, color: '#388bff', key: 'LOW' }
-    ], 60);
-  }
-
-  get expandedTestExecutionSegments(): Array<{ color: string; dasharray: string; dashoffset: number; key?: string }> {
-    return this.computeDonutSegmentsForRadius([
-      { value: this.passedCount, color: '#00875a', key: 'PASSED' },
-      { value: this.failedCount, color: '#de350b', key: 'FAILED' },
-      { value: this.blockedCount, color: '#6b778c', key: 'BLOCKED' },
-      { value: this.notExecutedCount, color: '#0052cc', key: 'NO_RUN' }
-    ], 60);
-  }
 
   // =========================================================================
   // QA DASHBOARD DRILLDOWN INTERACTIONS & DETAILS TABLE
