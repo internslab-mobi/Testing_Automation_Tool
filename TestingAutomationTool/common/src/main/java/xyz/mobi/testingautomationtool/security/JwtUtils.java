@@ -12,7 +12,9 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
+import java.time.Instant;
 import java.util.Date;
+import java.util.UUID;
 import java.util.function.Function;
 
 @Slf4j
@@ -87,6 +89,7 @@ public class JwtUtils {
         Date expiryDate = new Date(now.getTime() + getEffectiveAccessTokenExpirationMs());
 
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(userDetails.getUsername())
                 .claim(TOKEN_TYPE_CLAIM, TOKEN_TYPE_ACCESS)
                 .claim("userId", userDetails.getUserId())
@@ -107,6 +110,7 @@ public class JwtUtils {
         Date expiryDate = new Date(now.getTime() + getEffectiveRefreshTokenExpirationMs());
 
         return Jwts.builder()
+                .id(UUID.randomUUID().toString())
                 .subject(userDetails.getUsername())
                 .claim(TOKEN_TYPE_CLAIM, TOKEN_TYPE_REFRESH)
                 .claim("userId", userDetails.getUserId())
@@ -114,6 +118,32 @@ public class JwtUtils {
                 .expiration(expiryDate)
                 .signWith(getSigningKey())
                 .compact();
+    }
+
+    /**
+     * Generates a Refresh Token with an explicit expiration Instant (preserves original session lifetime across rotation)
+     */
+    public String generateRefreshToken(CustomUserDetails userDetails, Instant expiry) {
+        Date now = new Date();
+        Date expiryDate = Date.from(expiry);
+
+        return Jwts.builder()
+                .id(UUID.randomUUID().toString())
+                .subject(userDetails.getUsername())
+                .claim(TOKEN_TYPE_CLAIM, TOKEN_TYPE_REFRESH)
+                .claim("userId", userDetails.getUserId())
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .signWith(getSigningKey())
+                .compact();
+    }
+
+    /**
+     * Extracts expiration Instant directly from token claims
+     */
+    public Instant getExpirationFromToken(String token) {
+        Date expiration = getClaimFromToken(token, Claims::getExpiration);
+        return expiration.toInstant();
     }
 
     public String generateAccessTokenFromUsername(String username, Integer userId, String email, String role, String fullName) {

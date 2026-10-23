@@ -3,8 +3,11 @@ package xyz.mobi.summary_export_service.service.impl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.ss.util.CellRangeAddress;
+import org.apache.poi.ss.util.CellRangeAddressList;
 import org.apache.poi.xssf.streaming.SXSSFSheet;
 import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.mobi.summary_export_service.entity.Bug;
@@ -20,6 +23,7 @@ import xyz.mobi.summary_export_service.service.ExcelTemplateService;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -34,7 +38,7 @@ public class ExcelTemplateServiceImpl implements ExcelTemplateService {
     private final TestCaseRepository testCaseRepository;
     private final TestingExecutionRepository testingExecutionRepository;
     private final BugRepository bugRepository;
-
+    private static final int MAX_TEST_CASES = 1000;
     private static final String[] TESTCASE_HEADERS = {
             "TestcaseID",
             "Title",
@@ -324,5 +328,132 @@ public class ExcelTemplateServiceImpl implements ExcelTemplateService {
         for (int i = 0; i < widths.length; i++) {
             sheet.setColumnWidth(i, widths[i] * 256);
         }
+    }
+
+    @Override
+    public void generateTemplate(OutputStream outputStream)
+            throws IOException {
+
+        try (Workbook workbook = new XSSFWorkbook()) {
+
+            Sheet sheet = workbook.createSheet("Test Cases");
+
+            // Header styling
+            Font font = workbook.createFont();
+            font.setBold(true);
+            font.setColor(IndexedColors.WHITE.getIndex());
+
+            CellStyle headerStyle = workbook.createCellStyle();
+            headerStyle.setFont(font);
+            headerStyle.setFillForegroundColor(
+                    IndexedColors.DARK_BLUE.getIndex()
+            );
+            headerStyle.setFillPattern(
+                    FillPatternType.SOLID_FOREGROUND
+            );
+            headerStyle.setWrapText(true);
+            headerStyle.setVerticalAlignment(
+                    VerticalAlignment.CENTER
+            );
+
+            // Optional style to indicate the Title column is required
+            CellStyle requiredStyle = workbook.createCellStyle();
+            requiredStyle.setFillForegroundColor(
+                    IndexedColors.LIGHT_YELLOW.getIndex()
+            );
+            requiredStyle.setFillPattern(
+                    FillPatternType.SOLID_FOREGROUND
+            );
+
+            // Create headers
+            Row headerRow = sheet.createRow(0);
+            headerRow.setHeightInPoints(30);
+
+            for (int i = 0; i < TESTCASE_HEADERS.length; i++) {
+                Cell cell = headerRow.createCell(i);
+                cell.setCellValue(TESTCASE_HEADERS[i]);
+                cell.setCellStyle(headerStyle);
+                sheet.setColumnWidth(i, 22 * 256);
+            }
+
+            // Create 1,000 data rows
+            for (int rowIndex = 1;
+                 rowIndex <= MAX_TEST_CASES;
+                 rowIndex++) {
+
+                Row row = sheet.createRow(rowIndex);
+
+                // Title is column index 1
+                row.createCell(1).setCellStyle(requiredStyle);
+            }
+
+            // Dropdowns
+            addDropdown(sheet, 2,
+                    new String[]{"API", "DB", "E2E", "UI"});
+
+            addDropdown(sheet, 5,
+                    new String[]{"HIGH", "LOW", "MEDIUM"});
+
+            addDropdown(sheet, 11,
+                    new String[]{
+                            "YES", "NO", "PARTIALLY_FEASIBLE"
+                    });
+
+            addDropdown(sheet, 12,
+                    new String[]{
+                            "DESCOPE", "FAIL", "PASS",
+                            "IN_PROGRESS", "BLOCK"
+                    });
+
+            // Freeze header and enable filtering
+            sheet.createFreezePane(0, 1);
+
+            sheet.setAutoFilter(
+                    new CellRangeAddress(
+                            0,
+                            MAX_TEST_CASES,
+                            0,
+                            TESTCASE_HEADERS.length - 1
+                    )
+            );
+
+            workbook.write(outputStream);
+        }
+    }
+
+    private void addDropdown(
+            Sheet sheet,
+            int columnIndex,
+            String[] values) {
+
+        DataValidationHelper helper =
+                sheet.getDataValidationHelper();
+
+        DataValidationConstraint constraint =
+                helper.createExplicitListConstraint(values);
+
+        CellRangeAddressList addressList =
+                new CellRangeAddressList(
+                        1,
+                        MAX_TEST_CASES,
+                        columnIndex,
+                        columnIndex
+                );
+
+        DataValidation validation =
+                helper.createValidation(
+                        constraint,
+                        addressList
+                );
+
+        validation.setShowErrorBox(true);
+        validation.setErrorStyle(DataValidation.ErrorStyle.STOP);
+
+        validation.createErrorBox(
+                "Invalid value",
+                "Please select an allowed value from the dropdown."
+        );
+
+        sheet.addValidationData(validation);
     }
 }

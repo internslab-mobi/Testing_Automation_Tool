@@ -187,9 +187,10 @@ public class AuthController {
             response.addHeader(HttpHeaders.SET_COOKIE, accessCookie.toString());
         }
         if (StringUtils.hasText(refreshToken)) {
+            long remainingSeconds = jwtUtils.getRemainingExpirationMs(refreshToken) / 1000;
             ResponseCookie refreshCookie = CookieUtils.createRefreshTokenCookie(
                     refreshToken,
-                    jwtUtils.getRefreshTokenExpirationMs() / 1000,
+                    remainingSeconds > 0 ? remainingSeconds : jwtUtils.getRefreshTokenExpirationMs() / 1000,
                     cookieSecure,
                     cookieSameSite,
                     "/"

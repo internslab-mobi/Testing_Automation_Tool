@@ -120,7 +120,7 @@ public class AuthServiceImpl implements AuthService {
         RefreshToken tokenEntity = RefreshToken.builder()
                 .user(user)
                 .token(refreshToken)
-                .expiryDate(Instant.now().plusMillis(jwtUtils.getRefreshTokenExpirationMs()))
+                .expiryDate(jwtUtils.getExpirationFromToken(refreshToken))
                 .isRevoked(false)
                 .build();
         refreshTokenRepository.save(tokenEntity);
@@ -143,59 +143,77 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public AuthResponse refreshToken(RefreshTokenRequest request) {
         String refreshToken = request.getRefreshToken();
+
         if (refreshToken == null || refreshToken.isBlank()) {
             throw new IllegalArgumentException("Refresh token cannot be blank");
         }
 
         try {
-            // Step 1: Validate JWT cryptographic signature and format
+            // 1. Validate the refresh JWT
             if (!jwtUtils.validateRefreshToken(refreshToken)) {
-                throw new BadCredentialsException("Invalid refresh token. Session has expired. Please login again.");
+                throw new BadCredentialsException("Invalid refresh token. Please login again.");
             }
 
-            // Step 2: Validate token in database (verify exists, not revoked, and not expired)
-            RefreshToken tokenEntity = refreshTokenRepository.findByToken(refreshToken)
-                    .orElseThrow(() -> new BadCredentialsException("Revoked or untracked refresh token. Session has expired. Please login again."));
+            // 2. Validate the refresh token in the database
+            RefreshToken oldToken = refreshTokenRepository.findByToken(refreshToken)
+                    .orElseThrow(() -> new BadCredentialsException(
+                            "Refresh token is revoked or not found. Please login again."));
 
-            if (tokenEntity.isRevoked() || tokenEntity.isExpired()) {
+            if (oldToken.isRevoked() || oldToken.isExpired()) {
                 throw new BadCredentialsException("Session has expired. Please login again.");
             }
 
+            // 3. Get the user
             String username = jwtUtils.getUsernameFromToken(refreshToken);
+
             User user = userRepository.findByUsernameOrEmail(username, username)
                     .orElseThrow(() -> new ResourceNotFoundException("User not found: " + username));
 
             if (!user.isActive()) {
-                throw new AccountDisabledException("User account is inactive. Please contact your administrator.");
+                throw new AccountDisabledException(
+                        "User account is inactive. Please contact your administrator.");
             }
 
             CustomUserDetails userDetails = new CustomUserDetails(user);
 
-            // Generate fresh 15-minute access token
+            // 4. Generate A2 with a fresh 15-minute expiry
             String newAccessToken = jwtUtils.generateAccessToken(userDetails);
 
-            // Calculate remaining validity of refresh token
-            long remainingMs = jwtUtils.getRemainingExpirationMs(refreshToken);
-            long remainingMinutes = remainingMs / (60 * 1000);
+            // 5. Preserve R1's original JWT expiration for R2
+            Instant originalExpiry = jwtUtils.getExpirationFromToken(refreshToken);
 
-            String warningMessage = null;
-            if (remainingMinutes <= 10 && remainingMinutes > 0) {
-                warningMessage = "Warning: Your session will expire in " + remainingMinutes + " minute(s). Please login again soon.";
-            } else if (remainingMinutes <= 0) {
-                throw new BadCredentialsException("Session has expired. Please login again.");
-            }
+            String newRefreshToken = jwtUtils.generateRefreshToken(
+                    userDetails,
+                    originalExpiry
+            );
+
+            // 6. Revoke/delete R1 and store R2 with the original expiry
+            refreshTokenRepository.deleteByToken(refreshToken);
+            refreshTokenRepository.flush();
+
+            RefreshToken newTokenEntity = RefreshToken.builder()
+                    .user(user)
+                    .token(newRefreshToken)
+                    .expiryDate(oldToken.getExpiryDate())
+                    .isRevoked(false)
+                    .build();
+
+            refreshTokenRepository.save(newTokenEntity);
+
+            // 7. Return A2 and R2
+            long remainingSeconds =
+                    Math.max(0, originalExpiry.getEpochSecond() - Instant.now().getEpochSecond());
 
             return AuthResponse.builder()
                     .token(newAccessToken)
-                    .refreshToken(refreshToken)
+                    .refreshToken(newRefreshToken)
                     .expiresIn(jwtUtils.getAccessTokenExpirationMs() / 1000)
-                    .refreshTokenExpiresIn(remainingMs / 1000)
+                    .refreshTokenExpiresIn(remainingSeconds)
                     .userId(user.getUserId())
                     .username(user.getUsername())
                     .build();
 
         } catch (io.jsonwebtoken.ExpiredJwtException e) {
-            log.warn("Refresh token is expired for session: {}", e.getMessage());
             throw new BadCredentialsException("Session has expired. Please login again.");
         }
     }
@@ -305,7 +323,7 @@ public class AuthServiceImpl implements AuthService {
         RefreshToken tokenEntity = RefreshToken.builder()
                 .user(user)
                 .token(refreshToken)
-                .expiryDate(Instant.now().plusMillis(jwtUtils.getRefreshTokenExpirationMs()))
+                .expiryDate(jwtUtils.getExpirationFromToken(refreshToken))
                 .isRevoked(false)
                 .build();
         refreshTokenRepository.save(tokenEntity);

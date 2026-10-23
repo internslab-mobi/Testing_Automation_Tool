@@ -1,6 +1,6 @@
 import { Injectable, inject, signal } from "@angular/core";
 import { HttpClient } from "@angular/common/http";
-import { Observable, tap, map, catchError, finalize, shareReplay, throwError } from 'rxjs';
+import { Observable, tap, map, catchError, finalize, shareReplay, throwError, timer, Subscription, switchMap } from 'rxjs';
 import { LoginRequest } from "../../model/auth/loginRequest";
 import { RegisterRequest } from "../../model/auth/registerRequest";
 import { ForgotPasswordRequest } from "../../model/auth/forgotPasswordRequest";
@@ -25,6 +25,9 @@ export class AuthService {
 
   // Single in-flight refresh observable to deduplicate concurrent 401s
   private refreshInProgress$: Observable<string | null> | null = null;
+
+  // Background proactive 14th-minute auto-refresh subscription
+  private refreshTimerSub: Subscription | null = null;
 
   // In-Memory Signal for logged-in user profile
   private readonly currentUserSignal = signal<UserProfile | null>(null);
@@ -54,6 +57,19 @@ export class AuthService {
             if (profile.role) localStorage.setItem('tat_user_role', profile.role);
             if (profile.username) localStorage.setItem('tat_user_name', profile.username);
             if (profile.fullName) localStorage.setItem('tat_user_fullname', profile.fullName);
+          }
+
+          // If JWT has expiration claim, schedule proactive refresh 60s before expiry
+          if (decoded.exp) {
+            const nowSec = Math.floor(Date.now() / 1000);
+            const remainingSec = decoded.exp - nowSec;
+            if (remainingSec > 60) {
+              this.scheduleTokenRefresh(remainingSec);
+            } else {
+              this.scheduleTokenRefresh(900);
+            }
+          } else {
+            this.scheduleTokenRefresh(900);
           }
         }
       } catch (e) {
@@ -124,19 +140,65 @@ export class AuthService {
   }
 
   /**
-   * Retrieves the current refresh token from memory only.
+   * Retrieves the current refresh token from memory or localStorage fallback.
    */
   getRefreshToken(): string | null {
-    return this.inMemoryRefreshToken;
+    if (this.inMemoryRefreshToken) return this.inMemoryRefreshToken;
+    if (typeof localStorage !== 'undefined') {
+      return localStorage.getItem('tat_refresh_token');
+    }
+    return null;
   }
 
   /**
-   * Sets or clears the current refresh token in memory only.
+   * Sets or clears the current refresh token in memory and localStorage.
    */
   setRefreshToken(refreshToken: string | null): void {
     this.inMemoryRefreshToken = refreshToken;
     if (typeof localStorage !== 'undefined') {
-      localStorage.removeItem('refresh_token');
+      if (refreshToken) {
+        localStorage.setItem('tat_refresh_token', refreshToken);
+      } else {
+        localStorage.removeItem('tat_refresh_token');
+        localStorage.removeItem('refresh_token');
+      }
+    }
+  }
+
+  /**
+   * Proactive 14th-Minute Auto-Refresh Timer (Heartbeat).
+   * Automatically refreshes the access token 1 minute before expiry (at minute 14 of 15).
+   * Runs seamlessly in the background so the user NEVER encounters a 401 error.
+   */
+  public scheduleTokenRefresh(expiresInSeconds: number = 900): void {
+    this.stopTokenRefreshTimer();
+
+    // 15 minutes = 900 seconds. We trigger 1 minute before expiry -> 14 minutes = 840 seconds (840,000 ms)
+    const refreshDelayMs = Math.max((expiresInSeconds - 60) * 1000, 30000);
+
+    console.info(`[AuthService] Proactive auto-refresh scheduled in ${refreshDelayMs / 1000}s (14th-minute heartbeat)`);
+
+    this.refreshTimerSub = timer(refreshDelayMs).pipe(
+      switchMap(() => this.refreshToken())
+    ).subscribe({
+      next: (newToken) => {
+        if (newToken) {
+          console.info('[AuthService] 14th-minute proactive token refresh successful. Next cycle scheduled.');
+        }
+      },
+      error: (err) => {
+        console.warn('[AuthService] 14th-minute proactive token refresh failed:', err);
+      }
+    });
+  }
+
+  /**
+   * Cancels the proactive refresh timer (e.g. on logout or session clear).
+   */
+  public stopTokenRefreshTimer(): void {
+    if (this.refreshTimerSub) {
+      this.refreshTimerSub.unsubscribe();
+      this.refreshTimerSub = null;
     }
   }
 
@@ -162,6 +224,9 @@ export class AuthService {
 
         if (newAccessToken) {
           this.setAccessToken(newAccessToken);
+          // Re-schedule proactive refresh for the new 15-minute access token (runs at 14m)
+          const expiresIn = res?.data?.expiresIn || 900;
+          this.scheduleTokenRefresh(expiresIn);
         }
         if (newRefreshToken) {
           this.setRefreshToken(newRefreshToken);
@@ -210,6 +275,9 @@ export class AuthService {
         if (res?.data) {
           if (res.data.token) {
             this.setAccessToken(res.data.token);
+            // Start proactive 14-minute refresh timer on login!
+            const expiresIn = res.data.expiresIn || 900;
+            this.scheduleTokenRefresh(expiresIn);
           }
           if (res.data.refreshToken) {
             this.setRefreshToken(res.data.refreshToken);
@@ -244,6 +312,8 @@ export class AuthService {
         next: (res) => {
           if (res?.data) {
             this.currentUserSignal.set(res.data);
+            // Restore proactive 14-minute refresh timer on profile recovery!
+            this.scheduleTokenRefresh(900);
             if (typeof localStorage !== 'undefined') {
               if (res.data.userId) localStorage.setItem('tat_user_id', String(res.data.userId));
               if (res.data.username) localStorage.setItem('tat_user_name', res.data.username);
@@ -306,6 +376,7 @@ export class AuthService {
   }
 
   clearSession(): void {
+    this.stopTokenRefreshTimer();
     this.inMemoryAccessToken = null;
     this.inMemoryRefreshToken = null;
     this.currentUserSignal.set(null);
@@ -313,6 +384,7 @@ export class AuthService {
       localStorage.removeItem('token');
       localStorage.removeItem('jwt');
       localStorage.removeItem('refresh_token');
+      localStorage.removeItem('tat_refresh_token');
       localStorage.removeItem('tat_user_id');
       localStorage.removeItem('tat_user_name');
       localStorage.removeItem('tat_user_fullname');

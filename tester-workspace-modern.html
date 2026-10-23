@@ -1,0 +1,1321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TAT QA Tester Cockpit — Modern Workbench</title>
+  
+  <!-- Modern Typography & Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+  <style>
+    /* ==========================================================================
+       1. CSS DESIGN SYSTEM & TOKENS (Modern SaaS Dark/Light Slate Palette)
+       ========================================================================== */
+    :root {
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+
+      /* Color Tokens */
+      --primary: #059669; /* Emerald QA Accent */
+      --primary-hover: #047857;
+      --primary-light: #ecfdf5;
+      --primary-border: #a7f3d0;
+
+      --indigo: #4f46e5;
+      --indigo-light: #eef2ff;
+
+      --bg-body: #f8fafc;
+      --bg-card: #ffffff;
+      --bg-hover: #f1f5f9;
+      --bg-input: #ffffff;
+
+      --text-main: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+
+      --border: #e2e8f0;
+      --border-subtle: #f1f5f9;
+
+      /* Execution States */
+      --pass: #10b981;
+      --pass-bg: #ecfdf5;
+      --pass-border: #a7f3d0;
+
+      --fail: #ef4444;
+      --fail-bg: #fef2f2;
+      --fail-border: #fecaca;
+
+      --block: #f59e0b;
+      --block-bg: #fffbeb;
+
+      --descope: #64748b;
+      --descope-bg: #f8fafc;
+
+      --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.06);
+      --shadow-drawer: -6px 0 25px rgba(15, 23, 42, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-sans);
+      background-color: var(--bg-body);
+      color: var(--text-main);
+      height: 100vh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Layout Structure */
+    .app-shell {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      width: 100%;
+    }
+
+    /* Top Navbar */
+    .top-navbar {
+      height: 56px;
+      background: #ffffff;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 20px;
+      flex-shrink: 0;
+      z-index: 20;
+    }
+
+    .nav-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-pill {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 700;
+      font-size: 15px;
+      color: var(--text-main);
+    }
+
+    .brand-icon {
+      width: 30px;
+      height: 30px;
+      background: linear-gradient(135deg, #059669, #10b981);
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+
+    .breadcrumb {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .breadcrumb .active-crumb {
+      color: var(--text-main);
+      font-weight: 600;
+    }
+
+    .nav-search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-hover);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 6px 12px;
+      width: 320px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .nav-search kbd {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 10px;
+      font-family: var(--font-mono);
+      margin-left: auto;
+    }
+
+    .nav-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .nav-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-main);
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      background: #e2e8f0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+    }
+
+    /* Workspace Body (3-Pane Architecture) */
+    .workspace-body {
+      display: flex;
+      flex: 1;
+      height: calc(100vh - 56px);
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Left Sidebar */
+    .sidebar {
+      width: 260px;
+      background: #ffffff;
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      flex-shrink: 0;
+      transition: width 0.2s ease;
+    }
+
+    .sidebar-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sidebar-tree {
+      flex: 1;
+      overflow-y: auto;
+      padding: 10px 8px;
+    }
+
+    .tree-project {
+      margin-bottom: 12px;
+    }
+
+    .project-node {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-main);
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .project-node:hover {
+      background: var(--bg-hover);
+    }
+
+    .feature-list {
+      padding-left: 24px;
+      margin-top: 4px;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .feature-node {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 6px 10px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .feature-node:hover {
+      background: var(--bg-hover);
+      color: var(--text-main);
+    }
+
+    .feature-node.active {
+      background: var(--primary-light);
+      color: var(--primary);
+      font-weight: 600;
+    }
+
+    .feature-badge {
+      font-size: 11px;
+      background: #e2e8f0;
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+
+    .feature-node.active .feature-badge {
+      background: #a7f3d0;
+      color: #065f46;
+    }
+
+    /* Main Center Cockpit */
+    .cockpit-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-body);
+      overflow-y: auto;
+      min-width: 0;
+      padding: 18px 24px;
+      gap: 14px;
+    }
+
+    /* 1. COMPACT KPI STRIP */
+    .kpi-strip {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .kpi-progress-bar {
+      height: 6px;
+      width: 100%;
+      background: #f1f5f9;
+      border-radius: 4px;
+      display: flex;
+      overflow: hidden;
+    }
+
+    .kpi-seg {
+      height: 100%;
+      transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .kpi-seg.pass { background: var(--pass); }
+    .kpi-seg.fail { background: var(--fail); }
+    .kpi-seg.block { background: var(--block); }
+
+    .kpi-chips-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .kpi-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 12px;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .kpi-pill:hover {
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+    }
+
+    .kpi-pill.active {
+      background: #0f172a;
+      border-color: #0f172a;
+      color: #ffffff;
+    }
+
+    .kpi-pill .status-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+    }
+    .status-dot.dot-pass { background: var(--pass); }
+    .status-dot.dot-fail { background: var(--fail); }
+    .status-dot.dot-block { background: var(--block); }
+
+    .kpi-pill .pill-count {
+      background: rgba(0, 0, 0, 0.06);
+      padding: 1px 7px;
+      border-radius: 10px;
+      font-size: 11px;
+    }
+
+    .kpi-pill.active .pill-count {
+      background: rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+    }
+
+    .kpi-pill.bug-pill {
+      margin-left: auto;
+      border-color: #fecaca;
+      background: #fff5f5;
+      color: #dc2626;
+    }
+
+    .kpi-pill.bug-pill:hover {
+      background: #fee2e2;
+    }
+
+    /* Tabs & Actions Bar */
+    .cockpit-tabs-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 8px;
+    }
+
+    .tabs-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .tab-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      background: transparent;
+      border: none;
+      font-size: 13.5px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .tab-btn:hover {
+      background: var(--bg-hover);
+      color: var(--text-main);
+    }
+
+    .tab-btn.active {
+      background: #ffffff;
+      color: var(--primary);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .tab-counter {
+      background: #e2e8f0;
+      padding: 1px 6px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .tab-btn.active .tab-counter {
+      background: var(--primary-light);
+      color: var(--primary);
+    }
+
+    .tab-counter.alert {
+      background: #fee2e2;
+      color: #dc2626;
+    }
+
+    .tab-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-action-primary {
+      background: var(--primary);
+      color: #ffffff;
+      border: none;
+      padding: 7px 14px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      box-shadow: 0 1px 3px rgba(5, 150, 105, 0.2);
+      transition: all 0.15s ease;
+    }
+
+    .btn-action-primary:hover {
+      background: var(--primary-hover);
+      transform: translateY(-1px);
+    }
+
+    .btn-action-secondary {
+      background: #ffffff;
+      color: var(--text-secondary);
+      border: 1px solid var(--border);
+      padding: 7px 12px;
+      border-radius: 6px;
+      font-size: 12.5px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-action-secondary:hover {
+      background: var(--bg-hover);
+      color: var(--text-main);
+    }
+
+    /* Filter Toolbar */
+    .filter-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 8px 12px;
+    }
+
+    .filter-search {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      max-width: 380px;
+    }
+
+    .filter-search input {
+      border: none;
+      outline: none;
+      font-size: 13px;
+      font-family: inherit;
+      width: 100%;
+      color: var(--text-main);
+    }
+
+    .filter-selects {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .filter-dropdown {
+      border: 1px solid var(--border);
+      background: #f8fafc;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      cursor: pointer;
+      outline: none;
+    }
+
+    /* View Switcher (Table vs Kanban) */
+    .view-switcher {
+      display: flex;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px;
+    }
+
+    .view-btn {
+      border: none;
+      background: transparent;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      color: var(--text-muted);
+      cursor: pointer;
+    }
+
+    .view-btn.active {
+      background: #ffffff;
+      color: var(--text-main);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Modern Rapid-Runner Table */
+    .table-container {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .workbench-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    .workbench-table th {
+      background: #f8fafc;
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .workbench-table td {
+      padding: 12px 14px;
+      border-bottom: 1px solid var(--border-subtle);
+      color: var(--text-main);
+      vertical-align: middle;
+    }
+
+    .table-row {
+      cursor: pointer;
+      transition: background 0.1s ease;
+    }
+
+    .table-row:hover {
+      background: #f8fafc;
+    }
+
+    .table-row.row-active {
+      background: #f0fdf4 !important;
+    }
+
+    .table-row.row-failing {
+      border-left: 3px solid var(--fail);
+    }
+
+    .tc-id-pill {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: #3b82f6;
+      background: #eff6ff;
+      padding: 3px 8px;
+      border-radius: 6px;
+      border: 1px solid #bfdbfe;
+      display: inline-block;
+    }
+
+    .tc-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .tc-title {
+      font-weight: 600;
+      color: var(--text-main);
+      line-height: 1.35;
+    }
+
+    .tc-steps {
+      font-size: 12px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 480px;
+    }
+
+    /* Badges */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .badge.type-ui { background: #f1f5f9; color: #475569; }
+    .badge.type-api { background: #ede9fe; color: #6d28d9; }
+    .badge.type-e2e { background: #e0f2fe; color: #0369a1; }
+
+    .badge.prio-critical { background: #fee2e2; color: #b91c1c; }
+    .badge.prio-high { background: #ffedd5; color: #c2410c; }
+    .badge.prio-medium { background: #fef9c3; color: #a16207; }
+
+    .badge-status {
+      font-weight: 700;
+      font-size: 10.5px;
+      letter-spacing: 0.3px;
+    }
+    .badge-status.pass { background: var(--pass-bg); color: #047857; border: 1px solid var(--pass-border); }
+    .badge-status.fail { background: var(--fail-bg); color: #b91c1c; border: 1px solid var(--fail-border); }
+    .badge-status.block { background: var(--block-bg); color: #b45309; }
+    .badge-status.unexecuted { background: #f1f5f9; color: var(--text-muted); }
+
+    .linked-bugs-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      background: #fee2e2;
+      color: #b91c1c;
+      padding: 2px 6px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    /* 1-CLICK SEGMENTED RAPID EXECUTION */
+    .exec-segmented {
+      display: inline-flex;
+      background: #f1f5f9;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 2px;
+      gap: 2px;
+    }
+
+    .seg-chip {
+      border: none;
+      background: transparent;
+      width: 28px;
+      height: 24px;
+      border-radius: 4px;
+      font-size: 11px;
+      color: var(--text-muted);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .seg-chip:hover {
+      background: #ffffff;
+      color: var(--text-main);
+    }
+
+    .seg-chip.chip-pass.active {
+      background: var(--pass);
+      color: #ffffff;
+      box-shadow: 0 1px 3px rgba(16, 185, 129, 0.4);
+    }
+
+    .seg-chip.chip-fail.active {
+      background: var(--fail);
+      color: #ffffff;
+      box-shadow: 0 1px 3px rgba(239, 68, 68, 0.4);
+    }
+
+    .seg-chip.chip-block.active {
+      background: var(--block);
+      color: #ffffff;
+    }
+
+    .btn-instant-bug {
+      background: var(--fail);
+      color: #ffffff;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-left: 6px;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+      70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    /* SLIDE-OVER INSPECTOR DRAWER (Right Pane) */
+    .inspector-drawer {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 440px;
+      height: 100%;
+      background: #ffffff;
+      border-left: 1px solid var(--border);
+      box-shadow: var(--shadow-drawer);
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 30;
+    }
+
+    .inspector-drawer.open {
+      transform: translateX(0);
+    }
+
+    .drawer-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      background: #ffffff;
+    }
+
+    .drawer-title-group h3 {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--text-main);
+      margin-top: 4px;
+    }
+
+    .drawer-close {
+      border: none;
+      background: transparent;
+      font-size: 18px;
+      color: var(--text-muted);
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .drawer-close:hover {
+      color: var(--text-main);
+    }
+
+    .drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .drawer-card {
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px;
+    }
+
+    .drawer-card-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .steps-checklist {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .step-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 12.5px;
+      line-height: 1.4;
+    }
+
+    .drawer-footer {
+      padding: 14px 20px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      background: #f8fafc;
+    }
+
+    /* Footer Pagination */
+    .table-pagination {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 14px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+      background: #ffffff;
+    }
+
+    .pagination-actions {
+      display: flex;
+      gap: 6px;
+    }
+
+    .page-btn {
+      border: 1px solid var(--border);
+      background: #ffffff;
+      padding: 4px 10px;
+      border-radius: 4px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+
+    .page-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-shell">
+    
+    <!-- 1. TOP NAVBAR -->
+    <header class="top-navbar">
+      <div class="nav-left">
+        <div class="brand-pill">
+          <div class="brand-icon"><i class="fa-solid fa-cube"></i></div>
+          <span>TAT Cockpit</span>
+        </div>
+        <div class="breadcrumb">
+          <span>/</span>
+          <span>Core Banking Platform</span>
+          <span>/</span>
+          <span class="active-crumb"><i class="fa-solid fa-layer-group text-emerald"></i> Sprint 4 - OAuth2 Auth</span>
+        </div>
+      </div>
+
+      <div class="nav-search" onclick="focusSearch()" title="Press Ctrl+K to jump anywhere">
+        <i class="fa-solid fa-magnifying-glass"></i>
+        <span>Search test cases, defects, or features...</span>
+        <kbd>Ctrl K</kbd>
+      </div>
+
+      <div class="nav-right">
+        <button class="nav-btn"><i class="fa-solid fa-cloud-arrow-up text-indigo"></i> Run Suite</button>
+        <button class="nav-btn"><i class="fa-regular fa-bell"></i></button>
+        <div class="user-avatar" title="Vikram Raajak (QA Lead)">VR</div>
+      </div>
+    </header>
+
+    <!-- 2. WORKSPACE BODY (3-PANEL SYSTEM) -->
+    <div class="workspace-body">
+      
+      <!-- LEFT SIDEBAR: PROJECTS & FEATURES TREE -->
+      <aside class="sidebar">
+        <div class="sidebar-header">
+          <span>Project Hierarchy</span>
+          <i class="fa-solid fa-chevron-left" style="cursor: pointer;" title="Collapse Sidebar"></i>
+        </div>
+
+        <div class="sidebar-tree">
+          <div class="tree-project">
+            <div class="project-node">
+              <i class="fa-solid fa-folder-open text-indigo"></i>
+              <span>Core Banking Platform</span>
+            </div>
+            <div class="feature-list">
+              <div class="feature-node active">
+                <span><i class="fa-solid fa-cube text-emerald"></i> OAuth2 Auth</span>
+                <span class="feature-badge">12 TCs</span>
+              </div>
+              <div class="feature-node">
+                <span><i class="fa-solid fa-cube"></i> Fund Transfers</span>
+                <span class="feature-badge">8 TCs</span>
+              </div>
+              <div class="feature-node">
+                <span><i class="fa-solid fa-cube"></i> Excel Export</span>
+                <span class="feature-badge">4 TCs</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="tree-project">
+            <div class="project-node">
+              <i class="fa-regular fa-folder"></i>
+              <span>Mobile Banking App</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- CENTER COCKPIT -->
+      <main class="cockpit-main">
+        
+        <!-- COMPACT STICKY KPI & PROGRESS STRIP -->
+        <section class="kpi-strip">
+          <div class="kpi-progress-bar" title="Execution Run Progress">
+            <div class="kpi-seg pass" id="bar-pass" style="width: 65%;"></div>
+            <div class="kpi-seg fail" id="bar-fail" style="width: 20%;"></div>
+            <div class="kpi-seg block" id="bar-block" style="width: 15%;"></div>
+          </div>
+
+          <div class="kpi-chips-row">
+            <button class="kpi-pill active" onclick="filterStatus('ALL')">
+              <i class="fa-solid fa-vials"></i>
+              <span>Total Suite</span>
+              <span class="pill-count" id="count-total">20</span>
+            </button>
+            <button class="kpi-pill" onclick="filterStatus('PASS')">
+              <span class="status-dot dot-pass"></span>
+              <span>Passed</span>
+              <span class="pill-count" id="count-pass">13</span>
+            </button>
+            <button class="kpi-pill" onclick="filterStatus('FAIL')">
+              <span class="status-dot dot-fail"></span>
+              <span>Failed</span>
+              <span class="pill-count" id="count-fail">4</span>
+            </button>
+            <button class="kpi-pill" onclick="filterStatus('BLOCK')">
+              <span class="status-dot dot-block"></span>
+              <span>Blocked</span>
+              <span class="pill-count" id="count-block">3</span>
+            </button>
+
+            <button class="kpi-pill bug-pill" onclick="switchTab('bugs')">
+              <i class="fa-solid fa-fire"></i>
+              <span>Open Defects</span>
+              <span class="pill-count">2</span>
+            </button>
+          </div>
+        </section>
+
+        <!-- TABS & ACTIONS STRIP -->
+        <div class="cockpit-tabs-bar">
+          <div class="tabs-group">
+            <button class="tab-btn active" id="tab-testcases" onclick="switchTab('testcases')">
+              <i class="fa-solid fa-list-check"></i>
+              <span>Test Cases Suite</span>
+              <span class="tab-counter">20</span>
+            </button>
+            <button class="tab-btn" id="tab-bugs" onclick="switchTab('bugs')">
+              <i class="fa-solid fa-bug"></i>
+              <span>Defects & Issues</span>
+              <span class="tab-counter alert">2</span>
+            </button>
+          </div>
+
+          <div class="tab-actions">
+            <button class="btn-action-primary"><i class="fa-solid fa-plus"></i> New Test Case</button>
+            <button class="btn-action-secondary"><i class="fa-solid fa-file-excel text-emerald"></i> Import .xlsx</button>
+            <button class="btn-action-secondary"><i class="fa-solid fa-download text-indigo"></i> Export Summary</button>
+          </div>
+        </div>
+
+        <!-- FILTER & VIEW CONTROLS -->
+        <div class="filter-bar">
+          <div class="filter-search">
+            <i class="fa-solid fa-magnifying-glass text-muted"></i>
+            <input type="text" id="search-input" placeholder="Search test cases by title, steps, or format ID..." oninput="filterRows()">
+          </div>
+
+          <div class="filter-selects">
+            <select class="filter-dropdown">
+              <option>All Types</option>
+              <option>UI</option>
+              <option>API</option>
+              <option>E2E</option>
+            </select>
+            <select class="filter-dropdown">
+              <option>All Priorities</option>
+              <option>CRITICAL</option>
+              <option>HIGH</option>
+              <option>MEDIUM</option>
+            </select>
+
+            <!-- View Switcher -->
+            <div class="view-switcher">
+              <button class="view-btn active" title="Spreadsheet Grid"><i class="fa-solid fa-table-list"></i></button>
+              <button class="view-btn" title="Kanban Board"><i class="fa-solid fa-chart-simple"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- HIGH-PRODUCTIVITY WORKBENCH TABLE -->
+        <div class="table-container">
+          <table class="workbench-table">
+            <thead>
+              <tr>
+                <th style="width: 40px; text-align: center;"><input type="checkbox"></th>
+                <th style="width: 100px;">TC ID</th>
+                <th>Description & Steps</th>
+                <th style="width: 130px;">Type / Priority</th>
+                <th style="width: 140px; text-align: center;">Status</th>
+                <th style="width: 190px; text-align: right;">1-Click Execution</th>
+              </tr>
+            </thead>
+            <tbody id="tc-table-body">
+              
+              <!-- Sample Row 1 -->
+              <tr class="table-row" onclick="openDrawer('TC_101', 'Verify User Login with Valid OTP Credentials', '1. Enter email vikram@mobi.xyz\n2. Click send OTP\n3. Enter valid 6-digit pin\n4. Verify dashboard loads', 'API', 'CRITICAL', 'PASS', [])">
+                <td style="text-align: center;" onclick="event.stopPropagation()"><input type="checkbox"></td>
+                <td><span class="tc-id-pill">TC_101</span></td>
+                <td>
+                  <div class="tc-meta">
+                    <span class="tc-title">Verify User Login with Valid OTP Credentials</span>
+                    <span class="tc-steps"><i class="fa-solid fa-arrow-right-long"></i> 1. Enter email vikram@mobi.xyz -> 2. Enter 6-digit pin</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge type-api">API</span>
+                  <span class="badge prio-critical">CRITICAL</span>
+                </td>
+                <td style="text-align: center;" onclick="event.stopPropagation()">
+                  <span class="badge badge-status pass">PASS</span>
+                </td>
+                <td style="text-align: right;" onclick="event.stopPropagation()">
+                  <div class="exec-segmented">
+                    <button class="seg-chip chip-pass active" onclick="setRowStatus(this, 'PASS')"><i class="fa-solid fa-check"></i></button>
+                    <button class="seg-chip chip-fail" onclick="setRowStatus(this, 'FAIL')"><i class="fa-solid fa-xmark"></i></button>
+                    <button class="seg-chip chip-block" onclick="setRowStatus(this, 'BLOCK')"><i class="fa-solid fa-ban"></i></button>
+                  </div>
+                </td>
+              </tr>
+
+              <!-- Sample Row 2 (Failing with Log Bug button) -->
+              <tr class="table-row row-failing" onclick="openDrawer('TC_102', 'Export Summary to Excel returns 200 with .xlsx blob', '1. Click Export Summary button\n2. Inspect response headers\n3. Check status code == 200', 'API', 'HIGH', 'FAIL', ['BUG_201'])">
+                <td style="text-align: center;" onclick="event.stopPropagation()"><input type="checkbox"></td>
+                <td><span class="tc-id-pill">TC_102</span></td>
+                <td>
+                  <div class="tc-meta">
+                    <span class="tc-title">Export Summary to Excel returns 200 with .xlsx blob</span>
+                    <span class="tc-steps"><i class="fa-solid fa-arrow-right-long"></i> 1. Click Export Summary -> Expected 200 but threw 401 Unauthorized</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge type-api">API</span>
+                  <span class="badge prio-high">HIGH</span>
+                </td>
+                <td style="text-align: center;" onclick="event.stopPropagation()">
+                  <span class="badge badge-status fail">FAIL</span>
+                  <div><span class="linked-bugs-badge"><i class="fa-solid fa-bug"></i> 1 Bug</span></div>
+                </td>
+                <td style="text-align: right;" onclick="event.stopPropagation()">
+                  <div class="exec-segmented">
+                    <button class="seg-chip chip-pass" onclick="setRowStatus(this, 'PASS')"><i class="fa-solid fa-check"></i></button>
+                    <button class="seg-chip chip-fail active" onclick="setRowStatus(this, 'FAIL')"><i class="fa-solid fa-xmark"></i></button>
+                    <button class="seg-chip chip-block" onclick="setRowStatus(this, 'BLOCK')"><i class="fa-solid fa-ban"></i></button>
+                  </div>
+                  <button class="btn-instant-bug" onclick="alert('Opening Quick Defect Drawer with prefilled steps!')"><i class="fa-solid fa-bug"></i> Bug</button>
+                </td>
+              </tr>
+
+              <!-- Sample Row 3 -->
+              <tr class="table-row" onclick="openDrawer('TC_103', 'Invalid Password returns ERR_002 with proper rate-limiting', '1. Attempt 5 invalid logins\n2. Verify 429 Too Many Requests response', 'UI', 'MEDIUM', 'BLOCK', [])">
+                <td style="text-align: center;" onclick="event.stopPropagation()"><input type="checkbox"></td>
+                <td><span class="tc-id-pill">TC_103</span></td>
+                <td>
+                  <div class="tc-meta">
+                    <span class="tc-title">Invalid Password returns ERR_002 with proper rate-limiting</span>
+                    <span class="tc-steps"><i class="fa-solid fa-arrow-right-long"></i> 1. Attempt 5 invalid logins -> 2. Verify 429 response code</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="badge type-ui">UI</span>
+                  <span class="badge prio-medium">MEDIUM</span>
+                </td>
+                <td style="text-align: center;" onclick="event.stopPropagation()">
+                  <span class="badge badge-status block">BLOCK</span>
+                </td>
+                <td style="text-align: right;" onclick="event.stopPropagation()">
+                  <div class="exec-segmented">
+                    <button class="seg-chip chip-pass" onclick="setRowStatus(this, 'PASS')"><i class="fa-solid fa-check"></i></button>
+                    <button class="seg-chip chip-fail" onclick="setRowStatus(this, 'FAIL')"><i class="fa-solid fa-xmark"></i></button>
+                    <button class="seg-chip chip-block active" onclick="setRowStatus(this, 'BLOCK')"><i class="fa-solid fa-ban"></i></button>
+                  </div>
+                </td>
+              </tr>
+
+            </tbody>
+          </table>
+
+          <!-- Pagination Bar -->
+          <div class="table-pagination">
+            <span>Showing <strong>1-3</strong> of <strong>20</strong> test cases</span>
+            <div class="pagination-actions">
+              <button class="page-btn" disabled><i class="fa-solid fa-chevron-left"></i> Prev</button>
+              <button class="page-btn">Next <i class="fa-solid fa-chevron-right"></i></button>
+            </div>
+          </div>
+        </div>
+
+      </main>
+
+      <!-- 3. SLIDE-OVER INSPECTOR DRAWER (Zero Modal Blocking!) -->
+      <aside class="inspector-drawer" id="inspector-drawer">
+        <div class="drawer-header">
+          <div class="drawer-title-group">
+            <span class="tc-id-pill" id="drawer-tc-id">TC_102</span>
+            <h3 id="drawer-title">Export Summary to Excel returns 200 with .xlsx blob</h3>
+          </div>
+          <button class="drawer-close" onclick="closeDrawer()">&times;</button>
+        </div>
+
+        <div class="drawer-body">
+          <!-- Status Banner -->
+          <div class="drawer-card">
+            <div class="drawer-card-label"><i class="fa-solid fa-bolt"></i> Quick Execution</div>
+            <div style="display: flex; gap: 8px;">
+              <button class="btn-action-secondary" style="flex: 1;" onclick="alert('Marked Pass!')"><i class="fa-solid fa-check text-emerald"></i> Pass</button>
+              <button class="btn-action-secondary" style="flex: 1;" onclick="alert('Marked Fail!')"><i class="fa-solid fa-xmark text-rose"></i> Fail</button>
+              <button class="btn-action-secondary" style="flex: 1;"><i class="fa-solid fa-ban text-warning"></i> Block</button>
+            </div>
+          </div>
+
+          <!-- Steps Checklist -->
+          <div class="drawer-card">
+            <div class="drawer-card-label"><i class="fa-solid fa-list-ol"></i> Step-by-Step Execution Checklist</div>
+            <div class="steps-checklist">
+              <label class="step-item"><input type="checkbox"> 1. Click Export Summary button on cockpit header</label>
+              <label class="step-item"><input type="checkbox"> 2. Inspect browser network response headers</label>
+              <label class="step-item"><input type="checkbox"> 3. Check status code is 200 and Content-Type is .xlsx</label>
+            </div>
+          </div>
+
+          <!-- Linked Defects -->
+          <div class="drawer-card">
+            <div class="drawer-card-label"><i class="fa-solid fa-bug text-rose"></i> Linked Defects (1)</div>
+            <div style="font-size: 12.5px; font-weight: 600; color: #dc2626; display: flex; align-items: center; justify-content: space-between;">
+              <span>BUG_201: summary-export-service 401 Unauthorized</span>
+              <span class="badge prio-critical">CRITICAL</span>
+            </div>
+          </div>
+
+          <!-- Attachments -->
+          <div class="drawer-card">
+            <div class="drawer-card-label"><i class="fa-solid fa-paperclip"></i> Evidence Attachments</div>
+            <div style="border: 1px dashed var(--border); border-radius: 6px; padding: 14px; text-align: center; color: var(--text-muted); font-size: 12px; cursor: pointer;">
+              <i class="fa-solid fa-cloud-arrow-up" style="font-size: 18px; margin-bottom: 4px; display: block;"></i>
+              Drop screenshot or paste clipboard (Ctrl+V)
+            </div>
+          </div>
+        </div>
+
+        <div class="drawer-footer">
+          <button class="btn-action-secondary" onclick="closeDrawer()">Close</button>
+          <button class="btn-action-primary"><i class="fa-solid fa-pen-to-square"></i> Full Edit</button>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <!-- INTERACTIVE LIGHTWEIGHT LOGIC -->
+  <script>
+    function openDrawer(id, title, steps, type, prio, status, bugs) {
+      document.getElementById('drawer-tc-id').innerText = id;
+      document.getElementById('drawer-title').innerText = title;
+      document.getElementById('inspector-drawer').classList.add('open');
+    }
+
+    function closeDrawer() {
+      document.getElementById('inspector-drawer').classList.remove('open');
+    }
+
+    function setRowStatus(button, status) {
+      const parent = button.parentElement;
+      parent.querySelectorAll('.seg-chip').forEach(btn => btn.classList.remove('active'));
+      button.classList.add('active');
+
+      const row = button.closest('.table-row');
+      const statusBadge = row.querySelector('.badge-status');
+      statusBadge.className = 'badge badge-status ' + status.toLowerCase();
+      statusBadge.innerText = status;
+
+      if (status === 'FAIL') {
+        row.classList.add('row-failing');
+      } else {
+        row.classList.remove('row-failing');
+      }
+
+      // Update progress bar dynamically
+      updateProgress();
+    }
+
+    function updateProgress() {
+      const passes = document.querySelectorAll('.chip-pass.active').length;
+      const fails = document.querySelectorAll('.chip-fail.active').length;
+      const blocks = document.querySelectorAll('.chip-block.active').length;
+      const total = passes + fails + blocks || 1;
+
+      document.getElementById('bar-pass').style.width = ((passes / total) * 100) + '%';
+      document.getElementById('bar-fail').style.width = ((fails / total) * 100) + '%';
+      document.getElementById('bar-block').style.width = ((blocks / total) * 100) + '%';
+
+      document.getElementById('count-pass').innerText = passes;
+      document.getElementById('count-fail').innerText = fails;
+      document.getElementById('count-block').innerText = blocks;
+    }
+
+    function switchTab(tab) {
+      if (tab === 'testcases') {
+        document.getElementById('tab-testcases').classList.add('active');
+        document.getElementById('tab-bugs').classList.remove('active');
+      } else {
+        document.getElementById('tab-bugs').classList.add('active');
+        document.getElementById('tab-testcases').classList.remove('active');
+      }
+    }
+
+    function focusSearch() {
+      document.getElementById('search-input').focus();
+    }
+
+    // Keyboard Shortcuts (J / K Navigation, Esc to close)
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeDrawer();
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        focusSearch();
+      }
+    });
+  </script>
+</body>
+</html>
