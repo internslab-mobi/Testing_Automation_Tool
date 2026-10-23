@@ -17,7 +17,8 @@ import xyz.mobi.testingautomationtool.mapper.AttachmentMapper;
 import xyz.mobi.testingautomationtool.repository.*;
 import xyz.mobi.testingautomationtool.service.AttachmentService;
 import xyz.mobi.testingautomationtool.service.AuthService;
-
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,7 +40,12 @@ public class AttachmentServiceImpl implements AttachmentService {
     private final TestCaseRepository testCaseRepository;
     private final AuthService authService;
     private final AttachmentMapper attachmentMapper;
+    private AttachmentService self;
 
+    @Autowired
+    public void setSelf(@Lazy AttachmentService self) {
+        this.self = self;
+    }
     @Override
     @Transactional
     public List<AttachmentResponse> uploadAttachments(
@@ -168,7 +174,7 @@ public class AttachmentServiceImpl implements AttachmentService {
             Integer bugId,
             List<MultipartFile> files) {
 
-        return uploadAttachments(AttachmentType.BUG, bugId, files);
+        return self.uploadAttachments(AttachmentType.BUG, bugId, files);
     }
 
     @Override
@@ -177,7 +183,7 @@ public class AttachmentServiceImpl implements AttachmentService {
             Integer featureId,
             List<MultipartFile> files) {
 
-        return uploadAttachments(AttachmentType.FEATURE, featureId, files);
+        return self.uploadAttachments(AttachmentType.FEATURE, featureId, files);
     }
 
     @Override
@@ -186,7 +192,7 @@ public class AttachmentServiceImpl implements AttachmentService {
             Integer projectId,
             List<MultipartFile> files) {
 
-        return uploadAttachments(AttachmentType.PROJECT, projectId, files);
+        return self.uploadAttachments(AttachmentType.PROJECT, projectId, files);
     }
 
     @Override
@@ -195,7 +201,7 @@ public class AttachmentServiceImpl implements AttachmentService {
             Integer testcaseId,
             List<MultipartFile> files) {
 
-        return uploadAttachments(AttachmentType.TESTCASE, testcaseId, files);
+        return self.uploadAttachments(AttachmentType.TESTCASE, testcaseId, files);
     }
 
 
