@@ -66,7 +66,10 @@ public class SummaryExportClient {
         // Forward caller's Authorization token if present
         String authHeader = getCurrentAuthorizationHeader();
         if (authHeader != null && !authHeader.isBlank()) {
+            log.info("executeGetRequest: Adding Authorization header: {}...", authHeader.substring(0, Math.min(25, authHeader.length())));
             requestBuilder.header("Authorization", authHeader);
+        } else {
+            log.warn("executeGetRequest: NO Authorization header to add! authHeader is null/blank");
         }
 
         try {
@@ -102,7 +105,7 @@ public class SummaryExportClient {
         }
 
         HttpServletRequest request = attributes.getRequest();
-
+//
 //        String authHeader = request.getHeader("Authorization");
 //
 //        if (authHeader != null && authHeader.startsWith("Bearer ")) {
@@ -110,15 +113,20 @@ public class SummaryExportClient {
 //        }
 
         Cookie[] cookies = request.getCookies();
+        log.info("DEBUG: request.getCookies() in main-service: {}", (Object)(cookies != null ? java.util.Arrays.toString(cookies) : "NULL"));
 
         if (cookies != null) {
             for (Cookie cookie : cookies) {
-                if ("accessToken".equals(cookie.getName())) {
-                    return "Bearer " + cookie.getValue();
+                log.info("DEBUG: Found cookie '{}', value length={}", cookie.getName(), cookie.getValue() != null ? cookie.getValue().length() : 0);
+                if ("accessToken".equals(cookie.getName()) || "jwt".equalsIgnoreCase(cookie.getName())) {
+                    String result = "Bearer " + cookie.getValue();
+                    log.info("DEBUG: Returning authHeader with length {}", result.length());
+                    return result;
                 }
             }
         }
 
+        log.warn("DEBUG: No accessToken or jwt cookie found, returning null!");
         return null;
     }
 }
