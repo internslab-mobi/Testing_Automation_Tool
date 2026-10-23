@@ -5,7 +5,4 @@ public enum BugSeverity {
     MEDIUM,
     HIGH,
     CRITICAL,
-    BLOCKER,
-    MINOR,
-    MAJOR
 }
