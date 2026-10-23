@@ -510,11 +510,8 @@ public class TestCaseServiceImpl implements TestCaseService {
                         throw new IllegalArgumentException("Invalid pagination parameters");
                 }
 
-                int boundedSize = Math.min(pageable.getPageSize(), 100);
-                Pageable safePageable = PageRequest.of(pageable.getPageNumber(), boundedSize, pageable.getSort());
-
                 Page<TestCase> testCasesPage = testCaseRepository.findByFeatureIdWithFilters(
-                                featureId, status, type, priority, safePageable);
+                                featureId, status, type, priority, pageable);
 
                 return mapTestCasesWithExecutions(testCasesPage);
         }
@@ -598,13 +595,9 @@ public class TestCaseServiceImpl implements TestCaseService {
                         TestPriority priority,
                         Pageable pageable) {
 
-                int boundedSize = Math.min(
-                                pageable.getPageSize() <= 0 ? 10 : pageable.getPageSize(), 100);
-
-                Pageable safePageable = PageRequest.of(
-                                pageable.getPageNumber(),
-                                boundedSize,
-                                pageable.getSort());
+                if (pageable.getPageNumber() < 0 || pageable.getPageSize() <= 0) {
+                        throw new IllegalArgumentException("Invalid pagination parameters");
+                }
 
                 Specification<TestCase> spec = TestCaseSpecification.search(
                                 keyword,
@@ -613,7 +606,7 @@ public class TestCaseServiceImpl implements TestCaseService {
                                 type,
                                 priority);
 
-                Page<TestCase> testCasesPage = testCaseRepository.findAll(spec, safePageable);
+                Page<TestCase> testCasesPage = testCaseRepository.findAll(spec, pageable);
 
                 return mapTestCasesWithExecutions(testCasesPage);
         }

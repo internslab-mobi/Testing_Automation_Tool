@@ -338,10 +338,10 @@
         </div>
 
         <!-- Pagination Bar for Feature Test Cases Suite -->
-        <div class="table-pagination-bar" *ngIf="filteredTestCases.length > 0">
+        <div class="table-pagination-bar" *ngIf="tcTotalRecords > 0">
           <div class="pagination-info">
             <span class="pagination-count-text">
-              Showing <strong>{{ tcStartIndex }}-{{ tcEndIndex }}</strong> of <strong>{{ filteredTestCases.length }}</strong> test cases
+              Showing <strong>{{ tcStartIndex }}-{{ tcEndIndex }}</strong> of <strong>{{ tcTotalRecords }}</strong> test cases
             </span>
             <div class="pagination-divider"></div>
             <div class="page-size-picker">

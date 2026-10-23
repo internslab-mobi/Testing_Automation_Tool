@@ -1,7 +1,9 @@
-import { Component, OnInit, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
+import { Subject, Subscription } from 'rxjs';
+import { debounceTime } from 'rxjs/operators';
 
 // Sub-components
 import { NavbarComponent } from './components/navbar/navbar.component';
@@ -73,7 +75,7 @@ interface ToastAlert {
   templateUrl: './tester-workspace.html',
   styleUrl: './tester-workspace.css'
 })
-export class TesterWorkspace implements OnInit {
+export class TesterWorkspace implements OnInit, OnDestroy {
   readonly cdr = inject(ChangeDetectorRef);
   private readonly authService = inject(AuthService);
   private readonly projectService = inject(ProjectService);
@@ -242,6 +244,10 @@ export class TesterWorkspace implements OnInit {
   tcCurrentPage = 1;
   tcPageSize = 5;
   readonly tcPageSizeOptions = [5, 10, 20, 50, 100];
+  tcTotalRecords = 0;
+  private testCaseSub?: Subscription;
+  private tcSearchSubject = new Subject<void>();
+  private tcSearchSub?: Subscription;
 
   // Pagination: Defects
   bugCurrentPage = 1;
@@ -404,7 +410,18 @@ export class TesterWorkspace implements OnInit {
       this.loadProjects();
       this.loadNotifications();
     });
+    this.tcSearchSub = this.tcSearchSubject.pipe(
+      debounceTime(300)
+    ).subscribe(() => {
+      this.tcCurrentPage = 1;
+      this.fetchTestCasesPage();
+    });
     this.warmupCsrf();
+  }
+
+  ngOnDestroy(): void {
+    this.testCaseSub?.unsubscribe();
+    this.tcSearchSub?.unsubscribe();
   }
 
   // ==========================================
@@ -760,21 +777,20 @@ export class TesterWorkspace implements OnInit {
   // PAGINATION GETTERS & HELPERS
   // ==========================================
   get paginatedTestCases(): TestCase[] {
-    const startIndex = (this.tcCurrentPage - 1) * this.tcPageSize;
-    return this.filteredTestCases.slice(startIndex, startIndex + this.tcPageSize);
+    return this.filteredTestCases;
   }
 
   get totalTcPages(): number {
-    return Math.max(1, Math.ceil(this.filteredTestCases.length / this.tcPageSize));
+    return Math.max(1, Math.ceil(this.tcTotalRecords / this.tcPageSize));
   }
 
   get tcStartIndex(): number {
-    if (this.filteredTestCases.length === 0) return 0;
+    if (this.tcTotalRecords === 0) return 0;
     return (this.tcCurrentPage - 1) * this.tcPageSize + 1;
   }
 
   get tcEndIndex(): number {
-    return Math.min(this.tcCurrentPage * this.tcPageSize, this.filteredTestCases.length);
+    return Math.min(this.tcCurrentPage * this.tcPageSize, this.tcTotalRecords);
   }
 
   get tcPageNumbers(): number[] {
@@ -794,15 +810,16 @@ export class TesterWorkspace implements OnInit {
   }
 
   goToTcPage(page: number): void {
-    if (page >= 1 && page <= this.totalTcPages) {
+    if (page >= 1 && page <= this.totalTcPages && page !== this.tcCurrentPage) {
       this.tcCurrentPage = page;
-      this.cdr.markForCheck();
+      this.fetchTestCasesPage();
     }
   }
 
   onTcPageSizeChange(): void {
+    this.tcPageSize = Number(this.tcPageSize);
     this.tcCurrentPage = 1;
-    this.cdr.markForCheck();
+    this.fetchTestCasesPage();
   }
 
   get paginatedBugs(): Bug[] {
@@ -1521,55 +1538,83 @@ export class TesterWorkspace implements OnInit {
   // ==========================================
   // TEST CASES
   // ==========================================
-  loadTestCases(featureId: number): void {
-    if (this.testcaseCache.has(featureId)) {
-      this.testcases = this.testcaseCache.get(featureId)!;
-      this.applyTestCaseFilters();
-      this.updateMetrics();
+  loadTestCases(featureId: number, resetPage: boolean = true): void {
+    if (resetPage) {
+      this.tcCurrentPage = 1;
+    }
+    this.fetchTestCasesPage();
+  }
+
+  fetchTestCasesPage(): void {
+    if (!this.activeFeature) {
+      this.testcases = [];
+      this.filteredTestCases = [];
+      this.tcTotalRecords = 0;
+      this.totalTestCasesCount = 0;
       this.isLoadingTestCases = false;
       this.cdr.markForCheck();
       return;
     }
 
+    const featureId = this.activeFeature.featureId;
+    const pageIndex = Math.max(0, this.tcCurrentPage - 1);
+    const pageSize = this.tcPageSize;
+
+    let statusParam: string | undefined = undefined;
+    if (this.tcFilterStatus && this.tcFilterStatus !== 'ALL') {
+      const s = this.tcFilterStatus.toUpperCase();
+      if (s === 'PASS') statusParam = 'PASSED';
+      else if (s === 'FAIL') statusParam = 'FAILED';
+      else if (s === 'BLOCK') statusParam = 'BLOCKED';
+      else statusParam = s;
+    }
+
+    const typeParam = (this.tcFilterType && this.tcFilterType !== 'ALL') ? this.tcFilterType : undefined;
+    const priorityParam = (this.tcFilterPriority && this.tcFilterPriority !== 'ALL') ? this.tcFilterPriority : undefined;
+    const searchParam = this.tcSearch ? this.tcSearch.trim() : undefined;
+
     this.isLoadingTestCases = true;
     this.cdr.markForCheck();
 
-    this.testCaseService.getTestCases(featureId).subscribe({
-      next: (cases) => {
-        const list = (cases && cases.length > 0) ? cases : [];
+    if (this.testCaseSub) {
+      this.testCaseSub.unsubscribe();
+    }
+
+    this.testCaseSub = this.testCaseService.getTestCases(
+      featureId,
+      pageIndex,
+      pageSize,
+      {
+        keyword: searchParam,
+        status: statusParam,
+        type: typeParam,
+        priority: priorityParam,
+        sort: 'testcaseId,desc'
+      }
+    ).subscribe({
+      next: (pageRes) => {
+        const list = pageRes.content || [];
         this.testcases = list;
-        this.testcaseCache.set(featureId, list);
-        this.applyTestCaseFilters();
+        this.filteredTestCases = list;
+        this.tcTotalRecords = pageRes.totalElements;
+        this.totalTestCasesCount = pageRes.totalElements;
         this.updateMetrics();
         this.isLoadingTestCases = false;
         this.cdr.markForCheck();
       },
-      error: () => {
-        const list: TestCase[] = [];
-        this.testcases = list;
-        this.testcaseCache.set(featureId, list);
-        this.applyTestCaseFilters();
-        this.updateMetrics();
+      error: (err) => {
+        console.error('Failed to load test cases page:', err);
+        this.testcases = [];
+        this.filteredTestCases = [];
+        this.tcTotalRecords = 0;
         this.isLoadingTestCases = false;
         this.cdr.markForCheck();
       }
     });
   }
 
-  applyTestCaseFilters(): void {
-    const s = this.tcSearch.toLowerCase().trim();
-    this.filteredTestCases = this.testcases.filter(tc => {
-      const matchSearch = !s || tc.title.toLowerCase().includes(s) || (tc.testcaseFormatId && tc.testcaseFormatId.toLowerCase().includes(s));
-      const matchType = this.tcFilterType === 'ALL' || tc.testType === this.tcFilterType;
-      const matchPrio = this.tcFilterPriority === 'ALL' || tc.testPriority === this.tcFilterPriority;
-      const matchStatus = this.tcFilterStatus === 'ALL' || tc.executionStatus === this.tcFilterStatus || tc.testcaseStatus === this.tcFilterStatus;
-      return matchSearch && matchType && matchPrio && matchStatus;
-    });
-  }
-
   onTestCaseFilterChange(): void {
-    this.applyTestCaseFilters();
-    this.cdr.markForCheck();
+    this.tcSearchSubject.next();
   }
 
   openCreateTestCaseModal(): void {
@@ -1735,8 +1780,10 @@ export class TesterWorkspace implements OnInit {
         this.showToast('Test case soft deleted successfully!', 'success');
         this.isTestCaseDetailModalOpen = false;
         if (this.activeFeature) {
-          this.testcaseCache.delete(this.activeFeature.featureId);
-          this.loadTestCases(this.activeFeature.featureId);
+          if (this.filteredTestCases.length === 1 && this.tcCurrentPage > 1) {
+            this.tcCurrentPage--;
+          }
+          this.loadTestCases(this.activeFeature.featureId, false);
         }
         this.cdr.markForCheck();
       },
@@ -1990,15 +2037,14 @@ export class TesterWorkspace implements OnInit {
 
     this.tcSearch = b.testcaseFormatId || targetTc?.testcaseFormatId || targetTc?.title || '';
     this.tcCurrentPage = 1;
-    this.applyTestCaseFilters();
+    this.fetchTestCasesPage();
 
     // Open detail card for the test case
     if (targetTc) {
       this.viewTestCaseDetail(targetTc);
     } else if (b.testcaseId) {
-      this.testCaseService.getTestCases(b.featureId || this.activeFeature?.featureId || 0).subscribe({
-        next: (cases) => {
-          const found = cases?.find(t => t.testcaseId === b.testcaseId);
+      this.testCaseService.getTestCaseById(b.testcaseId).subscribe({
+        next: (found) => {
           if (found) {
             this.viewTestCaseDetail(found);
           }
@@ -2744,9 +2790,10 @@ export class TesterWorkspace implements OnInit {
           // Fetch test cases for these features
           const testCasePromises = flatFeatures.map(f =>
             new Promise<(TestCase & { featureName?: string; projectName?: string })[]>((resolve) => {
-              this.testCaseService.getTestCases(f.featureId).subscribe({
-                next: (cases) => {
-                  const mapped = (cases || []).map(c => ({
+              this.testCaseService.getTestCases(f.featureId, 0, 1000).subscribe({
+                next: (pageRes) => {
+                  const cases = pageRes.content || [];
+                  const mapped = cases.map(c => ({
                     ...c,
                     featureName: f.featureName,
                     projectName: f.projectName

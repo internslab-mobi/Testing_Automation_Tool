@@ -1,9 +1,28 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import { TestCase, TestCaseExecutionRequest, TestCaseCreatePayload, TestCasePutRequest, TestCasePatchRequest } from '../../model/workspace/workspace.model';
+
+export interface TestCasePageResponse {
+  content: TestCase[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+}
+
+export interface TestCaseFilterParams {
+  keyword?: string;
+  status?: string;
+  type?: string;
+  priority?: string;
+  sort?: string;
+}
 
 @Injectable({
   providedIn: 'root'
@@ -12,50 +31,90 @@ export class TestCaseService {
   private readonly http = inject(HttpClient);
   private readonly baseUrl = environment.apiGatewayUrl;
 
-  getTestCases(featureId: number): Observable<TestCase[]> {
-    return this.http.get<any>(`${this.baseUrl}/testcase?featureId=${featureId}&page=0&size=100`).pipe(
+  getTestCases(
+    featureId?: number | null,
+    page: number = 0,
+    size: number = 10,
+    filters?: TestCaseFilterParams
+  ): Observable<TestCasePageResponse> {
+    let params = new HttpParams()
+      .set('page', String(page))
+      .set('size', String(size));
+
+    if (featureId != null && featureId > 0) {
+      params = params.set('featureId', String(featureId));
+    }
+    if (filters?.keyword && filters.keyword.trim()) {
+      params = params.set('keyword', filters.keyword.trim());
+    }
+    if (filters?.status && filters.status !== 'ALL') {
+      params = params.set('status', filters.status);
+    }
+    if (filters?.type && filters.type !== 'ALL') {
+      params = params.set('type', filters.type);
+    }
+    if (filters?.priority && filters.priority !== 'ALL') {
+      params = params.set('priority', filters.priority);
+    }
+    if (filters?.sort) {
+      params = params.set('sort', filters.sort);
+    }
+
+    return this.http.get<any>(`${this.baseUrl}/testcase`, { params }).pipe(
       map(res => {
         const pageData = res?.data || res;
         const rawList = pageData?.content || (Array.isArray(pageData) ? pageData : []);
-        return rawList.map((item: any) => {
-          const tc = item.testCase || item;
-          const ex = item.execution || item.testingExecution || {};
-          const val = item.validations || {};
-          const auto = item.automation || {};
-          const bugSum = item.bugSummary || {};
-          const audit = item.audit || {};
-
-          const tcId = tc.testcaseId || item.testcaseId || tc.id || item.id;
-          const tcFormat = tc.testcaseFormatId || item.testcaseFormatId || (tcId ? `TC_${tcId}` : 'TC');
-
-          return {
-            testcaseId: tcId,
-            testcaseFormatId: tcFormat,
-            featureId: tc.featureId || item.featureId || featureId,
-            title: tc.title || item.title || '',
-            testType: tc.testType || item.testType || 'UI',
-            testPriority: tc.testPriority || item.testPriority || 'MEDIUM',
-            testcaseStatus: tc.testcaseStatus || item.testcaseStatus || 'PASSED',
-            executionStatus: ex.executionStatus || item.executionStatus || tc.testcaseStatus || 'UNEXECUTED',
-            comments: tc.comments || ex.comments || item.comments || '',
-            testData: ex.testData || item.testData || '',
-            automationFeasibility: auto.automationFeasibility || item.automationFeasibility || '',
-            bugsCount: bugSum.bugsCount ?? item.bugsCount ?? 0,
-            createdBy: audit.createdBy || item.createdBy || '',
-            updatedBy: audit.updatedBy || item.updatedBy || '',
-            execution: {
-              executionId: ex.executionId || item.executionId,
-              executionNumber: ex.executionNumber || 1,
-              precondition: ex.precondition || item.precondition || '',
-              executionSteps: ex.executionSteps || item.executionSteps || '',
-              uiValidations: val.uiValidations || ex.uiValidations || item.uiValidations || '',
-              dbValidations: val.dbValidations || ex.dbValidations || item.dbValidations || '',
-              comments: ex.comments || tc.comments || item.comments || ''
-            }
-          } as TestCase;
-        });
+        const content = rawList.map((item: any) => this.mapRawToTestCase(item, featureId || undefined));
+        return {
+          content,
+          totalElements: typeof pageData?.totalElements === 'number' ? pageData.totalElements : content.length,
+          totalPages: typeof pageData?.totalPages === 'number' ? pageData.totalPages : (content.length > 0 ? 1 : 0),
+          size: typeof pageData?.size === 'number' ? pageData.size : size,
+          number: typeof pageData?.number === 'number' ? pageData.number : page,
+          first: pageData?.first ?? (page === 0),
+          last: pageData?.last ?? true,
+          empty: pageData?.empty ?? (content.length === 0)
+        } as TestCasePageResponse;
       })
     );
+  }
+
+  private mapRawToTestCase(item: any, defaultFeatureId?: number): TestCase {
+    const tc = item.testCase || item;
+    const ex = item.execution || item.testingExecution || {};
+    const val = item.validations || {};
+    const auto = item.automation || {};
+    const bugSum = item.bugSummary || {};
+    const audit = item.audit || {};
+
+    const tcId = tc.testcaseId || item.testcaseId || tc.id || item.id;
+    const tcFormat = tc.testcaseFormatId || item.testcaseFormatId || (tcId ? `TC_${tcId}` : 'TC');
+
+    return {
+      testcaseId: tcId,
+      testcaseFormatId: tcFormat,
+      featureId: tc.featureId || item.featureId || defaultFeatureId,
+      title: tc.title || item.title || '',
+      testType: tc.testType || item.testType || 'UI',
+      testPriority: tc.testPriority || item.testPriority || 'MEDIUM',
+      testcaseStatus: tc.testcaseStatus || item.testcaseStatus || 'PASSED',
+      executionStatus: ex.executionStatus || item.executionStatus || tc.testcaseStatus || 'UNEXECUTED',
+      comments: tc.comments || ex.comments || item.comments || '',
+      testData: ex.testData || item.testData || '',
+      automationFeasibility: auto.automationFeasibility || item.automationFeasibility || '',
+      bugsCount: bugSum.bugsCount ?? item.bugsCount ?? 0,
+      createdBy: audit.createdBy || item.createdBy || '',
+      updatedBy: audit.updatedBy || item.updatedBy || '',
+      execution: {
+        executionId: ex.executionId || item.executionId,
+        executionNumber: ex.executionNumber || 1,
+        precondition: ex.precondition || item.precondition || '',
+        executionSteps: ex.executionSteps || item.executionSteps || '',
+        uiValidations: val.uiValidations || ex.uiValidations || item.uiValidations || '',
+        dbValidations: val.dbValidations || ex.dbValidations || item.dbValidations || '',
+        comments: ex.comments || tc.comments || item.comments || ''
+      }
+    } as TestCase;
   }
 
   createTestCase(payload: TestCaseExecutionRequest): Observable<TestCase> {
@@ -89,44 +148,10 @@ export class TestCaseService {
 
   getTestCaseById(testcaseId: number): Observable<TestCase> {
     return this.http.get<any>(`${this.baseUrl}/testcase/${testcaseId}`).pipe(
-        map(res => {
-          const item = res?.data || res;
-          const tc = item.testCase || item;
-          const ex = item.execution || item.testingExecution || {};
-          const val = item.validations || {};
-          const auto = item.automation || {};
-          const bugSum = item.bugSummary || {};
-          const audit = item.audit || {};
-
-          const tcId = tc.testcaseId || item.testcaseId || tc.id || item.id;
-          const tcFormat = tc.testcaseFormatId || item.testcaseFormatId || (tcId ? `TC_${tcId}` : 'TC');
-
-          return {
-            testcaseId: tcId,
-            testcaseFormatId: tcFormat,
-            featureId: tc.featureId || item.featureId,
-            title: tc.title || item.title || '',
-            testType: tc.testType || item.testType || 'UI',
-            testPriority: tc.testPriority || item.testPriority || 'MEDIUM',
-            testcaseStatus: tc.testcaseStatus || item.testcaseStatus || 'PASSED',
-            executionStatus: ex.executionStatus || item.executionStatus || tc.testcaseStatus || 'UNEXECUTED',
-            comments: tc.comments || ex.comments || item.comments || '',
-            testData: ex.testData || item.testData || '',
-            automationFeasibility: auto.automationFeasibility || item.automationFeasibility || '',
-            bugsCount: bugSum.bugsCount ?? item.bugsCount ?? 0,
-            createdBy: audit.createdBy || item.createdBy || '',
-            updatedBy: audit.updatedBy || item.updatedBy || '',
-            execution: {
-              executionId: ex.executionId || item.executionId,
-              executionNumber: ex.executionNumber || 1,
-              precondition: ex.precondition || item.precondition || '',
-              executionSteps: ex.executionSteps || item.executionSteps || '',
-              uiValidations: val.uiValidations || ex.uiValidations || item.uiValidations || '',
-              dbValidations: val.dbValidations || ex.dbValidations || item.dbValidations || '',
-              comments: ex.comments || tc.comments || item.comments || ''
-            }
-          } as TestCase;
-        })
+      map(res => {
+        const item = res?.data || res;
+        return this.mapRawToTestCase(item);
+      })
     );
   }
 

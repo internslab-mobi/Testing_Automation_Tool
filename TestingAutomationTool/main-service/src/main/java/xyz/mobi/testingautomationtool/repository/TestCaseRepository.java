@@ -20,6 +20,10 @@ import java.util.Optional;
 @Repository
 public interface TestCaseRepository extends JpaRepository<TestCase, Integer>, JpaSpecificationExecutor<TestCase> {
 
+    @Override
+    @EntityGraph(attributePaths = {"feature", "createdBy", "updatedBy"})
+    Page<TestCase> findAll(org.springframework.data.jpa.domain.Specification<TestCase> spec, Pageable pageable);
+
 
     @Modifying(clearAutomatically = true, flushAutomatically = true)
     @Query("UPDATE TestCase t SET t.isActive = false WHERE t.feature.project.projectId = :projectId")

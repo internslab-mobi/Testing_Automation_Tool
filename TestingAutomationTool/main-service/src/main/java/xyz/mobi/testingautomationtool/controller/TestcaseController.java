@@ -58,16 +58,23 @@ public class TestcaseController {
 
     @GetMapping
     public ResponseEntity<ApiResponse<Page<TestCaseResponse>>> getAllTestCases(
+            @RequestParam(required = false) String keyword,
             @RequestParam(required = false) Integer featureId,
             @RequestParam(required = false) TestCaseStatus status,
             @RequestParam(required = false) TestType type,
             @RequestParam(required = false) TestPriority priority,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
             @PageableDefault(page = 0, size = 10, sort = "testcaseId") Pageable pageable) {
-        if (pageable.getPageSize() <= 0) {
-            pageable = PageRequest.of(pageable.getPageNumber(),pageable.getPageSize(), pageable.getSort());
+        Pageable effectivePageable = resolvePageable(page, size, pageable);
+        Page<TestCaseResponse> result;
+        if (keyword != null && !keyword.isBlank()) {
+            result = testCaseService.searchTestCases(keyword, featureId, status, type, priority, effectivePageable);
+        } else {
+            result = testCaseService.getAll(featureId, status, type, priority, effectivePageable);
         }
         return ResponseEntity.ok(
-                ApiResponse.success("Test cases retrieved successfully", testCaseService.getAll(featureId, status, type, priority, pageable))
+                ApiResponse.success("Test cases retrieved successfully", result)
         );
     }
 
@@ -85,10 +92,28 @@ public class TestcaseController {
             @RequestParam(required = false) TestCaseStatus status,
             @RequestParam(required = false) TestType type,
             @RequestParam(required = false) TestPriority priority,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size,
             @PageableDefault(page = 0, size = 10, sort = "testcaseId") Pageable pageable) {
+        Pageable effectivePageable = resolvePageable(page, size, pageable);
         return ResponseEntity.ok(
-                ApiResponse.success("Test cases search results", testCaseService.searchTestCases(keyword, featureId, status, type, priority, pageable))
+                ApiResponse.success("Test cases search results", testCaseService.searchTestCases(keyword, featureId, status, type, priority, effectivePageable))
         );
+    }
+
+    private Pageable resolvePageable(Integer page, Integer size, Pageable pageable) {
+        int pageNumber = page != null ? page : (pageable != null ? pageable.getPageNumber() : 0);
+        int pageSize = size != null ? size : (pageable != null ? pageable.getPageSize() : 10);
+
+        if (pageNumber < 0 || pageSize <= 0) {
+            throw new IllegalArgumentException("Invalid pagination parameters: page must be >= 0 and size must be > 0");
+        }
+
+        org.springframework.data.domain.Sort sort = (pageable != null && pageable.getSort().isSorted())
+                ? pageable.getSort()
+                : org.springframework.data.domain.Sort.by("testcaseId");
+
+        return PageRequest.of(pageNumber, pageSize, sort);
     }
 
     @PutMapping("/{id}")
