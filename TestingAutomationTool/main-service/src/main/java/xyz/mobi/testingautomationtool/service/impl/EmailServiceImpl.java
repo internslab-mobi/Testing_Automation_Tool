@@ -607,11 +607,6 @@ public class EmailServiceImpl implements EmailService {
                 "Your account is ready to use"
         );
 
-        message.append("""
-            <p style="margin:0 0 20px;font-size:16px;color:#334155;">
-                Hello,
-            </p>
-            """);
 
         message.append("<p style=\"margin:0 0 20px;font-size:15px;"
                 + "line-height:1.8;color:#475569;\">Hello "

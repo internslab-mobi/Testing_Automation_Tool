@@ -62,14 +62,6 @@
           <i class="fa-regular fa-comment-dots text-emerald"></i> {{ activeProject.comments }}
         </div>
       </div>
-      <div class="navbar-overview-actions" *ngIf="activeProject.status !== 'INACTIVE'">
-        <button class="btn btn-primary btn-xs" (click)="viewProjectDetails.emit(activeProject)" title="View Full Project Details">
-          <i class="fa-solid fa-circle-info"></i> Project Details
-        </button>
-        <button class="btn btn-emerald btn-xs" (click)="editProject.emit(activeProject)" title="Edit Project">
-          <i class="fa-solid fa-pen-to-square"></i> Edit
-        </button>
-      </div>
     </div>
 
     <!-- 3. Master Directory Overview Banner (When in Overview Mode) -->
@@ -85,14 +77,7 @@
           <span class="version-tag">Workspace Hub</span>
         </div>
       </div>
-      <div class="navbar-overview-actions">
-        <button class="btn btn-primary btn-xs" (click)="refreshOverview.emit()" title="Refresh All Data">
-          <i class="fa-solid fa-rotate" [class.fa-spin]="isOverviewLoading"></i> Refresh All
-        </button>
-        <button class="btn btn-emerald btn-xs" (click)="createProject.emit()" title="Create New Project">
-          <i class="fa-solid fa-plus"></i> New Project
-        </button>
-      </div>
+    
     </div>
   </div>
 

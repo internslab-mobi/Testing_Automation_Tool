@@ -2934,11 +2934,14 @@ export class ManagerDashboard implements OnInit, OnDestroy {
 
   mapBugStatusToCategory(status?: string): 'OPEN' | 'IN_PROGRESS' | 'RESOLVED' {
     const s = (status || '').toUpperCase().trim();
-    if (s === 'RESOLVED' || s === 'FIXED' || s === 'CLOSED' || s === 'NOT_A_BUG') {
+    if (s === 'RESOLVED' || s === 'CLOSED' || s === 'NOT_A_BUG' || s ==='DEFERED') {
       return 'RESOLVED';
     }
-    if (s === 'IN_PROGRESS' || s === 'TESTING' || s === 'REOPENED') {
+    if (s === 'IN_PROGRESS' || s === 'FIXED' ) {
       return 'IN_PROGRESS';
+    }
+    if( s=== 'OPEN' || s === 'REOPENED'){
+      return 'OPEN';
     }
     return 'OPEN';
   }

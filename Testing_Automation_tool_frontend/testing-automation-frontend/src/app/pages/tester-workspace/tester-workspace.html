@@ -281,11 +281,11 @@
                 <td>
                   <div class="status-col" (click)="$event.stopPropagation()">
                     <select class="exec-status-select"
-                      [ngClass]="'status-' + (tc.executionStatus?.toLowerCase() || 'unexecuted')"
-                      [ngModel]="tc.executionStatus || 'UNEXECUTED'"
+                      [ngClass]="'status-' + (tc.executionStatus?.toLowerCase() || 'norun')"
+                      [ngModel]="tc.executionStatus || 'NO_RUN'"
                       (ngModelChange)="onTestCaseStatusChange(tc, $event)"
                       title="Change execution status">
-                      <option value="UNEXECUTED" disabled>UNEXECUTED</option>
+                      <option value="NO_RUN" disabled>NO RUN</option>
                       <option value="PASS">PASS</option>
                       <option value="FAIL">FAIL</option>
                       <option value="IN_PROGRESS">IN_PROGRESS</option>

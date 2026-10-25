@@ -17,8 +17,11 @@ import java.util.Map;
         name = "testing_test_cases",
         uniqueConstraints = {
                 @UniqueConstraint(
-                        name = "testing_test_cases_feature_id_testcase_format_id_unique",
-                        columnNames = {"feature_id", "testcase_format_id"}
+                        name = "uq_active_feature_testcase",
+                        columnNames = {
+                                "feature_id",
+                                "active_testcase_format_id"
+                        }
                 )
         }
 )
@@ -101,4 +104,12 @@ public class TestCase extends Auditable {
     @Column(name = "dynamic_fields", columnDefinition = "JSON")
     @Builder.Default
     private Map<String, Object> dynamicFields = new HashMap<>();
+
+    @Column(
+            name = "active_testcase_format_id",
+            insertable = false,
+            updatable = false,
+            length = 255
+    )
+    private String activeTestcaseFormatId;
 }

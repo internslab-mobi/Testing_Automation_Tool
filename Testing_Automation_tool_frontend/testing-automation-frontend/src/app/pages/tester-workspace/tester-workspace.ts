@@ -1849,7 +1849,7 @@ export class TesterWorkspace implements OnInit, OnDestroy {
   }
 
   onTestCaseStatusChange(tc: TestCase, newStatus: string): void {
-    if (!tc || !newStatus || newStatus === 'UNEXECUTED') return;
+    if (!tc || !newStatus || newStatus === 'NO_RUN') return;
     if (tc.executionStatus === newStatus) return;
     this.handleExecuteTestCase({ testcaseId: tc.testcaseId, status: newStatus as any });
   }

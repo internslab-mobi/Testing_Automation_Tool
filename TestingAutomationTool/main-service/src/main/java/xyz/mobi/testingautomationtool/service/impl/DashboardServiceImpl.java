@@ -5,7 +5,6 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import xyz.mobi.testingautomationtool.dto.DashboardDTO.*;
-import xyz.mobi.testingautomationtool.dto.ProjectDTO.ProjectResponse;
 import xyz.mobi.testingautomationtool.entity.*;
 import xyz.mobi.testingautomationtool.entity.Role;
 import xyz.mobi.testingautomationtool.enums.*;
@@ -15,7 +14,6 @@ import xyz.mobi.testingautomationtool.service.DashboardService;
 import xyz.mobi.testingautomationtool.service.EmailService;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -26,10 +24,7 @@ public class DashboardServiceImpl implements DashboardService {
     private final UserRepository userRepository;
     private final RoleRepository roleRepository;
     private final EmailService emailService;
-    private final ProjectRepository projectRepository;
-    private final FeatureRepository featureRepository;
-    private final TestCaseRepository testCaseRepository;
-    private final BugRepository bugRepository;
+
 
     @Override
     public PatchResponseForManager userConfirmation(PatchRequestOfManager request) {
