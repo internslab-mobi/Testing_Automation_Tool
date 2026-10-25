@@ -90,7 +90,14 @@ public class BugController {
     @DeleteMapping("/delete/{bugId}")
     public ResponseEntity<ApiResponse<String>> deleteBug(@PathVariable Integer bugId) {
         bugService.deleteBug(bugId);
-        return ResponseEntity.ok(ApiResponse.success("Bug soft deleted successfully"));
+        return ResponseEntity.ok(ApiResponse.success("Bug deleted successfully"));
+    }
+
+    @DeleteMapping("/bulk")
+    public ResponseEntity<ApiResponse<List<Integer>>> bulkDeleteBugs(
+            @RequestBody List<Integer> bugIds) {
+        List<Integer> deletedIds = bugService.bulkDeleteBugs(bugIds);
+        return ResponseEntity.ok(ApiResponse.success("Bugs deleted successfully", deletedIds));
     }
 
     @DeleteMapping("/{bugId}")

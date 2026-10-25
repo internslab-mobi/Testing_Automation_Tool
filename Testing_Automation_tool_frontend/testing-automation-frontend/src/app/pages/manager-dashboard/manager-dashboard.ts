@@ -1327,6 +1327,56 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     this.openStatusConfirmModal(project);
   }
 
+  showProjectDeleteModal = false;
+  projectToDelete: Project | null = null;
+  isDeletingProject = false;
+  projectDeleteError = '';
+
+  openDeleteProjectModal(project: Project): void {
+    if (!this.isManager) return;
+    if (this.isDeletingProject) return;
+    this.projectToDelete = project;
+    this.projectDeleteError = '';
+    this.showProjectDeleteModal = true;
+    this.cdr.markForCheck();
+  }
+
+  cancelProjectDelete(): void {
+    if (this.isDeletingProject) return;
+    this.showProjectDeleteModal = false;
+    this.projectToDelete = null;
+    this.projectDeleteError = '';
+    this.cdr.markForCheck();
+  }
+
+  confirmProjectDelete(): void {
+    if (!this.isManager) return;
+    if (!this.projectToDelete || this.isDeletingProject) return;
+
+    const project = this.projectToDelete;
+    this.isDeletingProject = true;
+    this.projectDeleteError = '';
+
+    this.projectService.softDeleteProject(project.projectId).subscribe({
+      next: () => {
+        this.showToast(`Project "${project.projectName}" has been deleted successfully.`);
+        this.isDeletingProject = false;
+        this.showProjectDeleteModal = false;
+        this.projectToDelete = null;
+        this.loadProjectDashboardData();
+        this.cdr.markForCheck();
+      },
+      error: (err: HttpErrorResponse) => {
+        console.error('Failed to delete project:', err);
+        this.isDeletingProject = false;
+        const msg = err?.error?.message || err?.message || 'Failed to delete project. Please try again.';
+        this.projectDeleteError = msg;
+        this.showToast(msg);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
 
 
 

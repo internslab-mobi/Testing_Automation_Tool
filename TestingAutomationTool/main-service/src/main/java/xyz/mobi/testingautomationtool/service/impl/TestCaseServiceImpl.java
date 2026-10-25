@@ -29,10 +29,12 @@ import xyz.mobi.testingautomationtool.service.TestCaseService;
 import xyz.mobi.testingautomationtool.specification.TestCaseSpecification;
 import xyz.mobi.testingautomationtool.utils.Utils;
 
+import lombok.extern.slf4j.Slf4j;
 import java.lang.Exception;
 import java.util.*;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @Transactional
 @RequiredArgsConstructor
@@ -314,6 +316,90 @@ public class TestCaseServiceImpl implements TestCaseService {
         }
 
         @Override
+        @Transactional(readOnly = true)
+        public byte[] downloadBlankTemplate() {
+                try {
+                        return summaryExportClient.downloadBlankTemplate();
+                } catch (Exception e) {
+                        log.warn("summary-export-service not reachable for blank template: {}. Generating fallback Excel template.", e.getMessage());
+                        return generateBlankTemplateFallback();
+                }
+        }
+
+        private byte[] generateBlankTemplateFallback() {
+                try (org.apache.poi.xssf.usermodel.XSSFWorkbook workbook = new org.apache.poi.xssf.usermodel.XSSFWorkbook();
+                     java.io.ByteArrayOutputStream out = new java.io.ByteArrayOutputStream()) {
+                        org.apache.poi.ss.usermodel.Sheet sheet = workbook.createSheet("Testcase");
+                        sheet.setDisplayGridlines(true);
+
+                        org.apache.poi.ss.usermodel.CellStyle headerStyle = workbook.createCellStyle();
+                        org.apache.poi.ss.usermodel.Font font = workbook.createFont();
+                        font.setBold(true);
+                        font.setColor(org.apache.poi.ss.usermodel.IndexedColors.WHITE.getIndex());
+                        headerStyle.setFont(font);
+                        headerStyle.setFillForegroundColor(org.apache.poi.ss.usermodel.IndexedColors.DARK_BLUE.getIndex());
+                        headerStyle.setFillPattern(org.apache.poi.ss.usermodel.FillPatternType.SOLID_FOREGROUND);
+                        headerStyle.setVerticalAlignment(org.apache.poi.ss.usermodel.VerticalAlignment.CENTER);
+
+                        String[] headers = {
+                                        "TestcaseID", "Title", "Test Type", "Test Execution", "Test Validation",
+                                        "Automation Priority", "Pre Condition", "Test data", "Execution steps",
+                                        "UI Validations", "DB Validations", "Automation Status", "Actual Status", "Comments"
+                        };
+
+                        org.apache.poi.ss.usermodel.Row headerRow = sheet.createRow(0);
+                        headerRow.setHeightInPoints(28);
+                        for (int i = 0; i < headers.length; i++) {
+                                org.apache.poi.ss.usermodel.Cell cell = headerRow.createCell(i);
+                                cell.setCellValue(headers[i]);
+                                cell.setCellStyle(headerStyle);
+                                sheet.setColumnWidth(i, 22 * 256);
+                        }
+
+                        // Add sample format row
+                        org.apache.poi.ss.usermodel.Row sampleRow = sheet.createRow(1);
+                        sampleRow.createCell(0).setCellValue("TC-001");
+                        sampleRow.createCell(1).setCellValue("Verify user login with valid credentials");
+                        sampleRow.createCell(2).setCellValue("UI");
+                        sampleRow.createCell(3).setCellValue("Browser Automated / Manual");
+                        sampleRow.createCell(4).setCellValue("Verify successful redirection to dashboard");
+                        sampleRow.createCell(5).setCellValue("HIGH");
+                        sampleRow.createCell(6).setCellValue("User is registered and active in system");
+                        sampleRow.createCell(7).setCellValue("username=testuser@example.com, password=ValidPass123!");
+                        sampleRow.createCell(8).setCellValue("1. Go to /login\n2. Enter valid credentials\n3. Click Submit");
+                        sampleRow.createCell(9).setCellValue("User avatar and dashboard metrics displayed");
+                        sampleRow.createCell(10).setCellValue("User last_login timestamp updated in database");
+                        sampleRow.createCell(11).setCellValue("YES");
+                        sampleRow.createCell(12).setCellValue("PASS");
+                        sampleRow.createCell(13).setCellValue("Sample test case row format");
+
+                        org.apache.poi.ss.usermodel.DataValidationHelper helper = sheet.getDataValidationHelper();
+                        addDropdownValidation(sheet, helper, 2, new String[]{"UI", "API", "DB", "E2E"});
+                        addDropdownValidation(sheet, helper, 5, new String[]{"HIGH", "MEDIUM", "LOW"});
+                        addDropdownValidation(sheet, helper, 11, new String[]{"YES", "NO", "PARTIALLY_FEASIBLE"});
+                        addDropdownValidation(sheet, helper, 12, new String[]{"PASS", "FAIL", "BLOCK", "DESCOPE", "IN_PROGRESS", "NO_RUN"});
+
+                        sheet.createFreezePane(0, 1);
+                        workbook.write(out);
+                        return out.toByteArray();
+                } catch (Exception e) {
+                        throw new ExcelProcessingException("Failed to generate blank test case template: " + e.getMessage(), e);
+                }
+        }
+
+        private void addDropdownValidation(org.apache.poi.ss.usermodel.Sheet sheet,
+                                           org.apache.poi.ss.usermodel.DataValidationHelper helper,
+                                           int colIndex,
+                                           String[] values) {
+                org.apache.poi.ss.util.CellRangeAddressList addressList = new org.apache.poi.ss.util.CellRangeAddressList(1, 1000, colIndex, colIndex);
+                org.apache.poi.ss.usermodel.DataValidationConstraint constraint = helper.createExplicitListConstraint(values);
+                org.apache.poi.ss.usermodel.DataValidation validation = helper.createValidation(constraint, addressList);
+                validation.setSuppressDropDownArrow(true);
+                validation.setShowErrorBox(true);
+                sheet.addValidationData(validation);
+        }
+
+        @Override
         public TestCaseResponse updateTestcaseDetails(TestCasePutRequest testCasePutRequest, Integer id) {
                 TestCase testCase = testCaseRepository.findById(id)
                                 .orElseThrow(() -> new ResourceNotFoundException("Test case not found with ID: " + id));
@@ -544,11 +630,6 @@ public class TestCaseServiceImpl implements TestCaseService {
                 return testCaseMapper.toResponse(testCase, execution);
         }
 
-        @Override
-        @Transactional(readOnly = true)
-        public TestCaseResponse getById(Integer id) {
-                return getById(id, false);
-        }
 
         @Override
         public String hardDeleteTestCase(Integer id) {
@@ -583,6 +664,30 @@ public class TestCaseServiceImpl implements TestCaseService {
                                 .testcaseId(id)
                                 .message("TestCase deleted successfully")
                                 .build();
+        }
+
+        @Override
+        public List<Integer> bulkDeleteTestCases(List<Integer> testCaseIds) {
+                if (testCaseIds == null || testCaseIds.isEmpty()) {
+                        return Collections.emptyList();
+                }
+                User currentUser = authService.getCurrentUser();
+                List<Integer> deletedIds = new ArrayList<>();
+                for (Integer id : testCaseIds) {
+                        Optional<TestCase> optionalTestCase = testCaseRepository.findById(id);
+                        if (optionalTestCase.isPresent()) {
+                                TestCase testCase = optionalTestCase.get();
+                                if (!testCase.isDeleted()) {
+                                        testCase.setDeleted(true);
+                                        testCase.setActive(false);
+                                        testCase.setUpdatedBy(currentUser);
+                                        bugRepository.softDeleteBugsByTestCaseId(id);
+                                        testCaseRepository.save(testCase);
+                                        deletedIds.add(id);
+                                }
+                        }
+                }
+                return deletedIds;
         }
 
         @Override

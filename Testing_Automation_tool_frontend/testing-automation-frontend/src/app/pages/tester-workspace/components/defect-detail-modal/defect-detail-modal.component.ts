@@ -146,7 +146,7 @@ export class DefectDetailModalComponent {
 
   onSoftDelete(): void {
     if (!this.bug) return;
-    if (confirm(`Are you sure you want to soft delete defect "${this.bug.bugFormatId || this.bug.title}"?`)) {
+    if (confirm(`Are you sure you want to delete defect "${this.bug.bugFormatId || this.bug.title}"?`)) {
       this.softDeleteBug.emit(this.bug.bugId);
     }
   }

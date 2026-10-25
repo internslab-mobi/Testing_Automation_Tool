@@ -73,6 +73,12 @@ export class ProjectService {
     );
   }
 
+  softDeleteProject(projectId: number): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrl}/project/delete/${projectId}`).pipe(
+      map(res => res?.data || res)
+    );
+  }
+
   getModules(): Observable<ModuleItem[]> {
     return this.http.get<any>(`${this.baseUrl}/project/modules`).pipe(
       map(res => {

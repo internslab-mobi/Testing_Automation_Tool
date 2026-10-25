@@ -114,7 +114,7 @@ public class ProjectController {
     public ResponseEntity<ApiResponse<PatchProjectDeleteResponse>> softDeleteProject(
             @PathVariable("id") Integer id) {
         PatchProjectDeleteResponse response = projectService.softDeleteProject(id);
-        return ResponseEntity.ok(ApiResponse.success("Project soft deleted successfully", response));
+        return ResponseEntity.ok(ApiResponse.success("Project deleted successfully", response));
     }
 
     @PreAuthorize("hasAnyRole('MANAGER')")

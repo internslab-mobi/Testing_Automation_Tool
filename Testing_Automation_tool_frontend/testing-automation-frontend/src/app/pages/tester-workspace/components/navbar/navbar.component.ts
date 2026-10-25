@@ -31,6 +31,9 @@ export class NavbarComponent {
   @Input() isOverviewLoading = false;
   @Input() isManagerUser = false;
   @Input() isOverviewMode = false;
+  @Input() displayFeatureDuration = '0m 00s';
+  @Input() isFeatureTimerRunning = false;
+  @Input() isUpdatingTimer = false;
 
   @Output() toggleSidebar = new EventEmitter<void>();
   @Output() openNotifications = new EventEmitter<void>();
@@ -43,6 +46,9 @@ export class NavbarComponent {
   @Output() createProject = new EventEmitter<void>();
   @Output() viewProjectDetails = new EventEmitter<any>();
   @Output() editProject = new EventEmitter<any>();
+  @Output() startTimer = new EventEmitter<void>();
+  @Output() stopTimer = new EventEmitter<void>();
+  @Output() openDurationDetails = new EventEmitter<void>();
 
   onBackToManager(): void {
     this.backToManager.emit();

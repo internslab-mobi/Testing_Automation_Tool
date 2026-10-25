@@ -776,6 +776,12 @@
   font-size: 9.5px;
 }
 
+.feat-meta-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .sprint-badge {
   font-weight: 700;
   color: #4f46e5;
@@ -783,6 +789,27 @@
   padding: 1px 5px;
   border-radius: 4px;
   font-size: 9px;
+}
+
+.feat-duration-pill {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+  font-weight: 600;
+  color: #334155;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 8.5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.feat-duration-pill.pill-running {
+  background: #ecfdf5;
+  color: #047857;
+  border-color: #a7f3d0;
+  font-weight: 700;
 }
 
 .proj-actions,
@@ -812,6 +839,18 @@
   background: #059669;
   color: #ffffff;
   border-color: #059669;
+}
+
+.btn-item-action.text-danger {
+  color: #dc2626 !important;
+  border-color: #fecaca;
+  background: #fef2f2;
+}
+
+.btn-item-action.text-danger:hover {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #dc2626 !important;
 }
 
 /* ==========================================================================

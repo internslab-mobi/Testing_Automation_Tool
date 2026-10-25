@@ -56,6 +56,12 @@ public class SummaryExportClient {
         return executeGetRequest(targetUrl, "Test case template for Feature ID: " + featureId);
     }
 
+    public byte[] downloadBlankTemplate() {
+        String targetUrl = baseUrl + "/template";
+        log.info("Internally calling summary-export-service for Blank Template -> {}", targetUrl);
+        return executeGetRequest(targetUrl, "Blank test case template");
+    }
+
     private byte[] executeGetRequest(String url, String operationDescription) {
         HttpRequest.Builder requestBuilder = HttpRequest.newBuilder()
                 .uri(URI.create(url))

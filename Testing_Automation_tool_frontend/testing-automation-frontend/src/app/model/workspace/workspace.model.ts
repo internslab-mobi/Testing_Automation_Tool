@@ -59,6 +59,8 @@ export interface Feature {
   description?: string;
   comments?: string;
   status?: string;
+  duration?: number;
+  startTime?: string | null;
   createdDate?: string;
 }
 
@@ -69,6 +71,29 @@ export interface FeatureCreateRequest {
   featureVersion?: string;
   description?: string;
   comments?: string;
+  duration?: number;
+  days?: number;
+  hours?: number;
+  minutes?: number;
+}
+
+export interface FeaturePatchRequest {
+  featureName?: string;
+  description?: string;
+  status?: string;
+  duration?: number;
+  sprint?: number;
+  version?: string;
+  featureVersion?: string;
+  startTime?: string | null;
+  startTimer?: boolean;
+  endTimer?: boolean;
+  days?: number;
+  hours?: number;
+  minutes?: number;
+  comments?: string;
+  isActive?: boolean;
+  testCaseId?: number[];
 }
 
 export interface TestCaseExecutionDetails {
@@ -290,25 +315,6 @@ export interface ProjectPatchRequest {
   subModule?: number | string | null;
   comments?: string;
   status?: string;
-}
-
-export interface FeaturePatchRequest {
-  featureName?: string;
-  description?: string;
-  status?: string;
-  duration?: number;
-  sprint?: number;
-  version?: string;
-  featureVersion?: string;
-  startTime?: string;
-  startTimer?: boolean;
-  endTimer?: boolean;
-  days?: number;
-  hours?: number;
-  minutes?: number;
-  comments?: string;
-  isActive?: boolean;
-  testCaseId?: number[];
 }
 
 export interface TestCasePatchRequest {

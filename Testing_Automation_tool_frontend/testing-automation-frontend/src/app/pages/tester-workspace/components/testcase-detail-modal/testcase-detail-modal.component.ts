@@ -120,7 +120,7 @@ export class TestCaseDetailModalComponent implements OnChanges {
 
   onSoftDelete(): void {
     if (!this.testCase) return;
-    if (confirm(`Are you sure you want to soft delete test case "${this.testCase.testcaseFormatId || this.testCase.title}"?`)) {
+    if (confirm(`Are you sure you want to delete test case "${this.testCase.testcaseFormatId || this.testCase.title}"?`)) {
       this.softDeleteTestCase.emit(this.testCase.testcaseId);
     }
   }

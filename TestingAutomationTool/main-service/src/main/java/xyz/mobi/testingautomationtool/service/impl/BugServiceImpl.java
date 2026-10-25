@@ -228,12 +228,6 @@ public class BugServiceImpl implements BugService {
 
     @Override
     @Transactional(readOnly = true)
-    public Page<BugResponse> getAllBugs(int page, int size) {
-        return getAllBugs(null, page, size);
-    }
-
-    @Override
-    @Transactional(readOnly = true)
     public Page<BugResponse> getAllBugs(Integer assignedTo, int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "createdAt"));
         User currentUser = null;
@@ -700,6 +694,42 @@ public class BugServiceImpl implements BugService {
                 Math.max(0, currentCount - occurrence));
 
         testingExecutionRepository.save(testingExecution);
+    }
+
+    @Override
+    @Transactional
+    public List<Integer> bulkDeleteBugs(List<Integer> bugIds) {
+        if (bugIds == null || bugIds.isEmpty()) {
+            return Collections.emptyList();
+        }
+        User currentUser = authService.getCurrentUser();
+        List<Integer> deletedIds = new ArrayList<>();
+        for (Integer bugId : bugIds) {
+            Optional<Bug> optionalBug = bugRepository.findById(bugId);
+            if (optionalBug.isPresent()) {
+                Bug bug = optionalBug.get();
+                if (!bug.isDeleted()) {
+                    if (bug.getTestCase() != null) {
+                        Integer testCaseId = bug.getTestCase().getTestcaseId();
+                        if (testCaseId != null) {
+                            testingExecutionRepository.findById(testCaseId).ifPresent(testingExecution -> {
+                                int occurrence = bug.getBugOccurrence() != null ? bug.getBugOccurrence() : 0;
+                                int currentCount = testingExecution.getBugsCount() != null ? testingExecution.getBugsCount() : 0;
+                                testingExecution.setBugsCount(Math.max(0, currentCount - occurrence));
+                                testingExecutionRepository.save(testingExecution);
+                            });
+                        }
+                    }
+
+                    bug.setDeleted(true);
+                    bug.setActive(false);
+                    bug.setUpdatedBy(currentUser);
+                    bugRepository.save(bug);
+                    deletedIds.add(bugId);
+                }
+            }
+        }
+        return deletedIds;
     }
 
     @Override

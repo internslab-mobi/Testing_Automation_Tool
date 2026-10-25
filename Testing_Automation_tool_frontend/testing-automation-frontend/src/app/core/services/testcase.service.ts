@@ -167,6 +167,12 @@ export class TestCaseService {
     );
   }
 
+  bulkDeleteTestCases(testCaseIds: number[]): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrl}/testcase/bulk`, { body: testCaseIds }).pipe(
+      map(res => res?.data || res)
+    );
+  }
+
   executeTestCase(testcaseId: number, executionStatus: 'PASS' | 'FAIL' | 'DESCOPE' | 'IN_PROGRESS' | 'BLOCK' | string): Observable<any> {
     return this.http.patch<any>(`${this.baseUrl}/testcase/${testcaseId}`, { executionStatus });
   }
@@ -182,6 +188,12 @@ export class TestCaseService {
     formData.append('file', file);
     formData.append('featureId', String(featureId));
     return this.http.post<any>(`${this.baseUrl}/testcase/upload`, formData);
+  }
+
+  downloadBlankTemplate(): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/testcase/template`, {
+      responseType: 'blob'
+    });
   }
 
   downloadTemplate(featureId: number): Observable<Blob> {

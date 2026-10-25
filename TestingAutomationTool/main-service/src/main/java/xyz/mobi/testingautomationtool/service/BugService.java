@@ -13,14 +13,11 @@ import java.util.List;
 
 public interface BugService {
 
-
     List<DeveloperOptionResponse> getDeveloperOptions();
 
     BugResponse createBug(Integer testcaseId,BugRequest request);
 
     BugResponse getById(Integer bugId);
-
-    Page<BugResponse> getAllBugs(int page, int size);
 
     Page<BugResponse> getAllBugs(Integer assignedTo, int page, int size);
 
@@ -31,6 +28,8 @@ public interface BugService {
     String patchBug(Integer bugId, BugPatchRequest request);
 
     void deleteBug(Integer bugId);
+
+    List<Integer> bulkDeleteBugs(List<Integer> bugIds);
 
     void hardDelete(Integer bugId);
 
@@ -51,6 +50,4 @@ public interface BugService {
             String updatedBy
     );
 
-//    @Transactional(readOnly = true)
-//    AttachmentDownloadResponse downloadBugAttachments(Integer bugId);
 }

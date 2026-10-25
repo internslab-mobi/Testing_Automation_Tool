@@ -2,17 +2,18 @@
   <!-- Modular Navbar Component -->
   <app-workspace-navbar [userName]="userName" [userRole]="userRole" [userInitials]="userInitials"
     [unreadNotificationCount]="unreadNotificationCount" [activeProject]="activeProject" [activeFeature]="activeFeature"
-    [featureAttachmentCount]="featureAttachmentCount" [selectedRegion]="selectedRegion" [isOverviewLoading]="isOverviewLoading"
-    [isManagerUser]="isManager" [isOverviewMode]="isOverviewMode"
-    (backToManager)="navigateToManagerDashboard()"
-    (toggleSidebar)="isSidebarOpen = !isSidebarOpen"
+    [displayFeatureDuration]="displayFeatureDuration" [isFeatureTimerRunning]="isFeatureTimerRunning"
+    [isUpdatingTimer]="isUpdatingTimer"
+    [featureAttachmentCount]="featureAttachmentCount" [selectedRegion]="selectedRegion"
+    [isOverviewLoading]="isOverviewLoading" [isManagerUser]="isManager" [isOverviewMode]="isOverviewMode"
+    (backToManager)="navigateToManagerDashboard()" (toggleSidebar)="isSidebarOpen = !isSidebarOpen"
     (openNotifications)="openNotificationsModal()" (openOverview)="clearActiveFeatureToOverview('projects')"
     (openOverviewTab)="clearActiveFeatureToOverview($event)"
     (openFeatureAttachments)="openAttachments('feature', $event.featureId, 'Feature Documentation: ' + $event.featureName)"
-    (refreshOverview)="loadAllOverviewData()"
-    (createProject)="openCreateProjectModal()"
-    (viewProjectDetails)="openProjectDetailsModal($event)"
-    (editProject)="openEditProject($event)"
+    (refreshOverview)="loadAllOverviewData()" (createProject)="openCreateProjectModal()"
+    (viewProjectDetails)="openProjectDetailsModal($event)" (editProject)="openEditProject($event)"
+    (startTimer)="startFeatureTimer()" (stopTimer)="stopFeatureTimer()"
+    (openDurationDetails)="openManualDurationModal()"
     (logout)="performLogout()"></app-workspace-navbar>
 
   <div class="workspace-body">
@@ -22,11 +23,13 @@
       [activeProject]="activeProject" [features]="features" [activeFeature]="activeFeature"
       [projectAttachmentCount]="projectAttachmentCount" [featureAttachmentCount]="featureAttachmentCount"
       [isOverviewMode]="isOverviewMode" [isLoadingFeatures]="isLoadingFeatures"
-      (regionChange)="onRegionChange($event)" (selectProject)="selectProject($event, false)"
-      (createProject)="openCreateProjectModal()" (editProject)="openEditProject($event)"
+      [isManagerUser]="isManager" (regionChange)="onRegionChange($event)"
+      (selectProject)="selectProject($event, false)" (createProject)="openCreateProjectModal()"
+      (editProject)="openEditProject($event)"
       (openProjectAttachments)="openAttachments('project', $event.projectId, 'Project Attachments: ' + $event.projectName)"
       (selectFeature)="selectFeature($event)" (createFeature)="openCreateFeatureModal()"
       (editFeature)="openEditFeature($event)"
+      (deleteFeature)="openDeleteFeatureModal($event)"
       (openFeatureAttachments)="openAttachments('feature', $event.featureId, 'Feature Documentation: ' + $event.featureName)"
       (openOverview)="clearActiveFeatureToOverview('projects')"
       (closeSidebar)="isSidebarOpen = false"></app-workspace-sidebar>
@@ -57,515 +60,549 @@
       <ng-container *ngIf="!isOverviewMode && activeProject && activeProject.status !== 'INACTIVE'">
         <!-- Quick Metrics Ribbon (Only accessible when Project is ACTIVE) -->
         <div class="metrics-ribbon" *ngIf="activeFeature">
-        <div class="metric-card total-metric"
-          (click)="activeSubTab = 'testcases'; tcFilterStatus = 'ALL'; onTestCaseFilterChange()">
-          <div class="metric-icon"><i class="fa-solid fa-vial"></i></div>
-          <div class="metric-data">
-            <span class="metric-num">{{ totalTestCasesCount }}</span>
-            <span class="metric-label">Total Test Cases</span>
+          <div class="metric-card total-metric"
+            (click)="activeSubTab = 'testcases'; tcFilterStatus = 'ALL'; onTestCaseFilterChange()">
+            <div class="metric-icon"><i class="fa-solid fa-vial"></i></div>
+            <div class="metric-data">
+              <span class="metric-num">{{ totalTestCasesCount }}</span>
+              <span class="metric-label">Total Test Cases</span>
+            </div>
+          </div>
+
+          <div class="metric-card pass-metric"
+            (click)="activeSubTab = 'testcases'; tcFilterStatus = 'PASS'; onTestCaseFilterChange()">
+            <div class="metric-icon"><i class="fa-solid fa-circle-check"></i></div>
+            <div class="metric-data">
+              <span class="metric-num">{{ passedCount }}</span>
+              <span class="metric-label">Passed</span>
+            </div>
+          </div>
+
+          <div class="metric-card fail-metric"
+            (click)="activeSubTab = 'testcases'; tcFilterStatus = 'FAIL'; onTestCaseFilterChange()">
+            <div class="metric-icon"><i class="fa-solid fa-circle-xmark"></i></div>
+            <div class="metric-data">
+              <span class="metric-num">{{ failedCount }}</span>
+              <span class="metric-label">Failed</span>
+            </div>
+          </div>
+
+          <div class="metric-card descope-metric"
+            (click)="activeSubTab = 'testcases'; tcFilterStatus = 'DESCOPE'; onTestCaseFilterChange()">
+            <div class="metric-icon"><i class="fa-solid fa-ban"></i></div>
+            <div class="metric-data">
+              <span class="metric-num">{{ descopeCount }}</span>
+              <span class="metric-label">Descoped</span>
+            </div>
+          </div>
+
+          <div class="metric-card bug-metric"
+            (click)="activeSubTab = 'bugs'; bugFilterStatus = 'ALL'; onBugFilterChange()">
+            <div class="metric-icon"><i class="fa-solid fa-bug"></i></div>
+            <div class="metric-data">
+              <span class="metric-num">{{ totalDefectsCount }}</span>
+              <span class="metric-label">Total Defects</span>
+            </div>
+          </div>
+
+          <div class="metric-card open-bug-metric"
+            (click)="activeSubTab = 'bugs'; bugFilterStatus = 'OPEN'; onBugFilterChange()">
+            <div class="metric-icon"><i class="fa-solid fa-fire"></i></div>
+            <div class="metric-data">
+              <span class="metric-num">{{ openDefectsCount }}</span>
+              <span class="metric-label">Active / Open</span>
+            </div>
           </div>
         </div>
 
-        <div class="metric-card pass-metric"
-          (click)="activeSubTab = 'testcases'; tcFilterStatus = 'PASS'; onTestCaseFilterChange()">
-          <div class="metric-icon"><i class="fa-solid fa-circle-check"></i></div>
-          <div class="metric-data">
-            <span class="metric-num">{{ passedCount }}</span>
-            <span class="metric-label">Passed</span>
-          </div>
-        </div>
-
-        <div class="metric-card fail-metric"
-          (click)="activeSubTab = 'testcases'; tcFilterStatus = 'FAIL'; onTestCaseFilterChange()">
-          <div class="metric-icon"><i class="fa-solid fa-circle-xmark"></i></div>
-          <div class="metric-data">
-            <span class="metric-num">{{ failedCount }}</span>
-            <span class="metric-label">Failed</span>
-          </div>
-        </div>
-
-        <div class="metric-card descope-metric"
-          (click)="activeSubTab = 'testcases'; tcFilterStatus = 'DESCOPE'; onTestCaseFilterChange()">
-          <div class="metric-icon"><i class="fa-solid fa-ban"></i></div>
-          <div class="metric-data">
-            <span class="metric-num">{{ descopeCount }}</span>
-            <span class="metric-label">Descoped</span>
-          </div>
-        </div>
-
-        <div class="metric-card bug-metric"
-          (click)="activeSubTab = 'bugs'; bugFilterStatus = 'ALL'; onBugFilterChange()">
-          <div class="metric-icon"><i class="fa-solid fa-bug"></i></div>
-          <div class="metric-data">
-            <span class="metric-num">{{ totalDefectsCount }}</span>
-            <span class="metric-label">Total Defects</span>
-          </div>
-        </div>
-
-        <div class="metric-card open-bug-metric"
-          (click)="activeSubTab = 'bugs'; bugFilterStatus = 'OPEN'; onBugFilterChange()">
-          <div class="metric-icon"><i class="fa-solid fa-fire"></i></div>
-          <div class="metric-data">
-            <span class="metric-num">{{ openDefectsCount }}</span>
-            <span class="metric-label">Active / Open</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Navigation Tabs (Test Cases vs Defects) -->
-      <div class="cockpit-tabs-bar" *ngIf="activeFeature">
-        <div class="tabs-group">
-          <button class="cockpit-tab" [class.active]="activeSubTab === 'testcases'"
-            (click)="activeSubTab = 'testcases'">
-            <i class="fa-solid fa-list-check"></i>
-            <span>Test Cases Suite</span>
-            <span class="tab-badge">{{ testcases.length }}</span>
-          </button>
-
-          <button class="cockpit-tab" [class.active]="activeSubTab === 'bugs'" (click)="activeSubTab = 'bugs'">
-            <i class="fa-solid fa-bug"></i>
-            <span>Defects & Issues</span>
-            <span class="tab-badge" [class.badge-alert]="openDefectsCount > 0">{{ bugs.length }}</span>
-          </button>
-        </div>
-
-        <!-- Suite Actions Strip -->
-        <div class="cockpit-tab-actions" *ngIf="activeSubTab === 'testcases'">
-          <button class="btn btn-primary btn-sm" (click)="openCreateTestCaseModal()">
-            <i class="fa-solid fa-plus"></i> Add Test Case
-          </button>
-          <button class="btn btn-secondary btn-sm" (click)="openExcelUploadModal()">
-            <i class="fa-solid fa-file-excel text-emerald"></i> Bulk Excel (.xlsx)
-          </button>
-          <!-- Export Testcase via Summary Export Service -->
-          <button class="btn btn-secondary btn-sm" (click)="exportTestCasesSummary()"
-            title="Export Test Cases to Excel via Summary Service">
-            <i class="fa-solid fa-download text-indigo"></i> Export Summary (Excel)
-          </button>
-        </div>
-
-        <div class="cockpit-tab-actions" *ngIf="activeSubTab === 'bugs'">
-          <button class="btn btn-rose btn-sm" (click)="openLogDefectModal()">
-            <i class="fa-solid fa-plus"></i> Log Defect
-          </button>
-          <!-- Export Bug Endpoint Calling -->
-          <button class="btn btn-secondary btn-sm" (click)="exportBugsSummary()" title="Export Defect Summary to Excel">
-            <i class="fa-solid fa-download text-indigo"></i> Export Defects (Excel)
-          </button>
-        </div>
-      </div>
-
-      <!-- VIEW 1: TEST CASES SUITE TABLE -->
-      <div class="view-panel" *ngIf="activeFeature && activeSubTab === 'testcases'">
-        <!-- Filter Toolbar -->
-        <div class="table-filter-toolbar">
-          <div class="filter-search-box">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" placeholder="Search test cases by title, steps, or ID..." [(ngModel)]="tcSearch"
-              (ngModelChange)="onTestCaseFilterChange()">
-          </div>
-
-          <div class="filter-dropdowns">
-            <select class="form-control filter-select" [(ngModel)]="tcFilterType" (change)="onTestCaseFilterChange()">
-              <option value="ALL">All Types</option>
-              <option value="UI">UI</option>
-              <option value="API">API</option>
-              <option value="DB">DB</option>
-              <option value="E2E">E2E</option>
-            </select>
-
-            <select class="form-control filter-select" [(ngModel)]="tcFilterPriority"
-              (change)="onTestCaseFilterChange()">
-              <option value="ALL">All Priorities</option>
-              <option value="CRITICAL">CRITICAL</option>
-              <option value="HIGH">HIGH</option>
-              <option value="MEDIUM">MEDIUM</option>
-              <option value="LOW">LOW</option>
-            </select>
-
-            <select class="form-control filter-select" [(ngModel)]="tcFilterStatus" (change)="onTestCaseFilterChange()">
-              <option value="ALL">All Statuses</option>
-              <option value="PASS">Passed</option>
-              <option value="FAIL">Failed</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="BLOCK">Blocked</option>
-              <option value="DESCOPE">Descoped</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Bulk Selection Action Banner -->
-        <div class="selection-banner" *ngIf="selectedTestCaseIds.size > 0">
-          <div class="selection-info">
-            <i class="fa-solid fa-circle-check text-emerald"></i>
-            <span><strong>{{ selectedTestCaseIds.size }}</strong> test case{{ selectedTestCaseIds.size > 1 ? 's' : '' }} selected</span>
-          </div>
-          <div class="selection-actions">
-            <button class="btn btn-warning btn-sm" (click)="openMoveTestCasesModal()">
-              <i class="fa-solid fa-arrow-right-arrow-left"></i> Map to Another Feature
+        <!-- Navigation Tabs (Test Cases vs Defects) -->
+        <div class="cockpit-tabs-bar" *ngIf="activeFeature">
+          <div class="tabs-group">
+            <button class="cockpit-tab" [class.active]="activeSubTab === 'testcases'"
+              (click)="activeSubTab = 'testcases'">
+              <i class="fa-solid fa-list-check"></i>
+              <span>Test Cases Suite</span>
+              <span class="tab-badge">{{ totalTestCasesCount || tcTotalRecords }}</span>
             </button>
-            <button class="btn btn-secondary btn-sm" (click)="clearSelectedTestCases()">
-              <i class="fa-solid fa-xmark"></i> Deselect All
+
+            <button class="cockpit-tab" [class.active]="activeSubTab === 'bugs'" (click)="activeSubTab = 'bugs'">
+              <i class="fa-solid fa-bug"></i>
+              <span>Defects & Issues</span>
+              <span class="tab-badge" [class.badge-alert]="openDefectsCount > 0">{{ bugs.length }}</span>
+            </button>
+          </div>
+
+          <!-- Suite Actions Strip -->
+          <div class="cockpit-tab-actions" *ngIf="activeSubTab === 'testcases'">
+            <button class="btn btn-primary btn-sm" (click)="openCreateTestCaseModal()" title="Add single test case manually">
+              <i class="fa-solid fa-plus"></i> Add Test Case
+            </button>
+            <button class="btn btn-secondary btn-sm" (click)="openExcelUploadModal()" title="Upload test cases from .xlsx spreadsheet">
+              <i class="fa-solid fa-cloud-arrow-up text-emerald"></i> Bulk Upload (.xlsx)
+            </button>
+            <!-- 2. Download Testcases: Downloads the testcases -->
+            <button class="btn btn-secondary btn-sm" (click)="downloadFeatureTestCases()" title="Download all test cases for this feature">
+              <i class="fa-solid fa-file-arrow-down text-indigo"></i> Download Testcases
+            </button>
+            <!-- 3. Current Link renamed: Download Testcase and Bug Data -->
+            <button class="btn btn-secondary btn-sm" (click)="exportTestCasesSummary()"
+              title="Download complete feature report with Testcase and Bug data">
+              <i class="fa-solid fa-download text-indigo"></i> Download Testcase and Bug Data
+            </button>
+          </div>
+
+          <div class="cockpit-tab-actions" *ngIf="activeSubTab === 'bugs'">
+            <button class="btn btn-rose btn-sm" (click)="openLogDefectModal()" title="Log a new defect">
+              <i class="fa-solid fa-plus"></i> Log Defect
+            </button>
+            <!-- Download Testcase and Bug Data -->
+            <button class="btn btn-secondary btn-sm" (click)="exportBugsSummary()"
+              title="Download complete feature report with Testcase and Bug data">
+              <i class="fa-solid fa-download text-indigo"></i> Download Testcase and Bug Data
             </button>
           </div>
         </div>
 
-        <!-- Clamped 2-Line Test Cases Table with Click to View Card -->
-        <div class="table-responsive">
-          <table class="cockpit-table">
-            <thead>
-              <tr>
-                <th style="width: 44px; text-align: center;">
-                  <input type="checkbox"
-                    [checked]="isAllTestCasesSelected()"
-                    [indeterminate]="isPartiallySelected()"
-                    (change)="toggleSelectAllTestCases($event)"
-                    title="Select / Deselect all visible test cases" />
-                </th>
-                <th style="width: 100px;">TC ID</th>
-                <th>Test Case Description & Steps</th>
-                <th style="width: 130px;">Type / Priority</th>
-                <th style="width: 150px;">Status / Bugs</th>
-                <th style="width: 210px; text-align: right;">Run & Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngIf="isLoadingTestCases">
-                <td colspan="6" class="table-loading-cell">
-                  <i class="fa-solid fa-circle-notch fa-spin text-emerald"></i>
-                  <span>Loading test cases...</span>
-                </td>
-              </tr>
-              <tr *ngIf="!isLoadingTestCases && paginatedTestCases.length === 0">
-                <td colspan="6" class="empty-table-cell">
-                  <i class="fa-solid fa-vial-circle-check"></i>
-                  <span>No test cases match filter criteria</span>
-                </td>
-              </tr>
+        <!-- VIEW 1: TEST CASES SUITE TABLE -->
+        <div class="view-panel" *ngIf="activeFeature && activeSubTab === 'testcases'">
+          <!-- Filter Toolbar -->
+          <div class="table-filter-toolbar">
+            <div class="filter-search-box">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" placeholder="Search test cases by title, steps, or ID..." [(ngModel)]="tcSearch"
+                (ngModelChange)="onTestCaseFilterChange()">
+            </div>
 
-              <tr *ngFor="let tc of paginatedTestCases; trackBy: trackByTestCaseId" class="clickable-row"
-                [class.row-selected]="isTestCaseSelected(tc.testcaseId)"
-                (click)="viewTestCaseDetail(tc)" title="Click to view detailed card, edit, or soft delete">
-                <td style="width: 44px; text-align: center;" (click)="$event.stopPropagation()">
-                  <input type="checkbox"
-                    [checked]="isTestCaseSelected(tc.testcaseId)"
-                    (change)="toggleTestCaseSelect(tc.testcaseId, $event)"
-                    title="Select test case" />
-                </td>
-                <td>
-                  <span class="tc-id-pill">{{ tc.testcaseFormatId || ('TC_' + tc.testcaseId) }}</span>
-                </td>
+            <div class="filter-dropdowns">
+              <select class="form-control filter-select" [(ngModel)]="tcFilterType" (change)="onTestCaseFilterChange()">
+                <option value="ALL">All Types</option>
+                <option value="UI">UI</option>
+                <option value="API">API</option>
+                <option value="DB">DB</option>
+                <option value="E2E">E2E</option>
+              </select>
 
-                <td>
-                  <!-- 2-Line Ellipsis Clamp -->
-                  <div class="tc-content-box">
-                    <div class="tc-title line-clamp-2" [title]="tc.title">
-                      {{ tc.title }}
-                    </div>
-                    <div class="tc-steps-snippet line-clamp-2" *ngIf="tc.execution?.executionSteps"
-                      [title]="tc.execution?.executionSteps">
-                      <i class="fa-solid fa-arrow-right-long text-muted"></i> {{ tc.execution?.executionSteps }}
-                    </div>
-                  </div>
-                </td>
+              <select class="form-control filter-select" [(ngModel)]="tcFilterPriority"
+                (change)="onTestCaseFilterChange()">
+                <option value="ALL">All Priorities</option>
+                <option value="CRITICAL">CRITICAL</option>
+                <option value="HIGH">HIGH</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="LOW">LOW</option>
+              </select>
 
-                <td>
-                  <div class="type-prio-col">
-                    <span class="badge-tag badge-type">{{ tc.testType }}</span>
-                    <span class="badge-tag" [ngClass]="'badge-prio-' + (tc.testPriority?.toLowerCase() || 'medium')">
-                      {{ tc.testPriority }}
-                    </span>
-                  </div>
-                </td>
-
-                <td>
-                  <div class="status-col" (click)="$event.stopPropagation()">
-                    <select class="exec-status-select"
-                      [ngClass]="'status-' + (tc.executionStatus?.toLowerCase() || 'norun')"
-                      [ngModel]="tc.executionStatus || 'NO_RUN'"
-                      (ngModelChange)="onTestCaseStatusChange(tc, $event)"
-                      title="Change execution status">
-                      <option value="NO_RUN" disabled>NO RUN</option>
-                      <option value="PASS">PASS</option>
-                      <option value="FAIL">FAIL</option>
-                      <option value="IN_PROGRESS">IN_PROGRESS</option>
-                      <option value="BLOCK">BLOCK</option>
-                      <option value="DESCOPE">DESCOPE</option>
-                    </select>
-                    <!-- Multiple Linked Bugs Count Badge -->
-                    <span *ngIf="getLinkedDefects(tc.testcaseId).length > 0" class="badge-linked-bugs"
-                      (click)="$event.stopPropagation(); filterDefectsByTestCase(tc)"
-                      title="View linked defects">
-                      <i class="fa-solid fa-bug"></i> {{ getLinkedDefects(tc.testcaseId).length }} Defects
-                    </span>
-                  </div>
-                </td>
-
-                <td style="text-align: right;" (click)="$event.stopPropagation()">
-                  <div class="row-actions">
-                    <button class="btn-action-icon btn-pass"
-                      [class.btn-active-pass]="tc.executionStatus === 'PASS'"
-                      (click)="handleExecuteTestCase({ testcaseId: tc.testcaseId, status: 'PASS' })"
-                      title="Mark as Passed">
-                      <i class="fa-solid fa-check"></i>
-                    </button>
-                    <button class="btn-action-icon btn-fail"
-                      [class.btn-active-fail]="tc.executionStatus === 'FAIL'"
-                      (click)="handleExecuteTestCase({ testcaseId: tc.testcaseId, status: 'FAIL' })"
-                      title="Mark as Failed">
-                      <i class="fa-solid fa-xmark"></i>
-                    </button>
-                    <!-- CREATE BUG BUTTON (Appears ONLY when executionStatus is FAIL) -->
-                    <button *ngIf="tc.executionStatus === 'FAIL'"
-                      class="btn-create-bug"
-                      (click)="openLogDefectModal(tc)"
-                      title="Create Bug for this failed test case">
-                      <i class="fa-solid fa-bug"></i> Create Bug
-                    </button>
-                    <button class="btn-action-icon" (click)="viewTestCaseDetail(tc, true)"
-                      title="Edit Test Case (Full Put Request)">
-                      <i class="fa-solid fa-pen-to-square text-indigo"></i>
-                    </button>
-                    <button class="btn-action-icon" (click)="viewTestCaseDetail(tc, false)"
-                      title="Open Full Details Card">
-                      <i class="fa-solid fa-ellipsis-vertical"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Pagination Bar for Feature Test Cases Suite -->
-        <div class="table-pagination-bar" *ngIf="tcTotalRecords > 0">
-          <div class="pagination-info">
-            <span class="pagination-count-text">
-              Showing <strong>{{ tcStartIndex }}-{{ tcEndIndex }}</strong> of <strong>{{ tcTotalRecords }}</strong> test cases
-            </span>
-            <div class="pagination-divider"></div>
-            <div class="page-size-picker">
-              <label>Rows:</label>
-              <select [(ngModel)]="tcPageSize" (change)="onTcPageSizeChange()" class="form-control-xs" title="Rows per page">
-                <option *ngFor="let opt of tcPageSizeOptions" [value]="opt">{{ opt }}</option>
+              <select class="form-control filter-select" [(ngModel)]="tcFilterStatus"
+                (change)="onTestCaseFilterChange()">
+                <option value="ALL">All Statuses</option>
+                <option value="PASS">Passed</option>
+                <option value="FAIL">Failed</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="BLOCK">Blocked</option>
+                <option value="DESCOPE">Descoped</option>
               </select>
             </div>
           </div>
-          <div class="pagination-controls">
-            <button class="btn-page" [disabled]="tcCurrentPage <= 1" (click)="goToTcPage(tcCurrentPage - 1)" title="Previous page">
-              <i class="fa-solid fa-chevron-left"></i> Prev
-            </button>
-            <span class="page-indicator">Page <strong>{{ tcCurrentPage }}</strong> of <strong>{{ totalTcPages }}</strong></span>
-            <button class="btn-page" [disabled]="tcCurrentPage >= totalTcPages" (click)="goToTcPage(tcCurrentPage + 1)" title="Next page">
-              Next <i class="fa-solid fa-chevron-right"></i>
-            </button>
+
+          <!-- Bulk Selection Action Banner -->
+          <div class="selection-banner" *ngIf="selectedTestCaseIds.size > 0">
+            <div class="selection-info">
+              <i class="fa-solid fa-circle-check text-emerald"></i>
+              <span><strong>{{ selectedTestCaseIds.size }}</strong> test case{{ selectedTestCaseIds.size > 1 ? 's' : ''
+                }} selected</span>
+            </div>
+            <div class="selection-actions">
+              <button class="btn btn-warning btn-sm" (click)="openMoveTestCasesModal()">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i> Map to Another Feature
+              </button>
+              <button class="btn btn-danger btn-sm" (click)="openBulkDeleteModal()">
+                <i class="fa-solid fa-trash-can"></i> Delete Selected
+              </button>
+              <button class="btn btn-secondary btn-sm" (click)="clearSelectedTestCases()">
+                <i class="fa-solid fa-xmark"></i> Deselect All
+              </button>
+            </div>
           </div>
-        </div>
-      </div>
 
-      <!-- VIEW 2: DEFECTS & BUGS TABLE -->
-      <div class="view-panel" *ngIf="activeFeature && activeSubTab === 'bugs'">
-        <!-- Filter Toolbar -->
-        <div class="table-filter-toolbar">
-          <div class="filter-search-box">
-            <i class="fa-solid fa-magnifying-glass"></i>
-            <input type="text" placeholder="Search defects by title, ID, or description..." [(ngModel)]="bugSearch"
-              (ngModelChange)="onBugFilterChange()">
-          </div>
+          <!-- Clamped 2-Line Test Cases Table with Click to View Card -->
+          <div class="table-responsive">
+            <table class="cockpit-table">
+              <thead>
+                <tr>
+                  <th style="width: 44px; text-align: center;">
+                    <input type="checkbox" [checked]="isAllTestCasesSelected()" [indeterminate]="isPartiallySelected()"
+                      (change)="toggleSelectAllTestCases($event)" title="Select / Deselect all visible test cases" />
+                  </th>
+                  <th style="width: 100px;">TC ID</th>
+                  <th>Test Case Description & Steps</th>
+                  <th style="width: 130px;">Type / Priority</th>
+                  <th style="width: 150px;">Status / Bugs</th>
+                  <th style="width: 210px; text-align: right;">Run & Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngIf="isLoadingTestCases">
+                  <td colspan="6" class="table-loading-cell">
+                    <i class="fa-solid fa-circle-notch fa-spin text-emerald"></i>
+                    <span>Loading test cases...</span>
+                  </td>
+                </tr>
+                <tr *ngIf="!isLoadingTestCases && paginatedTestCases.length === 0">
+                  <td colspan="6" class="empty-table-cell">
+                    <i class="fa-solid fa-vial-circle-check"></i>
+                    <span>No test cases match filter criteria</span>
+                  </td>
+                </tr>
 
-          <div class="filter-dropdowns">
-            <select class="form-control filter-select" [(ngModel)]="bugFilterSeverity" (change)="onBugFilterChange()">
-              <option value="ALL">All Severities</option>
-              <option value="CRITICAL">CRITICAL</option>
-              <option value="HIGH">HIGH</option>
-              <option value="MEDIUM">MEDIUM</option>
-              <option value="LOW">LOW</option>
-            </select>
+                <tr *ngFor="let tc of paginatedTestCases; trackBy: trackByTestCaseId" class="clickable-row"
+                  [class.row-selected]="isTestCaseSelected(tc.testcaseId)" (click)="viewTestCaseDetail(tc)"
+                  title="Click to view detailed card, edit, or delete">
+                  <td style="width: 44px; text-align: center;" (click)="$event.stopPropagation()">
+                    <input type="checkbox" [checked]="isTestCaseSelected(tc.testcaseId)"
+                      (change)="toggleTestCaseSelect(tc.testcaseId, $event)" title="Select test case" />
+                  </td>
+                  <td>
+                    <span class="tc-id-pill">{{ tc.testcaseFormatId || ('TC_' + tc.testcaseId) }}</span>
+                  </td>
 
-            <select class="form-control filter-select" [(ngModel)]="bugFilterStatus" (change)="onBugFilterChange()">
-              <option value="ALL">All Statuses</option>
-              <option value="OPEN">OPEN</option>
-              <option value="IN_PROGRESS">IN PROGRESS</option>
-              <option value="RESOLVED">RESOLVED</option>
-              <option value="FIXED">FIXED</option>
-              <option value="CLOSED">CLOSED</option>
-              <option value="REOPENED">REOPENED</option>
-              <option value="NOT_A_BUG">NOT A BUG</option>
-              <option value="DEFERRED">DEFERRED</option>
-            </select>
-          </div>
-        </div>
-
-        <!-- Clamped 2-Line Defects Table with Reopened Count and Locked Assignee -->
-        <div class="table-responsive">
-          <table class="cockpit-table">
-            <thead>
-              <tr>
-                <th style="width: 110px;">Bug ID</th>
-                <th>Defect Description & Expected Behavior</th>
-                <th style="width: 140px;">Severity / Category</th>
-                <th style="width: 150px;">Status / Reopened</th>
-                <th style="width: 170px;">Assignee</th>
-                <th style="width: 110px; text-align: right;">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr *ngIf="isLoadingBugs">
-                <td colspan="6" class="table-loading-cell">
-                  <i class="fa-solid fa-circle-notch fa-spin text-emerald"></i>
-                  <span>Loading defects and issues...</span>
-                </td>
-              </tr>
-              <tr *ngIf="!isLoadingBugs && paginatedBugs.length === 0">
-                <td colspan="6" class="empty-table-cell">
-                  <i class="fa-solid fa-shield-virus"></i>
-                  <span>No defects recorded matching filter</span>
-                </td>
-              </tr>
-
-              <tr *ngFor="let b of paginatedBugs; trackBy: trackByBugId" class="clickable-row"
-                (click)="viewDefectDetail(b)" title="Click to view detailed card, edit, or soft delete">
-                <td>
-                  <span class="bug-id-pill">{{ b.bugFormatId || ('BUG_' + b.bugId) }}</span>
-                  <span class="sub-tc-link clickable-tc-link"
-                    *ngIf="b.testcaseFormatId || b.testcaseId"
-                    (click)="$event.stopPropagation(); navigateToTestCaseFromBug(b)"
-                    [title]="'Click to view test case in suite: ' + (getLinkedTestCaseTitle(b) || b.testcaseFormatId || ('TC_' + b.testcaseId))">
-                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
-                    {{ b.testcaseFormatId || ('TC_' + b.testcaseId) }}
-                  </span>
-                </td>
-
-                <td>
-                  <!-- 2-Line Ellipsis Clamp -->
-                  <div class="bug-content-box">
-                    <div class="bug-title line-clamp-2" [title]="b.title">
-                      {{ b.title }}
+                  <td>
+                    <!-- 2-Line Ellipsis Clamp -->
+                    <div class="tc-content-box">
+                      <div class="tc-title line-clamp-2" [title]="tc.title">
+                        {{ tc.title }}
+                      </div>
+                      <div class="tc-steps-snippet line-clamp-2" *ngIf="tc.execution?.executionSteps"
+                        [title]="tc.execution?.executionSteps">
+                        <i class="fa-solid fa-arrow-right-long text-muted"></i> {{ tc.execution?.executionSteps }}
+                      </div>
                     </div>
-                    <div class="bug-desc-snippet line-clamp-2" *ngIf="b.description" [title]="b.description">
-                      {{ b.description }}
+                  </td>
+
+                  <td>
+                    <div class="type-prio-col">
+                      <span class="badge-tag badge-type">{{ tc.testType }}</span>
+                      <span class="badge-tag" [ngClass]="'badge-prio-' + (tc.testPriority?.toLowerCase() || 'medium')">
+                        {{ tc.testPriority }}
+                      </span>
                     </div>
-                  </div>
-                </td>
+                  </td>
 
-                <td>
-                  <div class="type-prio-col">
-                    <span class="badge-tag" [ngClass]="'badge-sev-' + (b.severity?.toLowerCase() || 'high')">
-                      {{ b.severity }}
-                    </span>
-                    <span class="badge-tag badge-category">{{ b.category || 'FUNCTIONAL' }}</span>
-                  </div>
-                </td>
+                  <td>
+                    <div class="status-col" (click)="$event.stopPropagation()">
+                      <select class="exec-status-select"
+                        [ngClass]="'status-' + (tc.executionStatus?.toLowerCase() || 'norun')"
+                        [ngModel]="tc.executionStatus || 'NO_RUN'" (ngModelChange)="onTestCaseStatusChange(tc, $event)"
+                        title="Change execution status">
+                        <option value="NO_RUN" disabled>NO RUN</option>
+                        <option value="PASS">PASS</option>
+                        <option value="FAIL">FAIL</option>
+                        <option value="IN_PROGRESS">IN_PROGRESS</option>
+                        <option value="BLOCK">BLOCK</option>
+                        <option value="DESCOPE">DESCOPE</option>
+                      </select>
+                      <!-- Multiple Linked Bugs Count Badge -->
+                      <span *ngIf="getLinkedDefects(tc.testcaseId).length > 0" class="badge-linked-bugs"
+                        (click)="$event.stopPropagation(); filterDefectsByTestCase(tc)" title="View linked defects">
+                        <i class="fa-solid fa-bug"></i> {{ getLinkedDefects(tc.testcaseId).length }} Defects
+                      </span>
+                    </div>
+                  </td>
 
-                <td>
-                  <div class="status-col">
-                    <span class="badge-tag" [ngClass]="'badge-status-' + (b.status?.toLowerCase() || 'open')">
-                      {{ b.status }}
-                    </span>
-                    <!-- Reopened Count Requirement -->
-                    <span *ngIf="b.status === 'REOPENED' || (b.bugOccurrence && b.bugOccurrence >= 2)"
-                      class="badge-tag badge-reopened">
-                      <i class="fa-solid fa-rotate-left"></i> Count: {{ b.bugOccurrence || 2 }}
-                    </span>
-                  </div>
-                </td>
+                  <td style="text-align: right;" (click)="$event.stopPropagation()">
+                    <div class="row-actions">
+                      <button class="btn-action-icon btn-pass" [class.btn-active-pass]="tc.executionStatus === 'PASS'"
+                        (click)="handleExecuteTestCase({ testcaseId: tc.testcaseId, status: 'PASS' })"
+                        title="Mark as Passed">
+                        <i class="fa-solid fa-check"></i>
+                      </button>
+                      <button class="btn-action-icon btn-fail" [class.btn-active-fail]="tc.executionStatus === 'FAIL'"
+                        (click)="handleExecuteTestCase({ testcaseId: tc.testcaseId, status: 'FAIL' })"
+                        title="Mark as Failed">
+                        <i class="fa-solid fa-xmark"></i>
+                      </button>
+                      <!-- CREATE BUG BUTTON (Appears ONLY when executionStatus is FAIL) -->
+                      <button *ngIf="tc.executionStatus === 'FAIL'" class="btn-create-bug"
+                        (click)="openLogDefectModal(tc)" title="Create Bug for this failed test case">
+                        <i class="fa-solid fa-bug"></i> Create Bug
+                      </button>
+                      <button class="btn-action-icon" (click)="viewTestCaseDetail(tc, true)"
+                        title="Edit Test Case (Full Put Request)">
+                        <i class="fa-solid fa-pen-to-square text-indigo"></i>
+                      </button>
+                      <button class="btn-action-icon" (click)="viewTestCaseDetail(tc, false)"
+                        title="Open Full Details Card">
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-                <td>
-                  <!-- Locked Assignee View -->
-                  <div class="assignee-cell" (click)="$event.stopPropagation(); viewDefectDetail(b)">
-                    <i class="fa-solid fa-lock text-emerald" *ngIf="b.assignedTo && b.assignedTo !== 'Unassigned'"></i>
-                    <i class="fa-solid fa-lock-open text-muted"
-                      *ngIf="!b.assignedTo || b.assignedTo === 'Unassigned'"></i>
-                    <span class="assignee-name">{{ b.assignedTo && b.assignedTo !== 'Unassigned' ? b.assignedTo :
-                      'Unassigned' }}</span>
-                  </div>
-                </td>
-
-                <td style="text-align: right;" (click)="$event.stopPropagation()">
-                  <div class="row-actions">
-                    <button class="btn-action-icon" (click)="openBugChat(b)" title="Open Discussion Thread">
-                      <i class="fa-solid fa-comments text-emerald"></i>
-                    </button>
-                    <button class="btn-action-icon"
-                      (click)="openAttachments('bug', b.bugId, 'Defect Evidence: ' + b.bugFormatId)"
-                      title="Evidence Attachments">
-                      <i class="fa-solid fa-paperclip text-indigo"></i>
-                    </button>
-                    <button class="btn-action-icon" (click)="viewDefectDetail(b)"
-                      title="Open Detail Card (Edit / Soft Delete)">
-                      <i class="fa-solid fa-ellipsis-vertical"></i>
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            </tbody>
-          </table>
+          <!-- Pagination Bar for Feature Test Cases Suite -->
+          <div class="table-pagination-bar" *ngIf="tcTotalRecords > 0">
+            <div class="pagination-info">
+              <span class="pagination-count-text">
+                Showing <strong>{{ tcStartIndex }}-{{ tcEndIndex }}</strong> of <strong>{{ tcTotalRecords }}</strong>
+                test cases
+              </span>
+              <div class="pagination-divider"></div>
+              <div class="page-size-picker">
+                <label>Rows:</label>
+                <select [(ngModel)]="tcPageSize" (change)="onTcPageSizeChange()" class="form-control-xs"
+                  title="Rows per page">
+                  <option *ngFor="let opt of tcPageSizeOptions" [ngValue]="opt">{{ opt }}</option>
+                </select>
+              </div>
+            </div>
+            <div class="pagination-controls">
+              <button class="btn-page" [disabled]="tcCurrentPage <= 1" (click)="goToTcPage(tcCurrentPage - 1)"
+                title="Previous page">
+                <i class="fa-solid fa-chevron-left"></i> Prev
+              </button>
+              <span class="page-indicator">Page <strong>{{ tcCurrentPage }}</strong> of <strong>{{ totalTcPages
+                  }}</strong></span>
+              <button class="btn-page" [disabled]="tcCurrentPage >= totalTcPages"
+                (click)="goToTcPage(tcCurrentPage + 1)" title="Next page">
+                Next <i class="fa-solid fa-chevron-right"></i>
+              </button>
+            </div>
+          </div>
         </div>
 
-        <!-- Pagination Bar for Defects Suite -->
-        <div class="table-pagination-bar" *ngIf="filteredBugs.length > 0">
-          <div class="pagination-info">
-            <span class="pagination-count-text">
-              Showing <strong>{{ bugStartIndex }}-{{ bugEndIndex }}</strong> of <strong>{{ filteredBugs.length }}</strong> defects
-            </span>
-            <div class="pagination-divider"></div>
-            <div class="page-size-picker">
-              <label>Rows:</label>
-              <select [(ngModel)]="bugPageSize" (change)="onBugPageSizeChange()" class="form-control-xs" title="Rows per page">
-                <option *ngFor="let opt of bugPageSizeOptions" [value]="opt">{{ opt }}</option>
+        <!-- VIEW 2: DEFECTS & BUGS TABLE -->
+        <div class="view-panel" *ngIf="activeFeature && activeSubTab === 'bugs'">
+          <!-- Filter Toolbar -->
+          <div class="table-filter-toolbar">
+            <div class="filter-search-box">
+              <i class="fa-solid fa-magnifying-glass"></i>
+              <input type="text" placeholder="Search defects by title, ID, or description..." [(ngModel)]="bugSearch"
+                (ngModelChange)="onBugFilterChange()">
+            </div>
+
+            <div class="filter-dropdowns">
+              <select class="form-control filter-select" [(ngModel)]="bugFilterSeverity" (change)="onBugFilterChange()">
+                <option value="ALL">All Severities</option>
+                <option value="CRITICAL">CRITICAL</option>
+                <option value="HIGH">HIGH</option>
+                <option value="MEDIUM">MEDIUM</option>
+                <option value="LOW">LOW</option>
+              </select>
+
+              <select class="form-control filter-select" [(ngModel)]="bugFilterStatus" (change)="onBugFilterChange()">
+                <option value="ALL">All Statuses</option>
+                <option value="OPEN">OPEN</option>
+                <option value="IN_PROGRESS">IN PROGRESS</option>
+                <option value="RESOLVED">RESOLVED</option>
+                <option value="FIXED">FIXED</option>
+                <option value="CLOSED">CLOSED</option>
+                <option value="REOPENED">REOPENED</option>
+                <option value="NOT_A_BUG">NOT A BUG</option>
+                <option value="DEFERRED">DEFERRED</option>
               </select>
             </div>
           </div>
-          <div class="pagination-controls">
-            <button class="btn-page" [disabled]="bugCurrentPage <= 1" (click)="goToBugPage(bugCurrentPage - 1)" title="Previous page">
-              <i class="fa-solid fa-chevron-left"></i> Prev
-            </button>
-            <span class="page-indicator">Page <strong>{{ bugCurrentPage }}</strong> of <strong>{{ totalBugPages }}</strong></span>
-            <button class="btn-page" [disabled]="bugCurrentPage >= totalBugPages"
-              (click)="goToBugPage(bugCurrentPage + 1)" title="Next page">
-              Next <i class="fa-solid fa-chevron-right"></i>
-            </button>
-          </div>
-        </div>
-      </div>
 
-      <!-- Loading Skeleton State when Features are Loading -->
-      <div class="view-panel workspace-skeleton-panel" *ngIf="isLoadingFeatures">
-        <div class="skeleton-ribbon-row">
-          <div class="skeleton-card" *ngFor="let i of [1,2,3,4,5,6]">
-            <div class="sk-icon"></div>
-            <div class="sk-lines">
-              <div class="sk-line sk-val"></div>
-              <div class="sk-line sk-lbl"></div>
+          <!-- Bulk Selection Action Banner for Defects -->
+          <div class="selection-banner" *ngIf="selectedBugIds.size > 0">
+            <div class="selection-info">
+              <i class="fa-solid fa-circle-check text-emerald"></i>
+              <span><strong>{{ selectedBugIds.size }}</strong> defect{{ selectedBugIds.size > 1 ? 's' : '' }} selected</span>
+            </div>
+            <div class="selection-actions">
+              <button class="btn btn-danger btn-sm" (click)="openBulkDeleteBugsModal()">
+                <i class="fa-solid fa-trash-can"></i> Delete Selected
+              </button>
+              <button class="btn btn-secondary btn-sm" (click)="clearSelectedBugs()">
+                <i class="fa-solid fa-xmark"></i> Deselect All
+              </button>
+            </div>
+          </div>
+
+          <!-- Clamped 2-Line Defects Table with Reopened Count and Locked Assignee -->
+          <div class="table-responsive">
+            <table class="cockpit-table">
+              <thead>
+                <tr>
+                  <th style="width: 44px; text-align: center;">
+                    <input type="checkbox" [checked]="isAllBugsSelected()" [indeterminate]="isPartiallyBugsSelected()"
+                      (change)="toggleSelectAllBugs($event)" title="Select / Deselect all visible defects" />
+                  </th>
+                  <th style="width: 110px;">Bug ID</th>
+                  <th>Defect Description & Expected Behavior</th>
+                  <th style="width: 140px;">Severity / Category</th>
+                  <th style="width: 150px;">Status / Reopened</th>
+                  <th style="width: 170px;">Assignee</th>
+                  <th style="width: 110px; text-align: right;">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr *ngIf="isLoadingBugs">
+                  <td colspan="7" class="table-loading-cell">
+                    <i class="fa-solid fa-circle-notch fa-spin text-emerald"></i>
+                    <span>Loading defects and issues...</span>
+                  </td>
+                </tr>
+                <tr *ngIf="!isLoadingBugs && paginatedBugs.length === 0">
+                  <td colspan="7" class="empty-table-cell">
+                    <i class="fa-solid fa-shield-virus"></i>
+                    <span>No defects recorded matching filter</span>
+                  </td>
+                </tr>
+
+                <tr *ngFor="let b of paginatedBugs; trackBy: trackByBugId" class="clickable-row"
+                  [class.row-selected]="isBugSelected(b.bugId)"
+                  (click)="viewDefectDetail(b)" title="Click to view detailed card, edit, or delete">
+                  <td style="width: 44px; text-align: center;" (click)="$event.stopPropagation()">
+                    <input type="checkbox" [checked]="isBugSelected(b.bugId)"
+                      (change)="toggleBugSelect(b.bugId, $event)" title="Select defect" />
+                  </td>
+                  <td>
+                    <span class="bug-id-pill">{{ b.bugFormatId || ('BUG_' + b.bugId) }}</span>
+                    <span class="sub-tc-link clickable-tc-link" *ngIf="b.testcaseFormatId || b.testcaseId"
+                      (click)="$event.stopPropagation(); navigateToTestCaseFromBug(b)"
+                      [title]="'Click to view test case in suite: ' + (getLinkedTestCaseTitle(b) || b.testcaseFormatId || ('TC_' + b.testcaseId))">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                      {{ b.testcaseFormatId || ('TC_' + b.testcaseId) }}
+                    </span>
+                  </td>
+
+                  <td>
+                    <!-- 2-Line Ellipsis Clamp -->
+                    <div class="bug-content-box">
+                      <div class="bug-title line-clamp-2" [title]="b.title">
+                        {{ b.title }}
+                      </div>
+                      <div class="bug-desc-snippet line-clamp-2" *ngIf="b.description" [title]="b.description">
+                        {{ b.description }}
+                      </div>
+                    </div>
+                  </td>
+
+                  <td>
+                    <div class="type-prio-col">
+                      <span class="badge-tag" [ngClass]="'badge-sev-' + (b.severity?.toLowerCase() || 'high')">
+                        {{ b.severity }}
+                      </span>
+                      <span class="badge-tag badge-category">{{ b.category || 'FUNCTIONAL' }}</span>
+                    </div>
+                  </td>
+
+                  <td>
+                    <div class="status-col">
+                      <span class="badge-tag" [ngClass]="'badge-status-' + (b.status?.toLowerCase() || 'open')">
+                        {{ b.status }}
+                      </span>
+                      <!-- Reopened Count Requirement -->
+                      <span *ngIf="b.status === 'REOPENED' || (b.bugOccurrence && b.bugOccurrence >= 2)"
+                        class="badge-tag badge-reopened">
+                        <i class="fa-solid fa-rotate-left"></i> Count: {{ b.bugOccurrence || 2 }}
+                      </span>
+                    </div>
+                  </td>
+
+                  <td>
+                    <!-- Locked Assignee View -->
+                    <div class="assignee-cell" (click)="$event.stopPropagation(); viewDefectDetail(b)">
+                      <i class="fa-solid fa-lock text-emerald"
+                        *ngIf="b.assignedTo && b.assignedTo !== 'Unassigned'"></i>
+                      <i class="fa-solid fa-lock-open text-muted"
+                        *ngIf="!b.assignedTo || b.assignedTo === 'Unassigned'"></i>
+                      <span class="assignee-name">{{ b.assignedTo && b.assignedTo !== 'Unassigned' ? b.assignedTo :
+                        'Unassigned' }}</span>
+                    </div>
+                  </td>
+
+                  <td style="text-align: right;" (click)="$event.stopPropagation()">
+                    <div class="row-actions">
+                      <button class="btn-action-icon" (click)="openBugChat(b)" title="Open Discussion Thread">
+                        <i class="fa-solid fa-comments text-emerald"></i>
+                      </button>
+                      <button class="btn-action-icon"
+                        (click)="openAttachments('bug', b.bugId, 'Defect Evidence: ' + b.bugFormatId)"
+                        title="Evidence Attachments">
+                        <i class="fa-solid fa-paperclip text-indigo"></i>
+                      </button>
+                      <button class="btn-action-icon" (click)="viewDefectDetail(b)"
+                        title="Open Detail Card (Edit / Delete)">
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar for Defects Suite -->
+          <div class="table-pagination-bar" *ngIf="filteredBugs.length > 0">
+            <div class="pagination-info">
+              <span class="pagination-count-text">
+                Showing <strong>{{ bugStartIndex }}-{{ bugEndIndex }}</strong> of <strong>{{ filteredBugs.length
+                  }}</strong> defects
+              </span>
+              <div class="pagination-divider"></div>
+              <div class="page-size-picker">
+                <label>Rows:</label>
+                <select [(ngModel)]="bugPageSize" (change)="onBugPageSizeChange()" class="form-control-xs"
+                  title="Rows per page">
+                  <option *ngFor="let opt of bugPageSizeOptions" [value]="opt">{{ opt }}</option>
+                </select>
+              </div>
+            </div>
+            <div class="pagination-controls">
+              <button class="btn-page" [disabled]="bugCurrentPage <= 1" (click)="goToBugPage(bugCurrentPage - 1)"
+                title="Previous page">
+                <i class="fa-solid fa-chevron-left"></i> Prev
+              </button>
+              <span class="page-indicator">Page <strong>{{ bugCurrentPage }}</strong> of <strong>{{ totalBugPages
+                  }}</strong></span>
+              <button class="btn-page" [disabled]="bugCurrentPage >= totalBugPages"
+                (click)="goToBugPage(bugCurrentPage + 1)" title="Next page">
+                Next <i class="fa-solid fa-chevron-right"></i>
+              </button>
             </div>
           </div>
         </div>
-        <div class="skeleton-body-content">
-          <div class="skeleton-tab-strip">
-            <div class="sk-tab"></div>
-            <div class="sk-tab"></div>
-          </div>
-          <div class="skeleton-table-mock">
-            <div class="sk-table-toolbar">
-              <div class="sk-search"></div>
-              <div class="sk-select"></div>
+
+        <!-- Loading Skeleton State when Features are Loading -->
+        <div class="view-panel workspace-skeleton-panel" *ngIf="isLoadingFeatures">
+          <div class="skeleton-ribbon-row">
+            <div class="skeleton-card" *ngFor="let i of [1,2,3,4,5,6]">
+              <div class="sk-icon"></div>
+              <div class="sk-lines">
+                <div class="sk-line sk-val"></div>
+                <div class="sk-line sk-lbl"></div>
+              </div>
             </div>
-            <div class="sk-table-row" *ngFor="let r of [1,2,3]"></div>
+          </div>
+          <div class="skeleton-body-content">
+            <div class="skeleton-tab-strip">
+              <div class="sk-tab"></div>
+              <div class="sk-tab"></div>
+            </div>
+            <div class="skeleton-table-mock">
+              <div class="sk-table-toolbar">
+                <div class="sk-search"></div>
+                <div class="sk-select"></div>
+              </div>
+              <div class="sk-table-row" *ngFor="let r of [1,2,3]"></div>
+            </div>
           </div>
         </div>
-      </div>
 
-      <!-- Empty State when Active Project has no Features yet (and not loading) -->
-      <div class="view-panel empty-feature-panel" *ngIf="!isLoadingFeatures && !activeFeature">
+        <!-- Empty State when Active Project has no Features yet (and not loading) -->
+        <div class="view-panel empty-feature-panel" *ngIf="!isLoadingFeatures && !activeFeature">
           <div class="empty-list-msg" style="padding: 48px 16px; text-align: center;">
             <i class="fa-solid fa-cubes text-emerald" style="font-size: 36px; margin-bottom: 12px; display: block;"></i>
             <h3 style="font-size: 16px; font-weight: 700; color: #334155; margin-bottom: 6px;">No Feature Selected</h3>
-            <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Select a feature from the sidebar to view test suites, or create a new feature for {{ activeProject.projectName }}.</p>
+            <p style="font-size: 13px; color: #64748b; margin-bottom: 16px;">Select a feature from the sidebar to view
+              test suites, or create a new feature for {{ activeProject.projectName }}.</p>
             <button class="btn btn-primary btn-sm" (click)="openCreateFeatureModal()">
               <i class="fa-solid fa-plus"></i> Create Feature
             </button>
           </div>
-      </div>
+        </div>
       </ng-container>
 
       <!-- VIEW 3: GLOBAL OVERVIEW DIRECTORY (When in Overview Mode OR No Feature is Selected) -->
@@ -690,22 +727,27 @@
           <div class="table-pagination-bar" *ngIf="filteredAllProjects.length > 0">
             <div class="pagination-info">
               <span class="pagination-count-text">
-                Showing <strong>{{ overviewProjStartIndex }}-{{ overviewProjEndIndex }}</strong> of <strong>{{ filteredAllProjects.length }}</strong> projects
+                Showing <strong>{{ overviewProjStartIndex }}-{{ overviewProjEndIndex }}</strong> of <strong>{{
+                  filteredAllProjects.length }}</strong> projects
               </span>
               <div class="pagination-divider"></div>
               <div class="page-size-picker">
                 <label>Rows:</label>
-                <select [(ngModel)]="overviewProjPageSize" (change)="overviewProjPage = 1" class="form-control-xs" title="Rows per page">
+                <select [(ngModel)]="overviewProjPageSize" (change)="overviewProjPage = 1" class="form-control-xs"
+                  title="Rows per page">
                   <option *ngFor="let opt of overviewPageSizeOptions" [value]="opt">{{ opt }}</option>
                 </select>
               </div>
             </div>
             <div class="pagination-controls">
-              <button class="btn-page" [disabled]="overviewProjPage <= 1" (click)="overviewProjPage = overviewProjPage - 1" title="Previous page">
+              <button class="btn-page" [disabled]="overviewProjPage <= 1"
+                (click)="overviewProjPage = overviewProjPage - 1" title="Previous page">
                 <i class="fa-solid fa-chevron-left"></i> Prev
               </button>
-              <span class="page-indicator">Page <strong>{{ overviewProjPage }}</strong> of <strong>{{ totalOverviewProjPages }}</strong></span>
-              <button class="btn-page" [disabled]="overviewProjPage >= totalOverviewProjPages" (click)="overviewProjPage = overviewProjPage + 1" title="Next page">
+              <span class="page-indicator">Page <strong>{{ overviewProjPage }}</strong> of <strong>{{
+                  totalOverviewProjPages }}</strong></span>
+              <button class="btn-page" [disabled]="overviewProjPage >= totalOverviewProjPages"
+                (click)="overviewProjPage = overviewProjPage + 1" title="Next page">
                 Next <i class="fa-solid fa-chevron-right"></i>
               </button>
             </div>
@@ -730,12 +772,13 @@
                   <th>Feature Name & Description</th>
                   <th style="width: 180px;">Project / Region</th>
                   <th style="width: 140px;">Sprint / Version</th>
-                  <th style="width: 140px; text-align: right;">Action</th>
+                  <th style="width: 150px;">Duration</th>
+                  <th style="width: 180px; text-align: right;">Action</th>
                 </tr>
               </thead>
               <tbody>
                 <tr *ngIf="paginatedAllFeatures.length === 0">
-                  <td colspan="5" class="empty-table-cell">
+                  <td colspan="6" class="empty-table-cell">
                     <i class="fa-solid fa-cubes"></i>
                     <span>No features found matching filter criteria</span>
                   </td>
@@ -770,6 +813,15 @@
                       <span class="sprint-tag">Sprint {{ f.sprint || 1 }}</span>
                     </div>
                   </td>
+                  <td>
+                    <div class="duration-badge-cell">
+                      <span class="duration-badge" [class.duration-running]="f.startTime" [title]="f.startTime ? 'Timer currently running' : 'Logged work duration'">
+                        <i class="fa-regular fa-clock" [class.fa-spin]="f.startTime"></i>
+                        <span>{{ formatDurationDisplay(f.duration || 0) }}</span>
+                        <span class="live-dot" *ngIf="f.startTime"></span>
+                      </span>
+                    </div>
+                  </td>
                   <td style="text-align: right;" (click)="$event.stopPropagation()">
                     <div class="row-actions">
                       <button class="btn btn-emerald btn-xs" (click)="navigateToFeature(f.featureId)">
@@ -777,6 +829,9 @@
                       </button>
                       <button class="btn-action-icon" (click)="openEditFeature(f)" title="Edit Feature">
                         <i class="fa-solid fa-pen-to-square"></i>
+                      </button>
+                      <button *ngIf="isManager" class="btn-action-icon text-danger" (click)="openDeleteFeatureModal(f)" title="Delete Feature">
+                        <i class="fa-regular fa-trash-can"></i>
                       </button>
                     </div>
                   </td>
@@ -789,22 +844,27 @@
           <div class="table-pagination-bar" *ngIf="filteredAllFeatures.length > 0">
             <div class="pagination-info">
               <span class="pagination-count-text">
-                Showing <strong>{{ overviewFeatStartIndex }}-{{ overviewFeatEndIndex }}</strong> of <strong>{{ filteredAllFeatures.length }}</strong> features
+                Showing <strong>{{ overviewFeatStartIndex }}-{{ overviewFeatEndIndex }}</strong> of <strong>{{
+                  filteredAllFeatures.length }}</strong> features
               </span>
               <div class="pagination-divider"></div>
               <div class="page-size-picker">
                 <label>Rows:</label>
-                <select [(ngModel)]="overviewFeatPageSize" (change)="overviewFeatPage = 1" class="form-control-xs" title="Rows per page">
+                <select [(ngModel)]="overviewFeatPageSize" (change)="overviewFeatPage = 1" class="form-control-xs"
+                  title="Rows per page">
                   <option *ngFor="let opt of overviewPageSizeOptions" [value]="opt">{{ opt }}</option>
                 </select>
               </div>
             </div>
             <div class="pagination-controls">
-              <button class="btn-page" [disabled]="overviewFeatPage <= 1" (click)="overviewFeatPage = overviewFeatPage - 1" title="Previous page">
+              <button class="btn-page" [disabled]="overviewFeatPage <= 1"
+                (click)="overviewFeatPage = overviewFeatPage - 1" title="Previous page">
                 <i class="fa-solid fa-chevron-left"></i> Prev
               </button>
-              <span class="page-indicator">Page <strong>{{ overviewFeatPage }}</strong> of <strong>{{ totalOverviewFeatPages }}</strong></span>
-              <button class="btn-page" [disabled]="overviewFeatPage >= totalOverviewFeatPages" (click)="overviewFeatPage = overviewFeatPage + 1" title="Next page">
+              <span class="page-indicator">Page <strong>{{ overviewFeatPage }}</strong> of <strong>{{
+                  totalOverviewFeatPages }}</strong></span>
+              <button class="btn-page" [disabled]="overviewFeatPage >= totalOverviewFeatPages"
+                (click)="overviewFeatPage = overviewFeatPage + 1" title="Next page">
                 Next <i class="fa-solid fa-chevron-right"></i>
               </button>
             </div>
@@ -847,11 +907,15 @@
           <div class="selection-banner" *ngIf="selectedTestCaseIds.size > 0">
             <div class="selection-info">
               <i class="fa-solid fa-circle-check text-emerald"></i>
-              <span><strong>{{ selectedTestCaseIds.size }}</strong> test case{{ selectedTestCaseIds.size > 1 ? 's' : '' }} selected</span>
+              <span><strong>{{ selectedTestCaseIds.size }}</strong> test case{{ selectedTestCaseIds.size > 1 ? 's' : ''
+                }} selected</span>
             </div>
             <div class="selection-actions">
               <button class="btn btn-warning btn-sm" (click)="openMoveTestCasesModal()">
                 <i class="fa-solid fa-arrow-right-arrow-left"></i> Map to Another Feature
+              </button>
+              <button class="btn btn-danger btn-sm" (click)="openBulkDeleteModal()">
+                <i class="fa-solid fa-trash-can"></i> Delete Selected
               </button>
               <button class="btn btn-secondary btn-sm" (click)="clearSelectedTestCases()">
                 <i class="fa-solid fa-xmark"></i> Deselect All
@@ -864,10 +928,8 @@
               <thead>
                 <tr>
                   <th style="width: 44px; text-align: center;">
-                    <input type="checkbox"
-                      [checked]="isAllOverviewTcSelected()"
-                      [indeterminate]="isPartiallyOverviewTcSelected()"
-                      (change)="toggleSelectAllOverviewTc($event)"
+                    <input type="checkbox" [checked]="isAllOverviewTcSelected()"
+                      [indeterminate]="isPartiallyOverviewTcSelected()" (change)="toggleSelectAllOverviewTc($event)"
                       title="Select / Deselect all visible test cases" />
                   </th>
                   <th style="width: 100px;">TC ID</th>
@@ -885,13 +947,10 @@
                   </td>
                 </tr>
                 <tr *ngFor="let tc of paginatedAllTestCases; trackBy: trackByTestCaseId" class="clickable-row"
-                  [class.row-selected]="isTestCaseSelected(tc.testcaseId)"
-                  (click)="viewTestCaseDetail(tc)">
+                  [class.row-selected]="isTestCaseSelected(tc.testcaseId)" (click)="viewTestCaseDetail(tc)">
                   <td style="width: 44px; text-align: center;" (click)="$event.stopPropagation()">
-                    <input type="checkbox"
-                      [checked]="isTestCaseSelected(tc.testcaseId)"
-                      (change)="toggleTestCaseSelect(tc.testcaseId, $event)"
-                      title="Select test case" />
+                    <input type="checkbox" [checked]="isTestCaseSelected(tc.testcaseId)"
+                      (change)="toggleTestCaseSelect(tc.testcaseId, $event)" title="Select test case" />
                   </td>
                   <td>
                     <span class="tc-id-pill">{{ tc.testcaseFormatId || ('TC_' + tc.testcaseId) }}</span>
@@ -934,7 +993,8 @@
                       <button class="btn-action-icon" (click)="viewTestCaseDetail(tc, true)" title="Edit Test Case">
                         <i class="fa-solid fa-pen-to-square text-indigo"></i>
                       </button>
-                      <button class="btn-action-icon" (click)="viewTestCaseDetail(tc, false)" title="View Testcase Card">
+                      <button class="btn-action-icon" (click)="viewTestCaseDetail(tc, false)"
+                        title="View Testcase Card">
                         <i class="fa-solid fa-eye"></i>
                       </button>
                     </div>
@@ -948,22 +1008,27 @@
           <div class="table-pagination-bar" *ngIf="filteredAllTestCases.length > 0">
             <div class="pagination-info">
               <span class="pagination-count-text">
-                Showing <strong>{{ overviewTcStartIndex }}-{{ overviewTcEndIndex }}</strong> of <strong>{{ filteredAllTestCases.length }}</strong> test cases
+                Showing <strong>{{ overviewTcStartIndex }}-{{ overviewTcEndIndex }}</strong> of <strong>{{
+                  filteredAllTestCases.length }}</strong> test cases
               </span>
               <div class="pagination-divider"></div>
               <div class="page-size-picker">
                 <label>Rows:</label>
-                <select [(ngModel)]="overviewTcPageSize" (change)="overviewTcPage = 1" class="form-control-xs" title="Rows per page">
+                <select [(ngModel)]="overviewTcPageSize" (change)="overviewTcPage = 1" class="form-control-xs"
+                  title="Rows per page">
                   <option *ngFor="let opt of overviewPageSizeOptions" [value]="opt">{{ opt }}</option>
                 </select>
               </div>
             </div>
             <div class="pagination-controls">
-              <button class="btn-page" [disabled]="overviewTcPage <= 1" (click)="overviewTcPage = overviewTcPage - 1" title="Previous page">
+              <button class="btn-page" [disabled]="overviewTcPage <= 1" (click)="overviewTcPage = overviewTcPage - 1"
+                title="Previous page">
                 <i class="fa-solid fa-chevron-left"></i> Prev
               </button>
-              <span class="page-indicator">Page <strong>{{ overviewTcPage }}</strong> of <strong>{{ totalOverviewTcPages }}</strong></span>
-              <button class="btn-page" [disabled]="overviewTcPage >= totalOverviewTcPages" (click)="overviewTcPage = overviewTcPage + 1" title="Next page">
+              <span class="page-indicator">Page <strong>{{ overviewTcPage }}</strong> of <strong>{{ totalOverviewTcPages
+                  }}</strong></span>
+              <button class="btn-page" [disabled]="overviewTcPage >= totalOverviewTcPages"
+                (click)="overviewTcPage = overviewTcPage + 1" title="Next page">
                 Next <i class="fa-solid fa-chevron-right"></i>
               </button>
             </div>
@@ -1021,8 +1086,7 @@
                   (click)="viewDefectDetail(b)">
                   <td>
                     <span class="bug-id-pill">{{ b.bugFormatId || ('BUG_' + b.bugId) }}</span>
-                    <span class="sub-tc-link clickable-tc-link"
-                      *ngIf="b.testcaseFormatId || b.testcaseId"
+                    <span class="sub-tc-link clickable-tc-link" *ngIf="b.testcaseFormatId || b.testcaseId"
                       (click)="$event.stopPropagation(); navigateToTestCaseFromBug(b)"
                       [title]="'Click to view test case in suite: ' + (getLinkedTestCaseTitle(b) || b.testcaseFormatId || ('TC_' + b.testcaseId))">
                       <i class="fa-solid fa-arrow-up-right-from-square"></i>
@@ -1088,22 +1152,27 @@
           <div class="table-pagination-bar" *ngIf="filteredAllBugs.length > 0">
             <div class="pagination-info">
               <span class="pagination-count-text">
-                Showing <strong>{{ overviewBugStartIndex }}-{{ overviewBugEndIndex }}</strong> of <strong>{{ filteredAllBugs.length }}</strong> defects
+                Showing <strong>{{ overviewBugStartIndex }}-{{ overviewBugEndIndex }}</strong> of <strong>{{
+                  filteredAllBugs.length }}</strong> defects
               </span>
               <div class="pagination-divider"></div>
               <div class="page-size-picker">
                 <label>Rows:</label>
-                <select [(ngModel)]="overviewBugPageSize" (change)="overviewBugPage = 1" class="form-control-xs" title="Rows per page">
+                <select [(ngModel)]="overviewBugPageSize" (change)="overviewBugPage = 1" class="form-control-xs"
+                  title="Rows per page">
                   <option *ngFor="let opt of overviewPageSizeOptions" [value]="opt">{{ opt }}</option>
                 </select>
               </div>
             </div>
             <div class="pagination-controls">
-              <button class="btn-page" [disabled]="overviewBugPage <= 1" (click)="overviewBugPage = overviewBugPage - 1" title="Previous page">
+              <button class="btn-page" [disabled]="overviewBugPage <= 1" (click)="overviewBugPage = overviewBugPage - 1"
+                title="Previous page">
                 <i class="fa-solid fa-chevron-left"></i> Prev
               </button>
-              <span class="page-indicator">Page <strong>{{ overviewBugPage }}</strong> of <strong>{{ totalOverviewBugPages }}</strong></span>
-              <button class="btn-page" [disabled]="overviewBugPage >= totalOverviewBugPages" (click)="overviewBugPage = overviewBugPage + 1" title="Next page">
+              <span class="page-indicator">Page <strong>{{ overviewBugPage }}</strong> of <strong>{{
+                  totalOverviewBugPages }}</strong></span>
+              <button class="btn-page" [disabled]="overviewBugPage >= totalOverviewBugPages"
+                (click)="overviewBugPage = overviewBugPage + 1" title="Next page">
                 Next <i class="fa-solid fa-chevron-right"></i>
               </button>
             </div>
@@ -1113,21 +1182,19 @@
     </main>
   </div>
 
-  <!-- MODAL: TEST CASE DETAIL CARD (WITH EDIT & SOFT DELETE APIS) -->
+  <!-- MODAL: TEST CASE DETAIL CARD (WITH EDIT & DELETE APIS) -->
   <app-testcase-detail-modal [isOpen]="isTestCaseDetailModalOpen" [testCase]="activeTestCaseDetail"
-    [startInEdit]="testCaseStartInEdit"
-    [activeFeature]="activeFeature"
+    [startInEdit]="testCaseStartInEdit" [activeFeature]="activeFeature"
     [linkedDefects]="activeTestCaseDetail ? getLinkedDefects(activeTestCaseDetail.testcaseId) : []"
-    (close)="isTestCaseDetailModalOpen = false; testCaseStartInEdit = false" (updateTestCase)="handleUpdateTestCase($event)"
-    (patchTestCase)="handlePatchTestCase($event)"
+    (close)="isTestCaseDetailModalOpen = false; testCaseStartInEdit = false"
+    (updateTestCase)="handleUpdateTestCase($event)" (patchTestCase)="handlePatchTestCase($event)"
     (softDeleteTestCase)="handleSoftDeleteTestCase($event)" (executeTestCase)="handleExecuteTestCase($event)"
     (logDefect)="openLogDefectModal($event)"
     (openDefectDetail)="isTestCaseDetailModalOpen = false; viewDefectDetail($event)"></app-testcase-detail-modal>
 
-  <!-- MODAL: DEFECT DETAIL CARD (WITH REOPENED COUNT, LOCKED ASSIGNEE, EDIT & SOFT DELETE APIS) -->
+  <!-- MODAL: DEFECT DETAIL CARD (WITH REOPENED COUNT, LOCKED ASSIGNEE, EDIT & DELETE APIS) -->
   <app-defect-detail-modal [isOpen]="isDefectDetailModalOpen" [bug]="activeDefectDetail" [developers]="developers"
-    (close)="isDefectDetailModalOpen = false" (updateBug)="handleUpdateBug($event)"
-    (patchBug)="handlePatchBug($event)"
+    (close)="isDefectDetailModalOpen = false" (updateBug)="handleUpdateBug($event)" (patchBug)="handlePatchBug($event)"
     (softDeleteBug)="handleSoftDeleteBug($event)" (changeStatus)="handleChangeBugStatus($event)"
     (changeAssignee)="handleChangeBugAssignee($event)" (openChat)="openBugChat($event)"
     (navigateToTestCase)="navigateToTestCaseFromBug($event)"
@@ -1148,17 +1215,13 @@
   <!-- MODAL: IN-APP NOTIFICATIONS -->
   <app-notifications-modal [isOpen]="isNotificationsModalOpen" [notifications]="notifications"
     [unreadCount]="unreadNotificationCount" (close)="isNotificationsModalOpen = false"
-    (toggleRead)="handleToggleNotificationRead($event)"
-    (selectNotification)="handleNotificationClick($event)"
+    (toggleRead)="handleToggleNotificationRead($event)" (selectNotification)="handleNotificationClick($event)"
     (dismiss)="handleDismissNotification($event)"
     (markAllRead)="handleMarkAllNotificationsRead()"></app-notifications-modal>
 
   <!-- SEPARATE COMPONENT MODAL: PROJECT DETAILS -->
-  <app-project-detail-modal
-    [isOpen]="isProjectDetailsModalOpen"
-    [project]="activeProject"
-    [attachmentCount]="projectAttachmentCount"
-    (close)="isProjectDetailsModalOpen = false"
+  <app-project-detail-modal [isOpen]="isProjectDetailsModalOpen" [project]="activeProject"
+    [attachmentCount]="projectAttachmentCount" (close)="isProjectDetailsModalOpen = false"
     (edit)="openEditProject($event)"
     (openAttachments)="openAttachments('project', $event.projectId, 'Project Attachments: ' + $event.projectName); isProjectDetailsModalOpen = false">
   </app-project-detail-modal>
@@ -1182,17 +1245,20 @@
         <div class="form-group">
           <div class="label-row-with-action">
             <label><i class="fa-solid fa-layer-group text-emerald"></i> Module *</label>
-            <button type="button" class="btn-link-action" *ngIf="!isAddingNewModule" (click)="isAddingNewModule = true; newModuleNameInput = ''">
+            <button type="button" class="btn-link-action" *ngIf="!isAddingNewModule"
+              (click)="isAddingNewModule = true; newModuleNameInput = ''">
               <i class="fa-solid fa-plus"></i> Add Module
             </button>
           </div>
-          <select class="form-control" [ngModel]="selectedModuleId" (ngModelChange)="onModuleSelectChange($event)" *ngIf="!isAddingNewModule">
+          <select class="form-control" [ngModel]="selectedModuleId" (ngModelChange)="onModuleSelectChange($event)"
+            *ngIf="!isAddingNewModule">
             <option [ngValue]="null" disabled>-- Select Module --</option>
             <option *ngFor="let m of dbModules" [ngValue]="m.moduleId">{{ m.moduleName }}</option>
             <option [ngValue]="-1">+ Add New Module...</option>
           </select>
           <div class="inline-create-row" *ngIf="isAddingNewModule">
-            <input type="text" class="form-control" placeholder="Enter new module name..." [(ngModel)]="newModuleNameInput" (keydown.enter)="saveNewModuleInline()">
+            <input type="text" class="form-control" placeholder="Enter new module name..."
+              [(ngModel)]="newModuleNameInput" (keydown.enter)="saveNewModuleInline()">
             <button type="button" class="btn btn-sm btn-primary" (click)="saveNewModuleInline()">
               <i class="fa-solid fa-check"></i> Add
             </button>
@@ -1206,17 +1272,21 @@
         <div class="form-group">
           <div class="label-row-with-action">
             <label><i class="fa-solid fa-cubes text-emerald"></i> Sub-Module *</label>
-            <button type="button" class="btn-link-action" *ngIf="!isAddingNewSubModule && selectedModuleId" (click)="isAddingNewSubModule = true; newSubModuleNameInput = ''">
+            <button type="button" class="btn-link-action" *ngIf="!isAddingNewSubModule && selectedModuleId"
+              (click)="isAddingNewSubModule = true; newSubModuleNameInput = ''">
               <i class="fa-solid fa-plus"></i> Add Sub-Module
             </button>
           </div>
-          <select class="form-control" [ngModel]="selectedSubModuleId" (ngModelChange)="onSubModuleSelectChange($event)" *ngIf="!isAddingNewSubModule" [disabled]="!selectedModuleId">
-            <option [ngValue]="null" disabled>{{ selectedModuleId ? '-- Select Sub-Module --' : '-- Select Module First --' }}</option>
+          <select class="form-control" [ngModel]="selectedSubModuleId" (ngModelChange)="onSubModuleSelectChange($event)"
+            *ngIf="!isAddingNewSubModule" [disabled]="!selectedModuleId">
+            <option [ngValue]="null" disabled>{{ selectedModuleId ? '-- Select Sub-Module --' : '-- Select Module First
+              --' }}</option>
             <option *ngFor="let sm of dbSubModules" [ngValue]="sm.subModuleId">{{ sm.subModuleName }}</option>
             <option [ngValue]="-1" *ngIf="selectedModuleId">+ Add New Sub-Module...</option>
           </select>
           <div class="inline-create-row" *ngIf="isAddingNewSubModule">
-            <input type="text" class="form-control" placeholder="Enter new sub-module name..." [(ngModel)]="newSubModuleNameInput" (keydown.enter)="saveNewSubModuleInline()">
+            <input type="text" class="form-control" placeholder="Enter new sub-module name..."
+              [(ngModel)]="newSubModuleNameInput" (keydown.enter)="saveNewSubModuleInline()">
             <button type="button" class="btn btn-sm btn-primary" (click)="saveNewSubModuleInline()">
               <i class="fa-solid fa-check"></i> Add
             </button>
@@ -1230,17 +1300,20 @@
         <div class="form-group">
           <div class="label-row-with-action">
             <label><i class="fa-solid fa-location-dot text-emerald"></i> Region / Location (from DB) *</label>
-            <button type="button" class="btn-link-action" *ngIf="!isAddingNewRegion" (click)="isAddingNewRegion = true; newRegionNameInput = ''">
+            <button type="button" class="btn-link-action" *ngIf="!isAddingNewRegion"
+              (click)="isAddingNewRegion = true; newRegionNameInput = ''">
               <i class="fa-solid fa-plus"></i> Add Region
             </button>
           </div>
-          <select class="form-control" [ngModel]="selectedRegionId" (ngModelChange)="onRegionSelectChange($event)" *ngIf="!isAddingNewRegion">
+          <select class="form-control" [ngModel]="selectedRegionId" (ngModelChange)="onRegionSelectChange($event)"
+            *ngIf="!isAddingNewRegion">
             <option [ngValue]="null" disabled>-- Select Region --</option>
             <option *ngFor="let r of dbRegions" [ngValue]="r.countryId">{{ r.countryName }}</option>
             <option [ngValue]="-1">+ Add New Region...</option>
           </select>
           <div class="inline-create-row" *ngIf="isAddingNewRegion">
-            <input type="text" class="form-control" placeholder="Enter new region name..." [(ngModel)]="newRegionNameInput" (keydown.enter)="saveNewRegionInline()">
+            <input type="text" class="form-control" placeholder="Enter new region name..."
+              [(ngModel)]="newRegionNameInput" (keydown.enter)="saveNewRegionInline()">
             <button type="button" class="btn btn-sm btn-primary" (click)="saveNewRegionInline()">
               <i class="fa-solid fa-check"></i> Add
             </button>
@@ -1307,16 +1380,20 @@
           <div class="form-group">
             <div class="label-row-with-action">
               <label><i class="fa-solid fa-cubes text-emerald"></i> Sub-Module</label>
-              <button type="button" class="btn-link-action" *ngIf="!isAddingNewSubModuleEdit && editSelectedModuleId" (click)="isAddingNewSubModuleEdit = true; newSubModuleNameInputEdit = ''">
+              <button type="button" class="btn-link-action" *ngIf="!isAddingNewSubModuleEdit && editSelectedModuleId"
+                (click)="isAddingNewSubModuleEdit = true; newSubModuleNameInputEdit = ''">
                 <i class="fa-solid fa-plus"></i> Add Sub-Module
               </button>
             </div>
-            <select class="form-control" [(ngModel)]="editSelectedSubModuleId" *ngIf="!isAddingNewSubModuleEdit" [disabled]="!editSelectedModuleId">
-              <option [ngValue]="null" disabled>{{ editSelectedModuleId ? (editSubModules.length > 0 ? '-- Select Sub-Module --' : 'No sub-modules found (Click Add)') : '-- Select Module First --' }}</option>
+            <select class="form-control" [(ngModel)]="editSelectedSubModuleId" *ngIf="!isAddingNewSubModuleEdit"
+              [disabled]="!editSelectedModuleId">
+              <option [ngValue]="null" disabled>{{ editSelectedModuleId ? (editSubModules.length > 0 ? '-- Select
+                Sub-Module --' : 'No sub-modules found (Click Add)') : '-- Select Module First --' }}</option>
               <option *ngFor="let sm of editSubModules" [ngValue]="sm.subModuleId">{{ sm.subModuleName }}</option>
             </select>
             <div class="inline-create-row" *ngIf="isAddingNewSubModuleEdit">
-              <input type="text" class="form-control" placeholder="Enter new sub-module name..." [(ngModel)]="newSubModuleNameInputEdit" (keydown.enter)="saveNewSubModuleInlineEdit()">
+              <input type="text" class="form-control" placeholder="Enter new sub-module name..."
+                [(ngModel)]="newSubModuleNameInputEdit" (keydown.enter)="saveNewSubModuleInlineEdit()">
               <button type="button" class="btn btn-sm btn-primary" (click)="saveNewSubModuleInlineEdit()">
                 <i class="fa-solid fa-check"></i> Add
               </button>
@@ -1433,9 +1510,38 @@
           <label>Feature Comments</label>
           <textarea class="form-control" [(ngModel)]="editFeatureForm.comments" rows="2"></textarea>
         </div>
+
+        <!-- Work Duration Input (Manual) -->
+        <div class="form-group">
+          <label class="d-flex align-items-center justify-content-between">
+            <span><i class="fa-regular fa-clock text-indigo"></i> Work Duration (Manual Entry)</span>
+            <span class="text-xs text-muted">Days, Hours &amp; Minutes</span>
+          </label>
+          <div class="duration-inputs-row">
+            <div class="duration-unit-field">
+              <label class="unit-label">Days</label>
+              <input type="number" min="0" class="form-control" [(ngModel)]="editFeatureDays" placeholder="0">
+            </div>
+            <div class="duration-unit-field">
+              <label class="unit-label">Hours (0-23)</label>
+              <input type="number" min="0" max="23" class="form-control" [(ngModel)]="editFeatureHours" placeholder="0">
+            </div>
+            <div class="duration-unit-field">
+              <label class="unit-label">Minutes (0-59)</label>
+              <input type="number" min="0" max="59" class="form-control" [(ngModel)]="editFeatureMinutes" placeholder="0">
+            </div>
+          </div>
+          <div class="duration-calc-note mt-1">
+            <span class="text-muted text-xs">Total: </span>
+            <strong class="text-emerald text-xs">{{ formatDurationDisplay((editFeatureDays * 86400) + (editFeatureHours * 3600) + (editFeatureMinutes * 60)) }}</strong>
+          </div>
+        </div>
       </div>
 
       <div class="modal-footer">
+        <button *ngIf="isManager && activeFeature" type="button" class="btn btn-danger-outline me-auto" (click)="openDeleteFeatureModal(activeFeature)" title="Delete Feature">
+          <i class="fa-regular fa-trash-can"></i> Delete Feature
+        </button>
         <button class="btn btn-secondary" (click)="isFeatureEditModalOpen = false">Cancel</button>
         <button class="btn btn-primary" (click)="saveFeatureEdit(false)" title="Save changes">
           <i class="fa-solid fa-floppy-disk"></i> Save Changes
@@ -1454,9 +1560,11 @@
 
       <div class="modal-body">
         <!-- Target Feature Indicator -->
-        <div style="background:#f1f5f9; padding:8px 12px; border-radius:6px; font-size:12px; display:flex; align-items:center; gap:8px;">
+        <div
+          style="background:#f1f5f9; padding:8px 12px; border-radius:6px; font-size:12px; display:flex; align-items:center; gap:8px;">
           <i class="fa-solid fa-layer-group text-indigo"></i>
-          <span>Target Feature: <strong>{{ activeFeature?.featureName }}</strong> (ID: {{ activeFeature?.featureId }})</span>
+          <span>Target Feature: <strong>{{ activeFeature?.featureName }}</strong> (ID: {{ activeFeature?.featureId
+            }})</span>
         </div>
 
         <!-- SECTION 1: TEST CASE DEFINITION -->
@@ -1594,7 +1702,8 @@
           </div>
 
           <div *ngIf="dynamicFieldsList.length === 0" class="dynamic-empty-hint">
-            No dynamic fields added. Click "+ Add Field" to attach custom metadata (e.g., Sprint, Browser, Module Tag, Device).
+            No dynamic fields added. Click "+ Add Field" to attach custom metadata (e.g., Sprint, Browser, Module Tag,
+            Device).
           </div>
 
           <div *ngFor="let field of dynamicFieldsList; let i = index" class="dynamic-field-row">
@@ -1618,26 +1727,170 @@
 
   <!-- MODAL: BULK EXCEL UPLOAD -->
   <div class="modal-overlay" *ngIf="isExcelModalOpen">
-    <div class="modal-card">
+    <div class="modal-card modal-excel-card">
       <div class="modal-header">
-        <h3><i class="fa-solid fa-file-excel text-emerald"></i> Bulk Import Test Cases (.xlsx)</h3>
+        <div>
+          <h3><i class="fa-solid fa-file-excel text-emerald"></i> Bulk Import Test Cases (.xlsx)</h3>
+          <p class="modal-subtitle">Upload spreadsheet or review the required structure and enums</p>
+        </div>
         <button class="modal-close" (click)="isExcelModalOpen = false">&times;</button>
       </div>
 
-      <div class="modal-body">
+      <div class="modal-body modal-scrollable">
+        <div class="target-feature-badge">
+          <span>Target Feature:</span>
+          <strong>{{ activeFeature?.featureName }}</strong>
+          <span class="badge-id" *ngIf="activeFeature?.featureId">#{{ activeFeature?.featureId }}</span>
+        </div>
+
         <div class="dropzone-box" (click)="excelFileInput.click()">
           <input #excelFileInput type="file" style="display:none;" accept=".xlsx, .xls"
             (change)="onExcelFileSelected($event)">
           <i class="fa-solid fa-cloud-arrow-up text-emerald"></i>
-          <div class="dropzone-title">Click to select .xlsx spreadsheet</div>
-          <div class="dropzone-sub">Target Feature: <strong>{{ activeFeature?.featureName }}</strong></div>
+          <div class="dropzone-title">Click to select .xlsx or .xls spreadsheet</div>
+          <div class="dropzone-sub">Upload formatted test case rows for this feature</div>
         </div>
 
         <div class="template-download-row">
-          <span>Need standardized template?</span>
-          <button class="btn-text-link" (click)="downloadTestCaseTemplate()">
-            <i class="fa-solid fa-download"></i> Get Template (.xlsx)
+          <div class="template-download-info">
+            <i class="fa-solid fa-file-circle-check text-emerald"></i>
+            <div>
+              <strong>Need the standardized template?</strong>
+              <div class="text-xs text-muted">Includes pre-configured headers, column types, and dropdown validations</div>
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" (click)="downloadTestCaseTemplate()">
+            <i class="fa-solid fa-download text-emerald"></i> Get Template (.xlsx)
           </button>
+        </div>
+
+        <!-- Format of Columns & Enums Guide -->
+        <div class="format-guide-section">
+          <div class="format-guide-header">
+            <h4><i class="fa-solid fa-table-list text-indigo"></i> Expected Column Structure & Format</h4>
+            <span class="format-badge">14 Standard Columns</span>
+          </div>
+
+          <div class="format-table-wrap">
+            <table class="format-table">
+              <thead>
+                <tr>
+                  <th style="width: 170px;">Column Name</th>
+                  <th style="width: 100px;">Requirement</th>
+                  <th>Allowed Values & Enums</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><code>TestcaseID</code></td>
+                  <td><span class="tag-req">Required</span></td>
+                  <td>Unique text identifier across all sheets (e.g., <code>TC-001</code>, <code>TC_AUTH_01</code>).</td>
+                </tr>
+                <tr>
+                  <td><code>Title</code></td>
+                  <td><span class="tag-opt">Optional</span></td>
+                  <td>Brief scenario summary or headline for the test case.</td>
+                </tr>
+                <tr>
+                  <td><code>Test Type</code></td>
+                  <td><span class="tag-opt">Optional</span></td>
+                  <td>
+                    <div class="enum-chips">
+                      <span class="chip-badge">UI</span>
+                      <span class="chip-badge">API</span>
+                      <span class="chip-badge">DB</span>
+                      <span class="chip-badge">E2E</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>Automation Priority</code></td>
+                  <td><span class="tag-opt">Optional</span></td>
+                  <td>
+                    <div class="enum-chips">
+                      <span class="chip-badge chip-high">HIGH</span>
+                      <span class="chip-badge chip-med">MEDIUM</span>
+                      <span class="chip-badge chip-low">LOW</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>Automation Status</code></td>
+                  <td><span class="tag-opt">Optional</span></td>
+                  <td>
+                    <div class="enum-chips">
+                      <span class="chip-badge">YES</span>
+                      <span class="chip-badge">NO</span>
+                      <span class="chip-badge">PARTIALLY_FEASIBLE</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>Actual Status</code></td>
+                  <td><span class="tag-opt">Optional</span></td>
+                  <td>
+                    <div class="enum-chips">
+                      <span class="chip-badge chip-pass">PASS</span>
+                      <span class="chip-badge chip-fail">FAIL</span>
+                      <span class="chip-badge chip-block">BLOCK</span>
+                      <span class="chip-badge chip-prog">IN_PROGRESS</span>
+                      <span class="chip-badge chip-descope">DESCOPE</span>
+                      <span class="chip-badge chip-norun">NO_RUN</span>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <td><code>Execution steps</code></td>
+                  <td><span class="tag-opt">Optional</span></td>
+                  <td>Step-by-step reproduction instructions.</td>
+                </tr>
+                <tr>
+                  <td><code>Test Execution</code></td>
+                  <td><span class="tag-opt">Optional</span></td>
+                  <td>Execution method or run environment text.</td>
+                </tr>
+                <tr>
+                  <td><code>Test Validation</code></td>
+                  <td><span class="tag-opt">Optional</span></td>
+                  <td>Expected results and assertions text.</td>
+                </tr>
+                <tr>
+                  <td><code>Pre Condition</code></td>
+                  <td><span class="tag-opt">Optional</span></td>
+                  <td>Prerequisites or initial system setup.</td>
+                </tr>
+                <tr>
+                  <td><code>Test data</code></td>
+                  <td><span class="tag-opt">Optional</span></td>
+                  <td>Input parameters or test datasets.</td>
+                </tr>
+                <tr>
+                  <td><code>UI Validations</code></td>
+                  <td><span class="tag-opt">Optional</span></td>
+                  <td>User interface assertions or visual checks.</td>
+                </tr>
+                <tr>
+                  <td><code>DB Validations</code></td>
+                  <td><span class="tag-opt">Optional</span></td>
+                  <td>Database queries or record verification notes.</td>
+                </tr>
+                <tr>
+                  <td><code>Comments</code></td>
+                  <td><span class="tag-opt">Optional</span></td>
+                  <td>General notes or comments.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Dynamic Extra Columns Explanation -->
+          <div class="extra-columns-box">
+            <div class="extra-icon"><i class="fa-solid fa-shapes text-indigo"></i></div>
+            <div class="extra-text">
+              <strong>Extra Columns: Text-Only Dynamic Fields</strong>
+              <p>You can include any additional columns in your spreadsheet (e.g. <em>Module, Component, Sprint, Tester</em>). All extra columns are automatically stored as <strong>text dynamic fields</strong> without triggering validation errors.</p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1671,7 +1924,8 @@
 
         <div class="form-group">
           <label>Defect Title *</label>
-          <input type="text" class="form-control" [(ngModel)]="newBugForm.title" placeholder="Summary of failure (max 300 chars)">
+          <input type="text" class="form-control" [(ngModel)]="newBugForm.title"
+            placeholder="Summary of failure (max 300 chars)">
         </div>
 
         <div class="form-group">
@@ -1757,7 +2011,8 @@
           </div>
 
           <div *ngIf="bugDynamicFieldsList.length === 0" class="dynamic-empty-hint">
-            No dynamic fields added. Click "+ Add Field" to attach custom metadata (e.g., Environment, Root Cause, Browser, Sprint).
+            No dynamic fields added. Click "+ Add Field" to attach custom metadata (e.g., Environment, Root Cause,
+            Browser, Sprint).
           </div>
 
           <div *ngFor="let field of bugDynamicFieldsList; let i = index" class="dynamic-field-row">
@@ -1793,7 +2048,8 @@
       <div class="modal-body">
         <!-- Selected Count & Chips -->
         <div class="move-selected-summary">
-          <label class="form-label-bold"><i class="fa-solid fa-list-check text-emerald"></i> Selected Test Cases ({{ selectedTestCaseIds.size }}):</label>
+          <label class="form-label-bold"><i class="fa-solid fa-list-check text-emerald"></i> Selected Test Cases ({{
+            selectedTestCaseIds.size }}):</label>
           <div class="selected-tc-chips-container">
             <span class="selected-tc-chip" *ngFor="let name of getSelectedTestCaseDisplayNames()">
               <i class="fa-solid fa-vial text-xs"></i> {{ name }}
@@ -1837,7 +2093,8 @@
               {{ f.featureName }} {{ f.sprint ? '(Sprint ' + f.sprint + ')' : '' }}
             </option>
           </select>
-          <div *ngIf="!isLoadingMoveFeatures && availableMoveFeatures.length === 0" class="no-features-hint text-warning mt-1">
+          <div *ngIf="!isLoadingMoveFeatures && availableMoveFeatures.length === 0"
+            class="no-features-hint text-warning mt-1">
             <i class="fa-solid fa-triangle-exclamation"></i> No available features found in this project.
           </div>
         </div>
@@ -1846,7 +2103,8 @@
         <div class="move-info-box">
           <i class="fa-solid fa-circle-info text-indigo"></i>
           <div>
-            <strong>Backend Mapping:</strong> Moving test cases will update their parent feature ID. Any active defects/bugs linked to these test cases will also automatically be updated to the destination feature.
+            <strong>Backend Mapping:</strong> Moving test cases will update their parent feature ID. Any active
+            defects/bugs linked to these test cases will also automatically be updated to the destination feature.
           </div>
         </div>
 
@@ -1857,13 +2115,332 @@
       </div>
 
       <div class="modal-footer">
-        <button class="btn btn-secondary" type="button" (click)="closeMoveTestCasesModal()" [disabled]="isMovingTestCases">
+        <button class="btn btn-secondary" type="button" (click)="closeMoveTestCasesModal()"
+          [disabled]="isMovingTestCases">
           Cancel
         </button>
-        <button class="btn btn-primary" type="button" (click)="confirmMoveTestCases()" [disabled]="isMovingTestCases || !targetMoveFeatureId">
+        <button class="btn btn-primary" type="button" (click)="confirmMoveTestCases()"
+          [disabled]="isMovingTestCases || !targetMoveFeatureId">
           <i class="fa-solid fa-spinner fa-spin" *ngIf="isMovingTestCases"></i>
           <i class="fa-solid fa-arrow-right-arrow-left" *ngIf="!isMovingTestCases"></i>
           {{ isMovingTestCases ? 'Mapping...' : 'Confirm Mapping' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BULK DELETE SELECTED TEST CASES MODAL -->
+  <div class="modal-overlay" *ngIf="isBulkDeleteModalOpen" (click)="closeBulkDeleteModal()">
+    <div class="modal-card modal-md" (click)="$event.stopPropagation()">
+      <div class="modal-header header-danger">
+        <div class="modal-title-wrap">
+          <h3><i class="fa-solid fa-trash-can text-danger"></i> Delete Selected Test Cases</h3>
+          <p class="modal-subtitle">Delete selected test cases and associated defects</p>
+        </div>
+        <button class="modal-close" (click)="closeBulkDeleteModal()" [disabled]="isBulkDeletingTestCases">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Delete Warning Box -->
+        <div class="bulk-delete-warning-box">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <div>
+            <strong>Are you sure you want to delete {{ selectedTestCaseIds.size }} test case{{ selectedTestCaseIds.size > 1 ? 's' : '' }}?</strong>
+            <p>
+              This action will delete the selected test cases. Associated defects/bugs will also be deleted.
+            </p>
+          </div>
+        </div>
+
+        <!-- Selected Count & Chips -->
+        <div class="move-selected-summary mt-3">
+          <label class="form-label-bold"><i class="fa-solid fa-list-check text-danger"></i> Test Cases to Delete ({{ selectedTestCaseIds.size }}):</label>
+          <div class="selected-tc-chips-container">
+            <span class="selected-tc-chip chip-danger" *ngFor="let name of getSelectedTestCaseDisplayNames()">
+              <i class="fa-solid fa-vial text-xs"></i> {{ name }}
+            </span>
+            <span class="selected-tc-chip more-chip" *ngIf="selectedTestCaseIds.size > 6">
+              +{{ selectedTestCaseIds.size - 6 }} more
+            </span>
+          </div>
+        </div>
+
+        <!-- Error Message if any -->
+        <div class="alert alert-danger mt-3" *ngIf="bulkDeleteErrorMessage">
+          <i class="fa-solid fa-triangle-exclamation"></i> {{ bulkDeleteErrorMessage }}
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" (click)="closeBulkDeleteModal()" [disabled]="isBulkDeletingTestCases">
+          Cancel
+        </button>
+        <button class="btn btn-danger" type="button" (click)="confirmBulkDeleteTestCases()" [disabled]="isBulkDeletingTestCases || selectedTestCaseIds.size === 0">
+          <i class="fa-solid fa-spinner fa-spin" *ngIf="isBulkDeletingTestCases"></i>
+          <i class="fa-solid fa-trash-can" *ngIf="!isBulkDeletingTestCases"></i>
+          {{ isBulkDeletingTestCases ? 'Deleting...' : 'Confirm Delete (' + selectedTestCaseIds.size + ')' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- BULK DELETE SELECTED DEFECTS MODAL -->
+  <div class="modal-overlay" *ngIf="isBulkDeleteBugsModalOpen" (click)="closeBulkDeleteBugsModal()">
+    <div class="modal-card modal-md" (click)="$event.stopPropagation()">
+      <div class="modal-header header-danger">
+        <div class="modal-title-wrap">
+          <h3><i class="fa-solid fa-trash-can text-danger"></i> Delete Selected Defects</h3>
+          <p class="modal-subtitle">Delete selected defects from this feature</p>
+        </div>
+        <button class="modal-close" (click)="closeBulkDeleteBugsModal()" [disabled]="isBulkDeletingBugs">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Delete Warning Box -->
+        <div class="bulk-delete-warning-box">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <div>
+            <strong>Are you sure you want to delete {{ selectedBugIds.size }} defect{{ selectedBugIds.size > 1 ? 's' : '' }}?</strong>
+            <p>
+              This action will delete the selected defects and adjust associated execution counters.
+            </p>
+          </div>
+        </div>
+
+        <!-- Selected Count & Chips -->
+        <div class="move-selected-summary mt-3">
+          <label class="form-label-bold"><i class="fa-solid fa-list-check text-danger"></i> Defects to Delete ({{ selectedBugIds.size }}):</label>
+          <div class="selected-tc-chips-container">
+            <span class="selected-tc-chip chip-danger" *ngFor="let name of getSelectedBugDisplayNames()">
+              <i class="fa-solid fa-bug text-xs"></i> {{ name }}
+            </span>
+            <span class="selected-tc-chip more-chip" *ngIf="selectedBugIds.size > 6">
+              +{{ selectedBugIds.size - 6 }} more
+            </span>
+          </div>
+        </div>
+
+        <!-- Error Message if any -->
+        <div class="alert alert-danger mt-3" *ngIf="bulkDeleteBugsErrorMessage">
+          <i class="fa-solid fa-triangle-exclamation"></i> {{ bulkDeleteBugsErrorMessage }}
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" (click)="closeBulkDeleteBugsModal()" [disabled]="isBulkDeletingBugs">
+          Cancel
+        </button>
+        <button class="btn btn-danger" type="button" (click)="confirmBulkDeleteBugs()" [disabled]="isBulkDeletingBugs || selectedBugIds.size === 0">
+          <i class="fa-solid fa-spinner fa-spin" *ngIf="isBulkDeletingBugs"></i>
+          <i class="fa-solid fa-trash-can" *ngIf="!isBulkDeletingBugs"></i>
+          {{ isBulkDeletingBugs ? 'Deleting...' : 'Confirm Delete (' + selectedBugIds.size + ')' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: DELETE FEATURE CONFIRMATION -->
+  <div class="modal-overlay" *ngIf="isDeleteFeatureModalOpen && isManager" (click)="closeDeleteFeatureModal()">
+    <div class="modal-card modal-delete-confirm-card" (click)="$event.stopPropagation()">
+      <div class="modal-header header-danger">
+        <div class="modal-title-wrap">
+          <h3 class="text-danger"><i class="fa-solid fa-trash-can"></i> Delete Feature</h3>
+          <p class="modal-subtitle">Confirm deletion of feature #{{ featureToDelete?.featureId }}</p>
+        </div>
+        <button class="modal-close" (click)="closeDeleteFeatureModal()" [disabled]="isDeletingFeature">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="delete-entity-summary-box" *ngIf="featureToDelete">
+          <span class="delete-entity-id">#{{ featureToDelete.featureId }}</span>
+          <span class="delete-entity-name">{{ featureToDelete.featureName }}</span>
+          <span class="delete-entity-badge" *ngIf="featureToDelete.featureVersion">{{ featureToDelete.featureVersion }}</span>
+          <span class="delete-entity-badge" *ngIf="featureToDelete.sprint">Sprint {{ featureToDelete.sprint }}</span>
+        </div>
+
+        <p class="delete-confirm-prompt">
+          Are you sure you want to delete feature <strong>{{ featureToDelete?.featureName }}</strong>?
+        </p>
+
+        <div class="bulk-delete-warning-box">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <div>
+            <strong>Deactivation Notice</strong>
+            <p>
+              This action will deactivate this feature along with all associated test cases, defects, and attachments.
+            </p>
+          </div>
+        </div>
+
+        <div class="alert alert-danger mt-3" *ngIf="deleteFeatureErrorMessage">
+          <i class="fa-solid fa-triangle-exclamation"></i> {{ deleteFeatureErrorMessage }}
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" type="button" (click)="closeDeleteFeatureModal()" [disabled]="isDeletingFeature">
+          Cancel
+        </button>
+        <button class="btn btn-danger" type="button" (click)="confirmDeleteFeature()" [disabled]="isDeletingFeature">
+          <i class="fa-solid fa-spinner fa-spin" *ngIf="isDeletingFeature"></i>
+          <i class="fa-solid fa-trash-can" *ngIf="!isDeletingFeature"></i>
+          {{ isDeletingFeature ? 'Deleting...' : 'Delete Feature' }}
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: MANUAL FEATURE WORK DURATION ENTRY -->
+  <div class="modal-overlay" *ngIf="isManualDurationModalOpen" (click)="closeManualDurationModal()">
+    <div class="modal-card modal-duration-card" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="duration-modal-title">
+          <div class="duration-modal-icon">
+            <i class="fa-regular fa-clock"></i>
+          </div>
+          <div>
+            <h3>Log Feature Work Duration</h3>
+            <p class="modal-subtitle">
+              {{ activeFeature?.featureName }} &bull; FEAT_{{ activeFeature?.featureId }}
+            </p>
+          </div>
+        </div>
+        <button class="modal-close" (click)="closeManualDurationModal()" [disabled]="isSavingDuration">&times;</button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Live Current Timer Card in Modal -->
+        <div class="modal-timer-live-card" [class.is-running]="isFeatureTimerRunning">
+          <div class="modal-timer-live-info">
+            <span class="modal-timer-label">Feature Work Timer Status</span>
+            <div class="modal-timer-digits-row">
+              <span class="live-pulse-dot" *ngIf="isFeatureTimerRunning"></span>
+              <i class="fa-regular fa-clock" [class.fa-spin]="isFeatureTimerRunning"></i>
+              <span class="modal-timer-digits">{{ displayFeatureDuration }}</span>
+              <span class="modal-timer-chip" [class.chip-active]="isFeatureTimerRunning">
+                {{ isFeatureTimerRunning ? 'ACTIVE TICKING' : 'STOPPED / PAUSED' }}
+              </span>
+            </div>
+          </div>
+          <div class="modal-timer-actions">
+            <button
+              *ngIf="!isFeatureTimerRunning"
+              type="button"
+              class="btn btn-emerald btn-sm"
+              (click)="startFeatureTimer()"
+              [disabled]="isUpdatingTimer"
+            >
+              <i class="fa-solid fa-play"></i> Start Work
+            </button>
+            <button
+              *ngIf="isFeatureTimerRunning"
+              type="button"
+              class="btn btn-warning btn-sm"
+              (click)="stopFeatureTimer()"
+              [disabled]="isUpdatingTimer"
+            >
+              <i class="fa-solid fa-pause"></i> Pause Work
+            </button>
+          </div>
+        </div>
+
+        <div class="duration-info-banner">
+          <i class="fa-solid fa-circle-info"></i>
+          <div>
+            <p>
+              Adjust work duration manually below (Days, Hours, Minutes). The backend will recalculate and store the total accumulated time in seconds.
+            </p>
+          </div>
+        </div>
+
+        <div class="duration-input-grid">
+          <div class="duration-input-col">
+            <label class="duration-col-label">
+              <span class="label-name">Days</span>
+              <span class="label-hint">24h / day</span>
+            </label>
+            <div class="duration-input-box">
+              <input
+                type="number"
+                min="0"
+                class="form-control duration-num-input"
+                [(ngModel)]="manualDurationDays"
+                placeholder="0"
+              />
+              <span class="unit-suffix">d</span>
+            </div>
+          </div>
+
+          <div class="duration-input-col">
+            <label class="duration-col-label">
+              <span class="label-name">Hours</span>
+              <span class="label-hint">0 - 23</span>
+            </label>
+            <div class="duration-input-box">
+              <input
+                type="number"
+                min="0"
+                max="23"
+                class="form-control duration-num-input"
+                [(ngModel)]="manualDurationHours"
+                placeholder="0"
+              />
+              <span class="unit-suffix">h</span>
+            </div>
+          </div>
+
+          <div class="duration-input-col">
+            <label class="duration-col-label">
+              <span class="label-name">Minutes</span>
+              <span class="label-hint">0 - 59</span>
+            </label>
+            <div class="duration-input-box">
+              <input
+                type="number"
+                min="0"
+                max="59"
+                class="form-control duration-num-input"
+                [(ngModel)]="manualDurationMinutes"
+                placeholder="0"
+              />
+              <span class="unit-suffix">m</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Calculated Duration Preview Card -->
+        <div class="duration-preview-card">
+          <div class="preview-label">Total Time to be Logged:</div>
+          <div class="preview-value-row">
+            <i class="fa-solid fa-stopwatch text-emerald"></i>
+            <span class="preview-formatted-time">{{ calculateDurationTotalPreview() }}</span>
+          </div>
+        </div>
+
+        <div class="alert alert-danger mt-3" *ngIf="manualDurationError">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          <span>{{ manualDurationError }}</span>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="closeManualDurationModal()"
+          [disabled]="isSavingDuration"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          class="btn btn-emerald"
+          (click)="saveManualDuration()"
+          [disabled]="isSavingDuration"
+        >
+          <i class="fa-solid fa-spinner fa-spin" *ngIf="isSavingDuration"></i>
+          <i class="fa-solid fa-check" *ngIf="!isSavingDuration"></i>
+          <span>{{ isSavingDuration ? 'Saving...' : 'Save Work Duration' }}</span>
         </button>
       </div>
     </div>

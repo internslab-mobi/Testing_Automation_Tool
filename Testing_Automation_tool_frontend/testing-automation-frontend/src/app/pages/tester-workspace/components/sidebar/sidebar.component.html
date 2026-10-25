@@ -276,13 +276,27 @@
             <i class="fa-regular fa-comment-dots"></i> {{ f.comments }}
           </div>
           <div class="feat-sub-row">
-            <span class="sprint-badge">Sprint {{ f.sprint || 1 }}</span>
+            <div class="feat-meta-pills">
+              <span class="sprint-badge">Sprint {{ f.sprint || 1 }}</span>
+              <span
+                class="feat-duration-pill"
+                *ngIf="(f.duration && f.duration > 0) || isFeatureRunning(f)"
+                [class.pill-running]="isFeatureRunning(f)"
+                [title]="isFeatureRunning(f) ? 'Timer running' : 'Logged duration'"
+              >
+                <i class="fa-regular fa-clock" [class.fa-spin]="isFeatureRunning(f)"></i>
+                {{ getFeatureDuration(f) }}
+              </span>
+            </div>
             <div class="feat-actions" *ngIf="activeFeature?.featureId === f.featureId">
               <button class="btn-item-action" (click)="$event.stopPropagation(); editFeature.emit(f)" title="Edit Feature">
                 <i class="fa-solid fa-pen-to-square"></i>
               </button>
               <button class="btn-item-action" (click)="$event.stopPropagation(); openFeatureAttachments.emit(f)" title="Feature Documentation & Files">
                 <i class="fa-solid fa-paperclip"></i>
+              </button>
+              <button *ngIf="isManagerUser" class="btn-item-action text-danger" (click)="$event.stopPropagation(); deleteFeature.emit(f)" title="Delete Feature">
+                <i class="fa-regular fa-trash-can"></i>
               </button>
             </div>
           </div>

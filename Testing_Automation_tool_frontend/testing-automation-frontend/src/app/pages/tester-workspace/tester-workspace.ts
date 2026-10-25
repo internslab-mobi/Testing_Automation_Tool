@@ -2,8 +2,8 @@ import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angula
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { Subject, Subscription } from 'rxjs';
-import { debounceTime } from 'rxjs/operators';
+import { Subject, Subscription, forkJoin, of } from 'rxjs';
+import { debounceTime, catchError } from 'rxjs/operators';
 
 // Sub-components
 import { NavbarComponent } from './components/navbar/navbar.component';
@@ -284,7 +284,7 @@ export class TesterWorkspace implements OnInit, OnDestroy {
   isNotificationsModalOpen = false;
   isMoveTestCasesModalOpen = false;
 
-  // Selected Test Cases for bulk operations (mapping to other feature)
+  // Selected Test Cases for bulk operations (mapping to other feature, bulk delete)
   selectedTestCaseIds: Set<number> = new Set<number>();
   isMovingTestCases = false;
   targetMoveProjectId: number | null = null;
@@ -292,6 +292,17 @@ export class TesterWorkspace implements OnInit, OnDestroy {
   availableMoveFeatures: Feature[] = [];
   isLoadingMoveFeatures = false;
   moveErrorMessage = '';
+
+  // Bulk Delete Test Cases Modal
+  isBulkDeleteModalOpen = false;
+  isBulkDeletingTestCases = false;
+  bulkDeleteErrorMessage = '';
+
+  // Selected Defects / Bugs for bulk operations (bulk delete)
+  selectedBugIds: Set<number> = new Set<number>();
+  isBulkDeleteBugsModalOpen = false;
+  isBulkDeletingBugs = false;
+  bulkDeleteBugsErrorMessage = '';
 
   // Modal State & Forms
   activeTestCaseDetail: TestCase | null = null;
@@ -420,6 +431,10 @@ export class TesterWorkspace implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
     this.testCaseSub?.unsubscribe();
     this.tcSearchSub?.unsubscribe();
   }
@@ -781,16 +796,19 @@ export class TesterWorkspace implements OnInit, OnDestroy {
   }
 
   get totalTcPages(): number {
-    return Math.max(1, Math.ceil(this.tcTotalRecords / this.tcPageSize));
+    const size = Number(this.tcPageSize) || 5;
+    return Math.max(1, Math.ceil(this.tcTotalRecords / size));
   }
 
   get tcStartIndex(): number {
     if (this.tcTotalRecords === 0) return 0;
-    return (this.tcCurrentPage - 1) * this.tcPageSize + 1;
+    const size = Number(this.tcPageSize) || 5;
+    return (this.tcCurrentPage - 1) * size + 1;
   }
 
   get tcEndIndex(): number {
-    return Math.min(this.tcCurrentPage * this.tcPageSize, this.tcTotalRecords);
+    const size = Number(this.tcPageSize) || 5;
+    return Math.min(this.tcCurrentPage * size, this.tcTotalRecords);
   }
 
   get tcPageNumbers(): number[] {
@@ -817,7 +835,7 @@ export class TesterWorkspace implements OnInit, OnDestroy {
   }
 
   onTcPageSizeChange(): void {
-    this.tcPageSize = Number(this.tcPageSize);
+    this.tcPageSize = Number(this.tcPageSize) || 5;
     this.tcCurrentPage = 1;
     this.fetchTestCasesPage();
   }
@@ -1369,10 +1387,12 @@ export class TesterWorkspace implements OnInit, OnDestroy {
       this.activeFeature = null;
       this.testcases = [];
       this.bugs = [];
+      this.syncFeatureTimer();
       this.cdr.markForCheck();
       return;
     }
     this.activeFeature = f;
+    this.syncFeatureTimer();
     this.loadFeatureAttachmentCount(f.featureId);
     this.loadTestCases(f.featureId);
     this.loadBugs(f.featureId);
@@ -1439,6 +1459,10 @@ export class TesterWorkspace implements OnInit, OnDestroy {
       description: f.description || '',
       comments: f.comments || ''
     };
+    const totalSecs = f.duration || 0;
+    this.editFeatureDays = Math.floor(totalSecs / 86400);
+    this.editFeatureHours = Math.floor((totalSecs % 86400) / 3600);
+    this.editFeatureMinutes = Math.floor((totalSecs % 3600) / 60);
     this.isFeatureEditModalOpen = true;
     this.cdr.markForCheck();
   }
@@ -1494,6 +1518,16 @@ export class TesterWorkspace implements OnInit, OnDestroy {
       patchReq.description = this.editFeatureForm.description;
     }
 
+    const newDays = Math.max(0, Number(this.editFeatureDays) || 0);
+    const newHours = Math.max(0, Math.min(23, Number(this.editFeatureHours) || 0));
+    const newMins = Math.max(0, Math.min(59, Number(this.editFeatureMinutes) || 0));
+    const newManualSecs = (newDays * 86400) + (newHours * 3600) + (newMins * 60);
+    if (newManualSecs !== (this.activeFeature.duration || 0)) {
+      patchReq.days = newDays;
+      patchReq.hours = newHours;
+      patchReq.minutes = newMins;
+    }
+
     if (Object.keys(patchReq).length === 0) {
       this.isFeatureEditModalOpen = false;
       return;
@@ -1542,7 +1576,43 @@ export class TesterWorkspace implements OnInit, OnDestroy {
     if (resetPage) {
       this.tcCurrentPage = 1;
     }
+    this.loadFeatureMetrics(featureId);
     this.fetchTestCasesPage();
+  }
+
+  loadFeatureMetrics(featureId: number): void {
+    if (!featureId) return;
+
+    this.testCaseService.getTestCases(featureId, 0, 1).subscribe({
+      next: (res) => {
+        this.totalTestCasesCount = res.totalElements;
+        if (!this.tcSearch && (!this.tcFilterStatus || this.tcFilterStatus === 'ALL') && (!this.tcFilterType || this.tcFilterType === 'ALL') && (!this.tcFilterPriority || this.tcFilterPriority === 'ALL')) {
+          this.tcTotalRecords = res.totalElements;
+        }
+        this.cdr.markForCheck();
+      }
+    });
+
+    this.testCaseService.getTestCases(featureId, 0, 1, { status: 'PASSED' }).subscribe({
+      next: (res) => {
+        this.passedCount = res.totalElements;
+        this.cdr.markForCheck();
+      }
+    });
+
+    this.testCaseService.getTestCases(featureId, 0, 1, { status: 'FAILED' }).subscribe({
+      next: (res) => {
+        this.failedCount = res.totalElements;
+        this.cdr.markForCheck();
+      }
+    });
+
+    this.testCaseService.getTestCases(featureId, 0, 1, { status: 'DESCOPE' }).subscribe({
+      next: (res) => {
+        this.descopeCount = res.totalElements;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   fetchTestCasesPage(): void {
@@ -1558,7 +1628,7 @@ export class TesterWorkspace implements OnInit, OnDestroy {
 
     const featureId = this.activeFeature.featureId;
     const pageIndex = Math.max(0, this.tcCurrentPage - 1);
-    const pageSize = this.tcPageSize;
+    const pageSize = Number(this.tcPageSize) || 5;
 
     let statusParam: string | undefined = undefined;
     if (this.tcFilterStatus && this.tcFilterStatus !== 'ALL') {
@@ -1597,7 +1667,9 @@ export class TesterWorkspace implements OnInit, OnDestroy {
         this.testcases = list;
         this.filteredTestCases = list;
         this.tcTotalRecords = pageRes.totalElements;
-        this.totalTestCasesCount = pageRes.totalElements;
+        if (!searchParam && !statusParam && !typeParam && !priorityParam) {
+          this.totalTestCasesCount = pageRes.totalElements;
+        }
         this.updateMetrics();
         this.isLoadingTestCases = false;
         this.cdr.markForCheck();
@@ -1777,19 +1849,20 @@ export class TesterWorkspace implements OnInit, OnDestroy {
   handleSoftDeleteTestCase(testcaseId: number): void {
     this.testCaseService.softDeleteTestCase(testcaseId).subscribe({
       next: () => {
-        this.showToast('Test case soft deleted successfully!', 'success');
+        this.showToast('Test case deleted successfully!', 'success');
         this.isTestCaseDetailModalOpen = false;
         if (this.activeFeature) {
           if (this.filteredTestCases.length === 1 && this.tcCurrentPage > 1) {
             this.tcCurrentPage--;
           }
+          this.loadFeatureMetrics(this.activeFeature.featureId);
           this.loadTestCases(this.activeFeature.featureId, false);
         }
         this.cdr.markForCheck();
       },
       error: (err) => {
         console.error('Error deleting test case:', err);
-        this.showToast(err?.error?.message || 'Failed to soft delete test case', 'error');
+        this.showToast(err?.error?.message || 'Failed to delete test case', 'error');
         this.cdr.markForCheck();
       }
     });
@@ -1833,7 +1906,7 @@ export class TesterWorkspace implements OnInit, OnDestroy {
         this.showToast(`Test case marked as ${event.status}`, 'success');
         if (this.activeFeature) {
           this.testcaseCache.delete(this.activeFeature.featureId);
-          this.loadTestCases(this.activeFeature.featureId);
+          this.loadTestCases(this.activeFeature.featureId, false);
         }
         this.cdr.markForCheck();
       },
@@ -1841,7 +1914,7 @@ export class TesterWorkspace implements OnInit, OnDestroy {
         console.error('Execution error:', err);
         this.showToast('Execution update failed', 'error');
         if (this.activeFeature) {
-          this.loadTestCases(this.activeFeature.featureId);
+          this.loadTestCases(this.activeFeature.featureId, false);
         }
         this.cdr.markForCheck();
       }
@@ -1854,19 +1927,22 @@ export class TesterWorkspace implements OnInit, OnDestroy {
     this.handleExecuteTestCase({ testcaseId: tc.testcaseId, status: newStatus as any });
   }
 
-  // Export Test Cases via Summary Export Service
+  // Export Test Cases & Bug Data via Summary Export Service (Download Testcase and Bug Data)
   exportTestCasesSummary(): void {
     if (!this.activeFeature) return;
-    this.showToast('Generating test cases summary export...', 'info');
-    this.testCaseService.exportTestCases(this.activeFeature.featureId).subscribe({
+    this.showToast('Preparing Testcase and Bug summary export...', 'info');
+    const featId = this.activeFeature.featureId;
+    const featName = (this.activeFeature.featureName || 'Feature').replace(/[^a-zA-Z0-9_-]/g, '_');
+    this.testCaseService.exportTestCases(featId).subscribe({
       next: (blob) => {
-        this.triggerBlobDownload(blob, `Feature_${this.activeFeature!.featureId}_TestCases_Export.xlsx`);
-        this.showToast('Test cases Excel exported successfully!', 'success');
+        this.triggerBlobDownload(blob, `QA_Summary_Report_${featName}.xlsx`);
+        this.showToast('Testcase and Bug data downloaded successfully!', 'success');
         this.cdr.markForCheck();
       },
       error: (err) => {
-        console.error('Export error:', err);
-        this.showToast('Failed to export test cases summary', 'error');
+        console.warn('Backend summary export failed, exporting client data to CSV:', err);
+        this.exportFeatureSummaryToCsv(`QA_Summary_${featName}.csv`);
+        this.showToast('Exported testcase and bug summary to CSV!', 'success');
         this.cdr.markForCheck();
       }
     });
@@ -1905,16 +1981,202 @@ export class TesterWorkspace implements OnInit, OnDestroy {
   }
 
   downloadTestCaseTemplate(): void {
-    if (!this.activeFeature) return;
-    this.testCaseService.downloadTemplate(this.activeFeature.featureId).subscribe({
+    this.showToast('Preparing standardized test case template...', 'info');
+    this.testCaseService.downloadBlankTemplate().subscribe({
       next: (blob) => {
-        this.triggerBlobDownload(blob, `testcase_template_${this.activeFeature!.featureId}.xlsx`);
-        this.showToast('Downloaded blank test case template', 'success');
+        this.triggerBlobDownload(blob, 'TestCase_Upload_Template.xlsx');
+        this.showToast('Standardized template downloaded successfully!', 'success');
+        this.cdr.markForCheck();
       },
-      error: () => {
-        this.showToast('Could not download template', 'error');
+      error: (err) => {
+        console.warn('Backend blank template API failed, attempting feature template or CSV fallback:', err);
+        if (this.activeFeature) {
+          this.testCaseService.downloadTemplate(this.activeFeature.featureId).subscribe({
+            next: (blob) => {
+              this.triggerBlobDownload(blob, 'TestCase_Upload_Template.xlsx');
+              this.showToast('Standardized template downloaded successfully!', 'success');
+              this.cdr.markForCheck();
+            },
+            error: () => {
+              this.generateAndDownloadTemplateCsv();
+              this.cdr.markForCheck();
+            }
+          });
+        } else {
+          this.generateAndDownloadTemplateCsv();
+          this.cdr.markForCheck();
+        }
       }
     });
+  }
+
+  downloadFeatureTestCases(): void {
+    if (!this.activeFeature) {
+      this.showToast('Please select a feature first.', 'warning');
+      return;
+    }
+    const featId = this.activeFeature.featureId;
+    const featName = (this.activeFeature.featureName || 'Feature').replace(/[^a-zA-Z0-9_-]/g, '_');
+    this.showToast('Downloading feature test cases...', 'info');
+
+    // Current link for get template /testcase/{featureId}/template
+    this.testCaseService.downloadTemplate(featId).subscribe({
+      next: (blob) => {
+        this.triggerBlobDownload(blob, `${featName}_TestCases.xlsx`);
+        this.showToast('Test cases downloaded successfully!', 'success');
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.warn('Backend download template failed, falling back to loaded test cases:', err);
+        if (this.testcases && this.testcases.length > 0) {
+          this.exportTestCasesToCsv(`${featName}_TestCases.csv`);
+          this.showToast('Test cases exported to CSV successfully!', 'success');
+        } else {
+          this.showToast('No test cases available to download.', 'warning');
+        }
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private generateAndDownloadTemplateCsv(): void {
+    const headers = [
+      'TestcaseID',
+      'Title',
+      'Test Type',
+      'Test Execution',
+      'Test Validation',
+      'Automation Priority',
+      'Pre Condition',
+      'Test data',
+      'Execution steps',
+      'UI Validations',
+      'DB Validations',
+      'Automation Status',
+      'Actual Status',
+      'Comments',
+      'Sample Extra Column'
+    ];
+
+    const sampleRow = [
+      'TC-001',
+      'Verify user login with valid credentials',
+      'UI',
+      'Automated / Manual',
+      'Verify dashboard redirection',
+      'HIGH',
+      'User is registered',
+      'username=test@example.com',
+      '1. Open /login; 2. Enter credentials; 3. Submit',
+      'Dashboard displayed',
+      'DB record updated',
+      'YES',
+      'PASS',
+      'Standard template row format',
+      'Optional extra text'
+    ];
+
+    const escapeCsv = (val: any) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+    const csvContent = '\uFEFF' + [
+      headers.map(escapeCsv).join(','),
+      sampleRow.map(escapeCsv).join(',')
+    ].join('\r\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    this.triggerBlobDownload(blob, 'TestCase_Upload_Template.csv');
+    this.showToast('Downloaded standardized template (CSV)', 'info');
+  }
+
+  private exportTestCasesToCsv(fileName: string): void {
+    if (!this.testcases || this.testcases.length === 0) return;
+    const escapeCsv = (val: any) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+
+    const headers = [
+      'TestcaseID',
+      'Title',
+      'Test Type',
+      'Test Execution',
+      'Test Validation',
+      'Automation Priority',
+      'Pre Condition',
+      'Test data',
+      'Execution steps',
+      'UI Validations',
+      'DB Validations',
+      'Automation Status',
+      'Actual Status',
+      'Comments'
+    ];
+
+    const rows = this.testcases.map(tc => [
+      tc.testcaseFormatId || tc.testcaseId || '',
+      tc.title || '',
+      tc.testType || '',
+      tc.testExecution || tc.execution?.testExecution || '',
+      tc.testValidation || tc.execution?.testValidation || '',
+      tc.testPriority || '',
+      tc.execution?.precondition || (tc as any).preCondition || '',
+      tc.testData || tc.execution?.testData || '',
+      tc.execution?.executionSteps || (tc as any).executionSteps || '',
+      tc.execution?.uiValidations || (tc as any).uiValidations || '',
+      tc.execution?.dbValidations || (tc as any).dbValidations || '',
+      tc.automationFeasibility || tc.execution?.automationFeasibility || (tc as any).automationStatus || '',
+      tc.testcaseStatus || tc.executionStatus || 'NO_RUN',
+      tc.comments || tc.execution?.comments || ''
+    ]);
+
+    const csvContent = '\uFEFF' + [
+      headers.map(escapeCsv).join(','),
+      ...rows.map(r => r.map(escapeCsv).join(','))
+    ].join('\r\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    this.triggerBlobDownload(blob, fileName);
+  }
+
+  private exportFeatureSummaryToCsv(fileName: string): void {
+    const escapeCsv = (val: any) => `"${String(val ?? '').replace(/"/g, '""')}"`;
+    const featName = this.activeFeature?.featureName || 'Feature';
+
+    const lines: string[] = [
+      `"FEATURE REPORT: ${featName}"`,
+      `"Export Date: ${new Date().toISOString()}"`,
+      `"Total Test Cases: ${this.testcases.length}, Total Defects: ${this.bugs.length}"`,
+      '',
+      '"--- TEST CASES ---"',
+      ['TestcaseID', 'Title', 'Type', 'Priority', 'Status', 'Pre Condition', 'Steps'].map(escapeCsv).join(',')
+    ];
+
+    this.testcases.forEach(tc => {
+      lines.push([
+        tc.testcaseFormatId || tc.testcaseId,
+        tc.title,
+        tc.testType,
+        tc.testPriority,
+        tc.testcaseStatus || tc.executionStatus || 'NO_RUN',
+        tc.execution?.precondition || (tc as any).preCondition || '',
+        tc.execution?.executionSteps || (tc as any).executionSteps || ''
+      ].map(escapeCsv).join(','));
+    });
+
+    lines.push('');
+    lines.push('"--- DEFECTS & BUGS ---"');
+    lines.push(['BugID', 'Title', 'Severity', 'Priority', 'Status', 'Category', 'TestcaseID'].map(escapeCsv).join(','));
+
+    this.bugs.forEach(b => {
+      lines.push([
+        b.bugFormatId || b.bugId,
+        b.title,
+        b.severity,
+        b.priority,
+        b.status,
+        b.category,
+        b.testcaseFormatId || b.testcaseId || ''
+      ].map(escapeCsv).join(','));
+    });
+
+    const blob = new Blob(['\uFEFF' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
+    this.triggerBlobDownload(blob, fileName);
   }
 
   // Get multiple bugs linked to a testcase
@@ -2195,7 +2457,7 @@ export class TesterWorkspace implements OnInit, OnDestroy {
   handleSoftDeleteBug(bugId: number): void {
     this.bugService.softDeleteBug(bugId).subscribe({
       next: () => {
-        this.showToast('Defect soft deleted successfully!', 'success');
+        this.showToast('Defect deleted successfully!', 'success');
         this.isDefectDetailModalOpen = false;
         if (this.activeFeature) {
           this.bugCache.delete(this.activeFeature.featureId);
@@ -2205,7 +2467,7 @@ export class TesterWorkspace implements OnInit, OnDestroy {
       },
       error: (err) => {
         console.error('Error deleting bug:', err);
-        this.showToast(err?.error?.message || 'Failed to soft delete defect', 'error');
+        this.showToast(err?.error?.message || 'Failed to delete defect', 'error');
         this.cdr.markForCheck();
       }
     });
@@ -2258,22 +2520,9 @@ export class TesterWorkspace implements OnInit, OnDestroy {
     });
   }
 
-  // Export Bug Endpoint Calling (Summary Export Service)
+  // Export Bug Endpoint Calling (Summary Export Service - Download Testcase and Bug Data)
   exportBugsSummary(): void {
-    if (!this.activeFeature) return;
-    this.showToast('Invoking defect summary export endpoint...', 'info');
-    this.bugService.exportBugs(this.activeFeature.featureId).subscribe({
-      next: (blob) => {
-        this.triggerBlobDownload(blob, `Feature_${this.activeFeature!.featureId}_Defects_Export.xlsx`);
-        this.showToast('Defect summary exported successfully!', 'success');
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        console.error('Export defect error:', err);
-        this.showToast('Failed to export defects summary', 'error');
-        this.cdr.markForCheck();
-      }
-    });
+    this.exportTestCasesSummary();
   }
 
   // ==========================================
@@ -2682,10 +2931,9 @@ export class TesterWorkspace implements OnInit, OnDestroy {
   // METRICS & HELPERS
   // ==========================================
   private updateMetrics(): void {
-    this.totalTestCasesCount = this.testcases.length;
-    this.passedCount = this.testcases.filter(tc => tc.executionStatus === 'PASS' || tc.testcaseStatus === 'PASSED').length;
-    this.failedCount = this.testcases.filter(tc => tc.executionStatus === 'FAIL' || tc.testcaseStatus === 'FAILED').length;
-    this.descopeCount = this.testcases.filter(tc => tc.executionStatus === 'DESCOPE' || tc.testcaseStatus === 'DESCOPE').length;
+    if (this.tcTotalRecords > 0) {
+      this.totalTestCasesCount = this.tcTotalRecords;
+    }
     this.totalDefectsCount = this.bugs.length;
     this.openDefectsCount = this.bugs.filter(b => b.status === 'OPEN' || b.status === 'IN_PROGRESS' || b.status === 'REOPENED').length;
   }
@@ -3105,6 +3353,7 @@ export class TesterWorkspace implements OnInit, OnDestroy {
         this.testcaseCache.delete(this.targetMoveFeatureId!);
 
         if (this.activeFeature) {
+          this.loadFeatureMetrics(this.activeFeature.featureId);
           this.loadTestCases(this.activeFeature.featureId);
         }
 
@@ -3121,6 +3370,528 @@ export class TesterWorkspace implements OnInit, OnDestroy {
         const errorDetail = err?.error?.message || err?.message || 'Failed to map test cases to the selected feature.';
         this.moveErrorMessage = errorDetail;
         this.showToast('Error mapping test cases: ' + errorDetail);
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // =========================================================================
+  // BULK DELETE SELECTED TEST CASES
+  // =========================================================================
+  openBulkDeleteModal(): void {
+    if (this.selectedTestCaseIds.size === 0) {
+      this.showToast('Please select at least one test case to delete.', 'warning');
+      return;
+    }
+    this.isBulkDeleteModalOpen = true;
+    this.bulkDeleteErrorMessage = '';
+    this.cdr.markForCheck();
+  }
+
+  closeBulkDeleteModal(): void {
+    if (this.isBulkDeletingTestCases) return;
+    this.isBulkDeleteModalOpen = false;
+    this.bulkDeleteErrorMessage = '';
+    this.cdr.markForCheck();
+  }
+
+  confirmBulkDeleteTestCases(): void {
+    if (this.selectedTestCaseIds.size === 0) {
+      this.bulkDeleteErrorMessage = 'No test cases selected for deletion.';
+      return;
+    }
+
+    this.isBulkDeletingTestCases = true;
+    this.bulkDeleteErrorMessage = '';
+
+    const testCaseIds = Array.from(this.selectedTestCaseIds);
+
+    this.testCaseService.bulkDeleteTestCases(testCaseIds).subscribe({
+      next: (deletedIds) => {
+        this.isBulkDeletingTestCases = false;
+        this.isBulkDeleteModalOpen = false;
+
+        const count = Array.isArray(deletedIds) ? deletedIds.length : testCaseIds.length;
+
+        this.showToast(
+          `Successfully deleted ${count} test case${count > 1 ? 's' : ''}!`,
+          'success'
+        );
+
+        if (this.activeFeature) {
+          this.testcaseCache.delete(this.activeFeature.featureId);
+          this.loadFeatureMetrics(this.activeFeature.featureId);
+          if (this.filteredTestCases.length <= count && this.tcCurrentPage > 1) {
+            this.tcCurrentPage = Math.max(1, this.tcCurrentPage - 1);
+          }
+          this.loadTestCases(this.activeFeature.featureId, false);
+        }
+
+        if (this.allFeaturesList.length > 0) {
+          this.loadAllOverviewData();
+        }
+
+        this.selectedTestCaseIds.clear();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Failed to bulk delete test cases:', err);
+        this.isBulkDeletingTestCases = false;
+        const errorDetail = err?.error?.message || err?.message || 'Failed to delete selected test cases.';
+        this.bulkDeleteErrorMessage = errorDetail;
+        this.showToast('Error deleting test cases: ' + errorDetail, 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // =========================================================================
+  // DEFECT / BUG BULK SELECTION & DELETE
+  // =========================================================================
+  toggleBugSelect(bugId: number, event?: Event): void {
+    if (event) event.stopPropagation();
+    if (this.selectedBugIds.has(bugId)) {
+      this.selectedBugIds.delete(bugId);
+    } else {
+      this.selectedBugIds.add(bugId);
+    }
+    this.cdr.markForCheck();
+  }
+
+  isBugSelected(bugId: number): boolean {
+    return this.selectedBugIds.has(bugId);
+  }
+
+  isAllBugsSelected(): boolean {
+    if (!this.paginatedBugs || this.paginatedBugs.length === 0) return false;
+    return this.paginatedBugs.every(b => this.selectedBugIds.has(b.bugId));
+  }
+
+  isPartiallyBugsSelected(): boolean {
+    if (!this.paginatedBugs || this.paginatedBugs.length === 0) return false;
+    const count = this.paginatedBugs.filter(b => this.selectedBugIds.has(b.bugId)).length;
+    return count > 0 && count < this.paginatedBugs.length;
+  }
+
+  toggleSelectAllBugs(event?: Event): void {
+    if (event) event.stopPropagation();
+    const allSelected = this.isAllBugsSelected();
+    if (allSelected) {
+      this.paginatedBugs.forEach(b => this.selectedBugIds.delete(b.bugId));
+    } else {
+      this.paginatedBugs.forEach(b => this.selectedBugIds.add(b.bugId));
+    }
+    this.cdr.markForCheck();
+  }
+
+  clearSelectedBugs(): void {
+    this.selectedBugIds.clear();
+    this.cdr.markForCheck();
+  }
+
+  getSelectedBugDisplayNames(): string[] {
+    const names: string[] = [];
+    const allBugs = [...this.bugs, ...(this.allBugsList || [])];
+    const seen = new Set<number>();
+    for (const bugId of this.selectedBugIds) {
+      if (seen.has(bugId)) continue;
+      seen.add(bugId);
+      const found = allBugs.find(b => b.bugId === bugId);
+      if (found) {
+        names.push(found.bugFormatId || `BUG_${found.bugId}`);
+      } else {
+        names.push(`BUG_${bugId}`);
+      }
+      if (names.length >= 6) break;
+    }
+    return names;
+  }
+
+  openBulkDeleteBugsModal(): void {
+    if (this.selectedBugIds.size === 0) {
+      this.showToast('Please select at least one defect to delete.', 'warning');
+      return;
+    }
+    this.isBulkDeleteBugsModalOpen = true;
+    this.bulkDeleteBugsErrorMessage = '';
+    this.cdr.markForCheck();
+  }
+
+  closeBulkDeleteBugsModal(): void {
+    if (this.isBulkDeletingBugs) return;
+    this.isBulkDeleteBugsModalOpen = false;
+    this.bulkDeleteBugsErrorMessage = '';
+    this.cdr.markForCheck();
+  }
+
+  confirmBulkDeleteBugs(): void {
+    if (this.selectedBugIds.size === 0) {
+      this.bulkDeleteBugsErrorMessage = 'No defects selected for deletion.';
+      return;
+    }
+
+    this.isBulkDeletingBugs = true;
+    this.bulkDeleteBugsErrorMessage = '';
+
+    const bugIds = Array.from(this.selectedBugIds);
+
+    this.bugService.bulkDeleteBugs(bugIds).subscribe({
+      next: (deletedIds) => {
+        this.isBulkDeletingBugs = false;
+        this.isBulkDeleteBugsModalOpen = false;
+
+        const count = Array.isArray(deletedIds) ? deletedIds.length : bugIds.length;
+        this.showToast(
+          `Successfully deleted ${count} defect${count > 1 ? 's' : ''}!`,
+          'success'
+        );
+
+        if (this.activeFeature) {
+          this.bugCache.delete(this.activeFeature.featureId);
+          this.loadBugs(this.activeFeature.featureId);
+        }
+
+        if (this.allFeaturesList.length > 0) {
+          this.loadAllOverviewData();
+        }
+
+        this.selectedBugIds.clear();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Failed to bulk delete defects:', err);
+        this.isBulkDeletingBugs = false;
+        const errorDetail = err?.error?.message || err?.message || 'Failed to delete selected defects.';
+        this.bulkDeleteBugsErrorMessage = errorDetail;
+        this.showToast('Error deleting defects: ' + errorDetail, 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // Feature Delete
+  isDeleteFeatureModalOpen = false;
+  featureToDelete: Feature | null = null;
+  isDeletingFeature = false;
+  deleteFeatureErrorMessage = '';
+
+  openDeleteFeatureModal(feature: Feature): void {
+    if (!this.isManager) {
+      this.showToast('Only managers can delete features.', 'warning');
+      return;
+    }
+    if (this.isDeletingFeature) return;
+    this.featureToDelete = feature;
+    this.deleteFeatureErrorMessage = '';
+    this.isDeleteFeatureModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  closeDeleteFeatureModal(): void {
+    if (this.isDeletingFeature) return;
+    this.isDeleteFeatureModalOpen = false;
+    this.featureToDelete = null;
+    this.deleteFeatureErrorMessage = '';
+    this.cdr.markForCheck();
+  }
+
+  confirmDeleteFeature(): void {
+    if (!this.isManager) return;
+    if (!this.featureToDelete || this.isDeletingFeature) return;
+
+    const feature = this.featureToDelete;
+    const featId = feature.featureId;
+    this.isDeletingFeature = true;
+    this.deleteFeatureErrorMessage = '';
+
+    this.featureService.deleteFeature(featId).subscribe({
+      next: () => {
+        this.showToast(`Feature "${feature.featureName}" deleted successfully.`, 'success');
+        this.isDeletingFeature = false;
+        this.isDeleteFeatureModalOpen = false;
+        this.isFeatureEditModalOpen = false;
+        this.featureToDelete = null;
+
+        // Remove from local lists
+        this.features = this.features.filter(f => f.featureId !== featId);
+        this.allFeaturesList = this.allFeaturesList.filter(f => f.featureId !== featId);
+
+        // If the activeFeature was the deleted one, clear or switch
+        if (this.activeFeature?.featureId === featId) {
+          if (this.features.length > 0) {
+            this.selectFeature(this.features[0]);
+          } else {
+            this.activeFeature = null;
+            this.clearActiveFeatureToOverview('projects');
+          }
+        }
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Failed to delete feature:', err);
+        this.isDeletingFeature = false;
+        const msg = err?.error?.message || err?.message || 'Failed to delete feature.';
+        this.deleteFeatureErrorMessage = msg;
+        this.showToast(msg, 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  // ==========================================
+  // FEATURE WORK DURATION & LIVE TIMER
+  // ==========================================
+  timerInterval: any = null;
+  currentLiveElapsed = 0;
+  isUpdatingTimer = false;
+
+  // Manual Duration Modal State
+  isManualDurationModalOpen = false;
+  isSavingDuration = false;
+  manualDurationDays = 0;
+  manualDurationHours = 0;
+  manualDurationMinutes = 0;
+  manualDurationError = '';
+
+  // Feature Edit Duration Inputs
+  editFeatureDays = 0;
+  editFeatureHours = 0;
+  editFeatureMinutes = 0;
+
+  get isFeatureTimerRunning(): boolean {
+    return !!this.activeFeature?.startTime;
+  }
+
+  get displayFeatureDuration(): string {
+    const base = this.activeFeature?.duration || 0;
+    const total = this.isFeatureTimerRunning ? (base + this.currentLiveElapsed) : base;
+    return this.formatDurationDisplay(total);
+  }
+
+  formatDurationDisplay(totalSeconds: number): string {
+    if (!totalSeconds || totalSeconds < 0) return '0m 00s';
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    const pad = (n: number) => n < 10 ? '0' + n : String(n);
+
+    if (days > 0) {
+      return `${days}d ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+    }
+    if (hours > 0) {
+      return `${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+    }
+    return `${pad(minutes)}m ${pad(seconds)}s`;
+  }
+
+  formatDurationShort(totalSeconds: number): string {
+    if (!totalSeconds || totalSeconds < 0) return '0s';
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    if (minutes > 0) return `${minutes}m`;
+    return `${totalSeconds}s`;
+  }
+
+  syncFeatureTimer(): void {
+    if (this.timerInterval) {
+      clearInterval(this.timerInterval);
+      this.timerInterval = null;
+    }
+    this.currentLiveElapsed = 0;
+
+    if (this.activeFeature?.startTime) {
+      const startMs = new Date(this.activeFeature.startTime).getTime();
+      const calcElapsed = () => Math.max(0, Math.floor((Date.now() - startMs) / 1000));
+      this.currentLiveElapsed = calcElapsed();
+
+      this.timerInterval = setInterval(() => {
+        this.currentLiveElapsed = calcElapsed();
+        this.cdr.markForCheck();
+      }, 1000);
+    }
+  }
+
+  startFeatureTimer(): void {
+    if (!this.activeFeature || this.isUpdatingTimer) return;
+    const feat = this.activeFeature;
+    this.isUpdatingTimer = true;
+
+    // OPTIMISTIC ZERO-DELAY UPDATE: Start timer immediately in 0ms
+    const prevStartTime = feat.startTime;
+    const nowIso = new Date().toISOString();
+    feat.startTime = nowIso;
+    this.syncFeatureTimer();
+
+    // Sync in features array and overview list immediately
+    const sidebarMatch = this.features.find(f => f.featureId === feat.featureId);
+    if (sidebarMatch) {
+      sidebarMatch.startTime = nowIso;
+    }
+    const overviewMatch = this.allFeaturesList.find(f => f.featureId === feat.featureId);
+    if (overviewMatch) {
+      overviewMatch.startTime = nowIso;
+    }
+    this.cdr.markForCheck();
+
+    this.featureService.startTimer(feat.featureId).subscribe({
+      next: () => {
+        this.isUpdatingTimer = false;
+        this.showToast(`Timer started for "${feat.featureName}".`, 'success');
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Failed to start timer:', err);
+        // Rollback on network error
+        feat.startTime = prevStartTime;
+        if (sidebarMatch) sidebarMatch.startTime = prevStartTime;
+        if (overviewMatch) overviewMatch.startTime = prevStartTime;
+        this.syncFeatureTimer();
+        this.isUpdatingTimer = false;
+        this.showToast(err?.error?.message || 'Failed to start timer', 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  stopFeatureTimer(): void {
+    if (!this.activeFeature || this.isUpdatingTimer) return;
+    const feat = this.activeFeature;
+    this.isUpdatingTimer = true;
+
+    // OPTIMISTIC ZERO-DELAY UPDATE: Stop timer immediately in 0ms without waiting for HTTP response
+    const prevStartTime = feat.startTime;
+    const prevDuration = feat.duration || 0;
+    const addedSecs = this.currentLiveElapsed;
+    const newTotalSecs = prevDuration + addedSecs;
+
+    feat.duration = newTotalSecs;
+    feat.startTime = null;
+    this.syncFeatureTimer();
+
+    // Sync in features array and overview list immediately for sidebar & table
+    const sidebarMatch = this.features.find(f => f.featureId === feat.featureId);
+    if (sidebarMatch) {
+      sidebarMatch.duration = newTotalSecs;
+      sidebarMatch.startTime = null;
+    }
+    const overviewMatch = this.allFeaturesList.find(f => f.featureId === feat.featureId);
+    if (overviewMatch) {
+      overviewMatch.duration = newTotalSecs;
+      overviewMatch.startTime = null;
+    }
+    this.cdr.markForCheck();
+
+    this.featureService.stopTimer(feat.featureId).subscribe({
+      next: () => {
+        this.isUpdatingTimer = false;
+        this.showToast(`Timer paused. Logged: ${this.formatDurationDisplay(newTotalSecs)}`, 'info');
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Failed to stop timer:', err);
+        // Rollback on network error
+        feat.startTime = prevStartTime;
+        feat.duration = prevDuration;
+        if (sidebarMatch) {
+          sidebarMatch.startTime = prevStartTime;
+          sidebarMatch.duration = prevDuration;
+        }
+        if (overviewMatch) {
+          overviewMatch.startTime = prevStartTime;
+          overviewMatch.duration = prevDuration;
+        }
+        this.syncFeatureTimer();
+        this.isUpdatingTimer = false;
+        this.showToast(err?.error?.message || 'Failed to stop timer', 'error');
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  openManualDurationModal(): void {
+    if (!this.activeFeature) return;
+    const dur = this.activeFeature.duration || 0;
+    this.manualDurationDays = Math.floor(dur / 86400);
+    this.manualDurationHours = Math.floor((dur % 86400) / 3600);
+    this.manualDurationMinutes = Math.floor((dur % 3600) / 60);
+    this.manualDurationError = '';
+    this.isManualDurationModalOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  closeManualDurationModal(): void {
+    if (this.isSavingDuration) return;
+    this.isManualDurationModalOpen = false;
+    this.manualDurationError = '';
+    this.cdr.markForCheck();
+  }
+
+  calculateDurationTotalPreview(): string {
+    const days = Math.max(0, Number(this.manualDurationDays) || 0);
+    const hours = Math.max(0, Number(this.manualDurationHours) || 0);
+    const minutes = Math.max(0, Number(this.manualDurationMinutes) || 0);
+    const totalSecs = (days * 86400) + (hours * 3600) + (minutes * 60);
+    return this.formatDurationDisplay(totalSecs);
+  }
+
+  saveManualDuration(): void {
+    if (!this.activeFeature || this.isSavingDuration) return;
+    const days = Number(this.manualDurationDays) || 0;
+    const hours = Number(this.manualDurationHours) || 0;
+    const minutes = Number(this.manualDurationMinutes) || 0;
+
+    if (days < 0 || hours < 0 || minutes < 0) {
+      this.manualDurationError = 'Values cannot be negative.';
+      return;
+    }
+    if (hours > 23) {
+      this.manualDurationError = 'Hours must be between 0 and 23.';
+      return;
+    }
+    if (minutes > 59) {
+      this.manualDurationError = 'Minutes must be between 0 and 59.';
+      return;
+    }
+
+    this.isSavingDuration = true;
+    this.manualDurationError = '';
+    const feat = this.activeFeature;
+    const totalSecs = (days * 86400) + (hours * 3600) + (minutes * 60);
+
+    // Optimistic instant update
+    feat.duration = totalSecs;
+    if (feat.startTime) {
+      feat.startTime = null;
+      this.syncFeatureTimer();
+    }
+    const sidebarMatch = this.features.find(f => f.featureId === feat.featureId);
+    if (sidebarMatch) {
+      sidebarMatch.duration = totalSecs;
+      sidebarMatch.startTime = null;
+    }
+    const overviewMatch = this.allFeaturesList.find(f => f.featureId === feat.featureId);
+    if (overviewMatch) {
+      overviewMatch.duration = totalSecs;
+      overviewMatch.startTime = null;
+    }
+    this.cdr.markForCheck();
+
+    this.featureService.setManualDuration(feat.featureId, days, hours, minutes).subscribe({
+      next: () => {
+        this.isSavingDuration = false;
+        this.isManualDurationModalOpen = false;
+        this.showToast(`Duration updated to ${this.formatDurationDisplay(totalSecs)}.`, 'success');
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        console.error('Failed to set duration:', err);
+        this.isSavingDuration = false;
+        this.manualDurationError = err?.error?.message || 'Failed to update duration.';
         this.cdr.markForCheck();
       }
     });

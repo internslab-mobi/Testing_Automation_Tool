@@ -27,6 +27,8 @@ export class FeatureService {
             description: f.description || '',
             comments: f.comments || '',
             status: f.status || 'ACTIVE',
+            duration: f.duration != null ? f.duration : 0,
+            startTime: f.startTime || null,
             createdDate: f.createdDate
           } as Feature;
         });
@@ -48,6 +50,24 @@ export class FeatureService {
 
   patchFeature(featureId: number, req: FeaturePatchRequest): Observable<any> {
     return this.http.patch<any>(`${this.baseUrl}/feature/${featureId}`, req).pipe(
+      map(res => res?.data || res)
+    );
+  }
+
+  startTimer(featureId: number): Observable<any> {
+    return this.patchFeature(featureId, { startTimer: true });
+  }
+
+  stopTimer(featureId: number): Observable<any> {
+    return this.patchFeature(featureId, { endTimer: true });
+  }
+
+  setManualDuration(featureId: number, days: number, hours: number, minutes: number): Observable<any> {
+    return this.patchFeature(featureId, { days, hours, minutes });
+  }
+
+  deleteFeature(featureId: number): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrl}/feature/${featureId}`).pipe(
       map(res => res?.data || res)
     );
   }

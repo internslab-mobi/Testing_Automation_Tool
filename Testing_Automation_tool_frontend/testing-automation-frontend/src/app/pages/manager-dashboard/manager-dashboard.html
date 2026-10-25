@@ -2265,6 +2265,7 @@
                   <th class="th-proj-region">Region</th>
                   <th class="th-proj-module">Module / Submodule</th>
                   <th class="th-proj-status">Status</th>
+                  <th class="th-proj-actions" *ngIf="isManager">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -2296,9 +2297,19 @@
                       </button>
                     </div>
                   </td>
+                  <td class="td-proj-actions" *ngIf="isManager">
+                    <button class="btn-delete-proj-action"
+                            (click)="openDeleteProjectModal(p)"
+                            type="button"
+                            [disabled]="isDeletingProject && projectToDelete?.projectId === p.projectId"
+                            [title]="'Delete project ' + p.projectName">
+                      <i class="fa-regular fa-trash-can"></i>
+                      <span>Delete</span>
+                    </button>
+                  </td>
                 </tr>
                 <tr *ngIf="filteredProjectsList.length === 0">
-                  <td colspan="5" class="text-center py-4 text-muted">No projects found matching the criteria.</td>
+                  <td [attr.colspan]="isManager ? 6 : 5" class="text-center py-4 text-muted">No projects found matching the criteria.</td>
                 </tr>
               </tbody>
             </table>
@@ -2858,6 +2869,58 @@
                 [disabled]="isUpdatingStatus">
           <i class="fa-solid fa-spinner fa-spin" *ngIf="isUpdatingStatus"></i>
           <span>{{ isUpdatingStatus ? 'Updating Status...' : 'Yes, Change Status' }}</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= PROJECT DELETE CONFIRM MODAL ================= -->
+  <div class="dashboard-modal-backdrop status-confirm-backdrop" *ngIf="showProjectDeleteModal && isManager" (click)="cancelProjectDelete()">
+    <div class="dashboard-modal-card status-confirm-modal-card" (click)="$event.stopPropagation()">
+      <div class="modal-card-header">
+        <div class="modal-header-title">
+          <i class="fa-solid fa-trash-can text-danger"></i>
+          <h3>Delete Project</h3>
+        </div>
+        <button class="modal-close-btn" (click)="cancelProjectDelete()" type="button" [disabled]="isDeletingProject" aria-label="Close dialog">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div class="modal-card-body">
+        <div class="status-confirm-project-box" *ngIf="projectToDelete">
+          <div class="confirm-project-details">
+            <span class="confirm-project-id">#{{ projectToDelete.projectId }}</span>
+            <span class="confirm-project-name">{{ projectToDelete.projectName }}</span>
+            <span class="region-pill" *ngIf="projectToDelete.region"><i class="fa-solid fa-location-dot"></i> {{ projectToDelete.region }}</span>
+          </div>
+        </div>
+
+        <p class="status-confirm-main-prompt">
+          Are you sure you want to delete project <strong>{{ projectToDelete?.projectName }}</strong>?
+        </p>
+
+        <p class="status-confirm-subtext text-muted">
+          This action will deactivate this project along with all associated features, test cases, defects, and attachments.
+        </p>
+
+        <div class="status-update-error-banner" *ngIf="projectDeleteError">
+          <i class="fa-solid fa-circle-exclamation"></i>
+          <span>{{ projectDeleteError }}</span>
+        </div>
+      </div>
+
+      <div class="modal-card-footer">
+        <button class="btn-modal-cancel" (click)="cancelProjectDelete()" type="button" [disabled]="isDeletingProject">
+          Cancel
+        </button>
+        <button class="btn-modal-submit btn-status-confirm-inactive"
+                (click)="confirmProjectDelete()"
+                type="button"
+                [disabled]="isDeletingProject">
+          <i class="fa-solid fa-spinner fa-spin" *ngIf="isDeletingProject"></i>
+          <i class="fa-solid fa-trash-can" *ngIf="!isDeletingProject"></i>
+          <span>{{ isDeletingProject ? 'Deleting...' : 'Yes, Delete Project' }}</span>
         </button>
       </div>
     </div>

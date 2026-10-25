@@ -103,6 +103,7 @@ public class FeatureController {
         return ResponseEntity.ok(ApiResponse.success(featureService.patchFeature(featureId, request)));
     }
 
+    @PreAuthorize("hasAnyRole('MANAGER')")
     @DeleteMapping("/{featureId}")
     public ResponseEntity<ApiResponse<String>> deleteFeature(
             @PathVariable Integer featureId) {

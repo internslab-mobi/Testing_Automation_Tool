@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectorRef, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Project, Feature } from '../../../../model/workspace/workspace.model';
@@ -10,8 +10,29 @@ import { Project, Feature } from '../../../../model/workspace/workspace.model';
   templateUrl: './sidebar.component.html',
   styleUrl: './sidebar.component.css'
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit, OnDestroy {
   readonly cdr = inject(ChangeDetectorRef);
+  private sidebarTicker: any = null;
+
+  ngOnInit(): void {
+    this.startSidebarTicker();
+  }
+
+  ngOnDestroy(): void {
+    if (this.sidebarTicker) {
+      clearInterval(this.sidebarTicker);
+      this.sidebarTicker = null;
+    }
+  }
+
+  private startSidebarTicker(): void {
+    this.sidebarTicker = setInterval(() => {
+      const hasRunningFeature = (this.features && this.features.some(f => !!f.startTime)) || !!this.activeFeature?.startTime;
+      if (hasRunningFeature) {
+        this.cdr.markForCheck();
+      }
+    }, 1000);
+  }
 
   @Input() isOpen = false;
   @Input() availableRegions: string[] = [];
@@ -35,6 +56,7 @@ export class SidebarComponent {
   @Input() featureAttachmentCount = 0;
   @Input() isOverviewMode = false;
   @Input() isLoadingFeatures = false;
+  @Input() isManagerUser = false;
 
   @Output() regionChange = new EventEmitter<string>();
   @Output() selectProject = new EventEmitter<Project>();
@@ -44,6 +66,7 @@ export class SidebarComponent {
   @Output() selectFeature = new EventEmitter<Feature>();
   @Output() createFeature = new EventEmitter<void>();
   @Output() editFeature = new EventEmitter<Feature>();
+  @Output() deleteFeature = new EventEmitter<Feature>();
   @Output() openFeatureAttachments = new EventEmitter<Feature>();
   @Output() closeSidebar = new EventEmitter<void>();
   @Output() openOverview = new EventEmitter<void>();
@@ -279,4 +302,34 @@ export class SidebarComponent {
   trackByFeatureId(_index: number, f: Feature): number {
     return f.featureId;
   }
+
+  formatDurationSidebar(totalSeconds: number): string {
+    if (!totalSeconds || totalSeconds < 0) return '0s';
+    const days = Math.floor(totalSeconds / 86400);
+    const hours = Math.floor((totalSeconds % 86400) / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    if (days > 0) return `${days}d ${hours}h`;
+    if (hours > 0) return `${hours}h ${minutes}m`;
+    if (minutes > 0) return `${minutes}m`;
+    return `${totalSeconds}s`;
+  }
+
+  getFeatureDuration(f: Feature): string {
+    const feat = (this.activeFeature && this.activeFeature.featureId === f.featureId) ? this.activeFeature : f;
+    let total = feat.duration || 0;
+    if (feat.startTime) {
+      const startMs = new Date(feat.startTime).getTime();
+      const elapsed = Math.max(0, Math.floor((Date.now() - startMs) / 1000));
+      total += elapsed;
+    }
+    return this.formatDurationSidebar(total);
+  }
+
+  isFeatureRunning(f: Feature): boolean {
+    if (this.activeFeature && this.activeFeature.featureId === f.featureId) {
+      return !!this.activeFeature.startTime;
+    }
+    return !!f.startTime;
+  }
 }
+

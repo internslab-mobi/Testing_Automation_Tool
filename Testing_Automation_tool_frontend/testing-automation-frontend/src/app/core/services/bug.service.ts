@@ -148,6 +148,12 @@ export class BugService {
     );
   }
 
+  bulkDeleteBugs(bugIds: number[]): Observable<any> {
+    return this.http.delete<any>(`${this.baseUrl}/bug/bulk`, { body: bugIds }).pipe(
+      map(res => res?.data || res)
+    );
+  }
+
   patchBugStatus(bugId: number, status: string): Observable<any> {
     return this.http.patch<any>(`${this.baseUrl}/bug/${bugId}`, { status });
   }

@@ -2,6 +2,7 @@ package xyz.mobi.testingautomationtool.controller;
 
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -45,6 +46,15 @@ public class TestcaseController {
             @RequestParam("file") MultipartFile file,
             @RequestParam("featureId") Integer featureId) {
         return ResponseEntity.ok(ApiResponse.success("Excel uploaded successfully", testCaseService.createTestCaseByUpload(file, featureId)));
+    }
+
+    @GetMapping("/template")
+    public ResponseEntity<byte[]> downloadBlankTemplate() {
+        byte[] excelBytes = testCaseService.downloadBlankTemplate();
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"TestCase_Template.xlsx\"")
+                .contentType(MediaType.parseMediaType("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"))
+                .body(excelBytes);
     }
 
     @GetMapping("/{featureId:\\d+}/template")
@@ -136,7 +146,14 @@ public class TestcaseController {
     public ResponseEntity<ApiResponse<PatchTestCaseDeleteResponse>> softDelete(
             @PathVariable("id") Integer id) {
         PatchTestCaseDeleteResponse response = testCaseService.softDeleteTestCase(id);
-        return ResponseEntity.ok(ApiResponse.success("Test case soft deleted successfully", response));
+        return ResponseEntity.ok(ApiResponse.success("Test case deleted successfully", response));
+    }
+
+    @DeleteMapping("/bulk")
+    public ResponseEntity<ApiResponse<List<Integer>>> bulkDeleteTestCases(
+            @RequestBody List<Integer> ids) {
+        List<Integer> deletedIds = testCaseService.bulkDeleteTestCases(ids);
+        return ResponseEntity.ok(ApiResponse.success("Test cases deleted successfully", deletedIds));
     }
 
     @DeleteMapping("/{id}")

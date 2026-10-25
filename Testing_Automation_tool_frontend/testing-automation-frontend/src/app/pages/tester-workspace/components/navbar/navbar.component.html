@@ -32,6 +32,46 @@
         <button class="btn btn-secondary btn-xs" (click)="viewProjectDetails.emit(activeProject)" title="View Project Details">
           <i class="fa-solid fa-folder-open"></i> Project Info
         </button>
+
+        <!-- Feature Work Duration Tracker Widget (Near Project Info) -->
+        <div class="navbar-duration-pill-group" [class.is-running]="isFeatureTimerRunning">
+          <!-- Main Duration Pill Button (Click to show full details & manual log) -->
+          <button
+            type="button"
+            class="btn-nav-duration"
+            (click)="openDurationDetails.emit()"
+            title="Click to view work duration details and manual log options"
+          >
+            <span class="nav-duration-pulse" *ngIf="isFeatureTimerRunning"></span>
+            <i class="fa-regular fa-clock" [class.fa-spin]="isFeatureTimerRunning"></i>
+            <span class="nav-duration-digits">{{ displayFeatureDuration }}</span>
+            <span class="nav-status-badge" [class.badge-live]="isFeatureTimerRunning">
+              {{ isFeatureTimerRunning ? 'ACTIVE' : 'LOGGED' }}
+            </span>
+          </button>
+
+          <!-- Quick Action Play/Pause Toggle Button -->
+          <button
+            *ngIf="!isFeatureTimerRunning"
+            type="button"
+            class="btn-nav-timer-toggle btn-toggle-play"
+            (click)="startTimer.emit(); $event.stopPropagation()"
+            [disabled]="isUpdatingTimer"
+            title="Start Work Timer"
+          >
+            <i class="fa-solid fa-play"></i>
+          </button>
+          <button
+            *ngIf="isFeatureTimerRunning"
+            type="button"
+            class="btn-nav-timer-toggle btn-toggle-pause"
+            (click)="stopTimer.emit(); $event.stopPropagation()"
+            [disabled]="isUpdatingTimer"
+            title="Pause Work Timer"
+          >
+            <i class="fa-solid fa-pause"></i>
+          </button>
+        </div>
       </div>
     </div>
 

@@ -1,5 +1,6 @@
 package xyz.mobi.testingautomationtool.service;
 
+import java.util.List;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.multipart.MultipartFile;
@@ -18,6 +19,8 @@ public interface TestCaseService {
     ExcelUploadResponse createTestCaseByUpload(MultipartFile file, Integer featureId);
 
     byte[] downloadTemplate(Integer featureId);
+    
+    byte[] downloadBlankTemplate();
 
     Page<TestCaseResponse> getAll(
             Integer featureId,
@@ -29,8 +32,6 @@ public interface TestCaseService {
     Page<TestCaseResponse> getAll(Integer featureId, int page, int size);
 
     TestCaseResponse getById(Integer id, boolean includeInactive);
-
-    TestCaseResponse getById(Integer id);
 
     Page<TestCaseResponse> searchTestCases(
             String keyword,
@@ -51,4 +52,6 @@ public interface TestCaseService {
     String hardDeleteTestCase(Integer id);
 
     PatchTestCaseDeleteResponse softDeleteTestCase(Integer id);
+ 
+    List<Integer> bulkDeleteTestCases(List<Integer> testCaseIds);
 }
