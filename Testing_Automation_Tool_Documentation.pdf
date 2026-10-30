@@ -1,0 +1,5481 @@
+%PDF-1.4
+%‚„œ”
+1 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [8 0 R 10 0 R 12 0 R 14 0 R 16 0 R 18 0 R 20 0 R 22 0 R 24 0 R 26 0 R] /Count 10 >>
+endobj
+3 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>
+endobj
+4 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>
+endobj
+5 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Oblique /Encoding /WinAnsiEncoding >>
+endobj
+6 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier /Encoding /WinAnsiEncoding >>
+endobj
+7 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Courier-Bold /Encoding /WinAnsiEncoding >>
+endobj
+8 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Contents 9 0 R /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> >>
+endobj
+9 0 obj
+<< /Length 8437 >>
+stream
+q
+0.06 0.11 0.22 rg
+42.00 683.89 511.28 108.00 re
+f
+Q
+q
+0.1 0.33 0.75 rg
+42.00 683.89 4.50 108.00 re
+f
+Q
+BT
+/F2 17 Tf
+1 1 1 rg
+60.00 765.89 Td
+(Testing Automation Tool \(TAT\)) Tj
+ET
+BT
+/F1 9.5 Tf
+0.65 0.8 0.98 rg
+60.00 747.89 Td
+(Enterprise Quality Assurance, Test Lifecycle & Defect Management Platform) Tj
+ET
+q
+0.13 0.23 0.42 rg
+60.00 717.89 54.11 14.00 re
+f
+Q
+BT
+/F2 7.5 Tf
+0.85 0.92 1 rg
+66.00 721.39 Td
+(Java 21 LTS) Tj
+ET
+q
+0.13 0.23 0.42 rg
+120.11 717.89 69.95 14.00 re
+f
+Q
+BT
+/F2 7.5 Tf
+0.85 0.92 1 rg
+126.11 721.39 Td
+(Spring Boot 4.1.1) Tj
+ET
+q
+0.13 0.23 0.42 rg
+196.06 717.89 87.03 14.00 re
+f
+Q
+BT
+/F2 7.5 Tf
+0.85 0.92 1 rg
+202.06 721.39 Td
+(Spring Cloud Gateway) Tj
+ET
+q
+0.13 0.23 0.42 rg
+289.09 717.89 48.27 14.00 re
+f
+Q
+BT
+/F2 7.5 Tf
+0.85 0.92 1 rg
+295.09 721.39 Td
+(Angular 22) Tj
+ET
+q
+0.13 0.23 0.42 rg
+343.36 717.89 106.19 14.00 re
+f
+Q
+BT
+/F2 7.5 Tf
+0.85 0.92 1 rg
+349.36 721.39 Td
+(Stateless JWT \(Dual-Token\)) Tj
+ET
+q
+0.13 0.23 0.42 rg
+455.54 717.89 43.26 14.00 re
+f
+Q
+BT
+/F2 7.5 Tf
+0.85 0.92 1 rg
+461.54 721.39 Td
+(MySQL 8) Tj
+ET
+BT
+/F2 7.5 Tf
+0.55 0.7 0.9 rg
+60.00 695.89 Td
+(SYSTEM ARCHITECTURE, SECURITY SPECIFICATION & REST API REFERENCE GUIDE) Tj
+ET
+q
+0.93 0.97 1 rg
+0.84 0.88 0.92 RG
+0.5 w
+42.00 642.39 511.28 23.50 re
+B
+Q
+q
+0.01 0.52 0.78 rg
+42.00 642.39 3.50 23.50 re
+f
+Q
+BT
+/F3 8.5 Tf
+0.12 0.16 0.23 rg
+54.00 655.89 Td
+(**Target Framework:** Spring Boot 4.1.1 / Java 21 LTS | Angular 22) Tj
+ET
+q
+0.93 0.97 1 rg
+0.84 0.88 0.92 RG
+0.5 w
+42.00 616.89 511.28 23.50 re
+B
+Q
+q
+0.01 0.52 0.78 rg
+42.00 616.89 3.50 23.50 re
+f
+Q
+BT
+/F3 8.5 Tf
+0.12 0.16 0.23 rg
+54.00 630.39 Td
+(**Architecture Pattern:** Distributed Microservices with Spring Cloud Gateway & Stateless Dual-Token JWT) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.75 w
+42.00 602.89 m 553.28 602.89 l S
+Q
+BT
+/F2 12 Tf
+0.1 0.33 0.75 rg
+42.00 572.89 Td
+(Table of Contents) Tj
+ET
+q
+0.01 0.52 0.78 RG
+1.5 w
+42.00 569.89 m 77.00 569.89 l S
+Q
+BT
+/F2 8.5 Tf
+0.1 0.33 0.75 rg
+42.00 554.89 Td
+(1.) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 554.89 Td
+([Executive Overview & Key Capabilities]\(#1-executive-overview--key-capabilities\)) Tj
+ET
+BT
+/F2 8.5 Tf
+0.1 0.33 0.75 rg
+42.00 542.39 Td
+(2.) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 542.39 Td
+([Microservices Architecture & System Topology]\(#2-microservices-architecture--system-topology\)) Tj
+ET
+BT
+/F2 8.5 Tf
+0.1 0.33 0.75 rg
+42.00 529.89 Td
+(3.) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 529.89 Td
+([Service Catalog & Network Port Matrix]\(#3-service-catalog--network-port-matrix\)) Tj
+ET
+BT
+/F2 8.5 Tf
+0.1 0.33 0.75 rg
+42.00 517.39 Td
+(4.) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 517.39 Td
+([Security, Authentication & RBAC Architecture]\(#4-security-authentication--rbac-architecture\)) Tj
+ET
+BT
+/F2 8.5 Tf
+0.1 0.33 0.75 rg
+42.00 504.89 Td
+(5.) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 504.89 Td
+([Domain Model & Entity-Relationship Architecture]\(#5-domain-model--entity-relationship-architecture\)) Tj
+ET
+BT
+/F2 8.5 Tf
+0.1 0.33 0.75 rg
+42.00 492.39 Td
+(6.) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 492.39 Td
+([Core Business Workflows & Modules Deep-Dive]\(#6-core-business-workflows--modules-deep-dive\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 481.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 479.89 Td
+([6.1 User Onboarding & Approval Lifecycle]\(#61-user-onboarding--approval-lifecycle\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 469.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 467.39 Td
+([6.2 Project & Agile Feature Management]\(#62-project--agile-feature-management\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 456.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 454.89 Td
+([6.3 Test Case Authoring & Bulk Excel Engine]\(#63-test-case-authoring--bulk-excel-engine\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 444.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 442.39 Td
+([6.4 Multi-Tier Test Execution Logging]\(#64-multi-tier-test-execution-logging\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 431.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 429.89 Td
+([6.5 Defect State Machine & Automated ID Engine]\(#65-defect-state-machine--automated-id-engine\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 419.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 417.39 Td
+([6.6 Defect Collaboration & Media Attachment Subsystem]\(#66-defect-collaboration--media-attachment-subsystem\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 406.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 404.89 Td
+([6.7 Outlook SMTP Notification Service]\(#67-outlook-smtp-notification-service\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 394.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 392.39 Td
+([6.8 Streaming QA Summary & Export Microservice]\(#68-streaming-qa-summary--export-microservice\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 381.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 379.89 Td
+([6.9 Manager Quality Health Score Algorithm]\(#69-manager-quality-health-score-algorithm\)) Tj
+ET
+BT
+/F2 8.5 Tf
+0.1 0.33 0.75 rg
+42.00 367.39 Td
+(7.) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 367.39 Td
+([Frontend Architecture & Single Page Application \(SPA\)]\(#7-frontend-architecture--single-page-application-spa\)) Tj
+ET
+BT
+/F2 8.5 Tf
+0.1 0.33 0.75 rg
+42.00 354.89 Td
+(8.) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 354.89 Td
+([Comprehensive REST API Reference]\(#8-comprehensive-rest-api-reference\)) Tj
+ET
+BT
+/F2 8.5 Tf
+0.1 0.33 0.75 rg
+42.00 342.39 Td
+(9.) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 342.39 Td
+([Configuration & Environment Variables]\(#9-configuration--environment-variables\)) Tj
+ET
+BT
+/F2 8.5 Tf
+0.1 0.33 0.75 rg
+42.00 329.89 Td
+(10.) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 329.89 Td
+([Local Development, Build & Startup Sequence]\(#10-local-development-build--startup-sequence\)) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.75 w
+42.00 311.39 m 553.28 311.39 l S
+Q
+BT
+/F2 12 Tf
+0.1 0.33 0.75 rg
+42.00 281.39 Td
+(1. Executive Overview & Key Capabilities) Tj
+ET
+q
+0.01 0.52 0.78 RG
+1.5 w
+42.00 278.39 m 77.00 278.39 l S
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+42.00 263.39 Td
+(The **Testing Automation Tool \(TAT\)** is an enterprise Quality Assurance \(QA\), Test Lifecycle Management, and Defect Tracking) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+42.00 251.89 Td
+(ecosystem. It consolidates disparate QA processes-test case authoring, bulk spreadsheet operations, test run validation, automated) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+42.00 240.39 Td
+(bug formatting, audit logging, defect team discussions, email notifications, and executive quality scoring-into a unified, distributed) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+42.00 228.89 Td
+(platform.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 201.39 Td
+(Key Capabilities) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 193.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 191.39 Td
+( **Role-Based Access Control \(RBAC\)**: Enforced segregation of duties across `ADMIN`, `MANAGER`, `TESTER`, and) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 179.89 Td
+(`DEVELOPER`.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 169.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 167.39 Td
+( **Manager Verification Pipeline**: Self-registered users are quarantined in an inactive state until vetted, approved, and assigned) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 155.89 Td
+(an operational role by a Manager.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 145.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 143.39 Td
+( **Flexible Test Suite Management**: Custom user-defined attributes stored via JSON type mapping) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 131.89 Td
+(\(`@JdbcTypeCode\(SqlTypes.JSON\)`\).) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 121.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 119.39 Td
+( **High-Performance Spreadsheet Engine**: Dynamic template generation and bulk `.xlsx` test case parsing using Apache POI) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 107.89 Td
+(\(SXSSF streaming for large datasets\).) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 97.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 95.39 Td
+( **Multi-Tier Execution Tracking**: Test executions capture UI validations, database query validations, preconditions, and test) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 83.89 Td
+(data alongside manual/automated run statuses.) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.5 w
+42 40 m 553.28 40 l S
+Q
+BT
+/F1 7.5 Tf
+0.39 0.45 0.55 rg
+42 28 Td
+(CONFIDENTIAL -- Internal Enterprise QA Documentation) Tj
+ET
+BT
+/F2 7.5 Tf
+0.06 0.11 0.22 rg
+510.75 28 Td
+(Page 1 of 10) Tj
+ET
+
+endstream
+endobj
+10 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Contents 11 0 R /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> >>
+endobj
+11 0 obj
+<< /Length 8605 >>
+stream
+BT
+/F2 7.5 Tf
+0.39 0.45 0.55 rg
+42 809.89 Td
+(TESTING AUTOMATION TOOL \(TAT\) -- TECHNICAL ARCHITECTURE MANUAL) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.5 w
+42 805.89 m 553.28 805.89 l S
+Q
+q
+0.1 0.33 0.75 rg
+45.00 793.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 791.89 Td
+( **Automated Defect Formatting & State Machine**: Standardized bug identifiers \(e.g. `BUG-AUTH_MODULE-001`\), immutable) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 780.39 Td
+(audit trail logs in `testing_bug_history`, and root-cause analysis \(RCA\) reporting.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 769.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 767.89 Td
+( **Defect Collaboration & Attachment Hub**: Threaded commenting and multi-part attachment uploading with automated `.zip`) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 756.39 Td
+(bundle downloads.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 745.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 743.89 Td
+( **Enterprise SMTP Dispatcher**: Dedicated microservice handling asynchronous HTML notifications via Microsoft Outlook /) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 732.39 Td
+(Office 365 SMTP relay with delivery tracking.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 721.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 719.89 Td
+( **Proprietary Quality Health Scoring**: Real-time evaluation of software stability based on test pass rates, execution density, and) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 708.39 Td
+(weighted defect severity penalties.) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.75 w
+42.00 689.89 m 553.28 689.89 l S
+Q
+BT
+/F2 12 Tf
+0.1 0.33 0.75 rg
+42.00 659.89 Td
+(2. Microservices Architecture & System Topology) Tj
+ET
+q
+0.01 0.52 0.78 RG
+1.5 w
+42.00 656.89 m 77.00 656.89 l S
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+42.00 641.89 Td
+(TAT is architected as a distributed microservice ecosystem behind a centralized Edge API Gateway.) Tj
+ET
+q
+0.94 0.96 0.98 rg
+0.84 0.88 0.92 RG
+0.5 w
+42.00 282.89 511.28 344.50 re
+B
+Q
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 615.39 Td
+(graph TD) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 605.89 Td
+(    subgraph ClientLayer ["Client Presentation Layer"]) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 596.39 Td
+(        AngularApp["Angular 22 SPA \(Port 4200\)"]) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 586.89 Td
+(        LegacyUIs["Static HTML Consoles \(manager-dashboard, bug-chat\)"]) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 577.39 Td
+(    end) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 558.39 Td
+(    subgraph EdgeLayer ["API Gateway & Routing \(Port 8082\)"]) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 548.89 Td
+(        Gateway["Spring Cloud Gateway WebFlux"]) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 539.39 Td
+(        CorsEngine["Global CORS & Header Deduplicator"]) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 529.89 Td
+(    end) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 510.89 Td
+(    subgraph CoreMicroservices ["Backend Microservices Ecosystem"]) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 501.39 Td
+(        AuthSvc["auth-service \(Port 8081\)<br/>* Identity & Registration<br/>* Dual-Token JWT \(A) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 491.89 Td
+(        MainSvc["main-service \(Port 8090\)<br/>* Projects & Features<br/>* Test Cases & Executio) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 482.39 Td
+(        SummarySvc["summary-export-service \(Port 8092\)<br/>* SXSSF Streaming Excel Export<br/>*) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 472.89 Td
+(        NotifSvc["notification-service \(Port 8091\)<br/>* Office 365 / Outlook SMTP Relay<br/>* ) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 463.39 Td
+(    end) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 444.39 Td
+(    subgraph SharedModules ["Shared Libraries"]) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 434.89 Td
+(        CommonLib["common module<br/>* JwtUtils & CookieUtils<br/>* SpaCsrfTokenRequestHandler<) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 425.39 Td
+(    end) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 406.39 Td
+(    subgraph DataStorage ["Data Tier \(MySQL\)"]) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 396.89 Td
+(        AppDB[\("Interns_db \(Core Database\)<br/>* Users, Tokens, Projects<br/>* Features, Tests,) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 387.39 Td
+(        NotifDB[\("notification_service_db<br/>* Notification Tracking Table"\)]) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 377.89 Td
+(    end) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 358.89 Td
+(    ClientLayer -->|HTTP Requests with Cookies & CSRF| Gateway) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 349.39 Td
+(    Gateway --> CorsEngine) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 339.89 Td
+(    CorsEngine -->|Route /auth/**| AuthSvc) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 330.39 Td
+(    CorsEngine -->|Route /manager/**, /project/**, /feature/**, /testcases/**, /bugs/**, /admin) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 320.89 Td
+(    CorsEngine -->|Route /api/v1/notifications/**| NotifSvc) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 301.89 Td
+(    AuthSvc -.->|Trigger OTP Emails| NotifSvc) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 292.39 Td
+(    MainSvc -.->|Trigger Event Notifications| NotifSvc) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.75 w
+42.00 270.89 m 553.28 270.89 l S
+Q
+BT
+/F2 12 Tf
+0.1 0.33 0.75 rg
+42.00 240.89 Td
+(3. Service Catalog & Network Port Matrix) Tj
+ET
+q
+0.01 0.52 0.78 RG
+1.5 w
+42.00 237.89 m 77.00 237.89 l S
+Q
+q
+0.09 0.16 0.3 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 200.89 511.28 26.00 re
+B
+Q
+BT
+/F2 8 Tf
+1 1 1 rg
+47.00 220.89 Td
+(Service /) Tj
+ET
+BT
+/F2 8 Tf
+1 1 1 rg
+47.00 210.89 Td
+(Component) Tj
+ET
+BT
+/F2 8 Tf
+1 1 1 rg
+107.00 220.89 Td
+(Sub-directory) Tj
+ET
+BT
+/F2 8 Tf
+1 1 1 rg
+237.00 220.89 Td
+(Runtime / Tech Stack) Tj
+ET
+BT
+/F2 8 Tf
+1 1 1 rg
+327.00 220.89 Td
+(Default Port) Tj
+ET
+BT
+/F2 8 Tf
+1 1 1 rg
+407.00 220.89 Td
+(Primary Responsibility) Tj
+ET
+q
+1 1 1 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 164.89 511.28 36.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 194.89 Td
+(**Angular) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 184.89 Td
+(Frontend**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+107.00 194.89 Td
+(`Testing_Automation_tool_frontend/testing-automation-frontend`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+237.00 194.89 Td
+(Node.js 18+, Angular) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+237.00 184.89 Td
+(22, TypeScript) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+327.00 194.89 Td
+(`4200`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 194.89 Td
+(Single Page Application providing) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 184.89 Td
+(interactive portals for Admin, Manager,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 174.89 Td
+(Tester, and Developer workflows.) Tj
+ET
+q
+0.97 0.98 0.99 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 128.89 511.28 36.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 158.89 Td
+(**API) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 148.89 Td
+(Gateway**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+107.00 158.89 Td
+(`TestingAutomationTool/api-gateway`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+237.00 158.89 Td
+(Spring Boot 4.1.1,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+237.00 148.89 Td
+(Spring Cloud Gateway) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+237.00 138.89 Td
+(WebFlux) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+327.00 158.89 Td
+(`8082`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 158.89 Td
+(Public reverse proxy, global CORS) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 148.89 Td
+(management, cookie passthrough, and) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 138.89 Td
+(downstream route dispatching.) Tj
+ET
+q
+1 1 1 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 82.89 511.28 46.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 122.89 Td
+(**Auth) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 112.89 Td
+(Service**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+107.00 122.89 Td
+(`TestingAutomationTool/auth-service`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+237.00 122.89 Td
+(Spring Boot 4.1.1,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+237.00 112.89 Td
+(Spring Security, JJWT) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+327.00 122.89 Td
+(`8081`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 122.89 Td
+(User registration, authentication,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 112.89 Td
+(dual-token generation, refresh token) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 102.89 Td
+(persistence, and 6-digit email OTP) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 92.89 Td
+(password recovery.) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.5 w
+42 40 m 553.28 40 l S
+Q
+BT
+/F1 7.5 Tf
+0.39 0.45 0.55 rg
+42 28 Td
+(CONFIDENTIAL -- Internal Enterprise QA Documentation) Tj
+ET
+BT
+/F2 7.5 Tf
+0.06 0.11 0.22 rg
+510.75 28 Td
+(Page 2 of 10) Tj
+ET
+
+endstream
+endobj
+12 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Contents 13 0 R /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> >>
+endobj
+13 0 obj
+<< /Length 9651 >>
+stream
+BT
+/F2 7.5 Tf
+0.39 0.45 0.55 rg
+42 809.89 Td
+(TESTING AUTOMATION TOOL \(TAT\) -- TECHNICAL ARCHITECTURE MANUAL) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.5 w
+42 805.89 m 553.28 805.89 l S
+Q
+q
+0.97 0.98 0.99 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 749.89 511.28 46.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 789.89 Td
+(**Main) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 779.89 Td
+(Service**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+107.00 789.89 Td
+(`TestingAutomationTool/main-service`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+237.00 789.89 Td
+(Spring Boot 4.1.1,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+237.00 779.89 Td
+(Spring Data JPA,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+237.00 769.89 Td
+(Hibernate 6) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+327.00 789.89 Td
+(`8090`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 789.89 Td
+(Core business engine: Project, Feature,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 779.89 Td
+(TestCase, Execution, Bug, Comment,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 769.89 Td
+(Attachment, Admin, and Executive) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 759.89 Td
+(Dashboard.) Tj
+ET
+q
+1 1 1 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 713.89 511.28 36.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 743.89 Td
+(**Notification) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 733.89 Td
+(Service**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+107.00 743.89 Td
+(`notification-service`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+237.00 743.89 Td
+(Spring Boot, Spring) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+237.00 733.89 Td
+(Mail, Jakarta Mail) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+327.00 743.89 Td
+(`8091`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 743.89 Td
+(Standalone email notification microservice) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 733.89 Td
+(interfacing with Microsoft Outlook/Office) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 723.89 Td
+(365 SMTP with delivery persistence.) Tj
+ET
+q
+0.97 0.98 0.99 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 677.89 511.28 36.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 707.89 Td
+(**Summary) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 697.89 Td
+(Export) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 687.89 Td
+(Service**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+107.00 707.89 Td
+(`summary-export-service`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+237.00 707.89 Td
+(Spring Boot 4.1.1,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+237.00 697.89 Td
+(Apache POI SXSSF) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+327.00 707.89 Td
+(`8092`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 707.89 Td
+(High-throughput, memory-efficient Excel) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 697.89 Td
+(report generation and dynamic test case) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 687.89 Td
+(upload template builder.) Tj
+ET
+q
+1 1 1 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 641.89 511.28 36.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 671.89 Td
+(**Common) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 661.89 Td
+(Shared) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 651.89 Td
+(Library**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+107.00 671.89 Td
+(`TestingAutomationTool/common`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+237.00 671.89 Td
+(Java 21 Library) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+327.00 671.89 Td
+(N/A) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 671.89 Td
+(Shared security filters, JWT utilities,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 661.89 Td
+(cookie helpers, CSRF handlers, entity) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+407.00 651.89 Td
+(models, and DTO contracts.) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.75 w
+42.00 625.89 m 553.28 625.89 l S
+Q
+BT
+/F2 12 Tf
+0.1 0.33 0.75 rg
+42.00 595.89 Td
+(4. Security, Authentication & RBAC Architecture) Tj
+ET
+q
+0.01 0.52 0.78 RG
+1.5 w
+42.00 592.89 m 77.00 592.89 l S
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+42.00 577.89 Td
+(The platform enforces a zero-trust, defense-in-depth security model across all tiers:) Tj
+ET
+q
+0.94 0.96 0.98 rg
+0.84 0.88 0.92 RG
+0.5 w
+42.00 313.89 511.28 249.50 re
+B
+Q
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 551.39 Td
+(sequenceDiagram) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 541.89 Td
+(    autonumber) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 532.39 Td
+(    actor User as Client Browser) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 522.89 Td
+(    participant Gateway as API Gateway \(:8082\)) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 513.39 Td
+(    participant Auth as Auth Service \(:8081\)) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 503.89 Td
+(    participant Main as Main Service \(:8090\)) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 494.39 Td
+(    participant DB as MySQL \(Interns_db\)) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 475.39 Td
+(    Note over User,Auth: Authentication & Token Issuance) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 465.89 Td
+(    User->>Gateway: POST /auth/login \(username, password\)) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 456.39 Td
+(    Gateway->>Auth: Forward to :8081) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 446.89 Td
+(    Auth->>DB: Verify credentials & active account status) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 437.39 Td
+(    Auth->>DB: Store persistent refresh token in testing_refresh_tokens) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 427.89 Td
+(    Auth-->>Gateway: 200 OK + Set-Cookie: accessToken \(15m HttpOnly\)<br/>+ Set-Cookie: refreshT) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 418.39 Td
+(    Gateway-->>User: Pass Set-Cookie headers back to browser) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 399.39 Td
+(    Note over User,Main: Protected Business Request) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 389.89 Td
+(    User->>Gateway: POST /testcases \(with Cookies + X-XSRF-TOKEN header\)) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 380.39 Td
+(    Gateway->>Main: Forward request to :8090 with headers & cookies) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 370.89 Td
+(    Main->>Main: CsrfCookieFilter & SpaCsrfTokenRequestHandler validate CSRF) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 361.39 Td
+(    Main->>Main: JwtAuthenticationFilter validates accessToken signature & claims) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 351.89 Td
+(    Main->>Main: Check @PreAuthorize\("hasAnyRole\('MANAGER', 'TESTER', 'ADMIN'\)"\)) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 342.39 Td
+(    Main->>DB: Execute business logic) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 332.89 Td
+(    Main-->>Gateway: 201 Created) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 323.39 Td
+(    Gateway-->>User: 201 Created) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 294.89 Td
+(4.1 Dual-Token Lifecycle) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 286.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 284.89 Td
+(**Access Token \(`accessToken`\)**:) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 274.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 272.39 Td
+(Validity: **15 minutes** \(`900,000 ms`\).) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 261.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 259.89 Td
+(Carries claims: `userId`, `username`, `email`, `role`, `fullName`.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 249.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 247.39 Td
+(Stored in an **HttpOnly**, `SameSite=Lax` browser cookie.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 236.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 234.89 Td
+(**Refresh Token \(`refreshToken`\)**:) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 224.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 222.39 Td
+(Validity: **24 hours** \(`86,400,000 ms`\).) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 211.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 209.89 Td
+(Persisted in MySQL table `testing_refresh_tokens`.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 199.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 197.39 Td
+(Exchanged via `POST /auth/refresh` without prompting the user for credentials.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 186.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 184.89 Td
+(**10-Minute Session Warning**: If refreshed within the last 10 minutes of its 24-hour lifetime, the API returns a warning notification) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 173.39 Td
+(\(`sessionExpiryWarning`\).) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 162.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 160.89 Td
+(**Strict Session Expiration**: Once expired or revoked, calls return `HTTP 401 Unauthorized` with `"Refresh token expired. Please) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 149.39 Td
+(log in again."`.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 123.89 Td
+(4.2 In-Memory OTP Password Recovery) Tj
+ET
+BT
+/F2 8.5 Tf
+0.1 0.33 0.75 rg
+42.00 113.89 Td
+(1.) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 113.89 Td
+(`POST /auth/forgot-password`: Generates a cryptographically random 6-digit OTP stored in thread-safe memory with a **10-minute) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 102.39 Td
+(TTL**. Dispatches an HTML email via `notification-service`.) Tj
+ET
+BT
+/F2 8.5 Tf
+0.1 0.33 0.75 rg
+42.00 89.89 Td
+(2.) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 89.89 Td
+(`POST /auth/verify-otp`: Validates code correctness without changing state.) Tj
+ET
+BT
+/F2 8.5 Tf
+0.1 0.33 0.75 rg
+42.00 77.39 Td
+(3.) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 77.39 Td
+(`POST /auth/reset-password`: Validates OTP, updates password with BCrypt, invalidates all prior refresh tokens, and returns fresh) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 65.89 Td
+(Access + Refresh tokens for an instant authenticated session.) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.5 w
+42 40 m 553.28 40 l S
+Q
+BT
+/F1 7.5 Tf
+0.39 0.45 0.55 rg
+42 28 Td
+(CONFIDENTIAL -- Internal Enterprise QA Documentation) Tj
+ET
+BT
+/F2 7.5 Tf
+0.06 0.11 0.22 rg
+510.75 28 Td
+(Page 3 of 10) Tj
+ET
+
+endstream
+endobj
+14 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Contents 15 0 R /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> >>
+endobj
+15 0 obj
+<< /Length 10731 >>
+stream
+BT
+/F2 7.5 Tf
+0.39 0.45 0.55 rg
+42 809.89 Td
+(TESTING AUTOMATION TOOL \(TAT\) -- TECHNICAL ARCHITECTURE MANUAL) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.5 w
+42 805.89 m 553.28 805.89 l S
+Q
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 784.89 Td
+(4.3 Double-Submit CSRF Defense) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 776.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 774.89 Td
+(Uses Spring Security 6's deferred CSRF model.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 764.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 762.39 Td
+(`CsrfCookieFilter` forces generation of the `XSRF-TOKEN` cookie.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 751.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 749.89 Td
+(`SpaCsrfTokenRequestHandler` processes the incoming `X-XSRF-TOKEN` header on non-safe HTTP methods \(`POST`, `PUT`,) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 738.39 Td
+(`PATCH`, `DELETE`\).) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 712.89 Td
+(4.4 Role-Based Access Control \(RBAC\) Matrix) Tj
+ET
+q
+0.09 0.16 0.3 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 684.89 511.28 16.00 re
+B
+Q
+BT
+/F2 8 Tf
+1 1 1 rg
+47.00 694.89 Td
+(Functional Area) Tj
+ET
+BT
+/F2 8 Tf
+1 1 1 rg
+117.00 694.89 Td
+(Path Pattern) Tj
+ET
+BT
+/F2 8 Tf
+1 1 1 rg
+277.00 694.89 Td
+(Required Role\(s\)) Tj
+ET
+BT
+/F2 8 Tf
+1 1 1 rg
+387.00 694.89 Td
+(Description) Tj
+ET
+q
+1 1 1 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 648.89 511.28 36.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 678.89 Td
+(**Public Auth**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 678.89 Td
+(`/auth/register`, `/auth/login`, `/auth/refresh`,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 668.89 Td
+(`/auth/forgot-password`,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 658.89 Td
+(`/auth/reset-password`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 678.89 Td
+(Public) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 678.89 Td
+(Unauthenticated user operations) Tj
+ET
+q
+0.97 0.98 0.99 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 622.89 511.28 26.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 642.89 Td
+(**Session &) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 632.89 Td
+(Profile**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 642.89 Td
+(`/auth/profile`, `/auth/change-password`,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 632.89 Td
+(`/auth/logout`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 642.89 Td
+(Authenticated) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 642.89 Td
+(Any active logged-in user) Tj
+ET
+q
+1 1 1 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 586.89 511.28 36.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 616.89 Td
+(**Manager) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 606.89 Td
+(Approvals**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 616.89 Td
+(`/manager/users/pending`,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 606.89 Td
+(`/manager/userConfirmation`,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 596.89 Td
+(`/manager/userRejection/*`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 616.89 Td
+(`MANAGER`, `ADMIN`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 616.89 Td
+(Vetting and activating newly registered user) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 606.89 Td
+(accounts) Tj
+ET
+q
+0.97 0.98 0.99 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 560.89 511.28 26.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 580.89 Td
+(**Manager) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 570.89 Td
+(Analytics**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 580.89 Td
+(`/manager/dashboard/**`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 580.89 Td
+(`MANAGER`, `ADMIN`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 580.89 Td
+(Real-time QA metrics and health scoring) Tj
+ET
+q
+1 1 1 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 534.89 511.28 26.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 554.89 Td
+(**User) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 544.89 Td
+(Administration**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 554.89 Td
+(`/admin/**`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 554.89 Td
+(`ADMIN`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 554.89 Td
+(CRUD on managers, user role adjustments,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 544.89 Td
+(soft/hard deletion) Tj
+ET
+q
+0.97 0.98 0.99 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 508.89 511.28 26.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 528.89 Td
+(**Project) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 518.89 Td
+(Management**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 528.89 Td
+(`/project`, `/project/{id}`, `/project/search`,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 518.89 Td
+(`/project/attachment/*`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 528.89 Td
+(`MANAGER`, `TESTER`,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 518.89 Td
+(`ADMIN`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 528.89 Td
+(Manage testing projects and file documentation) Tj
+ET
+q
+1 1 1 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 482.89 511.28 26.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 502.89 Td
+(**Project) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 492.89 Td
+(Deletion**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 502.89 Td
+(`PATCH /project/access/{id}`, `DELETE) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 492.89 Td
+(/project/**`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 502.89 Td
+(`MANAGER`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 502.89 Td
+(Soft-disable, soft-delete, or permanent purge) Tj
+ET
+q
+0.97 0.98 0.99 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 456.89 511.28 26.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 476.89 Td
+(**Feature) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 466.89 Td
+(Management**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 476.89 Td
+(`/feature/**`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 476.89 Td
+(`MANAGER`, `TESTER`,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 466.89 Td
+(`ADMIN`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 476.89 Td
+(Sprints, versions, and attachments within) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 466.89 Td
+(projects) Tj
+ET
+q
+1 1 1 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 430.89 511.28 26.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 450.89 Td
+(**Test Case) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 440.89 Td
+(Suite**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 450.89 Td
+(`/testcases/**`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 450.89 Td
+(`MANAGER`, `TESTER`,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 440.89 Td
+(`ADMIN`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 450.89 Td
+(Test case authoring, execution logging, Excel) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 440.89 Td
+(upload) Tj
+ET
+q
+0.97 0.98 0.99 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 404.89 511.28 26.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 424.89 Td
+(**Defect) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 414.89 Td
+(Tracking**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 424.89 Td
+(`/bugs/**`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 424.89 Td
+(`MANAGER`, `TESTER`,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 414.89 Td
+(`ADMIN`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 424.89 Td
+(Bug lifecycle, status transitions, attachments) Tj
+ET
+q
+1 1 1 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 378.89 511.28 26.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 398.89 Td
+(**Defect) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 388.89 Td
+(Discussion**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 398.89 Td
+(`/comments/**`, `/bugs/{bugId}/comments/**`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 398.89 Td
+(`MANAGER`, `TESTER`,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 388.89 Td
+(`ADMIN`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 398.89 Td
+(Threaded discussions on defects) Tj
+ET
+q
+0.97 0.98 0.99 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 352.89 511.28 26.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 372.89 Td
+(**In-App Alerts**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 372.89 Td
+(`/in-app-notifications/**`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 372.89 Td
+(Authenticated) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 372.89 Td
+(User notification inbox and mark-as-read) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 362.89 Td
+(updates) Tj
+ET
+q
+1 1 1 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 326.89 511.28 26.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 346.89 Td
+(**Summary) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 336.89 Td
+(Reports**) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 346.89 Td
+(`/export/summary/**`, `/export/template/**`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 346.89 Td
+(`MANAGER`, `TESTER`,) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 336.89 Td
+(`ADMIN`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 346.89 Td
+(Project/feature Excel export and upload) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 336.89 Td
+(templates) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.75 w
+42.00 310.89 m 553.28 310.89 l S
+Q
+BT
+/F2 12 Tf
+0.1 0.33 0.75 rg
+42.00 280.89 Td
+(5. Domain Model & Entity-Relationship Architecture) Tj
+ET
+q
+0.01 0.52 0.78 RG
+1.5 w
+42.00 277.89 m 77.00 277.89 l S
+Q
+q
+0.94 0.96 0.98 rg
+0.84 0.88 0.92 RG
+0.5 w
+42.00 28.89 511.28 240.00 re
+B
+Q
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 256.89 Td
+(erDiagram) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 247.39 Td
+(    ROLE ||--o{ USER : "assigned to") Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 237.89 Td
+(    USER ||--o{ REFRESH_TOKEN : "owns") Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 228.39 Td
+(    USER ||--o{ PROJECT : "creates") Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 218.89 Td
+(    USER ||--o{ FEATURE : "creates") Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 209.39 Td
+(    USER ||--o{ TEST_CASE : "authors") Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 199.89 Td
+(    USER ||--o{ TESTING_EXECUTION : "executes") Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 190.39 Td
+(    USER ||--o{ BUG : "reports / assigned to") Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 180.89 Td
+(    USER ||--o{ COMMENT : "authors") Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 171.39 Td
+(    USER ||--o{ IN_APP_NOTIFICATION : "receives") Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 152.39 Td
+(    PROJECT ||--o{ FEATURE : "contains") Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 142.89 Td
+(    PROJECT ||--o{ ATTACHMENT : "has documents") Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 123.89 Td
+(    FEATURE ||--o{ TEST_CASE : "groups") Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 114.39 Td
+(    FEATURE ||--o{ BUG : "encounters") Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 104.89 Td
+(    FEATURE ||--o{ ATTACHMENT : "has documents") Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 85.89 Td
+(    TEST_CASE ||--|| TESTING_EXECUTION : "1-to-1 execution details") Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 76.39 Td
+(    TEST_CASE ||--o{ BUG : "generates") Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.5 w
+42 40 m 553.28 40 l S
+Q
+BT
+/F1 7.5 Tf
+0.39 0.45 0.55 rg
+42 28 Td
+(CONFIDENTIAL -- Internal Enterprise QA Documentation) Tj
+ET
+BT
+/F2 7.5 Tf
+0.06 0.11 0.22 rg
+510.75 28 Td
+(Page 4 of 10) Tj
+ET
+
+endstream
+endobj
+16 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Contents 17 0 R /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> >>
+endobj
+17 0 obj
+<< /Length 8896 >>
+stream
+BT
+/F2 7.5 Tf
+0.39 0.45 0.55 rg
+42 809.89 Td
+(TESTING AUTOMATION TOOL \(TAT\) -- TECHNICAL ARCHITECTURE MANUAL) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.5 w
+42 805.89 m 553.28 805.89 l S
+Q
+q
+0.94 0.96 0.98 rg
+0.84 0.88 0.92 RG
+0.5 w
+42.00 563.89 511.28 234.00 re
+B
+Q
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 785.89 Td
+(    BUG ||--o{ BUG_HISTORY : "tracks state transitions") Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 776.39 Td
+(    BUG ||--o{ COMMENT : "discussion thread") Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 766.89 Td
+(    BUG ||--o{ ATTACHMENT : "screenshot / logs evidence") Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 738.39 Td
+(Core Entity Schema Definitions) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 730.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 728.39 Td
+(**`User` \(`testing_users`\)**: ID, username, email, password \(BCrypt\), full name, designation, skills, role reference, active status) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 716.89 Td
+(\(`isActive`\), soft-delete flag \(`isDeleted`\).) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 706.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 704.39 Td
+(**`RefreshToken` \(`testing_refresh_tokens`\)**: ID, user reference, token hash, expiry timestamp, revocation flag \(`isRevoked`\).) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 693.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 691.89 Td
+(**`Project` \(`testing_projects`\)**: ID, name, region, status \(`ACTIVE`, `INACTIVE`\), soft-delete flag, optimistic lock version.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 681.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 679.39 Td
+(**`Feature` \(`testing_features`\)**: ID, project reference, name, sprint number, status \(`ACTIVE`, `IN_PROGRESS`, `COMPLETED`,) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 667.89 Td
+(`ON_HOLD`, `DEPRECATED`\), feature version.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 657.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 655.39 Td
+(**`TestCase` \(`testing_testcases`\)**: ID, feature reference, formatted ID \(`testcaseFormatId`\), title, test type \(`SMOKE`,) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 643.89 Td
+(`REGRESSION`, `FUNCTIONAL`, `SANITY`, `E2E`\), test priority, status, dynamic JSON metadata \(`dynamicFields`\).) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 633.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 631.39 Td
+(**`TestingExecution` \(`testing_executions`\)**: ID, testcase reference, execution status \(`PASS`, `FAIL`, `NO_RUN`, `BLOCKED`,) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 619.89 Td
+(`DESCOPE`\), automation feasibility \(`YES`, `NO`, `PLANNED`\), UI validations, DB validations, preconditions, test data, executed-at) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 608.39 Td
+(timestamp.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 597.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 595.89 Td
+(**`Bug` \(`testing_bugs`\)**: ID, formatted ID \(`bugFormatId`\), testcase reference, feature reference, title, severity \(`CRITICAL`,) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 584.39 Td
+(`HIGH`, `MEDIUM`, `LOW`\), priority, category \(`PRE_PRODUCTION`, `PRODUCTION`, `REGRESSION`, `SECURITY`,) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 572.89 Td
+(`PERFORMANCE`, `UI_UX`\), status \(`OPEN`, `IN_PROGRESS`, `RESOLVED`, `FIXED`, `REOPENED`, `CLOSED`\), reporter,) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 561.39 Td
+(assignee, RCA comments.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 550.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 548.89 Td
+(**`BugHistory` \(`testing_bug_history`\)**: ID, bug reference, previous status, updated status, previous assignee, new assignee,) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 537.39 Td
+(change comments, modified timestamp, changed-by user.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 526.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 524.89 Td
+(**`Comment` \(`testing_comments`\)**: ID, bug reference, user reference, message body, created/updated timestamps.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 514.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 512.39 Td
+(**`Attachment` \(`testing_attachments`\)**: ID, entity type \(`PROJECT`, `FEATURE`, `BUG`\), entity ID, original file name, stored file) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 500.89 Td
+(path, MIME type, file size.) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.75 w
+42.00 482.39 m 553.28 482.39 l S
+Q
+BT
+/F2 12 Tf
+0.1 0.33 0.75 rg
+42.00 452.39 Td
+(6. Core Business Workflows & Modules Deep-Dive) Tj
+ET
+q
+0.01 0.52 0.78 RG
+1.5 w
+42.00 449.39 m 77.00 449.39 l S
+Q
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 427.39 Td
+(6.1 User Onboarding & Approval Lifecycle) Tj
+ET
+BT
+/F2 8.5 Tf
+0.1 0.33 0.75 rg
+42.00 417.39 Td
+(1.) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 417.39 Td
+(**Self-Registration**: Candidate users fill out `/auth/register`. The account is created with `isActive = false`.) Tj
+ET
+BT
+/F2 8.5 Tf
+0.1 0.33 0.75 rg
+42.00 404.89 Td
+(2.) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 404.89 Td
+(**Review Queue**: Managers view pending registrations at `GET /manager/users/pending`.) Tj
+ET
+BT
+/F2 8.5 Tf
+0.1 0.33 0.75 rg
+42.00 392.39 Td
+(3.) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 392.39 Td
+(**Approval \(`PUT /manager/userConfirmation`\)**: Manager approves the user, assigning their official role \(`TESTER`,) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 380.89 Td
+(`DEVELOPER`, `MANAGER`\). An automated welcome email is dispatched via `notification-service`.) Tj
+ET
+BT
+/F2 8.5 Tf
+0.1 0.33 0.75 rg
+42.00 368.39 Td
+(4.) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+58.00 368.39 Td
+(**Rejection \(`DELETE /manager/userRejection/{userId}`\)**: Purges the registration request and sends a polite rejection notice.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 342.89 Td
+(6.2 Project & Agile Feature Management) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 334.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 332.89 Td
+(Projects represent overarching software initiatives partitioned by geographical deployment regions.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 322.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 320.39 Td
+(Features represent Agile sprints or epics.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 309.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 307.89 Td
+(Document repository: Files \(specifications, architecture diagrams\) can be attached to projects or features and downloaded) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 296.39 Td
+(individually or bundled into ZIP archives.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 270.89 Td
+(6.3 Test Case Authoring & Bulk Excel Engine) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 262.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 260.89 Td
+(**Manual Mode**: Test cases are created via `POST /testcases` with custom JSON dynamic attributes.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 250.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 248.39 Td
+(**Bulk Excel Import**: Testers download a formatted template \(`GET /testcases/template/{projectId}/{featureId}`\), populate it, and) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 236.89 Td
+(upload via `POST /testcases/upload`.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 226.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 224.39 Td
+(Sheet Name: `TCFormat`) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 213.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 211.89 Td
+(Columns: Test Case ID, Title, Test Type, Test Execution, Test Validation, Automation Priority, Preconditions, Test Data, Execution) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 200.39 Td
+(Steps, UI Validations, DB Validations, Automation Feasibility, Actual Status, Comments.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 189.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 187.89 Td
+(The POI parser validates rows, converts statuses, and generates corresponding `TestCase` and `TestingExecution` entities in a) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 176.39 Td
+(single atomic transaction.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 150.89 Td
+(6.4 Multi-Tier Test Execution Logging) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+42.00 140.89 Td
+(Validations are segregated into UI and database tiers:) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 128.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 126.39 Td
+(**UI Validations**: Visual and DOM assertion logs.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 115.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 113.89 Td
+(**DB Validations**: SQL query checks verifying data persistence and referential integrity.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 103.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 101.39 Td
+(**Statuses**: `PASS`, `FAIL`, `NO_RUN`, `BLOCKED`, `DESCOPE`.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 75.89 Td
+(6.5 Defect State Machine & Automated ID Engine) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.5 w
+42 40 m 553.28 40 l S
+Q
+BT
+/F1 7.5 Tf
+0.39 0.45 0.55 rg
+42 28 Td
+(CONFIDENTIAL -- Internal Enterprise QA Documentation) Tj
+ET
+BT
+/F2 7.5 Tf
+0.06 0.11 0.22 rg
+510.75 28 Td
+(Page 5 of 10) Tj
+ET
+
+endstream
+endobj
+18 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Contents 19 0 R /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> >>
+endobj
+19 0 obj
+<< /Length 6847 >>
+stream
+BT
+/F2 7.5 Tf
+0.39 0.45 0.55 rg
+42 809.89 Td
+(TESTING AUTOMATION TOOL \(TAT\) -- TECHNICAL ARCHITECTURE MANUAL) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.5 w
+42 805.89 m 553.28 805.89 l S
+Q
+q
+0.1 0.33 0.75 rg
+45.00 793.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 791.89 Td
+(**Bug ID Generation**: Standardized pattern `BUG-<FEATURE_NAME>-<SEQUENCE_NUMBER>` \(e.g.) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 780.39 Td
+(`BUG-AUTHENTICATION-001`\).) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 769.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 767.89 Td
+(**Defect State Transitions**:) Tj
+ET
+q
+0.94 0.96 0.98 rg
+0.84 0.88 0.92 RG
+0.5 w
+42.00 644.89 511.28 116.50 re
+B
+Q
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 749.39 Td
+(stateDiagram-v2) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 739.89 Td
+(    [*] --> OPEN: Bug Logged) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 730.39 Td
+(    OPEN --> IN_PROGRESS: Developer Investigates) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 720.89 Td
+(    IN_PROGRESS --> RESOLVED: Fix Submitted) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 711.39 Td
+(    IN_PROGRESS --> BLOCKED: Blocked by Dependency) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 701.89 Td
+(    BLOCKED --> IN_PROGRESS: Unblocked) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 692.39 Td
+(    RESOLVED --> FIXED: Developer/Build Verification) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 682.89 Td
+(    FIXED --> CLOSED: Tester Verifies Pass) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 673.39 Td
+(    FIXED --> REOPENED: Tester Finds Failure) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 663.89 Td
+(    REOPENED --> IN_PROGRESS: Developer Rework) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 654.39 Td
+(    CLOSED --> [*]) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 640.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 638.89 Td
+(Every state or assignee change creates an audit record in `testing_bug_history` and dispatches email and in-app notifications.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 613.39 Td
+(6.6 Defect Collaboration & Media Attachment Subsystem) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 605.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 603.39 Td
+(**Threaded Discussions**: In-context comments between testers and developers.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 592.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 590.89 Td
+(**File Uploads**: Screenshots, log files, stack traces, or screen recordings up to 20MB per file.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 580.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 578.39 Td
+(**ZIP Packaging**: Download all evidence files for a bug in a single compressed archive.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 552.89 Td
+(6.7 Outlook SMTP Notification Service) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 544.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 542.89 Td
+(Independent microservice \(`:8091`\) accepting requests from `main-service` and `auth-service`.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 532.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 530.39 Td
+(Connects to Microsoft Office 365 / Outlook SMTP via STARTTLS on port 587.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 519.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 517.89 Td
+(Enforces attachment security \(prohibits `.exe`, `.bat`, `.sh` scripts\).) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 507.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 505.39 Td
+(Persists notification tracking status \(`PENDING`, `SUBMITTED`, `FAILED`\) in `notification_service_db`.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 494.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 492.89 Td
+(Does not log or persist sensitive message bodies to protect user confidentiality.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 467.39 Td
+(6.8 Streaming QA Summary & Export Microservice) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 459.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 457.39 Td
+(High-efficiency export service \(`:8092`\) utilizing Apache POI's SXSSF streaming workbook.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 446.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 444.89 Td
+(Streams comprehensive multi-tab reports for entire projects or specific features:) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 434.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 432.39 Td
+(Tab 1: Executive Metrics & Health Score summary.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 421.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 419.89 Td
+(Tab 2: Test Case catalog & execution details.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 409.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 407.39 Td
+(Tab 3: Defect inventory with severities and RCA comments.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 381.89 Td
+(6.9 Manager Quality Health Score Algorithm) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+42.00 371.89 Td
+(Calculated in `DashboardServiceImpl`:) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+42.00 351.39 Td
+($$\\text{Pass Rate \(\\%\)} = \\frac{\\text{Passed Test Cases}}{\\text{Passed} + \\text{Failed}} \\times 100$$) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+42.00 330.89 Td
+($$\\text{Base Score} = \(\\text{Pass Rate} \\times 0.75\) + 25.0$$) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+42.00 310.39 Td
+($$\\text{Final Health Score} = \\text{clamp}\\Big\( \\text{Base Score} - \(\\text{Critical Defects} \\times 20.0\) - \(\\text{High Defects} \\times 8.0\), \\,) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+42.00 298.89 Td
+(0.0, \\, 100.0 \\Big\)$$) Tj
+ET
+BT
+/F2 9 Tf
+0.39 0.45 0.55 rg
+42.00 273.39 Td
+(Rating Classifications) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 267.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 265.39 Td
+( **EXCELLENT** \($\\ge 85\\%$ score, $\\ge 85\\%$ pass rate, $0$ critical defects\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 254.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 252.89 Td
+( **GOOD** \($\\ge 70\\%$ score\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 242.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 240.39 Td
+( **NEEDS_ATTENTION** \($\\ge 50\\%$ score\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 229.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 227.89 Td
+( **CRITICAL** \($< 50\\%$ score OR any open Critical defect\)) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.75 w
+42.00 209.39 m 553.28 209.39 l S
+Q
+BT
+/F2 12 Tf
+0.1 0.33 0.75 rg
+42.00 179.39 Td
+(7. Frontend Architecture & Single Page Application \(SPA\)) Tj
+ET
+q
+0.01 0.52 0.78 RG
+1.5 w
+42.00 176.39 m 77.00 176.39 l S
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+42.00 161.39 Td
+(The user interface is built on **Angular 22** using standalone components, Angular routing, and reactive services.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 133.89 Td
+(Routing Table & Access Controls) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.5 w
+42 40 m 553.28 40 l S
+Q
+BT
+/F1 7.5 Tf
+0.39 0.45 0.55 rg
+42 28 Td
+(CONFIDENTIAL -- Internal Enterprise QA Documentation) Tj
+ET
+BT
+/F2 7.5 Tf
+0.06 0.11 0.22 rg
+510.75 28 Td
+(Page 6 of 10) Tj
+ET
+
+endstream
+endobj
+20 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Contents 21 0 R /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> >>
+endobj
+21 0 obj
+<< /Length 8664 >>
+stream
+BT
+/F2 7.5 Tf
+0.39 0.45 0.55 rg
+42 809.89 Td
+(TESTING AUTOMATION TOOL \(TAT\) -- TECHNICAL ARCHITECTURE MANUAL) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.5 w
+42 805.89 m 553.28 805.89 l S
+Q
+q
+0.94 0.96 0.98 rg
+0.84 0.88 0.92 RG
+0.5 w
+42.00 690.89 511.28 107.00 re
+B
+Q
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 785.89 Td
+(/login                     -> Login Component \(Public\)) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 776.39 Td
+(/register                  -> Register Component \(Public\)) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 766.89 Td
+(/forgot-password           -> Forgot Password \(Public\)) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 757.39 Td
+(/verify-otp                -> Verify 6-digit OTP \(Public\)) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 747.89 Td
+(/reset-password            -> Set New Password \(Public\)) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 738.39 Td
+(/profile                   -> User Profile \(authGuard\)) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 728.89 Td
+(/tester-workspace          -> Tester Workspace \(authGuard\)) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 719.39 Td
+(/developer-workspace       -> Developer Workspace \(authGuard\)) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 709.89 Td
+(/manager-dashboard         -> Manager Dashboard \(authGuard, managerGuard\)) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 700.39 Td
+(/admin-workspace           -> Admin Workspace \(authGuard\)) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 671.89 Td
+(Key Frontend Core Services & Interceptors) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 663.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 661.89 Td
+(**`authService.ts`**: Handles authentication, user profile state, session timeout monitoring, and cookie credentials.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 651.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 649.39 Td
+(**`auth.interceptor.ts`**: Attaches `withCredentials: true` to all outgoing HTTP requests, extracts the `XSRF-TOKEN` cookie, and) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 637.89 Td
+(injects the `X-XSRF-TOKEN` header. Automatically redirects to login on `401 Unauthorized`.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 627.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 625.39 Td
+(**`proxy.conf.json`**: Proxies `/api/*` to `http://localhost:8082` during local development \(`ng serve`\), stripping the `/api` prefix.) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.75 w
+42.00 606.89 m 553.28 606.89 l S
+Q
+BT
+/F2 12 Tf
+0.1 0.33 0.75 rg
+42.00 576.89 Td
+(8. Comprehensive REST API Reference) Tj
+ET
+q
+0.01 0.52 0.78 RG
+1.5 w
+42.00 573.89 m 77.00 573.89 l S
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+42.00 558.89 Td
+(All requests passing through the API Gateway use base URL: `http://localhost:8082` \(or direct service ports for internal communication\).) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 531.39 Td
+(8.1 Authentication & Profile \(`/auth/**` -> Port 8081\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 523.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 521.39 Td
+(`POST /auth/register` - Public user registration.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 510.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 508.89 Td
+(`POST /auth/login` - Authenticate and receive `accessToken` + `refreshToken` HttpOnly cookies.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 498.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 496.39 Td
+(`POST /auth/refresh` - Issue fresh access token from valid refresh token.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 485.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 483.89 Td
+(`POST /auth/forgot-password` - Request 6-digit email OTP.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 473.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 471.39 Td
+(`POST /auth/verify-otp` - Verify OTP validity.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 460.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 458.89 Td
+(`POST /auth/reset-password` - Reset password using OTP with auto-login.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 448.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 446.39 Td
+(`POST /auth/logout` - Invalidate refresh token and clear cookies.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 435.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 433.89 Td
+(`GET /auth/profile` - Get authenticated user details.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 423.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 421.39 Td
+(`POST /auth/change-password` - Update user password.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 395.89 Td
+(8.2 Project Management \(`/project/**` -> Port 8090\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 387.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 385.89 Td
+(`POST /project` - Create project.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 375.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 373.39 Td
+(`GET /project` - List all active projects.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 362.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 360.89 Td
+(`GET /project/{id}` - Get project by ID.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 350.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 348.39 Td
+(`GET /project/search?keyword=&status=` - Filter projects.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 337.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 335.89 Td
+(`PUT /project/{id}` - Update project.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 325.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 323.39 Td
+(`PATCH /project/{id}` - Partial update.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 312.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 310.89 Td
+(`PATCH /project/access/{id}` - Toggle active status \(`MANAGER`\).) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 300.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 298.39 Td
+(`DELETE /project/delete/{id}` - Soft delete project \(`MANAGER`\).) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 287.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 285.89 Td
+(`DELETE /project/{id}` - Permanent delete \(`MANAGER`\).) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 275.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 273.39 Td
+(`POST /project/attachment/{projectId}` - Upload documentation attachment.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 262.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 260.89 Td
+(`GET /project/projects/{projectId}/attachments/download` - Download all attachments as ZIP.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 235.39 Td
+(8.3 Feature Management \(`/feature/**` -> Port 8090\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 227.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 225.39 Td
+(`POST /feature` - Create feature under a project.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 214.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 212.89 Td
+(`GET /feature/{id}` - Get feature details.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 202.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 200.39 Td
+(`GET /feature/project/{projectId}` - List all features in a project.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 189.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 187.89 Td
+(`GET /feature/search?keyword=&status=&page=&size=` - Paginated feature search.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 177.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 175.39 Td
+(`PUT /feature/{id}` - Update feature.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 164.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 162.89 Td
+(`PATCH /feature/{id}` - Partial update.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 152.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 150.39 Td
+(`DELETE /feature/{id}` - Soft delete feature.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 139.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 137.89 Td
+(`POST /feature/attachment/{featureId}` - Upload feature document.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 127.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 125.39 Td
+(`GET /feature/features/{featureId}/attachments/download` - Download feature attachments ZIP.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 99.89 Td
+(8.4 Test Case Suite \(`/testcases/**` -> Port 8090\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 91.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 89.89 Td
+(`POST /testcases` - Create test case with execution criteria.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 79.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 77.39 Td
+(`POST /testcases/upload` - Bulk import via `.xlsx` spreadsheet upload.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 66.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 64.89 Td
+(`GET /testcases` - Paginated list of test cases.) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.5 w
+42 40 m 553.28 40 l S
+Q
+BT
+/F1 7.5 Tf
+0.39 0.45 0.55 rg
+42 28 Td
+(CONFIDENTIAL -- Internal Enterprise QA Documentation) Tj
+ET
+BT
+/F2 7.5 Tf
+0.06 0.11 0.22 rg
+510.75 28 Td
+(Page 7 of 10) Tj
+ET
+
+endstream
+endobj
+22 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Contents 23 0 R /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> >>
+endobj
+23 0 obj
+<< /Length 8610 >>
+stream
+BT
+/F2 7.5 Tf
+0.39 0.45 0.55 rg
+42 809.89 Td
+(TESTING AUTOMATION TOOL \(TAT\) -- TECHNICAL ARCHITECTURE MANUAL) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.5 w
+42 805.89 m 553.28 805.89 l S
+Q
+q
+0.1 0.33 0.75 rg
+45.00 793.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 791.89 Td
+(`GET /testcases/{id}` - Retrieve test case by ID.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 781.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 779.39 Td
+(`GET /testcases/search` - Filter by feature, status, priority, type.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 768.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 766.89 Td
+(`PUT /testcases/{id}` - Update test case and execution details.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 756.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 754.39 Td
+(`PATCH /testcases/{id}` - Partial status/priority update.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 743.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 741.89 Td
+(`DELETE /testcases/soft/{id}` - Soft delete.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 731.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 729.39 Td
+(`DELETE /testcases/{id}` - Hard delete.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 703.89 Td
+(8.5 Defect & Bug Tracking \(`/bugs/**` -> Port 8090\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 695.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 693.89 Td
+(`POST /bugs` - Log a new bug \(auto-assigns `BUG-<FEATURE>-XXX`\).) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 683.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 681.39 Td
+(`GET /bugs/{id}` - Get bug details.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 670.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 668.89 Td
+(`GET /bugs?page=&size=&sort=` - Paginated list of defects.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 658.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 656.39 Td
+(`PUT /bugs/{id}` - Full update of defect.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 645.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 643.89 Td
+(`PATCH /bugs/{id}` - Update status or assignee \(triggers email & audit history\).) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 633.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 631.39 Td
+(`GET /bugs/search` - Search bugs by severity, category, priority, status.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 620.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 618.89 Td
+(`PATCH /bugs/delete/{id}` - Soft delete defect.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 608.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 606.39 Td
+(`DELETE /bugs/{id}` - Hard delete defect.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 595.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 593.89 Td
+(`POST /bugs/{bugId}/attachments` - Upload bug screenshot or log.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 583.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 581.39 Td
+(`GET /bugs/{bugId}/attachments` - List attachments for bug.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 570.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 568.89 Td
+(`GET /bugs/attachments/{attachmentId}/download` - Download specific attachment.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 543.39 Td
+(8.6 Defect Comments \(`/bugs/{bugId}/comments` & `/comments/**` -> Port 8090\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 535.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 533.39 Td
+(`POST /bugs/{bugId}/comments` - Add comment to defect.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 522.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 520.89 Td
+(`GET /bugs/{bugId}/comments` - List all comments for defect.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 510.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 508.39 Td
+(`GET /bugs/{bugId}/comments/page` - Paginated comments list.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 497.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 495.89 Td
+(`PUT /comments/{commentId}` - Edit comment.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 485.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 483.39 Td
+(`DELETE /comments/{commentId}` - Delete comment.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 457.89 Td
+(8.7 Manager Dashboard & Approvals \(`/manager/**` -> Port 8090\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 449.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 447.89 Td
+(`GET /manager/dashboard/overview` - High-level KPIs, quality health score, top failing features.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 437.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 435.39 Td
+(`GET /manager/dashboard/project/{projectId}` - Project-specific test & defect metrics.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 424.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 422.89 Td
+(`GET /manager/dashboard/feature/{featureId}` - Feature-specific metrics.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 412.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 410.39 Td
+(`GET /manager/users/active` - List active users.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 399.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 397.89 Td
+(`GET /manager/users/pending` - List pending sign-up requests.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 387.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 385.39 Td
+(`PUT /manager/userConfirmation` - Approve user and set role.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 374.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 372.89 Td
+(`DELETE /manager/userRejection/{userId}` - Reject pending signup.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 347.39 Td
+(8.8 User Administration \(`/admin/**` -> Port 8090\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 339.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 337.39 Td
+(`POST /admin/managers` - Create manager account.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 326.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 324.89 Td
+(`GET /admin/users` - List all system users.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 314.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 312.39 Td
+(`GET /admin/users/{userId}` - Retrieve user profile.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 301.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 299.89 Td
+(`GET /admin/users/role/{role}` - List users by role.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 289.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 287.39 Td
+(`PUT /admin/users/{userId}` - Update user profile and role.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 276.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 274.89 Td
+(`DELETE /admin/users/{userId}` - Soft delete user.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 264.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 262.39 Td
+(`DELETE /admin/users/{userId}/permanent` - Permanent user purge.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 236.89 Td
+(8.9 Summary & Export Microservice \(`/export/**` -> Port 8092\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 228.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 226.89 Td
+(`GET /export/summary/project/{projectId}` - Download full project QA Excel summary.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 216.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 214.39 Td
+(`GET /export/summary/feature/{featureId}` - Download feature QA Excel summary.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 203.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 201.89 Td
+(`GET /export/template/{projectId}/{featureId}` - Download `.xlsx` test case template.) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 176.39 Td
+(8.10 Notification Microservice \(`/api/v1/notifications/**` -> Port 8091\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 168.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 166.39 Td
+(`POST /api/v1/notifications/email` - Submit an email for dispatch.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 155.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 153.89 Td
+(`GET /api/v1/notifications/{notificationId}` - Check email delivery status.) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 143.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 141.39 Td
+(`GET /api/v1/notifications` - Paginated history of dispatched emails.) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.75 w
+42.00 122.89 m 553.28 122.89 l S
+Q
+BT
+/F2 12 Tf
+0.1 0.33 0.75 rg
+42.00 92.89 Td
+(9. Configuration & Environment Variables) Tj
+ET
+q
+0.01 0.52 0.78 RG
+1.5 w
+42.00 89.89 m 77.00 89.89 l S
+Q
+q
+0.09 0.16 0.3 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 62.89 511.28 16.00 re
+B
+Q
+BT
+/F2 8 Tf
+1 1 1 rg
+47.00 72.89 Td
+(Variable) Tj
+ET
+BT
+/F2 8 Tf
+1 1 1 rg
+117.00 72.89 Td
+(Target Service) Tj
+ET
+BT
+/F2 8 Tf
+1 1 1 rg
+277.00 72.89 Td
+(Default) Tj
+ET
+BT
+/F2 8 Tf
+1 1 1 rg
+387.00 72.89 Td
+(Purpose) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.5 w
+42 40 m 553.28 40 l S
+Q
+BT
+/F1 7.5 Tf
+0.39 0.45 0.55 rg
+42 28 Td
+(CONFIDENTIAL -- Internal Enterprise QA Documentation) Tj
+ET
+BT
+/F2 7.5 Tf
+0.06 0.11 0.22 rg
+510.75 28 Td
+(Page 8 of 10) Tj
+ET
+
+endstream
+endobj
+24 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Contents 25 0 R /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> >>
+endobj
+25 0 obj
+<< /Length 9511 >>
+stream
+BT
+/F2 7.5 Tf
+0.39 0.45 0.55 rg
+42 809.89 Td
+(TESTING AUTOMATION TOOL \(TAT\) -- TECHNICAL ARCHITECTURE MANUAL) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.5 w
+42 805.89 m 553.28 805.89 l S
+Q
+q
+1 1 1 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 779.89 511.28 16.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 789.89 Td
+(`DB_URL`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 789.89 Td
+(Auth, Main, Summary) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 789.89 Td
+(`jdbc:mysql://192.168.11.101:3306/Interns_db`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 789.89 Td
+(Connection string for core application database.) Tj
+ET
+q
+0.97 0.98 0.99 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 763.89 511.28 16.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 773.89 Td
+(`DB_USERNAME`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 773.89 Td
+(Auth, Main, Summary) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 773.89 Td
+(*\(Configured\)*) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 773.89 Td
+(MySQL database username.) Tj
+ET
+q
+1 1 1 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 747.89 511.28 16.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 757.89 Td
+(`DB_PASSWORD`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 757.89 Td
+(Auth, Main, Summary) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 757.89 Td
+(*\(Configured\)*) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 757.89 Td
+(MySQL database password.) Tj
+ET
+q
+0.97 0.98 0.99 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 721.89 511.28 26.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 741.89 Td
+(`JWT_SECRET`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 741.89 Td
+(Auth, Main, Summary) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 741.89 Td
+(`404E635266556A586E32...`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 741.89 Td
+(256-bit secret key for HMAC-SHA256 signature) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 731.89 Td
+(validation.) Tj
+ET
+q
+1 1 1 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 705.89 511.28 16.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 715.89 Td
+(`JWT_ACCESS_TOKEN_EXPIRATION_MS`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 715.89 Td
+(Auth, Main) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 715.89 Td
+(`900000` \(15m\)) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 715.89 Td
+(Lifespan of access token.) Tj
+ET
+q
+0.97 0.98 0.99 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 689.89 511.28 16.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 699.89 Td
+(`JWT_REFRESH_TOKEN_EXPIRATION_MS`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 699.89 Td
+(Auth, Main) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 699.89 Td
+(`86400000` \(24h\)) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 699.89 Td
+(Lifespan of refresh token.) Tj
+ET
+q
+1 1 1 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 673.89 511.28 16.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 683.89 Td
+(`NOTIFICATION_SERVICE_URL`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 683.89 Td
+(Auth, Main, Gateway) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 683.89 Td
+(`http://localhost:8091`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 683.89 Td
+(Base URL for the Notification Microservice.) Tj
+ET
+q
+0.97 0.98 0.99 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 657.89 511.28 16.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 667.89 Td
+(`AUTH_SERVICE_URL`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 667.89 Td
+(Gateway) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 667.89 Td
+(`http://localhost:8081`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 667.89 Td
+(Downstream route for `/auth/**`.) Tj
+ET
+q
+1 1 1 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 641.89 511.28 16.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 651.89 Td
+(`MAIN_SERVICE_URL`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 651.89 Td
+(Gateway) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 651.89 Td
+(`http://localhost:8090`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 651.89 Td
+(Downstream route for business operations.) Tj
+ET
+q
+0.97 0.98 0.99 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 625.89 511.28 16.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 635.89 Td
+(`OUTLOOK_SMTP_HOST`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 635.89 Td
+(Notification) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 635.89 Td
+(`smtp.office365.com`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 635.89 Td
+(SMTP host for email dispatch.) Tj
+ET
+q
+1 1 1 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 609.89 511.28 16.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 619.89 Td
+(`OUTLOOK_SMTP_PORT`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 619.89 Td
+(Notification) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 619.89 Td
+(`587`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 619.89 Td
+(STARTTLS SMTP port.) Tj
+ET
+q
+0.97 0.98 0.99 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 593.89 511.28 16.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 603.89 Td
+(`OUTLOOK_SMTP_USERNAME`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 603.89 Td
+(Notification) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 603.89 Td
+(*\(Configured\)*) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 603.89 Td
+(Office 365 / Outlook mailbox address.) Tj
+ET
+q
+1 1 1 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 577.89 511.28 16.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 587.89 Td
+(`OUTLOOK_SMTP_PASSWORD`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 587.89 Td
+(Notification) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 587.89 Td
+(*\(Configured\)*) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 587.89 Td
+(Mailbox app password.) Tj
+ET
+q
+0.97 0.98 0.99 rg
+0.84 0.88 0.92 RG
+0.4 w
+42.00 561.89 511.28 16.00 re
+B
+Q
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+47.00 571.89 Td
+(`OUTLOOK_DEFAULT_FROM`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+117.00 571.89 Td
+(Notification) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+277.00 571.89 Td
+(`notifications@example.com`) Tj
+ET
+BT
+/F1 7.5 Tf
+0.12 0.16 0.23 rg
+387.00 571.89 Td
+(Default sender email address.) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.75 w
+42.00 545.89 m 553.28 545.89 l S
+Q
+BT
+/F2 12 Tf
+0.1 0.33 0.75 rg
+42.00 515.89 Td
+(10. Local Development, Build & Startup Sequence) Tj
+ET
+q
+0.01 0.52 0.78 RG
+1.5 w
+42.00 512.89 m 77.00 512.89 l S
+Q
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 490.89 Td
+(Prerequisites) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 482.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 480.89 Td
+(**Java SE Development Kit**: Version 21 LTS) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 470.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 468.39 Td
+(**Node.js**: Version 18.x or 20.x) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 457.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 455.89 Td
+(**Angular CLI**: Version 22.x) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 445.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 443.39 Td
+(**Apache Maven**: Version 3.9+ \(or use `./mvnw`\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 432.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 430.89 Td
+(**MySQL Server**: 8.0+) Tj
+ET
+BT
+/F2 10 Tf
+0.09 0.16 0.3 rg
+42.00 405.39 Td
+(Recommended Startup Sequence) Tj
+ET
+BT
+/F2 9 Tf
+0.39 0.45 0.55 rg
+42.00 384.39 Td
+(1. Databases) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+42.00 376.39 Td
+(Ensure both MySQL databases are running and accessible:) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 363.89 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 361.89 Td
+(`Interns_db` \(Core application schema\)) Tj
+ET
+q
+0.1 0.33 0.75 rg
+45.00 351.39 3.00 3.00 re
+f
+Q
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+56.00 349.39 Td
+(`notification_service_db` \(Notification tracking schema, initialize with `notification-service/schema.sql`\)) Tj
+ET
+BT
+/F2 9 Tf
+0.39 0.45 0.55 rg
+42.00 325.89 Td
+(2. Notification Microservice \(Port 8091\)) Tj
+ET
+q
+0.94 0.96 0.98 rg
+0.84 0.88 0.92 RG
+0.5 w
+42.00 292.89 511.28 31.00 re
+B
+Q
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 311.89 Td
+(cd D:\\Testing_Automation_Tool\\notification-service) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 302.39 Td
+(./mvnw clean spring-boot:run) Tj
+ET
+BT
+/F2 9 Tf
+0.39 0.45 0.55 rg
+42.00 275.89 Td
+(3. Core TestingAutomationTool Modules) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+42.00 267.89 Td
+(From directory `D:\\Testing_Automation_Tool\\TestingAutomationTool`:) Tj
+ET
+q
+0.94 0.96 0.98 rg
+0.84 0.88 0.92 RG
+0.5 w
+42.00 218.89 511.28 40.50 re
+B
+Q
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 247.39 Td
+(cd D:\\Testing_Automation_Tool\\TestingAutomationTool) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 237.89 Td
+(# Build shared library and all submodules) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 228.39 Td
+(./mvnw clean package -DskipTests) Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+42.00 206.89 Td
+(Start the individual submodules:) Tj
+ET
+q
+0.94 0.96 0.98 rg
+0.84 0.88 0.92 RG
+0.5 w
+42.00 81.89 511.28 116.50 re
+B
+Q
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 186.39 Td
+(# Terminal 1: Auth Service \(Port 8081\)) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 176.89 Td
+(cd auth-service) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 167.39 Td
+(../mvnw spring-boot:run) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 148.39 Td
+(# Terminal 2: Main Business Service \(Port 8090\)) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 138.89 Td
+(cd main-service) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 129.39 Td
+(../mvnw spring-boot:run) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 110.39 Td
+(# Terminal 3: API Gateway \(Port 8082\)) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 100.89 Td
+(cd api-gateway) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 91.39 Td
+(../mvnw spring-boot:run) Tj
+ET
+BT
+/F2 9 Tf
+0.39 0.45 0.55 rg
+42.00 64.89 Td
+(4. Summary & Export Microservice \(Port 8092\)) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.5 w
+42 40 m 553.28 40 l S
+Q
+BT
+/F1 7.5 Tf
+0.39 0.45 0.55 rg
+42 28 Td
+(CONFIDENTIAL -- Internal Enterprise QA Documentation) Tj
+ET
+BT
+/F2 7.5 Tf
+0.06 0.11 0.22 rg
+510.75 28 Td
+(Page 9 of 10) Tj
+ET
+
+endstream
+endobj
+26 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Contents 27 0 R /Resources << /Font << /F1 3 0 R /F2 4 0 R /F3 5 0 R /F4 6 0 R /F5 7 0 R >> >> >>
+endobj
+27 0 obj
+<< /Length 1308 >>
+stream
+BT
+/F2 7.5 Tf
+0.39 0.45 0.55 rg
+42 809.89 Td
+(TESTING AUTOMATION TOOL \(TAT\) -- TECHNICAL ARCHITECTURE MANUAL) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.5 w
+42 805.89 m 553.28 805.89 l S
+Q
+q
+0.94 0.96 0.98 rg
+0.84 0.88 0.92 RG
+0.5 w
+42.00 766.89 511.28 31.00 re
+B
+Q
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 785.89 Td
+(cd D:\\Testing_Automation_Tool\\summary-export-service) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 776.39 Td
+(./mvnw clean spring-boot:run) Tj
+ET
+BT
+/F2 9 Tf
+0.39 0.45 0.55 rg
+42.00 749.89 Td
+(5. Angular Frontend \(Port 4200\)) Tj
+ET
+q
+0.94 0.96 0.98 rg
+0.84 0.88 0.92 RG
+0.5 w
+42.00 707.39 511.28 40.50 re
+B
+Q
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 735.89 Td
+(cd D:\\Testing_Automation_Tool\\Testing_Automation_tool_frontend\\testing-automation-frontend) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 726.39 Td
+(npm install) Tj
+ET
+BT
+/F4 7.5 Tf
+0.12 0.16 0.23 rg
+50.00 716.89 Td
+(npm start   # Runs 'ng serve --proxy-config proxy.conf.json') Tj
+ET
+BT
+/F1 8.5 Tf
+0.12 0.16 0.23 rg
+42.00 701.39 Td
+(Open your browser to `http://localhost:4200` to access the Testing Automation Tool.) Tj
+ET
+q
+0.84 0.88 0.92 RG
+0.5 w
+42 40 m 553.28 40 l S
+Q
+BT
+/F1 7.5 Tf
+0.39 0.45 0.55 rg
+42 28 Td
+(CONFIDENTIAL -- Internal Enterprise QA Documentation) Tj
+ET
+BT
+/F2 7.5 Tf
+0.06 0.11 0.22 rg
+506.58 28 Td
+(Page 10 of 10) Tj
+ET
+
+endstream
+endobj
+xref
+0 28
+0000000000 65535 f 
+0000000015 00000 n 
+0000000064 00000 n 
+0000000185 00000 n 
+0000000282 00000 n 
+0000000384 00000 n 
+0000000489 00000 n 
+0000000584 00000 n 
+0000000684 00000 n 
+0000000856 00000 n 
+0000009345 00000 n 
+0000009519 00000 n 
+0000018177 00000 n 
+0000018351 00000 n 
+0000028055 00000 n 
+0000028229 00000 n 
+0000039014 00000 n 
+0000039188 00000 n 
+0000048137 00000 n 
+0000048311 00000 n 
+0000055211 00000 n 
+0000055385 00000 n 
+0000064102 00000 n 
+0000064276 00000 n 
+0000072939 00000 n 
+0000073113 00000 n 
+0000082677 00000 n 
+0000082851 00000 n 
+trailer
+<< /Size 28 /Root 1 0 R >>
+startxref
+84212
+%%EOF
