@@ -42,5 +42,7 @@ public interface AttachmentService {
             AttachmentType type,
             Integer entityId);
 
+    AttachmentDownloadResponse getAttachmentById(Integer attachmentId);
+
     String deleteAttachment(Integer attachmentId);
 }

@@ -20,5 +20,7 @@ public interface InAppNotificationService {
 
     void createNewCommentNotification(Comment comment);
 
+    void createBugAssignedNotification(Bug bug);
+
     void createProjectInactiveNotification(Project project);
 }

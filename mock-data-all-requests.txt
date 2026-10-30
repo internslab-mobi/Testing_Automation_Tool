@@ -1,0 +1,2288 @@
+====================================================================================================
+TESTING AUTOMATION TOOL (TAT) - COMPREHENSIVE MOCK DATA FOR ALL REQUESTS
+====================================================================================================
+Generated: 2026-10-26
+Scope: Complete Microservices Architecture
+  - API Gateway:                 http://localhost:8082
+  - Auth Service:                http://localhost:8081 (or via Gateway /auth)
+  - Main Service:                http://localhost:8090 (or via Gateway /project, /feature, /testcase, /bug)
+  - Summary Export Service:      http://localhost:8092
+  - Notification Email Service:  http://localhost:8091
+====================================================================================================
+
+TABLE OF CONTENTS
+----------------------------------------------------------------------------------------------------
+SECTION 1: AUTHENTICATION & IDENTITY (AUTH SERVICE)
+  1.1  POST /auth/register                     - User Self-Registration
+  1.2  POST /auth/login                        - User Authentication / JWT Issuance
+  1.3  POST /auth/refresh                      - Refresh 15-Minute Access Token
+  1.4  POST /auth/forgot-password              - Request 6-Digit Password Reset OTP
+  1.5  POST /auth/verify-otp                   - Verify OTP & Generate Reset Token
+  1.6  POST /auth/reset-password               - Reset Password with Reset Token
+  1.7  POST /auth/change-password              - Change Password (Authenticated)
+  1.8  PUT  /auth/profile                      - Update User Profile
+  1.9  POST /auth/logout                       - Invalidate Session & Revoke Refresh Token
+
+SECTION 2: ADMIN & MANAGER GOVERNANCE
+  2.1  POST   /admin/managers                  - Admin Create Manager / User Direct
+  2.2  PUT    /admin/users/{userId}            - Admin Full User Update
+  2.3  PATCH  /admin/managers/{userId}         - Admin Partial User / Role Patch
+  2.4  PUT    /manager/userConfirmation        - Manager Approve & Assign Role
+  2.5  DELETE /manager/userRejection/{userId}  - Manager Reject Pending Registration
+  2.6  DELETE /admin/users/{userId}            - Admin Soft Delete User
+  2.7  DELETE /admin/users/{userId}/permanent  - Admin Hard Delete User
+
+SECTION 3: PROJECT GEOGRAPHY & MODULE SETUP
+  3.1  POST /project/module                    - Create Functional Module
+  3.2  POST /project/{moduleId}/sub-modules    - Create Sub-Module for a Module
+  3.3  POST /project/region                    - Create Deployment Region
+
+SECTION 4: PROJECT MANAGEMENT
+  4.1  POST   /project                         - Create Project
+  4.2  PUT    /project/{projectId}             - Update Project Details
+  4.3  PATCH  /project/{projectId}             - Patch Project Details
+  4.4  PATCH  /project/access/{projectId}      - Toggle Project Active / Access Status
+  4.5  DELETE /project/delete/{projectId}      - Soft Delete Project
+  4.6  DELETE /project/{projectId}             - Hard Delete Project Permanent
+
+SECTION 5: FEATURE MANAGEMENT
+  5.1  POST   /feature                         - Create Feature
+  5.2  PUT    /feature/{featureId}             - Update Feature Details
+  5.3  PATCH  /feature/{featureId}             - Patch Feature (Timer, Status, Sprint, Version)
+  5.4  GET    /feature/search                  - Search / Filter Features (Query Params)
+  5.5  DELETE /feature/delete/{featureId}      - Soft Delete Feature
+  5.6  DELETE /feature/{featureId}             - Hard Delete Feature Permanent
+
+SECTION 6: TEST CASE CREATION & EXECUTION
+  6.1  POST   /testcase                        - Create Manual Test Case with Execution Details
+  6.2  PUT    /testcase/{testcaseId}           - Update Test Case Details
+  6.3  PATCH  /testcase/{testcaseId}           - Patch Test Case Execution / Status / Validations
+  6.4  GET    /testcase/search                 - Search / Filter Test Cases (Query Params)
+  6.5  DELETE /testcase/soft/{testcaseId}      - Soft Delete Test Case
+  6.6  DELETE /testcase/{testcaseId}           - Hard Delete Test Case Permanent
+  6.7  DELETE /testcase/bulk                   - Bulk Delete Test Cases
+
+SECTION 7: DEFECT & BUG TRACKING
+  7.1  POST   /bug?testcaseId={testcaseId}     - Log Defect / Bug Against Test Case
+  7.2  PUT    /bug/{bugId}                     - Full Update Defect Details
+  7.3  PATCH  /bug/{bugId}                     - Patch Bug Status / Workflow Transition
+  7.4  GET    /bug/search                      - Global Bug Search & Filter (Query Params)
+  7.5  DELETE /bug/delete/{bugId}              - Soft Delete Defect
+  7.6  DELETE /bug/{bugId}                     - Hard Delete Defect Permanent
+  7.7  DELETE /bug/bulk                        - Bulk Delete Defects
+
+SECTION 8: COLLABORATIVE DEFECT COMMENTS
+  8.1  POST   /bug/{bugId}/comments            - Add Comment to Defect
+  8.2  PUT    /comments/{commentId}            - Update Existing Comment
+  8.3  DELETE /comments/{commentId}            - Delete Comment
+
+SECTION 9: IN-APP NOTIFICATIONS
+  9.1  PATCH  /in-app-notifications/{id}       - Mark Notification Read / Unread
+  9.2  DELETE /in-app-notifications/{id}       - Dismiss / Delete Notification
+
+SECTION 10: ASYNCHRONOUS EMAIL NOTIFICATION SERVICE (PORT 8091)
+  10.1 POST /api/v1/notifications/email        - Dispatch Transactional / Alert Email
+
+====================================================================================================
+
+
+====================================================================================================
+SECTION 1: AUTHENTICATION & IDENTITY
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+REQUEST 1.1: Register New User
+HTTP Method: POST
+Endpoint:    http://localhost:8082/auth/register
+Headers:
+  Content-Type: application/json
+Description:
+  Self-registration endpoint. User accounts start in PENDING state awaiting Manager confirmation.
+  Field Constraints:
+  - username: Required, 3-50 chars
+  - email: Required, valid RFC email format
+  - password: Required, min 6 chars
+  - fullName: Required, max 150 chars
+  - designation: Optional, max 100 chars
+  - skills: Optional string
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (QA Automation Lead):
+{
+  "username": "alex.rivera",
+  "email": "alex.rivera@fintechcorp.io",
+  "password": "SecurePassword#2026",
+  "fullName": "Alex Rivera",
+  "designation": "Lead QA Automation Engineer",
+  "skills": "Selenium, Java, Playwright, REST Assured, Jenkins, Docker"
+}
+
+EXAMPLE 2 (Senior Backend Software Engineer):
+{
+  "username": "priya.nair",
+  "email": "priya.nair@cloudscale.net",
+  "password": "CloudDev@Pass99",
+  "fullName": "Priya Nair",
+  "designation": "Senior Backend Developer",
+  "skills": "Java 21, Spring Boot, MySQL, Redis, Kafka, Kubernetes"
+}
+
+EXAMPLE 3 (QA Performance & Security Specialist):
+{
+  "username": "marcus.chen",
+  "email": "marcus.chen@healthguard.org",
+  "password": "HealthSec!2026$",
+  "fullName": "Marcus Chen",
+  "designation": "Performance & Security QA Specialist",
+  "skills": "JMeter, Gatling, OWASP ZAP, Postman, Python, Linux"
+}
+
+EXAMPLE 4 (Frontend UI/UX Test Engineer):
+{
+  "username": "elena.rostova",
+  "email": "elena.rostova@retailhub.com",
+  "password": "UiTesting$Pass1",
+  "fullName": "Elena Rostova",
+  "designation": "Frontend Test Automation Specialist",
+  "skills": "Cypress, Angular 19, TypeScript, Jest, Percy Visual AI"
+}
+
+EXAMPLE 5 (Engineering Manager / QA Lead):
+{
+  "username": "david.wright",
+  "email": "david.wright@enterpriseqa.com",
+  "password": "ManagerGate#44",
+  "fullName": "David Wright",
+  "designation": "Quality Engineering Manager",
+  "skills": "Test Strategy, Agile Governance, Jira, CI/CD Architecture, Team Leadership"
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 1.2: Login User
+HTTP Method: POST
+Endpoint:    http://localhost:8082/auth/login
+Headers:
+  Content-Type: application/json
+Description:
+  Authenticates user and returns 15-minute Access Token, 24-hour Refresh Token, and user profile data.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Admin Login):
+{
+  "usernameOrEmail": "admin",
+  "password": "Admin@123"
+}
+
+EXAMPLE 2 (Tester Login via Email):
+{
+  "usernameOrEmail": "alex.rivera@fintechcorp.io",
+  "password": "SecurePassword#2026"
+}
+
+EXAMPLE 3 (Developer Login via Username):
+{
+  "usernameOrEmail": "priya.nair",
+  "password": "CloudDev@Pass99"
+}
+
+EXAMPLE 4 (QA Specialist via Email):
+{
+  "usernameOrEmail": "marcus.chen@healthguard.org",
+  "password": "HealthSec!2026$"
+}
+
+EXAMPLE 5 (Manager Login via Username):
+{
+  "usernameOrEmail": "david.wright",
+  "password": "ManagerGate#44"
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 1.3: Refresh Access Token
+HTTP Method: POST
+Endpoint:    http://localhost:8082/auth/refresh
+Headers:
+  Content-Type: application/json
+Description:
+  Exchanges the 24-hour Refresh Token for a fresh 15-minute Access Token without re-entering credentials.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1:
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbGV4LnJpdmVyYSIsInR5cGUiOiJSRUZSRVNIIiwiZXhwIjoxNzk4MzAwMDAwfQ.k8D18f7sD8Fsdj84hsdFsd"
+}
+
+EXAMPLE 2:
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwcml5YS5uYWlyIiwidHlwZSI6IlJFRlJFU0giLCJleHAiOjE3OTgzMDUwMDB9.x99sdF8shdks923jd8fssd"
+}
+
+EXAMPLE 3:
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsInR5cGUiOiJSRUZSRVNIIiwiZXhwIjoxNzk4MzEwMDAwfQ.pPlm294jffks92kdfjssd923"
+}
+
+EXAMPLE 4:
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtYXJjdXMuY2hlbiIsInR5cGUiOiJSRUZSRVNIIiwiZXhwIjoxNzk4MzE1MDAwfQ.mMf92kdf8sh29sfdj823"
+}
+
+EXAMPLE 5:
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkYXZpZC53cmlnaHQiLCJ0eXBlIjoiUkVGUkVTSCIiLCJleHAiOjE3OTgzMjAwMDB9.qQw92jdls823ndf7s823"
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 1.4: Forgot Password (Send OTP)
+HTTP Method: POST
+Endpoint:    http://localhost:8082/auth/forgot-password
+Headers:
+  Content-Type: application/json
+Description:
+  Generates a 6-digit OTP stored with a 10-minute TTL and emails the code to the user.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1:
+{
+  "email": "alex.rivera@fintechcorp.io"
+}
+
+EXAMPLE 2:
+{
+  "email": "priya.nair@cloudscale.net"
+}
+
+EXAMPLE 3:
+{
+  "email": "marcus.chen@healthguard.org"
+}
+
+EXAMPLE 4:
+{
+  "email": "elena.rostova@retailhub.com"
+}
+
+EXAMPLE 5:
+{
+  "email": "david.wright@enterpriseqa.com"
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 1.5: Verify OTP
+HTTP Method: POST
+Endpoint:    http://localhost:8082/auth/verify-otp
+Headers:
+  Content-Type: application/json
+Description:
+  Validates the 6-digit OTP code and returns a 15-minute temporary Reset Token.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1:
+{
+  "email": "alex.rivera@fintechcorp.io",
+  "otpCode": "739201"
+}
+
+EXAMPLE 2:
+{
+  "email": "priya.nair@cloudscale.net",
+  "otpCode": "481029"
+}
+
+EXAMPLE 3:
+{
+  "email": "marcus.chen@healthguard.org",
+  "otpCode": "912384"
+}
+
+EXAMPLE 4:
+{
+  "email": "elena.rostova@retailhub.com",
+  "otpCode": "503921"
+}
+
+EXAMPLE 5:
+{
+  "email": "david.wright@enterpriseqa.com",
+  "otpCode": "628471"
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 1.6: Reset Password with Reset Token
+HTTP Method: POST
+Endpoint:    http://localhost:8082/auth/reset-password
+Headers:
+  Content-Type: application/json
+Description:
+  Sets a new password using the validated reset token, revoking prior tokens and logging in automatically.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1:
+{
+  "resetToken": "rst_98fa7c20e4b14d89a203f1b4c9e8a712",
+  "newPassword": "AlexSecure#2026New"
+}
+
+EXAMPLE 2:
+{
+  "resetToken": "rst_b3f92d81a04c45719e782d41b5a6c384",
+  "newPassword": "Priya@Cloud#2026Rev"
+}
+
+EXAMPLE 3:
+{
+  "resetToken": "rst_c47e819a2b534d0fa162983ec74f1b29",
+  "newPassword": "MarcusHealth!NewPass26"
+}
+
+EXAMPLE 4:
+{
+  "resetToken": "rst_f91a283b04c249a5b719e831c2049d5a",
+  "newPassword": "ElenaUiTest#2026New"
+}
+
+EXAMPLE 5:
+{
+  "resetToken": "rst_e1829374c0b14f82a938217340df98a1",
+  "newPassword": "DavidLeader@2026Pass"
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 1.7: Change Password (Authenticated User)
+HTTP Method: POST
+Endpoint:    http://localhost:8082/auth/change-password
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Authenticated password change requiring current password verification.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1:
+{
+  "currentPassword": "SecurePassword#2026",
+  "newPassword": "AlexUpdatedPassword@2026!"
+}
+
+EXAMPLE 2:
+{
+  "currentPassword": "CloudDev@Pass99",
+  "newPassword": "CloudPriyaDev#2026V2"
+}
+
+EXAMPLE 3:
+{
+  "currentPassword": "HealthSec!2026$",
+  "newPassword": "MarcusSecureVault$2026"
+}
+
+EXAMPLE 4:
+{
+  "currentPassword": "UiTesting$Pass1",
+  "newPassword": "ElenaCypress#2026Pro"
+}
+
+EXAMPLE 5:
+{
+  "currentPassword": "ManagerGate#44",
+  "newPassword": "DavidEnterprise#2026Key"
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 1.8: Update User Profile
+HTTP Method: PUT
+Endpoint:    http://localhost:8082/auth/profile
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Updates user personal information, designation, and technical skill taxonomy.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1:
+{
+  "fullName": "Alex Rivera, Ph.D.",
+  "designation": "Staff QA Architect & Automation Lead",
+  "skills": "Selenium Grid, Playwright, Java 21, Kubernetes, k6 Performance, CI/CD"
+}
+
+EXAMPLE 2:
+{
+  "fullName": "Priya Nair, M.Tech",
+  "designation": "Principal Backend Systems Architect",
+  "skills": "Java 21, Spring Boot, Microservices, Distributed Caching, Kafka, Event Sourcing"
+}
+
+EXAMPLE 3:
+{
+  "fullName": "Marcus Chen, CISSP",
+  "designation": "Lead AppSec & Performance Quality Engineer",
+  "skills": "OWASP Top 10, JMeter, DAST/SAST, SonarQube, Python, Bash, Network Forensics"
+}
+
+EXAMPLE 4:
+{
+  "fullName": "Elena Rostova",
+  "designation": "Lead Frontend Automation Specialist",
+  "skills": "Angular 19, React 19, Cypress E2E, Playwright, Storybook, Visual Regression"
+}
+
+EXAMPLE 5:
+{
+  "fullName": "David Wright, PMP",
+  "designation": "Director of Quality Engineering & Governance",
+  "skills": "QA Governance, Agile Scaling, OKRs, Release Orchestration, Vendor Assessment"
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 1.9: Logout
+HTTP Method: POST
+Endpoint:    http://localhost:8082/auth/logout
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Revokes the active refresh token in the database to prevent further access token generation.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1:
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhbGV4LnJpdmVyYSIsInR5cGUiOiJSRUZSRVNIIiwiZXhwIjoxNzk4MzAwMDAwfQ.k8D18f7sD8Fsdj84hsdFsd"
+}
+
+EXAMPLE 2:
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJwcml5YS5uYWlyIiwidHlwZSI6IlJFRlJFU0giLCJleHAiOjE3OTgzMDUwMDB9.x99sdF8shdks923jd8fssd"
+}
+
+EXAMPLE 3:
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiIsInR5cGUiOiJSRUZSRVNIIiwiZXhwIjoxNzk4MzEwMDAwfQ.pPlm294jffks92kdfjssd923"
+}
+
+EXAMPLE 4:
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtYXJjdXMuY2hlbiIsInR5cGUiOiJSRUZSRVNIIiwiZXhwIjoxNzk4MzE1MDAwfQ.mMf92kdf8sh29sfdj823"
+}
+
+EXAMPLE 5:
+{
+  "refreshToken": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJkYXZpZC53cmlnaHQiLCJ0eXBlIjoiUkVGUkVTSCIiLCJleHAiOjE3OTgzMjAwMDB9.qQw92jdls823ndf7s823"
+}
+
+
+====================================================================================================
+SECTION 2: ADMIN & MANAGER GOVERNANCE
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+REQUEST 2.1: Admin Create Manager / User Direct
+HTTP Method: POST
+Endpoint:    http://localhost:8082/admin/managers
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{adminAccessToken}}
+Description:
+  Allows System Administrators to provision managerial and staff accounts directly without pending review.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (QA Engineering Manager):
+{
+  "username": "mgr.sarah.connor",
+  "email": "sarah.connor@skycorp.io",
+  "fullName": "Sarah Connor",
+  "designation": "Engineering Manager - QA & Releases",
+  "skills": "Test Strategy, Resource Planning, Team Mentorship, JIRA, Postman"
+}
+
+EXAMPLE 2 (DevOps Lead Manager):
+{
+  "username": "mgr.robert.lang",
+  "email": "robert.lang@cloudops.net",
+  "fullName": "Robert Lang",
+  "designation": "Infrastructure & QA Operations Manager",
+  "skills": "Kubernetes, Helm, Terraform, Jenkins Pipelines, Cloud Monitoring"
+}
+
+EXAMPLE 3 (Core Banking QA Lead):
+{
+  "username": "mgr.anita.sharma",
+  "email": "anita.sharma@apexbank.com",
+  "fullName": "Anita Sharma",
+  "designation": "Lead Quality Assurance Manager",
+  "skills": "Core Banking, ISO 20022, Payment Gateways, Compliance, Audit Logs"
+}
+
+EXAMPLE 4 (Healthcare Platform Manager):
+{
+  "username": "mgr.frank.castle",
+  "email": "frank.castle@medtech.org",
+  "fullName": "Frank Castle",
+  "designation": "Healthcare Systems QA Director",
+  "skills": "HIPAA, FDA CFR Part 11, HL7/FHIR, Validation Life Cycle"
+}
+
+EXAMPLE 5 (Product Quality Director):
+{
+  "username": "mgr.jessica.jones",
+  "email": "jessica.jones@saasstream.com",
+  "fullName": "Jessica Jones",
+  "designation": "Director of Test Automation & SRE",
+  "skills": "Chaos Engineering, SRE Metrics, SLA/SLO Oversight, Microservices"
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 2.2: Admin Full Update User
+HTTP Method: PUT
+Endpoint:    http://localhost:8082/admin/users/{userId}
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{adminAccessToken}}
+Description:
+  Updates username, email, full name, designation, and skills of an existing user account.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Update User ID: 3):
+{
+  "username": "alex.rivera",
+  "email": "alex.rivera.lead@fintechcorp.io",
+  "fullName": "Alex Rivera, Lead QA Architect",
+  "designation": "Staff Automation Architect",
+  "skills": "Selenium, Playwright, Cypress, Java 21, Spring Boot, Docker, K8s"
+}
+
+EXAMPLE 2 (Update User ID: 4):
+{
+  "username": "priya.nair",
+  "email": "priya.nair.techlead@cloudscale.net",
+  "fullName": "Priya Nair",
+  "designation": "Technical Lead - Distributed Backend Services",
+  "skills": "Java 21, Kotlin, Spring Cloud, Kafka, Cassandra, gRPC"
+}
+
+EXAMPLE 3 (Update User ID: 5):
+{
+  "username": "marcus.chen",
+  "email": "marcus.chen.sec@healthguard.org",
+  "fullName": "Marcus Chen",
+  "designation": "Principal Security & QA Engineer",
+  "skills": "OWASP ASVS, Burp Suite, SonarQube, JMeter, Docker Security"
+}
+
+EXAMPLE 4 (Update User ID: 6):
+{
+  "username": "elena.rostova",
+  "email": "elena.rostova.lead@retailhub.com",
+  "fullName": "Elena Rostova",
+  "designation": "Staff UI/UX Quality Engineer",
+  "skills": "Angular 19, React, Playwright, Web Accessibility WCAG 2.1 AA"
+}
+
+EXAMPLE 5 (Update User ID: 7):
+{
+  "username": "david.wright",
+  "email": "david.wright.dir@enterpriseqa.com",
+  "fullName": "David Wright",
+  "designation": "Senior Director of Quality Engineering",
+  "skills": "Enterprise QA Transformation, Budgeting, Executive Reporting"
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 2.3: Admin Partial Patch Manager / User
+HTTP Method: PATCH
+Endpoint:    http://localhost:8082/admin/managers/{userId}
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{adminAccessToken}}
+Description:
+  Patches designation, skills, or contact information for an administrator or manager record.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Patch User ID: 3):
+{
+  "designation": "Senior Lead SDET",
+  "skills": "Playwright, Java 21, AWS Test Automation, CI/CD"
+}
+
+EXAMPLE 2 (Patch User ID: 4):
+{
+  "designation": "Software Architect",
+  "skills": "Microservices, Distributed Transactions, Event Mesh"
+}
+
+EXAMPLE 3 (Patch User ID: 5):
+{
+  "designation": "Security Automation Architect",
+  "skills": "DevSecOps, Vault, Keycloak, OAuth2/OIDC Security"
+}
+
+EXAMPLE 4 (Patch User ID: 6):
+{
+  "designation": "Principal Frontend SDET",
+  "skills": "Angular 19, Cypress Component Testing, Mock Service Worker"
+}
+
+EXAMPLE 5 (Patch User ID: 7):
+{
+  "designation": "Head of Engineering Quality",
+  "skills": "Quality Maturity Models, Six Sigma QA, ISO 9001"
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 2.4: Manager Approve & Assign Role
+HTTP Method: PUT
+Endpoint:    http://localhost:8082/manager/userConfirmation
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{managerAccessToken}}
+Description:
+  Manager activates a pending user registration and assigns their official role:
+  Valid Roles: TESTER, DEVELOPER, MANAGER, ADMIN
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Approve User ID 3 as TESTER):
+{
+  "userId": 3,
+  "role": "TESTER"
+}
+
+EXAMPLE 2 (Approve User ID 4 as DEVELOPER):
+{
+  "userId": 4,
+  "role": "DEVELOPER"
+}
+
+EXAMPLE 3 (Approve User ID 5 as TESTER):
+{
+  "userId": 5,
+  "role": "TESTER"
+}
+
+EXAMPLE 4 (Approve User ID 6 as DEVELOPER):
+{
+  "userId": 6,
+  "role": "DEVELOPER"
+}
+
+EXAMPLE 5 (Approve User ID 7 as MANAGER):
+{
+  "userId": 7,
+  "role": "MANAGER"
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 2.5: Manager Reject Pending User
+HTTP Method: DELETE
+Endpoint:    http://localhost:8082/manager/userRejection/{userId}
+Headers:
+  Authorization: Bearer {{managerAccessToken}}
+Description:
+  Deletes an unverified or unauthorized registration request from the pending queue.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1: DELETE http://localhost:8082/manager/userRejection/12
+EXAMPLE 2: DELETE http://localhost:8082/manager/userRejection/15
+EXAMPLE 3: DELETE http://localhost:8082/manager/userRejection/18
+EXAMPLE 4: DELETE http://localhost:8082/manager/userRejection/22
+EXAMPLE 5: DELETE http://localhost:8082/manager/userRejection/29
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 2.6: Admin Soft Delete User
+HTTP Method: DELETE
+Endpoint:    http://localhost:8082/admin/users/{userId}
+Headers:
+  Authorization: Bearer {{adminAccessToken}}
+Description:
+  Sets isActive=false and isDeleted=true on user entity, disabling logins while keeping historical audit integrity.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1: DELETE http://localhost:8082/admin/users/8
+EXAMPLE 2: DELETE http://localhost:8082/admin/users/11
+EXAMPLE 3: DELETE http://localhost:8082/admin/users/14
+EXAMPLE 4: DELETE http://localhost:8082/admin/users/19
+EXAMPLE 5: DELETE http://localhost:8082/admin/users/23
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 2.7: Admin Permanent Delete User
+HTTP Method: DELETE
+Endpoint:    http://localhost:8082/admin/users/{userId}/permanent
+Headers:
+  Authorization: Bearer {{adminAccessToken}}
+Description:
+  Permanently deletes user record from database (only allowed if no critical linked entities violate FK).
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1: DELETE http://localhost:8082/admin/users/31/permanent
+EXAMPLE 2: DELETE http://localhost:8082/admin/users/32/permanent
+EXAMPLE 3: DELETE http://localhost:8082/admin/users/33/permanent
+EXAMPLE 4: DELETE http://localhost:8082/admin/users/34/permanent
+EXAMPLE 5: DELETE http://localhost:8082/admin/users/35/permanent
+
+
+====================================================================================================
+SECTION 3: PROJECT GEOGRAPHY & MODULE SETUP
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+REQUEST 3.1: Create Functional Module
+HTTP Method: POST
+Endpoint:    http://localhost:8082/project/module
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Creates a top-level functional domain module used to classify projects and features.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1:
+{
+  "moduleName": "Payment Gateway & Settlement Engine"
+}
+
+EXAMPLE 2:
+{
+  "moduleName": "User Identity, IAM & Multi-Factor Auth"
+}
+
+EXAMPLE 3:
+{
+  "moduleName": "Healthcare Electronic Health Records (EHR)"
+}
+
+EXAMPLE 4:
+{
+  "moduleName": "Supply Chain & Real-Time Logistics Tracking"
+}
+
+EXAMPLE 5:
+{
+  "moduleName": "Customer Support & AI Chat Collaboration"
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 3.2: Create Sub-Module
+HTTP Method: POST
+Endpoint:    http://localhost:8082/project/{moduleId}/sub-modules
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Creates a granular sub-module categorized under an existing functional module.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (For Module ID 1 - Payment Gateway):
+POST http://localhost:8082/project/1/sub-modules
+{
+  "subModuleName": "Stripe & Razorpay Card Processing"
+}
+
+EXAMPLE 2 (For Module ID 1 - Payment Gateway):
+POST http://localhost:8082/project/1/sub-modules
+{
+  "subModuleName": "Automated Refund & Dispute Reconciliation"
+}
+
+EXAMPLE 3 (For Module ID 2 - IAM):
+POST http://localhost:8082/project/2/sub-modules
+{
+  "subModuleName": "OAuth2 / OIDC & Single Sign-On (SSO)"
+}
+
+EXAMPLE 4 (For Module ID 3 - Healthcare EHR):
+POST http://localhost:8082/project/3/sub-modules
+{
+  "subModuleName": "Patient Vitals & Clinical Observation History"
+}
+
+EXAMPLE 5 (For Module ID 4 - Logistics):
+POST http://localhost:8082/project/4/sub-modules
+{
+  "subModuleName": "GPS Fleet Telemetry & Geofencing Alerts"
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 3.3: Create Deployment Region
+HTTP Method: POST
+Endpoint:    http://localhost:8082/project/region
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Defines geographic or cloud server deployment regions (e.g., US-EAST, EU-CENTRAL, APAC).
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1:
+{
+  "regionName": "North America - US East (N. Virginia)"
+}
+
+EXAMPLE 2:
+{
+  "regionName": "Europe - EU Central (Frankfurt)"
+}
+
+EXAMPLE 3:
+{
+  "regionName": "Asia Pacific - AP South (Mumbai)"
+}
+
+EXAMPLE 4:
+{
+  "regionName": "Asia Pacific - AP Southeast (Singapore)"
+}
+
+EXAMPLE 5:
+{
+  "regionName": "South America - SA East (Sao Paulo)"
+}
+
+
+====================================================================================================
+SECTION 4: PROJECT MANAGEMENT
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+REQUEST 4.1: Create Project
+HTTP Method: POST
+Endpoint:    http://localhost:8082/project
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Creates an enterprise testing project linked to a region, module, and sub-module.
+  Field Constraints:
+  - projectName: Required, max 200 chars
+  - region: Integer (Region ID, e.g. 1, 2, 3)
+  - module: Integer (Module ID, e.g. 1, 2, 3)
+  - subModule: Integer (SubModule ID, e.g. 1, 2, 3)
+  - description: Optional text
+  - comments: Optional audit remarks
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Fintech Payment Automation):
+{
+  "projectName": "Global Payment Processing & Merchant Settlement",
+  "region": 1,
+  "module": 1,
+  "subModule": 1,
+  "description": "End-to-end automation test suite covering credit card authorizations, 3DS authentication, webhooks, and payout cycles across multi-currency channels.",
+  "comments": "High-priority compliance suite. Target launch Q3 2026."
+}
+
+EXAMPLE 2 (Enterprise IAM & Zero Trust Security):
+{
+  "projectName": "Enterprise IAM & Zero Trust SSO Modernization",
+  "region": 2,
+  "module": 2,
+  "subModule": 3,
+  "description": "Validation of OpenID Connect, OAuth2 token rotation, biometric passkeys, MFA verification, and SCIM automated provisioning pipelines.",
+  "comments": "Mandatory audit for SOC2 Type II and ISO 27001 readiness."
+}
+
+EXAMPLE 3 (Healthcare Telehealth & EHR Platform):
+{
+  "projectName": "NextGen Telehealth & EHR Clinical System",
+  "region": 1,
+  "module": 3,
+  "subModule": 4,
+  "description": "Validation of doctor-patient WebRTC video sessions, electronic health records encryption, prescription routing, and HL7 FHIR conformance.",
+  "comments": "HIPAA compliance critical. Requires synthetic patient test data only."
+}
+
+EXAMPLE 4 (Real-Time Logistics Fleet Tracking):
+{
+  "projectName": "Autonomous Fleet Telematics & Delivery Dispatch",
+  "region": 3,
+  "module": 4,
+  "subModule": 5,
+  "description": "Automated testing for real-time WebSocket vehicle telemetry, geofence ingress/egress triggers, route optimization, and cold-chain temperature sensors.",
+  "comments": "High throughput stress tests required up to 50,000 concurrent IoT events/sec."
+}
+
+EXAMPLE 5 (Customer Support AI & Live Chat):
+{
+  "projectName": "Customer Support AI Copilot & Real-Time Chat",
+  "region": 4,
+  "module": 5,
+  "subModule": 1,
+  "description": "Testing AI triage bots, sentiment analysis models, agent desktop chat handoffs, ticket assignment engines, and satisfaction survey integrations.",
+  "comments": "Sprint 14 deliverable. Focus on SLA escalation triggers."
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 4.2: Update Project Details
+HTTP Method: PUT
+Endpoint:    http://localhost:8082/project/{projectId}
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Full update of project name, region, module, subModule, description, and comments.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Update Project ID 1):
+{
+  "projectName": "Global Payment Processing & Merchant Settlement v2",
+  "region": 1,
+  "module": 1,
+  "subModule": 2,
+  "description": "Updated scope including automated chargeback disputes, Stripe webhook retry logic, and ledger double-entry reconciliation testing.",
+  "comments": "Scope expanded to cover SEPA Direct Debit."
+}
+
+EXAMPLE 2 (Update Project ID 2):
+{
+  "projectName": "Enterprise IAM & Zero Trust SSO Modernization (Cloud Native)",
+  "region": 2,
+  "module": 2,
+  "subModule": 3,
+  "description": "Added FIDO2 WebAuthn hardware security key regression suites and adaptive risk-based authentication checks.",
+  "comments": "Updated per CISO security findings."
+}
+
+EXAMPLE 3 (Update Project ID 3):
+{
+  "projectName": "NextGen Telehealth & EHR Clinical System (HIPAA Phase 2)",
+  "region": 1,
+  "module": 3,
+  "subModule": 4,
+  "description": "Added e-Prescription Surescripts integration test cases and automated audit logging verification.",
+  "comments": "Clinical trial testing scheduled for next sprint."
+}
+
+EXAMPLE 4 (Update Project ID 4):
+{
+  "projectName": "Autonomous Fleet Telematics & Delivery Dispatch 2026",
+  "region": 3,
+  "module": 4,
+  "subModule": 5,
+  "description": "Updated with MQTT broker failover testing and offline event caching for low-connectivity delivery trucks.",
+  "comments": "Testing edge gateway sync resilience."
+}
+
+EXAMPLE 5 (Update Project ID 5):
+{
+  "projectName": "Customer Support AI Copilot & Real-Time Chat (Enterprise)",
+  "region": 4,
+  "module": 5,
+  "subModule": 1,
+  "description": "Incorporated LLM response hallucination safety guardrails and multi-lingual auto-translation validation.",
+  "comments": "Spanish and Japanese localization test suites added."
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 4.3: Patch Project Details
+HTTP Method: PATCH
+Endpoint:    http://localhost:8082/project/{projectId}
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Partially updates selected project attributes (e.g. updating description or switching module/region).
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Patch Project ID 1):
+{
+  "description": "Refined test execution window to 02:00 UTC to prevent staging database lock contention.",
+  "comments": "Nightly regression schedule approved."
+}
+
+EXAMPLE 2 (Patch Project ID 2):
+{
+  "region": 1,
+  "comments": "Migrated primary target environment from EU to US East staging cluster."
+}
+
+EXAMPLE 3 (Patch Project ID 3):
+{
+  "projectName": "NextGen Telehealth & EHR Clinical Suite - Production Ready",
+  "comments": "Completed final penetration test pass. Ready for release sign-off."
+}
+
+EXAMPLE 4 (Patch Project ID 4):
+{
+  "subModule": 5,
+  "description": "Enhanced GPS geofencing perimeter accuracy checks down to 5-meter radius tolerances."
+}
+
+EXAMPLE 5 (Patch Project ID 5):
+{
+  "description": "Added automated voice-to-text accuracy benchmarking suites for customer support telephony.",
+  "comments": "Benchmarked against Whisper model v3."
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 4.4: Toggle Project Active Status
+HTTP Method: PATCH
+Endpoint:    http://localhost:8082/project/access/{projectId}
+Headers:
+  Authorization: Bearer {{accessToken}}
+Description:
+  Toggles the project status between ACTIVE and INACTIVE.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1: PATCH http://localhost:8082/project/access/1
+EXAMPLE 2: PATCH http://localhost:8082/project/access/2
+EXAMPLE 3: PATCH http://localhost:8082/project/access/3
+EXAMPLE 4: PATCH http://localhost:8082/project/access/4
+EXAMPLE 5: PATCH http://localhost:8082/project/access/5
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 4.5: Soft Delete Project
+HTTP Method: DELETE
+Endpoint:    http://localhost:8082/project/delete/{projectId}
+Headers:
+  Authorization: Bearer {{accessToken}}
+Description:
+  Marks project as isDeleted=true, preserving relational defect reports and execution archives.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1: DELETE http://localhost:8082/project/delete/6
+EXAMPLE 2: DELETE http://localhost:8082/project/delete/7
+EXAMPLE 3: DELETE http://localhost:8082/project/delete/8
+EXAMPLE 4: DELETE http://localhost:8082/project/delete/9
+EXAMPLE 5: DELETE http://localhost:8082/project/delete/10
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 4.6: Hard Delete Project Permanent
+HTTP Method: DELETE
+Endpoint:    http://localhost:8082/project/{projectId}
+Headers:
+  Authorization: Bearer {{accessToken}}
+Description:
+  Permanently purges project and cascading test case linkages from database.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1: DELETE http://localhost:8082/project/15
+EXAMPLE 2: DELETE http://localhost:8082/project/16
+EXAMPLE 3: DELETE http://localhost:8082/project/17
+EXAMPLE 4: DELETE http://localhost:8082/project/18
+EXAMPLE 5: DELETE http://localhost:8082/project/19
+
+
+====================================================================================================
+SECTION 5: FEATURE MANAGEMENT
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+REQUEST 5.1: Create Feature
+HTTP Method: POST
+Endpoint:    http://localhost:8082/feature
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Creates a testable feature under a parent project.
+  Field Constraints:
+  - projectId: Required, positive integer
+  - featureName: Required, max 200 chars
+  - sprint: Required integer
+  - featureVersion: Required string (e.g. "v1.2.0")
+  - description: Optional text
+  - comments: Optional remarks
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Project 1 - 3D Secure 2.0 Card Authentication):
+{
+  "projectId": 1,
+  "featureName": "3D Secure 2.0 Frictionless & Challenge Card Auth Flow",
+  "sprint": 12,
+  "featureVersion": "v2.1.0",
+  "description": "Validates frictionless biometric authentication, SMS OTP challenge step-up, liability shift indicators, and ACS server timeout fallbacks.",
+  "comments": "Visa and Mastercard test card matrices must be executed."
+}
+
+EXAMPLE 2 (Project 2 - OAuth2 Biometric WebAuthn Passkeys):
+{
+  "projectId": 2,
+  "featureName": "FIDO2 / WebAuthn Biometric Passkey Registration & Login",
+  "sprint": 8,
+  "featureVersion": "v1.4.0",
+  "description": "Verifies public-key credential creation, browser navigator.credentials API handshakes, TouchID/Windows Hello hardware token validation, and multi-device sync.",
+  "comments": "Cross-browser matrix: Chrome, Safari, Firefox, Edge."
+}
+
+EXAMPLE 3 (Project 3 - Patient Vital Signs Telemetry):
+{
+  "projectId": 3,
+  "featureName": "Real-Time Patient Vitals Monitoring & Alert Thresholds",
+  "sprint": 15,
+  "featureVersion": "v3.0.1",
+  "description": "Testing Bluetooth medical device data ingestion, heart rate variability anomalies, oxygen saturation alarms, and push notifications to on-call nurses.",
+  "comments": "Critical medical safety feature. Zero missed alert tolerance."
+}
+
+EXAMPLE 4 (Project 4 - Geofence Dispatch Automation):
+{
+  "projectId": 4,
+  "featureName": "Dynamic Warehouse Geofence Ingress & Automatic Gate Pass",
+  "sprint": 6,
+  "featureVersion": "v1.0.5",
+  "description": "Testing GPS coordinate polygon intersection calculations, automatic gate barcode generation, driver arrival notifications, and dock allocation algorithms.",
+  "comments": "Benchmarking with simulated 500 truck fleet movement."
+}
+
+EXAMPLE 5 (Project 5 - AI Chatbot Escalation Engine):
+{
+  "projectId": 5,
+  "featureName": "Customer Frustration Detection & Live Agent Handoff",
+  "sprint": 10,
+  "featureVersion": "v2.0.0",
+  "description": "Validates NLP sentiment score dropping below -0.6, automatic transcript compilation, priority queue routing, and WebSocket agent session takeover.",
+  "comments": "Handoff latency target must remain under 800 milliseconds."
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 5.2: Update Feature Details
+HTTP Method: PUT
+Endpoint:    http://localhost:8082/feature/{featureId}
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Updates feature name, description, sprint, and version.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Update Feature ID 1):
+{
+  "featureName": "3D Secure 2.2 Frictionless & Challenge Card Auth Flow (Updated)",
+  "description": "Updated to EMVCo 3DS 2.2 specification including app-to-app authentication redirects and decoupled payment validation.",
+  "sprint": 13,
+  "featureVersion": "v2.2.0"
+}
+
+EXAMPLE 2 (Update Feature ID 2):
+{
+  "featureName": "FIDO2 / WebAuthn Passkeys & Conditional UI Autofill",
+  "description": "Added passkey conditional UI autofill on input focus and hardware security key backup codes.",
+  "sprint": 9,
+  "featureVersion": "v1.5.0"
+}
+
+EXAMPLE 3 (Update Feature ID 3):
+{
+  "featureName": "Real-Time Patient Vitals & Automated Physician Escalation",
+  "description": "Includes automated Twilio emergency voice call triggers when vitals stay critical for over 3 minutes.",
+  "sprint": 16,
+  "featureVersion": "v3.1.0"
+}
+
+EXAMPLE 4 (Update Feature ID 4):
+{
+  "featureName": "Dynamic Warehouse Geofence Ingress & Automated Dock Assignment",
+  "description": "Integrated yard management forklift assignment and hazardous cargo safety checklist validation.",
+  "sprint": 7,
+  "featureVersion": "v1.1.0"
+}
+
+EXAMPLE 5 (Update Feature ID 5):
+{
+  "featureName": "Customer Sentiment AI Triage & Tier 3 Handoff Orchestration",
+  "description": "Incorporated real-time speech acoustic pitch analysis for voice customer support escalation.",
+  "sprint": 11,
+  "featureVersion": "v2.1.0"
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 5.3: Patch Feature (Timer, Status, Sprint, Version)
+HTTP Method: PATCH
+Endpoint:    http://localhost:8082/feature/{featureId}
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Patches execution timer, status (ACTIVE, IN_PROGRESS, COMPLETED, ON_HOLD, DEPRECATED),
+  or sprint assignments for a feature.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Start Execution Timer & Set IN_PROGRESS):
+PATCH http://localhost:8082/feature/1
+{
+  "status": "IN_PROGRESS",
+  "startTimer": true,
+  "comments": "QA testing cycle commenced by Alex Rivera."
+}
+
+EXAMPLE 2 (Stop Timer & Complete Feature with Duration):
+PATCH http://localhost:8082/feature/1
+{
+  "status": "COMPLETED",
+  "endTimer": true,
+  "days": 2,
+  "hours": 5,
+  "minutes": 30,
+  "comments": "All 45 automated test cases executed successfully. 0 critical defects."
+}
+
+EXAMPLE 3 (Put Feature ON_HOLD due to Environment Downtime):
+PATCH http://localhost:8082/feature/2
+{
+  "status": "ON_HOLD",
+  "comments": "Blocked on ACS test server gateway certificate renewal. Resuming tomorrow."
+}
+
+EXAMPLE 4 (Move Feature to Next Sprint):
+PATCH http://localhost:8082/feature/3
+{
+  "sprint": 17,
+  "featureVersion": "v3.2.0-RC1",
+  "comments": "Spillover from Sprint 16 due to hospital staging network maintenance."
+}
+
+EXAMPLE 5 (Update Associated Test Case IDs & Remarks):
+PATCH http://localhost:8082/feature/4
+{
+  "featureName": "Dynamic Warehouse Geofence Ingress - Phase 1 Complete",
+  "testCaseId": [101, 102, 103, 104, 105],
+  "comments": "Linked core E2E regression suite cases."
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 5.4: Search / Filter Features
+HTTP Method: GET
+Endpoint:    http://localhost:8082/feature/search
+Headers:
+  Authorization: Bearer {{accessToken}}
+Description:
+  Searches features by keyword, project ID, status, sprint, or version.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Search by Keyword 'Auth' in Project 1):
+GET http://localhost:8082/feature/search?keyword=Auth&projectId=1&page=0&size=10
+
+EXAMPLE 2 (Filter by Status 'IN_PROGRESS' for Sprint 12):
+GET http://localhost:8082/feature/search?status=IN_PROGRESS&sprint=12&page=0&size=20
+
+EXAMPLE 3 (Search 'Telemetry' across all projects):
+GET http://localhost:8082/feature/search?keyword=Telemetry&page=0&size=10
+
+EXAMPLE 4 (Search COMPLETED Features for Project 2):
+GET http://localhost:8082/feature/search?projectId=2&status=COMPLETED&page=0&size=25
+
+EXAMPLE 5 (Search by Version 'v2.1.0'):
+GET http://localhost:8082/feature/search?keyword=v2.1.0&page=0&size=10
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 5.5: Soft Delete Feature
+HTTP Method: DELETE
+Endpoint:    http://localhost:8082/feature/delete/{featureId}
+Headers:
+  Authorization: Bearer {{accessToken}}
+Description:
+  Soft deletes feature while keeping historical test runs and logged bugs intact.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1: DELETE http://localhost:8082/feature/delete/14
+EXAMPLE 2: DELETE http://localhost:8082/feature/delete/15
+EXAMPLE 3: DELETE http://localhost:8082/feature/delete/16
+EXAMPLE 4: DELETE http://localhost:8082/feature/delete/17
+EXAMPLE 5: DELETE http://localhost:8082/feature/delete/18
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 5.6: Hard Delete Feature Permanent
+HTTP Method: DELETE
+Endpoint:    http://localhost:8082/feature/{featureId}
+Headers:
+  Authorization: Bearer {{accessToken}}
+Description:
+  Permanently deletes feature and all orphaned linkages.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1: DELETE http://localhost:8082/feature/21
+EXAMPLE 2: DELETE http://localhost:8082/feature/22
+EXAMPLE 3: DELETE http://localhost:8082/feature/23
+EXAMPLE 4: DELETE http://localhost:8082/feature/24
+EXAMPLE 5: DELETE http://localhost:8082/feature/25
+
+
+====================================================================================================
+SECTION 6: TEST CASE CREATION & EXECUTION
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+REQUEST 6.1: Create Manual Test Case with Execution Details
+HTTP Method: POST
+Endpoint:    http://localhost:8082/testcase
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Creates a comprehensive test case along with its initial execution instructions and validations.
+  Enums & Rules:
+  - testType: UI, API, DB, E2E
+  - testPriority: LOW, MEDIUM, HIGH, CRITICAL
+  - testcaseStatus: NO_RUN, DESCOPE, PASSED, FAILED, IN_PROGRESS, BLOCKED
+  - automationFeasibility: YES, NO, PARTIALLY_FEASIBLE
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (E2E Payment Card Authorization Flow):
+{
+  "testCase": {
+    "featureId": 1,
+    "testcaseFormatId": "TC-PAY-001",
+    "title": "Verify 3DS Frictionless Payment with Valid Visa Card",
+    "testType": "E2E",
+    "testPriority": "CRITICAL",
+    "testcaseStatus": "PASSED",
+    "createdBy": 3,
+    "dynamicFields": {
+      "browser": "Chrome 131",
+      "environment": "Staging-US",
+      "complianceTag": "PCI-DSS-4.0"
+    }
+  },
+  "testingExecutionRequest": {
+    "automationFeasibility": "YES",
+    "testExecution": "Automated via Playwright suite regression-payments.spec.ts",
+    "testValidation": "Assert HTTP 200, charge status 'succeeded', and 3DS auth result 'frictionless'",
+    "precondition": "Merchant account is active, currency USD, 3DS 2.0 enabled in merchant settings",
+    "testData": "Card: 4000 0012 3456 0005, Expiry: 12/28, CVV: 123, Amount: $149.99",
+    "executionSteps": "1. Navigate to checkout page\n2. Enter billing address\n3. Input test Visa credentials\n4. Click 'Authorize & Pay'\n5. Intercept webhook callback",
+    "uiValidations": "Checkout modal displays green checkmark banner 'Payment Successful #TXN-90214'.",
+    "dbValidations": "SELECT status, amount, liability_shift FROM transactions WHERE txn_id = 'TXN-90214' returns status='SUCCEEDED' and liability_shift=1.",
+    "comments": "Automated run finished in 2.3 seconds without visual regressions."
+  }
+}
+
+EXAMPLE 2 (API Security - OAuth2 Token Expiration & Revocation):
+{
+  "testCase": {
+    "featureId": 2,
+    "testcaseFormatId": "TC-AUTH-042",
+    "title": "Verify JWT Access Token Rejection After Expiration Timestamp",
+    "testType": "API",
+    "testPriority": "HIGH",
+    "testcaseStatus": "PASSED",
+    "createdBy": 3,
+    "dynamicFields": {
+      "securityStandard": "RFC 6749",
+      "authProtocol": "Bearer JWT"
+    }
+  },
+  "testingExecutionRequest": {
+    "automationFeasibility": "YES",
+    "testExecution": "REST Assured automated API regression test suite",
+    "testValidation": "Expect HTTP 401 Unauthorized with errorCode 'TOKEN_EXPIRED'",
+    "precondition": "User registered and issued token with artificially mocked 1-second TTL",
+    "testData": "Token payload: { sub: 'alex.rivera', exp: 1700000000 }",
+    "executionSteps": "1. Generate expired JWT\n2. Dispatch GET /auth/profile with 'Authorization: Bearer <expiredToken>'\n3. Inspect HTTP response headers and JSON body",
+    "uiValidations": "N/A - Direct REST API Endpoint test",
+    "dbValidations": "Audit table 'security_audit_logs' records event 'EXPIRED_TOKEN_ATTEMPT' with client IP.",
+    "comments": "Verified clock-skew leeway is strictly bounded to 30 seconds."
+  }
+}
+
+EXAMPLE 3 (Database Integrity - Clinical Vital Signs Encryption):
+{
+  "testCase": {
+    "featureId": 3,
+    "testcaseFormatId": "TC-EHR-109",
+    "title": "Verify At-Rest AES-256-GCM Encryption for Patient Blood Pressure Records",
+    "testType": "DB",
+    "testPriority": "CRITICAL",
+    "testcaseStatus": "PASSED",
+    "createdBy": 5,
+    "dynamicFields": {
+      "regulatoryBody": "HIPAA",
+      "encryptionStandard": "AES-256-GCM"
+    }
+  },
+  "testingExecutionRequest": {
+    "automationFeasibility": "YES",
+    "testExecution": "Automated JUnit 5 DB integration test using Testcontainers MySQL",
+    "testValidation": "Direct SQL select must return raw ciphertext for systolic and diastolic columns",
+    "precondition": "Database encryption key configured in AWS KMS with valid IAM role",
+    "testData": "Patient ID: PAT-84920, Systolic: 120, Diastolic: 80, HeartRate: 72 bpm",
+    "executionSteps": "1. Post clinical vital record via REST API\n2. Execute raw JDBC query 'SELECT systolic_encrypted FROM patient_vitals WHERE patient_id = ?'\n3. Verify plaintext is not visible without KMS decrypt permission",
+    "uiValidations": "Doctor dashboard renders decrypted values '120/80 mmHg' seamlessly for authenticated physician.",
+    "dbValidations": "Raw column 'systolic_encrypted' starts with KMS key ARN header prefix and binary ciphertext.",
+    "comments": "Passed HIPAA Technical Safeguard 45 CFR § 164.312(a)(2)(iv)."
+  }
+}
+
+EXAMPLE 4 (UI Responsive - Geofence Dashboard Interactive Map):
+{
+  "testCase": {
+    "featureId": 4,
+    "testcaseFormatId": "TC-GEO-025",
+    "title": "Verify Real-Time Vehicle Marker Rendering on Leaflet Map Canvas",
+    "testType": "UI",
+    "testPriority": "MEDIUM",
+    "testcaseStatus": "PASSED",
+    "createdBy": 4,
+    "dynamicFields": {
+      "deviceResolution": "1920x1080",
+      "browser": "Firefox 133"
+    }
+  },
+  "testingExecutionRequest": {
+    "automationFeasibility": "PARTIALLY_FEASIBLE",
+    "testExecution": "Hybrid Cypress automated render check with manual verification of map fluidity",
+    "testValidation": "Map marker updates coordinates within 500ms of WebSocket message receipt",
+    "precondition": "Mock WebSocket telemetry server broadcasting vehicle GPS packets at 1Hz",
+    "testData": "Vehicle: TRUCK-109, Latitude: 37.7749, Longitude: -122.4194, Speed: 45 mph",
+    "executionSteps": "1. Open fleet management map portal\n2. Select Truck #109\n3. Transmit 10 successive GPS coordinate increments via WebSocket\n4. Observe animated vehicle icon path trajectory",
+    "uiValidations": "SVG marker glides smoothly between coordinates without screen stuttering or memory leaks.",
+    "dbValidations": "Table 'telemetry_history' contains 10 records matching transmission timestamps.",
+    "comments": "Verified 60 FPS animation performance using Chrome DevTools Performance profile."
+  }
+}
+
+EXAMPLE 5 (E2E Integration - AI Bot Escalation and Ticket Handoff):
+{
+  "testCase": {
+    "featureId": 5,
+    "testcaseFormatId": "TC-CHAT-088",
+    "title": "Verify Frustrated Customer Sentiment Auto-Triggers Human Agent Takeover",
+    "testType": "E2E",
+    "testPriority": "HIGH",
+    "testcaseStatus": "PASSED",
+    "createdBy": 4,
+    "dynamicFields": {
+      "channel": "LiveWebChat",
+      "nlpModel": "DistilBERT-Sentiment-v2"
+    }
+  },
+  "testingExecutionRequest": {
+    "automationFeasibility": "YES",
+    "testExecution": "Multi-browser Playwright test simulating simultaneous customer and agent windows",
+    "testValidation": "Customer sees 'Transferring to human specialist' within 1.2s; Agent receives incoming chime",
+    "precondition": "At least one customer support agent is marked 'ONLINE' in queue",
+    "testData": "Customer input text: 'Your service is completely broken and nobody is helping me! Cancel my account now!'",
+    "executionSteps": "1. Customer opens support widget\n2. Type angry statement\n3. Verify NLP classification triggers negative score < -0.8\n4. Verify agent desktop accepts auto-dispatched ticket #TICK-5541",
+    "uiValidations": "Chat window displays agent avatar 'Sarah Connor joined the chat' with complete previous history.",
+    "dbValidations": "Table 'support_tickets' status changes from 'BOT_TRIAGE' to 'AGENT_ASSIGNED' with sentiment_score=-0.89.",
+    "comments": "Full conversation transcript successfully propagated into agent context."
+  }
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 6.2: Update Test Case Details
+HTTP Method: PUT
+Endpoint:    http://localhost:8082/testcase/{testcaseId}
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Updates test case metadata, execution steps, validations, preconditions, and dynamic fields.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Update Test Case ID 1):
+{
+  "title": "Verify 3DS Frictionless Payment with Valid Visa Card & Dynamic Currency Conversion",
+  "testType": "E2E",
+  "testPriority": "CRITICAL",
+  "precondition": "Merchant account enabled for multi-currency settlement (USD, EUR, GBP)",
+  "testData": "Card: 4000 0012 3456 0005, Expiry: 12/28, CVV: 123, Currency: EUR, Amount: €120.00",
+  "executionSteps": "1. Select Euro currency\n2. Enter test card\n3. Verify exchange rate quote\n4. Complete 3DS frictionless charge",
+  "uiValidations": "Receipt displays exact EUR charged and converted USD equivalent on settlement preview.",
+  "dbValidations": "Transaction record holds foreign_exchange_rate=1.08 and settled_amount=129.60 USD.",
+  "comments": "Updated to cover European cross-border transaction regulations."
+}
+
+EXAMPLE 2 (Update Test Case ID 2):
+{
+  "title": "Verify JWT Access Token Rejection & Blacklist Handling After Explicit Logout",
+  "testType": "API",
+  "testPriority": "CRITICAL",
+  "precondition": "User logged in with active JWT and Redis token blacklist service operational",
+  "testData": "Valid JWT with 10 minutes remaining lifetime",
+  "executionSteps": "1. Call POST /auth/logout with token\n2. Immediately call GET /auth/profile with same token\n3. Assert 401 response",
+  "uiValidations": "Web app immediately navigates to /login with session expired toast alert.",
+  "dbValidations": "Redis key 'bl_jwt_<token_hash>' exists with remaining TTL matching token expiration.",
+  "comments": "Added Redis distributed blacklist validation."
+}
+
+EXAMPLE 3 (Update Test Case ID 3):
+{
+  "title": "Verify At-Rest AES-256-GCM Encryption with Automatic Annual Key Rotation",
+  "testType": "DB",
+  "testPriority": "CRITICAL",
+  "precondition": "AWS KMS configured with automatic annual key rotation enabled",
+  "testData": "Patient record encrypted with Key Version 1, re-encrypted under Key Version 2",
+  "executionSteps": "1. Insert record using Key V1\n2. Trigger simulated key rotation event\n3. Query record to confirm seamless decryption using Key V2",
+  "uiValidations": "Clinical summary loads without decryption errors or data corruption warnings.",
+  "dbValidations": "Key ID header in ciphertext metadata reflects updated AWS KMS Key Version ID.",
+  "comments": "Ensures backward compatibility after corporate key rotation cycles."
+}
+
+EXAMPLE 4 (Update Test Case ID 4):
+{
+  "title": "Verify Real-Time Vehicle Marker Rendering on Leaflet Map Canvas with Cluster Mode",
+  "testType": "UI",
+  "testPriority": "MEDIUM",
+  "precondition": "Fleet simulation sending 2,500 simultaneous vehicle coordinates in close proximity",
+  "testData": "2,500 simulated vehicle coordinates clustered around Chicago metro hub",
+  "executionSteps": "1. Zoom out map view\n2. Verify spiderfy / cluster bubble displays '2,500'\n3. Zoom in to street level and verify individual vehicle markers separate",
+  "uiValidations": "Cluster circle displays smoothly with count badge; zooms without browser frame drops.",
+  "dbValidations": "N/A - Client-side geospatial clustering test.",
+  "comments": "Leaflet.markercluster library verified for zero memory leaks over 30 minutes."
+}
+
+EXAMPLE 5 (Update Test Case ID 5):
+{
+  "title": "Verify Frustrated Customer Auto-Triggers Human Handoff with Priority Escalation Tier 2",
+  "testType": "E2E",
+  "testPriority": "HIGH",
+  "precondition": "Customer flagged as 'VIP Platinum Subscriber' in CRM database",
+  "testData": "VIP customer saying 'I am furious with your billing error!'",
+  "executionSteps": "1. Open chat widget with VIP token\n2. Input complaint\n3. Assert ticket bypasses standard queue and rings Tier 2 Senior Support desk directly",
+  "uiValidations": "Agent window shows prominent gold 'VIP PLATINUM' tag with 30-second answer SLA counter.",
+  "dbValidations": "Table 'support_tickets' priority set to 'URGENT_TIER_2' with SLA deadline 3 minutes.",
+  "comments": "VIP SLA routing tested and certified."
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 6.3: Patch Test Case Details / Execution Status
+HTTP Method: PATCH
+Endpoint:    http://localhost:8082/testcase/{testcaseId}
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Patches testcase execution status (PASS, FAIL, DESCOPE, IN_PROGRESS, BLOCK),
+  priority, execution steps, or dynamic attributes.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Mark Test Case FAILED with Root Cause):
+PATCH http://localhost:8082/testcase/1
+{
+  "executionStatus": "FAIL",
+  "comments": "Failed in Sprint 12 regression: Bank ACS server timed out after 30 seconds instead of returning fallback indicator."
+}
+
+EXAMPLE 2 (Mark Test Case PASSED after Bug Fix):
+PATCH http://localhost:8082/testcase/1
+{
+  "executionStatus": "PASS",
+  "testExecution": "Retested against Gateway v2.1.2 patch. ACS timeout fallback verified working.",
+  "comments": "Defect BUG-PAY-001 verified resolved. Test case passed."
+}
+
+EXAMPLE 3 (Mark Test Case BLOCKED due to Downstream Service):
+PATCH http://localhost:8082/testcase/2
+{
+  "executionStatus": "BLOCK",
+  "comments": "Blocked: Redis cluster in staging environment currently undergoing maintenance."
+}
+
+EXAMPLE 4 (DESCOPE Test Case from Current Sprint):
+PATCH http://localhost:8082/testcase/4
+{
+  "executionStatus": "DESCOPE",
+  "comments": "Descope approved by Manager: Map clustering deferred to Sprint 8."
+}
+
+EXAMPLE 5 (Update Dynamic Fields & Priority):
+PATCH http://localhost:8082/testcase/5
+{
+  "testPriority": "CRITICAL",
+  "dynamicFields": {
+    "regressionSuite": "Nightly-P0",
+    "automatedRunner": "Playwright-Worker-3",
+    "lastRunDurationMs": 1420
+  },
+  "comments": "Promoted to Critical P0 nightly blocker suite."
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 6.4: Search / Filter Test Cases
+HTTP Method: GET
+Endpoint:    http://localhost:8082/testcase/search
+Headers:
+  Authorization: Bearer {{accessToken}}
+Description:
+  Searches test cases by keyword, feature ID, test type (UI, API, DB, E2E), priority, or status.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Search by Keyword 'Visa' in Feature 1):
+GET http://localhost:8082/testcase/search?keyword=Visa&featureId=1&page=0&size=10
+
+EXAMPLE 2 (Filter CRITICAL Priority API Test Cases):
+GET http://localhost:8082/testcase/search?type=API&priority=CRITICAL&page=0&size=20
+
+EXAMPLE 3 (Search FAILED Test Cases across Feature 2):
+GET http://localhost:8082/testcase/search?featureId=2&status=FAILED&page=0&size=15
+
+EXAMPLE 4 (Search 'Encryption' DB Test Cases):
+GET http://localhost:8082/testcase/search?keyword=Encryption&type=DB&page=0&size=10
+
+EXAMPLE 5 (Search All Active Test Cases for Feature 4):
+GET http://localhost:8082/testcase/search?featureId=4&page=0&size=50
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 6.5: Soft Delete Test Case
+HTTP Method: DELETE
+Endpoint:    http://localhost:8082/testcase/soft/{testcaseId}
+Headers:
+  Authorization: Bearer {{accessToken}}
+Description:
+  Marks testcase as inactive / soft-deleted without deleting linked execution audit records.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1: DELETE http://localhost:8082/testcase/soft/12
+EXAMPLE 2: DELETE http://localhost:8082/testcase/soft/15
+EXAMPLE 3: DELETE http://localhost:8082/testcase/soft/18
+EXAMPLE 4: DELETE http://localhost:8082/testcase/soft/23
+EXAMPLE 5: DELETE http://localhost:8082/testcase/soft/31
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 6.6: Hard Delete Test Case Permanent
+HTTP Method: DELETE
+Endpoint:    http://localhost:8082/testcase/{testcaseId}
+Headers:
+  Authorization: Bearer {{accessToken}}
+Description:
+  Permanently removes test case and all associated execution history records.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1: DELETE http://localhost:8082/testcase/45
+EXAMPLE 2: DELETE http://localhost:8082/testcase/46
+EXAMPLE 3: DELETE http://localhost:8082/testcase/47
+EXAMPLE 4: DELETE http://localhost:8082/testcase/48
+EXAMPLE 5: DELETE http://localhost:8082/testcase/49
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 6.7: Bulk Delete Test Cases
+HTTP Method: DELETE
+Endpoint:    http://localhost:8082/testcase/bulk
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Deletes an array of test case IDs in a single atomic database transaction.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1:
+[51, 52, 53]
+
+EXAMPLE 2:
+[101, 102, 103, 104, 105]
+
+EXAMPLE 3:
+[210, 211, 212, 213]
+
+EXAMPLE 4:
+[340, 341]
+
+EXAMPLE 5:
+[401, 402, 403, 404, 405, 406, 407]
+
+
+====================================================================================================
+SECTION 7: DEFECT & BUG TRACKING
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+REQUEST 7.1: Create Bug / Defect
+HTTP Method: POST
+Endpoint:    http://localhost:8082/bug?testcaseId={testcaseId}
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Creates and logs a defect linked to a failed test case.
+  Enums & Rules:
+  - severity: LOW, MEDIUM, HIGH, CRITICAL
+  - priority: LOW, MEDIUM, HIGH, CRITICAL
+  - category: PRE_PRODUCTION, POST_PRODUCTION, ENHANCED
+  - status: OPEN, IN_PROGRESS, FIXED, RESOLVED, CLOSED, REOPENED, NOT_A_BUG, DEFERRED
+  - assignedTo: Integer (Developer user ID, e.g. 4)
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Payment Timeout Defect - Linked to Test Case 1):
+POST http://localhost:8082/bug?testcaseId=1
+{
+  "title": "ACS 3DS Challenge times out after 30 seconds with 504 Gateway Error instead of soft decline",
+  "description": "When an issuing bank Access Control Server (ACS) fails to respond to 3DS challenge within 10s, the gateway throws unhandled HTTP 504 Gateway Timeout rather than executing graceful frictionless fallback or soft decline retry.",
+  "severity": "CRITICAL",
+  "priority": "CRITICAL",
+  "category": "PRE_PRODUCTION",
+  "status": "OPEN",
+  "assignedTo": 4,
+  "comments": "Discovered during Sprint 12 Visa regression test. Root cause appears to be missing timeout handler in PaymentAcquirerClient.java.",
+  "dynamicFields": {
+    "acquirer": "Stripe-Connect",
+    "httpStatus": 504,
+    "environment": "Staging-US-East"
+  }
+}
+
+EXAMPLE 2 (Security Token Leak Defect - Linked to Test Case 2):
+POST http://localhost:8082/bug?testcaseId=2
+{
+  "title": "JWT refresh token logged in plain text within server-side debug log files",
+  "description": "During authentication refresh sequence, AuthController line 94 logs complete incoming refresh token string in logger.debug statement, violating security compliance policies.",
+  "severity": "HIGH",
+  "priority": "HIGH",
+  "category": "PRE_PRODUCTION",
+  "status": "OPEN",
+  "assignedTo": 4,
+  "comments": "Security audit item. Needs masking pattern applied immediately in logback configuration.",
+  "dynamicFields": {
+    "cveCategory": "CWE-532",
+    "complianceImpact": "SOC2-Violation"
+  }
+}
+
+EXAMPLE 3 (HIPAA Data Integrity Defect - Linked to Test Case 3):
+POST http://localhost:8082/bug?testcaseId=3
+{
+  "title": "Patient blood pressure export CSV contains unmasked systolic values without physician session check",
+  "description": "When generating bulk CSV export from nurse workstation, patient blood pressure records bypass row-level masking if the requesting user has role TESTER instead of CLINICAL_ADMIN.",
+  "severity": "CRITICAL",
+  "priority": "HIGH",
+  "category": "PRE_PRODUCTION",
+  "status": "OPEN",
+  "assignedTo": 4,
+  "comments": "Immediate hotfix required. Role-based column filter failed in ExportService.java.",
+  "dynamicFields": {
+    "regulatoryRisk": "HIPAA-Breach",
+    "affectedService": "summary-export-service"
+  }
+}
+
+EXAMPLE 4 (Map Telemetry Memory Leak Defect - Linked to Test Case 4):
+POST http://localhost:8082/bug?testcaseId=4
+{
+  "title": "Fleet live tracking map memory usage balloons to 1.8GB after 45 minutes of WebSocket updates",
+  "description": "Old Leaflet marker DOM nodes are not cleared when vehicles transmit updated GPS locations, resulting in continuous Chrome renderer heap allocation growth and eventual browser crash.",
+  "severity": "MEDIUM",
+  "priority": "HIGH",
+  "category": "PRE_PRODUCTION",
+  "status": "OPEN",
+  "assignedTo": 4,
+  "comments": "Affects dispatcher control room multi-monitor displays left running overnight.",
+  "dynamicFields": {
+    "browser": "Chrome 131",
+    "heapSizeMB": 1840
+  }
+}
+
+EXAMPLE 5 (Chat AI Escalation Failure Defect - Linked to Test Case 5):
+POST http://localhost:8082/bug?testcaseId=5
+{
+  "title": "Customer chat disconnects when negative sentiment score triggers transfer during high agent load",
+  "description": "If all human agents have 5 active concurrent chats, the bot attempts transfer, receives queue capacity rejection, and terminates the WebSocket connection without sending an apology or callback offer.",
+  "severity": "HIGH",
+  "priority": "MEDIUM",
+  "category": "PRE_PRODUCTION",
+  "status": "OPEN",
+  "assignedTo": 4,
+  "comments": "Customer experience defect. Should place customer in holding queue with estimated wait time.",
+  "dynamicFields": {
+    "queueDepth": 25,
+    "errorReason": "QUEUE_CAPACITY_EXCEEDED"
+  }
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 7.2: Update Bug Details
+HTTP Method: PUT
+Endpoint:    http://localhost:8082/bug/{bugId}
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Full update of bug title, description, severity, priority, category, assignee, and comments.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Update Bug ID 1):
+{
+  "title": "ACS 3DS Challenge times out after 30 seconds with 504 - Added Acquirer Circuit Breaker",
+  "description": "Updated defect description: The issue occurs because Resilience4j circuit breaker timeout is configured to 45s while NGINX proxy terminates socket at 30s.",
+  "severity": "CRITICAL",
+  "priority": "CRITICAL",
+  "category": "PRE_PRODUCTION",
+  "status": "IN_PROGRESS",
+  "assignedTo": 4,
+  "comments": "Developer Priya Nair has identified configuration mismatch in gateway application.yml.",
+  "dynamicFields": {
+    "rootCause": "Timeout Mismatch",
+    "circuitBreaker": "Resilience4j"
+  }
+}
+
+EXAMPLE 2 (Update Bug ID 2):
+{
+  "title": "JWT refresh token logged in plain text within server-side debug log files (PR #142 Raised)",
+  "description": "Logback masking converter implemented to replace all tokens matching 'eyJhbGci...' with '[REDACTED_TOKEN]'.",
+  "severity": "HIGH",
+  "priority": "HIGH",
+  "category": "PRE_PRODUCTION",
+  "status": "IN_PROGRESS",
+  "assignedTo": 4,
+  "comments": "Pull Request #142 submitted for review to security team.",
+  "dynamicFields": {
+    "prLink": "https://github.com/internslab-mobi/tat/pull/142"
+  }
+}
+
+EXAMPLE 3 (Update Bug ID 3):
+{
+  "title": "Patient blood pressure export CSV contains unmasked systolic values (Fix Deployed to Staging)",
+  "description": "Row-level column security policy enforced in SummaryExportController. Masking applied to all non-clinical roles.",
+  "severity": "CRITICAL",
+  "priority": "HIGH",
+  "category": "PRE_PRODUCTION",
+  "status": "FIXED",
+  "assignedTo": 4,
+  "comments": "Deployed to Staging cluster build #2026.10.15. Ready for QA retest.",
+  "dynamicFields": {
+    "buildNumber": "2026.10.15",
+    "retestReady": true
+  }
+}
+
+EXAMPLE 4 (Update Bug ID 4):
+{
+  "title": "Fleet live tracking map memory usage balloons to 1.8GB (Refactored to Canvas Layer)",
+  "description": "Migrated DOM-based SVG markers to HTML5 Canvas overlay. Memory allocation remains constant under 140MB over 4 hours.",
+  "severity": "MEDIUM",
+  "priority": "HIGH",
+  "category": "PRE_PRODUCTION",
+  "status": "FIXED",
+  "assignedTo": 4,
+  "comments": "Canvas renderer verified at 60 FPS with 5,000 markers.",
+  "dynamicFields": {
+    "renderEngine": "HTML5 Canvas Overlay",
+    "finalHeapMB": 138
+  }
+}
+
+EXAMPLE 5 (Update Bug ID 5):
+{
+  "title": "Customer chat disconnects when negative sentiment score triggers transfer during high agent load",
+  "description": "Implemented fallback holding queue with polling status updates and estimated wait time calculation.",
+  "severity": "HIGH",
+  "priority": "MEDIUM",
+  "category": "PRE_PRODUCTION",
+  "status": "FIXED",
+  "assignedTo": 4,
+  "comments": "Customer now hears audio queue chime and sees queue position card.",
+  "dynamicFields": {
+    "queueMechanism": "Redis Sorted Set",
+    "waitEstimateAlgorithm": "Moving Average"
+  }
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 7.3: Patch Bug Status / Workflow Transition
+HTTP Method: PATCH
+Endpoint:    http://localhost:8082/bug/{bugId}
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Transitions the bug through its lifecycle state machine:
+  OPEN -> IN_PROGRESS -> FIXED -> RESOLVED -> CLOSED (or REOPENED, NOT_A_BUG, DEFERRED).
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Move Bug 1 to IN_PROGRESS):
+PATCH http://localhost:8082/bug/1
+{
+  "status": "IN_PROGRESS",
+  "assignedTo": 4,
+  "comments": "Priya Nair accepted defect and started debugging gateway timeout."
+}
+
+EXAMPLE 2 (Move Bug 1 to FIXED):
+PATCH http://localhost:8082/bug/1
+{
+  "status": "FIXED",
+  "comments": "Fixed: NGINX proxy_read_timeout increased to 60s; circuit breaker timeout tuned to 25s."
+}
+
+EXAMPLE 3 (Move Bug 1 to RESOLVED / QA Verified):
+PATCH http://localhost:8082/bug/1
+{
+  "status": "RESOLVED",
+  "comments": "Verified by Alex Rivera on Staging-US. ACS timeout now returns soft decline HTTP 402."
+}
+
+EXAMPLE 4 (Move Bug 1 to CLOSED):
+PATCH http://localhost:8082/bug/1
+{
+  "status": "CLOSED",
+  "comments": "Fix released to Production in Release v2.1.2. Defect closed."
+}
+
+EXAMPLE 5 (Mark Bug as NOT_A_BUG or DEFERRED):
+PATCH http://localhost:8082/bug/2
+{
+  "status": "NOT_A_BUG",
+  "comments": "Determined to be intended behavior when debug flag DEBUG_AUTH_VERBOSE=true is explicitly enabled in local test profiles."
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 7.4: Global Bug Search & Filter
+HTTP Method: GET
+Endpoint:    http://localhost:8082/bug/search
+Headers:
+  Authorization: Bearer {{accessToken}}
+Description:
+  Searches defects by keyword, status, severity, priority, or feature.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Search Open Critical Defects):
+GET http://localhost:8082/bug/search?status=OPEN&severity=CRITICAL&page=0&size=10
+
+EXAMPLE 2 (Search Bugs for Feature 1):
+GET http://localhost:8082/bug/search?featureId=1&page=0&size=20
+
+EXAMPLE 3 (Search Bugs Assigned to Developer ID 4):
+GET http://localhost:8082/bug/search?assignedTo=4&status=IN_PROGRESS&page=0&size=15
+
+EXAMPLE 4 (Search Keyword 'Timeout'):
+GET http://localhost:8082/bug/search?keyword=Timeout&page=0&size=10
+
+EXAMPLE 5 (Search Pre-Production Security Category):
+GET http://localhost:8082/bug/search?category=PRE_PRODUCTION&page=0&size=25
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 7.5: Soft Delete Defect
+HTTP Method: DELETE
+Endpoint:    http://localhost:8082/bug/delete/{bugId}
+Headers:
+  Authorization: Bearer {{accessToken}}
+Description:
+  Soft deletes a defect while keeping linked audit logs and regression archives.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1: DELETE http://localhost:8082/bug/delete/10
+EXAMPLE 2: DELETE http://localhost:8082/bug/delete/14
+EXAMPLE 3: DELETE http://localhost:8082/bug/delete/19
+EXAMPLE 4: DELETE http://localhost:8082/bug/delete/24
+EXAMPLE 5: DELETE http://localhost:8082/bug/delete/28
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 7.6: Hard Delete Defect Permanent
+HTTP Method: DELETE
+Endpoint:    http://localhost:8082/bug/{bugId}
+Headers:
+  Authorization: Bearer {{accessToken}}
+Description:
+  Permanently deletes a defect and removes associated attachment records from database.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1: DELETE http://localhost:8082/bug/35
+EXAMPLE 2: DELETE http://localhost:8082/bug/36
+EXAMPLE 3: DELETE http://localhost:8082/bug/37
+EXAMPLE 4: DELETE http://localhost:8082/bug/38
+EXAMPLE 5: DELETE http://localhost:8082/bug/39
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 7.7: Bulk Delete Defects
+HTTP Method: DELETE
+Endpoint:    http://localhost:8082/bug/bulk
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Deletes multiple defect records by ID array in a single request.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1:
+[41, 42]
+
+EXAMPLE 2:
+[50, 51, 52]
+
+EXAMPLE 3:
+[65, 66, 67, 68]
+
+EXAMPLE 4:
+[71, 72, 73, 74, 75]
+
+EXAMPLE 5:
+[81, 82, 83]
+
+
+====================================================================================================
+SECTION 8: COLLABORATIVE DEFECT COMMENTS
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+REQUEST 8.1: Add Comment to Defect
+HTTP Method: POST
+Endpoint:    http://localhost:8082/bug/{bugId}/comments
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Posts a collaborative discussion message or debugging finding to a defect thread.
+  Field Constraints:
+  - comment: Required string, max 1000 characters
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (For Bug ID 1 - Acquirer Timeout):
+POST http://localhost:8082/bug/1/comments
+{
+  "comment": "Reproduced on staging using MockACS proxy with simulated 35-second delay. The NGINX ingress controller dropped connection before Spring Gateway timed out."
+}
+
+EXAMPLE 2 (For Bug ID 1 - Developer Response):
+POST http://localhost:8082/bug/1/comments
+{
+  "comment": "I have created PR #145 which lowers the Gateway Acquirer timeout to 15s and returns a clean 402 Card Declined response. Testing on staging build #89."
+}
+
+EXAMPLE 3 (For Bug ID 2 - Security Fix Finding):
+POST http://localhost:8082/bug/2/comments
+{
+  "comment": "Confirmed that all token strings are now scrubbed with regex pattern 'Bearer [A-Za-z0-9-_=]+\.[A-Za-z0-9-_=]+\.?[A-Za-z0-9-_.+/=]*'. Log files clean."
+}
+
+EXAMPLE 4 (For Bug ID 3 - Healthcare Audit Verification):
+POST http://localhost:8082/bug/3/comments
+{
+  "comment": "Verified with synthetic patient records: export generated by nurse role masks all vital sign columns. HIPAA risk eliminated."
+}
+
+EXAMPLE 5 (For Bug ID 4 - Performance Memory Profiling):
+POST http://localhost:8082/bug/4/comments
+{
+  "comment": "Ran 2-hour soak test with 5,000 GPS points. Chrome DevTools snapshot shows 0 detached DOM nodes and flat memory footprint."
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 8.2: Update Comment
+HTTP Method: PUT
+Endpoint:    http://localhost:8082/comments/{commentId}
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Updates the content of an existing discussion comment.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Update Comment ID 1):
+{
+  "comment": "Reproduced on staging using MockACS proxy with simulated 35-second delay. Confirmed this happens on both Visa and Mastercard test cards."
+}
+
+EXAMPLE 2 (Update Comment ID 2):
+{
+  "comment": "I have created PR #145 which lowers Gateway timeout to 15s. PR passed all unit tests and is currently under peer review."
+}
+
+EXAMPLE 3 (Update Comment ID 3):
+{
+  "comment": "Confirmed all token strings are scrubbed. Logback configuration updated across auth-service, main-service, and summary-export-service."
+}
+
+EXAMPLE 4 (Update Comment ID 4):
+{
+  "comment": "Verified with synthetic patient records: CSV export generated by non-admin roles masks all vital sign columns."
+}
+
+EXAMPLE 5 (Update Comment ID 5):
+{
+  "comment": "Ran 4-hour soak test with 5,000 GPS points. Heap allocation stable at 138MB."
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 8.3: Delete Comment
+HTTP Method: DELETE
+Endpoint:    http://localhost:8082/comments/{commentId}
+Headers:
+  Authorization: Bearer {{accessToken}}
+Description:
+  Deletes an existing comment from defect chat.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1: DELETE http://localhost:8082/comments/11
+EXAMPLE 2: DELETE http://localhost:8082/comments/12
+EXAMPLE 3: DELETE http://localhost:8082/comments/13
+EXAMPLE 4: DELETE http://localhost:8082/comments/14
+EXAMPLE 5: DELETE http://localhost:8082/comments/15
+
+
+====================================================================================================
+SECTION 9: IN-APP NOTIFICATIONS
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+REQUEST 9.1: Patch In-App Notification (Mark READ / UNREAD)
+HTTP Method: PATCH
+Endpoint:    http://localhost:8082/in-app-notifications/{notificationId}
+Headers:
+  Content-Type: application/json
+  Authorization: Bearer {{accessToken}}
+Description:
+  Updates the read state of an in-app user notification.
+  Enums:
+  - status: READ, UNREAD
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1:
+PATCH http://localhost:8082/in-app-notifications/1
+{
+  "status": "READ"
+}
+
+EXAMPLE 2:
+PATCH http://localhost:8082/in-app-notifications/2
+{
+  "status": "READ"
+}
+
+EXAMPLE 3:
+PATCH http://localhost:8082/in-app-notifications/3
+{
+  "status": "UNREAD"
+}
+
+EXAMPLE 4:
+PATCH http://localhost:8082/in-app-notifications/4
+{
+  "status": "READ"
+}
+
+EXAMPLE 5:
+PATCH http://localhost:8082/in-app-notifications/5
+{
+  "status": "READ"
+}
+
+
+----------------------------------------------------------------------------------------------------
+REQUEST 9.2: Delete In-App Notification
+HTTP Method: DELETE
+Endpoint:    http://localhost:8082/in-app-notifications/{notificationId}
+Headers:
+  Authorization: Bearer {{accessToken}}
+Description:
+  Dismisses and removes a notification from the user's notification bell panel.
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1: DELETE http://localhost:8082/in-app-notifications/1
+EXAMPLE 2: DELETE http://localhost:8082/in-app-notifications/2
+EXAMPLE 3: DELETE http://localhost:8082/in-app-notifications/3
+EXAMPLE 4: DELETE http://localhost:8082/in-app-notifications/4
+EXAMPLE 5: DELETE http://localhost:8082/in-app-notifications/5
+
+
+====================================================================================================
+SECTION 10: ASYNCHRONOUS EMAIL NOTIFICATION SERVICE (PORT 8091)
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+REQUEST 10.1: Send Email Notification
+HTTP Method: POST
+Endpoint:    http://localhost:8091/api/v1/notifications/email
+Headers:
+  Content-Type: application/json
+Description:
+  Dispatches transactional, alert, defect assignment, or executive quality health emails via notification-service.
+  Field Constraints:
+  - to: List of valid email addresses (required)
+  - cc: List of valid email addresses (optional)
+  - subject: Required string, max 500 chars
+  - body: Required string
+  - isHtml: Boolean (default false)
+  - replyTo: Optional valid email
+  - attachments: Optional list of Base64 encoded attachments
+----------------------------------------------------------------------------------------------------
+
+EXAMPLE 1 (Defect Assignment Notification to Developer):
+{
+  "to": ["priya.nair@cloudscale.net"],
+  "cc": ["alex.rivera@fintechcorp.io"],
+  "subject": "[CRITICAL DEFECT ASSIGNED] BUG-PAY-001: 3DS Acquirer Timeout Failure",
+  "body": "<h2>Defect Assignment Alert</h2><p>Hello Priya,</p><p>A critical defect has been logged and assigned to you:</p><ul><li><b>ID:</b> BUG-PAY-001</li><li><b>Severity:</b> CRITICAL</li><li><b>Priority:</b> HIGH</li><li><b>Feature:</b> 3D Secure 2.0 Frictionless & Challenge Card Auth Flow</li><li><b>Reported By:</b> Alex Rivera</li></ul><p>Please review the defect log in the Tester Workspace.</p>",
+  "isHtml": true,
+  "replyTo": "no-reply@testingautomationtool.io"
+}
+
+EXAMPLE 2 (Sprint Regression Quality Health Summary to Management):
+{
+  "to": ["david.wright@enterpriseqa.com"],
+  "cc": ["sarah.connor@skycorp.io", "robert.lang@cloudops.net"],
+  "subject": "[EXECUTIVE SUMMARY] Sprint 12 Quality Health Score: 92.4% (PASS)",
+  "body": "<h2>Sprint 12 Quality Assurance Executive Summary</h2><p>Dear David,</p><p>The test execution cycle for Sprint 12 has concluded with outstanding results:</p><table border='1' cellpadding='6'><tr><th>Total Tests</th><th>Passed</th><th>Failed</th><th>Descope</th><th>Health Score</th></tr><tr><td>180</td><td>172</td><td>4</td><td>4</td><td><b>92.4%</b></td></tr></table><p>All blocking defects have verified resolutions in staging build #2026.10.18.</p>",
+  "isHtml": true,
+  "replyTo": "qa-reports@testingautomationtool.io"
+}
+
+EXAMPLE 3 (Security Vulnerability Patch Alert):
+{
+  "to": ["marcus.chen@healthguard.org", "ciso-office@fintechcorp.io"],
+  "subject": "[SECURITY ADVISORY] CVE-532 Token Logging Vulnerability Remediated",
+  "body": "Security Team,
+
+The token logging vulnerability reported under BUG-AUTH-002 has been verified and remediated across all staging clusters. Masking filters are active in auth-service build v2.4.1.
+
+Audit status: COMPLIANT.",
+  "isHtml": false,
+  "replyTo": "appsec@testingautomationtool.io"
+}
+
+EXAMPLE 4 (User Account Registration Approval Alert):
+{
+  "to": ["alex.rivera@fintechcorp.io"],
+  "subject": "Your Testing Automation Tool Account Has Been Approved",
+  "body": "<h2>Welcome to Testing Automation Tool</h2><p>Dear Alex,</p><p>Your account has been reviewed and approved by Manager <b>David Wright</b> with the role: <b>TESTER</b>.</p><p><a href='http://localhost:4200/login'>Click here to login</a></p>",
+  "isHtml": true,
+  "replyTo": "admin@testingautomationtool.io"
+}
+
+EXAMPLE 5 (Automated Test Execution Alert with Base64 Log Attachment):
+{
+  "to": ["qa-alerts@enterpriseqa.com"],
+  "subject": "[CI/CD PIPELINE ALERT] Nightly Smoke Suite Completed (98.8% Pass Rate)",
+  "body": "Nightly Jenkins CI/CD execution pipeline completed on branch 'main'. 248 of 251 test cases passed. Attached is the execution summary report.",
+  "isHtml": false,
+  "replyTo": "jenkins-bot@testingautomationtool.io",
+  "attachments": [
+    {
+      "fileName": "execution-summary-nightly.json",
+      "contentType": "application/json",
+      "contentBase64": "ewogICJzdWl0ZU5hbWUiOiAiTmlnaHRseSBTbW9rZSBSZWdyZXNzaW9uIiwKICAidG90YWxUZXN0cyI6IDI1MSwKICAicGFzc2VkIjogMjQ4LAogICJmYWlsZWQiOiAzLAogICJleGVjdXRpb25UaW1lU2Vjb25kcyI6IDQxMi44Cn0="
+    }
+  ]
+}
+
+====================================================================================================
+END OF MOCK DATA SPECIFICATION FILE
+====================================================================================================

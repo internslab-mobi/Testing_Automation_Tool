@@ -50,6 +50,8 @@ public class TestCaseServiceImpl implements TestCaseService {
         private final TestCaseExcelService testCaseExcelService;
         private final AttachmentRepository attachmentRepository;
         private final SummaryExportClient summaryExportClient;
+        private final AuditLogRepository auditLogRepository;
+        private final UserRepository userRepository;
 
         @Override
         public TestCaseExecutionResponse createTestCaseByManual(TestCaseExecutionRequest request) {
@@ -561,12 +563,14 @@ public class TestCaseServiceImpl implements TestCaseService {
                                 execution.setExecutionNumber(
                                                 execution.getExecutionNumber() + 1);
 
-                                if (executionStatus == ExecutionStatus.PASS) {
-                                        utils.trigger(
-                                                        testCase,
-                                                        testCase.getCreatedBy(),
-                                                        null);
+                                User execUser = authService.getCurrentUser();
+                                if (execUser == null) {
+                                        execUser = testCase.getCreatedBy();
                                 }
+                                utils.trigger(
+                                                testCase,
+                                                execUser,
+                                                null);
                                 updatedFields.add("executionStatus");
                         }
 
@@ -735,5 +739,75 @@ public class TestCaseServiceImpl implements TestCaseService {
                 final Map<Integer, TestingExecution> finalExecutionMap = executionMap;
                 return testCasesPage.map(testCase -> testCaseMapper.toResponse(testCase,
                                 finalExecutionMap.get(testCase.getTestcaseId())));
+        }
+
+        @Override
+        @Transactional(readOnly = true)
+        public List<TestCaseAuditLogResponse> getTestCaseHistory(Integer testcaseId) {
+                TestCase testCase = testCaseRepository.findById(testcaseId)
+                                .orElseThrow(() -> new ResourceNotFoundException("Test case not found with ID: " + testcaseId));
+
+                List<TestingAuditLog> logs = auditLogRepository.findByTestCase_TestcaseIdOrderByExecutedAtAsc(testcaseId);
+
+                List<TestCaseAuditLogResponse> responses = new java.util.ArrayList<>();
+                String runningPreviousStatus = null;
+
+                if (logs == null || logs.isEmpty()) {
+                        String creatorName = testCase.getCreatedBy() != null ? testCase.getCreatedBy().getUsername() : "QA Tester";
+                        if (testCase.getCreatedBy() != null && testCase.getCreatedBy().getFullName() != null && !testCase.getCreatedBy().getFullName().isBlank()) {
+                                creatorName = testCase.getCreatedBy().getFullName();
+                        }
+
+                        responses.add(TestCaseAuditLogResponse.builder()
+                                        .logId(0)
+                                        .testcaseId(testCase.getTestcaseId())
+                                        .testcaseFormatId(testCase.getTestcaseFormatId())
+                                        .status(testCase.getTestcaseStatus())
+                                        .previousStatus(null)
+                                        .executedBy(testCase.getCreatedBy() != null ? testCase.getCreatedBy().getUserId() : null)
+                                        .executedByName(creatorName)
+                                        .executedAt(testCase.getCreatedAt() != null ? testCase.getCreatedAt() : java.time.Instant.now())
+                                        .bugId(null)
+                                        .bugFormatId(null)
+                                        .build());
+                        return responses;
+                }
+
+                java.util.Map<Integer, String> userNames = new java.util.HashMap<>();
+
+                for (int i = 0; i < logs.size(); i++) {
+                        TestingAuditLog logItem = logs.get(i);
+
+                        String execName = null;
+                        if (logItem.getExecutedBy() != null) {
+                                execName = userNames.computeIfAbsent(logItem.getExecutedBy(), id ->
+                                                userRepository.findById(id)
+                                                                .map(u -> (u.getFullName() != null && !u.getFullName().isBlank()) ? u.getFullName() : u.getUsername())
+                                                                .orElse("User #" + id)
+                                );
+                        }
+
+                        String currentStatusStr = logItem.getTestcaseStatus() != null ? logItem.getTestcaseStatus().name() : null;
+
+                        Integer bugId = logItem.getBug() != null ? logItem.getBug().getBugId() : null;
+                        String bugFormatId = logItem.getBug() != null ? logItem.getBug().getBugFormatId() : null;
+
+                        responses.add(TestCaseAuditLogResponse.builder()
+                                        .logId(logItem.getLogId())
+                                        .testcaseId(testCase.getTestcaseId())
+                                        .testcaseFormatId(testCase.getTestcaseFormatId())
+                                        .status(logItem.getTestcaseStatus())
+                                        .previousStatus(runningPreviousStatus)
+                                        .executedBy(logItem.getExecutedBy())
+                                        .executedByName(execName != null ? execName : (i == 0 ? "Tester" : "System"))
+                                        .executedAt(logItem.getExecutedAt())
+                                        .bugId(bugId)
+                                        .bugFormatId(bugFormatId)
+                                        .build());
+
+                        runningPreviousStatus = currentStatusStr;
+                }
+
+                return responses;
         }
 }

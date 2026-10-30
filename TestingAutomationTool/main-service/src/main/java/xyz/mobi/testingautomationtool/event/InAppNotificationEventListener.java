@@ -42,6 +42,20 @@ public class InAppNotificationEventListener {
     }
 
     @EventListener
+    public void handleBugAssignedEvent(BugAssignedEvent event) {
+        if (event == null || event.getBug() == null) {
+            return;
+        }
+        log.info("Handling BugAssignedEvent for Bug ID: {}", event.getBug().getBugId());
+        try {
+            inAppNotificationService.createBugAssignedNotification(event.getBug());
+        } catch (Exception ex) {
+            log.error("Failed to create bug assigned in-app notification for Bug ID {}: {}",
+                    event.getBug().getBugId(), ex.getMessage(), ex);
+        }
+    }
+
+    @EventListener
     public void handleProjectInactiveEvent(ProjectInactiveEvent event) {
         if (event == null || event.getProject() == null) {
             return;

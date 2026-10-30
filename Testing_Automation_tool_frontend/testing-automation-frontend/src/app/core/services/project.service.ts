@@ -173,4 +173,10 @@ export class ProjectService {
       responseType: 'blob'
     });
   }
+
+  viewSingleAttachment(attachmentId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/attachments/${attachmentId}/view`, {
+      responseType: 'blob'
+    });
+  }
 }

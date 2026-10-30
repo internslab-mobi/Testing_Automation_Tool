@@ -400,7 +400,7 @@ app-workspace-sidebar.collapsed {
 /* Quick Metrics Ribbon (Compact & Sleek) */
 .metrics-ribbon {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
   gap: 8px;
 }
 
@@ -452,6 +452,16 @@ app-workspace-sidebar.collapsed {
 .descope-metric .metric-icon {
   background: #f1f5f9;
   color: #94a3b8;
+}
+
+.inprogress-metric .metric-icon {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.block-metric .metric-icon {
+  background: #f3e8ff;
+  color: #7e22ce;
 }
 
 .bug-metric .metric-icon {
@@ -859,6 +869,21 @@ app-workspace-sidebar.collapsed {
   color: #b91c1c;
 }
 
+.badge-block {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+.badge-inprogress {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.badge-descope {
+  background: #e2e8f0;
+  color: #475569;
+}
+
 .badge-idle {
   background: #f1f5f9;
   color: #64748b;
@@ -1004,6 +1029,20 @@ app-workspace-sidebar.collapsed {
   border-color: #ef4444;
 }
 
+.btn-action-icon.btn-inprogress:hover,
+.btn-action-icon.btn-active-inprogress {
+  background: #f59e0b;
+  color: #ffffff;
+  border-color: #f59e0b;
+}
+
+.btn-action-icon.btn-block:hover,
+.btn-action-icon.btn-active-block {
+  background: #a855f7;
+  color: #ffffff;
+  border-color: #a855f7;
+}
+
 .btn-action-icon.btn-log-bug:hover {
   background: #e11d48;
   color: #ffffff;
@@ -1046,7 +1085,8 @@ app-workspace-sidebar.collapsed {
   border-color: #fde68a;
 }
 
-.exec-status-select.status-block {
+.exec-status-select.status-block,
+.exec-status-select.status-blocked {
   background-color: #f3e8ff;
   color: #7e22ce;
   border-color: #d8b4fe;

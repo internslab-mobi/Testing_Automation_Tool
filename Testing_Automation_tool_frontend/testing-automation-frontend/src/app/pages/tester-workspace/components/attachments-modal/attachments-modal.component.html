@@ -48,6 +48,9 @@
             </div>
           </div>
           <div class="attachment-actions">
+            <button class="btn-view-file" (click)="onViewFile(f)" title="View file content without download">
+              <i class="fa-solid fa-eye"></i> View
+            </button>
             <button class="btn-download-file" (click)="onDownloadSingle(f)" title="Download this file">
               <i class="fa-solid fa-download"></i>
             </button>
@@ -64,6 +67,103 @@
       <button class="btn btn-primary" [disabled]="attachments.length === 0" (click)="downloadAll.emit()">
         <i class="fa-solid fa-download"></i> Download All (.zip)
       </button>
+    </div>
+  </div>
+
+  <!-- In-Browser File Preview Lightbox Overlay -->
+  <div class="file-preview-overlay" *ngIf="isPreviewOpen" (click)="closePreview()">
+    <div class="file-preview-card" (click)="$event.stopPropagation()">
+      <div class="preview-header">
+        <div class="preview-title-info">
+          <i class="fa-solid" [ngClass]="getPreviewIconClass()"></i>
+          <div class="preview-names">
+            <span class="preview-filename" [title]="previewFile?.fileName">{{ previewFile?.fileName }}</span>
+            <span class="preview-filesize" *ngIf="previewFile?.fileSize">{{ (previewFile!.fileSize! / 1024) | number:'1.0-1' }} KB</span>
+          </div>
+        </div>
+
+        <div class="preview-header-actions">
+          <!-- Text Copy Button -->
+          <button *ngIf="previewFileType === 'text' && !isLoadingPreview && !previewError"
+                  class="btn-preview-icon" (click)="copyText()" [title]="copySuccess ? 'Copied to clipboard!' : 'Copy file content'">
+            <i class="fa-solid" [ngClass]="copySuccess ? 'fa-check text-emerald' : 'fa-copy'"></i>
+            <span>{{ copySuccess ? 'Copied' : 'Copy' }}</span>
+          </button>
+
+          <!-- Image Zoom Controls -->
+          <div class="zoom-controls-group" *ngIf="previewFileType === 'image' && !isLoadingPreview && !previewError">
+            <button class="btn-preview-icon" (click)="zoomOut()" title="Zoom out"><i class="fa-solid fa-minus"></i></button>
+            <span class="zoom-level-text">{{ (imageZoom * 100) | number:'1.0-0' }}%</span>
+            <button class="btn-preview-icon" (click)="zoomIn()" title="Zoom in"><i class="fa-solid fa-plus"></i></button>
+            <button class="btn-preview-icon" (click)="resetZoom()" title="Reset zoom"><i class="fa-solid fa-arrows-rotate"></i></button>
+          </div>
+
+          <!-- Download Button -->
+          <button class="btn-preview-icon btn-preview-download" (click)="downloadFromPreview()" title="Download file to computer">
+            <i class="fa-solid fa-download"></i>
+            <span>Download</span>
+          </button>
+
+          <!-- Close Button -->
+          <button class="btn-preview-close" (click)="closePreview()" title="Close preview">&times;</button>
+        </div>
+      </div>
+
+      <div class="preview-body">
+        <!-- Loading State -->
+        <div *ngIf="isLoadingPreview" class="preview-state-box">
+          <i class="fa-solid fa-spinner fa-spin preview-loading-spinner"></i>
+          <span>Loading file content for preview...</span>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="!isLoadingPreview && previewError" class="preview-state-box preview-error-box">
+          <i class="fa-solid fa-circle-exclamation text-rose"></i>
+          <span class="preview-error-text">{{ previewError }}</span>
+          <button class="btn btn-secondary btn-sm" (click)="downloadFromPreview()">
+            <i class="fa-solid fa-download"></i> Download File Instead
+          </button>
+        </div>
+
+        <!-- Content: Image -->
+        <div *ngIf="!isLoadingPreview && !previewError && previewFileType === 'image'" class="preview-image-container">
+          <img [src]="previewBlobUrl" [alt]="previewFile?.fileName" class="preview-img" [style.transform]="'scale(' + imageZoom + ')'" />
+        </div>
+
+        <!-- Content: PDF -->
+        <div *ngIf="!isLoadingPreview && !previewError && previewFileType === 'pdf'" class="preview-iframe-container">
+          <iframe [src]="previewBlobUrl" class="preview-iframe" title="PDF Preview"></iframe>
+        </div>
+
+        <!-- Content: Text / Logs / Code -->
+        <div *ngIf="!isLoadingPreview && !previewError && previewFileType === 'text'" class="preview-text-container">
+          <pre class="preview-code-block"><code>{{ previewTextContent }}</code></pre>
+        </div>
+
+        <!-- Content: Audio -->
+        <div *ngIf="!isLoadingPreview && !previewError && previewFileType === 'audio'" class="preview-media-container">
+          <audio controls [src]="previewBlobUrl" class="preview-audio-player"></audio>
+        </div>
+
+        <!-- Content: Video -->
+        <div *ngIf="!isLoadingPreview && !previewError && previewFileType === 'video'" class="preview-media-container">
+          <video controls [src]="previewBlobUrl" class="preview-video-player"></video>
+        </div>
+
+        <!-- Content: Unsupported / Binary Format -->
+        <div *ngIf="!isLoadingPreview && !previewError && previewFileType === 'unsupported'" class="preview-state-box preview-unsupported-box">
+          <div class="unsupported-icon-badge">
+            <i class="fa-solid fa-file-zipper"></i>
+          </div>
+          <h4>In-browser preview is not available for this format</h4>
+          <p class="unsupported-desc">
+            The file <strong>{{ previewFile?.fileName }}</strong> cannot be rendered directly in the browser. You can download the file to inspect it.
+          </p>
+          <button class="btn btn-primary" (click)="downloadFromPreview()">
+            <i class="fa-solid fa-download"></i> Download File ({{ previewFile?.fileName }})
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </div>

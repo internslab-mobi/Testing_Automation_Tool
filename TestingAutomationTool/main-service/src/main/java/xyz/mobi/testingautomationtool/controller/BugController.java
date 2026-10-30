@@ -214,4 +214,8 @@ public class BugController {
                 .body(resource);
     }
 
+    @GetMapping("/{bugId:\\d+}/history")
+    public ResponseEntity<ApiResponse<List<BugHistoryResponse>>> getBugHistory(@PathVariable("bugId") Integer bugId) {
+        return ResponseEntity.ok(ApiResponse.success("Bug audit history retrieved successfully", bugService.getBugHistory(bugId)));
+    }
 }

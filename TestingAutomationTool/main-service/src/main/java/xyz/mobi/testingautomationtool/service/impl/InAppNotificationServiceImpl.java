@@ -124,14 +124,17 @@ public class InAppNotificationServiceImpl implements InAppNotificationService {
         }
 
         Bug bug = comment.getBug();
-        if (bug.getAssignedTo() == null) {
+        if (bug.getAssignedTo() == null && bug.getReportedBy() == null) {
             return;
         }
 
         User recipient;
-        if (comment.getCreatedBy() != null && Objects.equals(bug.getAssignedTo().getUserId(), comment.getCreatedBy().getUserId())) {
+        if (comment.getCreatedBy() != null && bug.getAssignedTo() != null
+                && Objects.equals(bug.getAssignedTo().getUserId(), comment.getCreatedBy().getUserId())) {
+            // Comment written by the developer -> notify the QA reporter
             recipient = bug.getReportedBy();
         } else {
+            // Comment written by QA/tester or manager -> notify the assigned developer
             recipient = bug.getAssignedTo();
         }
 
@@ -139,10 +142,70 @@ public class InAppNotificationServiceImpl implements InAppNotificationService {
             return;
         }
 
+        // Never notify the user who posted the comment
+        if (comment.getCreatedBy() != null && Objects.equals(recipient.getUserId(), comment.getCreatedBy().getUserId())) {
+            return;
+        }
+
+        String commenterName = "User";
+        if (comment.getCreatedBy() != null) {
+            if (comment.getCreatedBy().getFullName() != null && !comment.getCreatedBy().getFullName().isBlank()) {
+                commenterName = comment.getCreatedBy().getFullName();
+            } else if (comment.getCreatedBy().getUsername() != null && !comment.getCreatedBy().getUsername().isBlank()) {
+                commenterName = comment.getCreatedBy().getUsername();
+            }
+        }
+
+        String rawComment = comment.getComment() != null ? comment.getComment().trim() : "";
+        String snippet = rawComment.length() > 50 ? rawComment.substring(0, 47) + "..." : rawComment;
+        String bugIdentifier = bug.getBugFormatId() != null ? bug.getBugFormatId() : ("Bug #" + bug.getBugId());
+
+        String message = snippet.isEmpty()
+                ? "New comment on " + bugIdentifier + " from " + commenterName
+                : "New comment on " + bugIdentifier + " (" + commenterName + "): \"" + snippet + "\"";
+
         InAppNotification notification = InAppNotification.builder()
                 .employee(recipient)
                 .bug(bug)
-                .message("New comment added to Bug " + bug.getBugFormatId())
+                .message(message)
+                .notificationStatus(InAppNotificationStatus.UNREAD)
+                .createdAt(Instant.now())
+                .build();
+
+        inAppNotificationRepository.save(notification);
+    }
+
+    @Transactional
+    @Override
+    public void createBugAssignedNotification(Bug bug) {
+        if (bug == null || bug.getAssignedTo() == null) {
+            return;
+        }
+
+        User recipient = bug.getAssignedTo();
+        String assignerName = "QA";
+        if (bug.getReportedBy() != null) {
+            if (bug.getReportedBy().getFullName() != null && !bug.getReportedBy().getFullName().isBlank()) {
+                assignerName = bug.getReportedBy().getFullName();
+            } else if (bug.getReportedBy().getUsername() != null && !bug.getReportedBy().getUsername().isBlank()) {
+                assignerName = bug.getReportedBy().getUsername();
+            }
+        }
+
+        String title = bug.getTitle() != null ? bug.getTitle().trim() : "";
+        if (title.length() > 40) {
+            title = title.substring(0, 37) + "...";
+        }
+        String bugIdentifier = bug.getBugFormatId() != null ? bug.getBugFormatId() : ("Bug #" + bug.getBugId());
+
+        String message = title.isEmpty()
+                ? "New defect " + bugIdentifier + " assigned to you by " + assignerName
+                : "New defect " + bugIdentifier + " (" + title + ") assigned to you by " + assignerName;
+
+        InAppNotification notification = InAppNotification.builder()
+                .employee(recipient)
+                .bug(bug)
+                .message(message)
                 .notificationStatus(InAppNotificationStatus.UNREAD)
                 .createdAt(Instant.now())
                 .build();

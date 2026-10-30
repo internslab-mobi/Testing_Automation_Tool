@@ -54,4 +54,6 @@ public interface TestCaseService {
     PatchTestCaseDeleteResponse softDeleteTestCase(Integer id);
  
     List<Integer> bulkDeleteTestCases(List<Integer> testCaseIds);
+
+    List<TestCaseAuditLogResponse> getTestCaseHistory(Integer testcaseId);
 }

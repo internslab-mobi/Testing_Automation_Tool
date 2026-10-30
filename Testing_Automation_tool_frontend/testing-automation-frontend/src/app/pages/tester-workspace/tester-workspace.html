@@ -87,6 +87,26 @@
             </div>
           </div>
 
+          <div class="metric-card inprogress-metric"
+            (click)="activeSubTab = 'testcases'; tcFilterStatus = 'IN_PROGRESS'; onTestCaseFilterChange()"
+            title="Filter by In Progress test cases">
+            <div class="metric-icon"><i class="fa-solid fa-spinner"></i></div>
+            <div class="metric-data">
+              <span class="metric-num">{{ inProgressCount }}</span>
+              <span class="metric-label">In Progress</span>
+            </div>
+          </div>
+
+          <div class="metric-card block-metric"
+            (click)="activeSubTab = 'testcases'; tcFilterStatus = 'BLOCK'; onTestCaseFilterChange()"
+            title="Filter by Blocked test cases">
+            <div class="metric-icon"><i class="fa-solid fa-hand"></i></div>
+            <div class="metric-data">
+              <span class="metric-num">{{ blockedCount }}</span>
+              <span class="metric-label">Blocked</span>
+            </div>
+          </div>
+
           <div class="metric-card descope-metric"
             (click)="activeSubTab = 'testcases'; tcFilterStatus = 'DESCOPE'; onTestCaseFilterChange()">
             <div class="metric-icon"><i class="fa-solid fa-ban"></i></div>
@@ -289,8 +309,8 @@
                   <td>
                     <div class="status-col" (click)="$event.stopPropagation()">
                       <select class="exec-status-select"
-                        [ngClass]="'status-' + (tc.executionStatus?.toLowerCase() || 'norun')"
-                        [ngModel]="tc.executionStatus || 'NO_RUN'" (ngModelChange)="onTestCaseStatusChange(tc, $event)"
+                        [ngClass]="'status-' + (getNormalizedExecutionStatus(tc).toLowerCase() || 'norun')"
+                        [ngModel]="getNormalizedExecutionStatus(tc)" (ngModelChange)="onTestCaseStatusChange(tc, $event)"
                         title="Change execution status">
                         <option value="NO_RUN" disabled>NO RUN</option>
                         <option value="PASS">PASS</option>
@@ -309,18 +329,28 @@
 
                   <td style="text-align: right;" (click)="$event.stopPropagation()">
                     <div class="row-actions">
-                      <button class="btn-action-icon btn-pass" [class.btn-active-pass]="tc.executionStatus === 'PASS'"
+                      <button class="btn-action-icon btn-pass" [class.btn-active-pass]="getNormalizedExecutionStatus(tc) === 'PASS'"
                         (click)="handleExecuteTestCase({ testcaseId: tc.testcaseId, status: 'PASS' })"
                         title="Mark as Passed">
                         <i class="fa-solid fa-check"></i>
                       </button>
-                      <button class="btn-action-icon btn-fail" [class.btn-active-fail]="tc.executionStatus === 'FAIL'"
+                      <button class="btn-action-icon btn-fail" [class.btn-active-fail]="getNormalizedExecutionStatus(tc) === 'FAIL'"
                         (click)="handleExecuteTestCase({ testcaseId: tc.testcaseId, status: 'FAIL' })"
                         title="Mark as Failed">
                         <i class="fa-solid fa-xmark"></i>
                       </button>
+                      <button class="btn-action-icon btn-inprogress" [class.btn-active-inprogress]="getNormalizedExecutionStatus(tc) === 'IN_PROGRESS'"
+                        (click)="handleExecuteTestCase({ testcaseId: tc.testcaseId, status: 'IN_PROGRESS' })"
+                        title="Mark as In Progress">
+                        <i class="fa-solid fa-spinner"></i>
+                      </button>
+                      <button class="btn-action-icon btn-block" [class.btn-active-block]="getNormalizedExecutionStatus(tc) === 'BLOCK'"
+                        (click)="handleExecuteTestCase({ testcaseId: tc.testcaseId, status: 'BLOCK' })"
+                        title="Mark as Blocked">
+                        <i class="fa-solid fa-hand"></i>
+                      </button>
                       <!-- CREATE BUG BUTTON (Appears ONLY when executionStatus is FAIL) -->
-                      <button *ngIf="tc.executionStatus === 'FAIL'" class="btn-create-bug"
+                      <button *ngIf="getNormalizedExecutionStatus(tc) === 'FAIL'" class="btn-create-bug"
                         (click)="openLogDefectModal(tc)" title="Create Bug for this failed test case">
                         <i class="fa-solid fa-bug"></i> Create Bug
                       </button>
@@ -898,6 +928,8 @@
                 <option value="ALL">All Statuses</option>
                 <option value="PASS">Passed</option>
                 <option value="FAIL">Failed</option>
+                <option value="IN_PROGRESS">In Progress</option>
+                <option value="BLOCK">Blocked</option>
                 <option value="DESCOPE">Descoped</option>
               </select>
             </div>
@@ -980,8 +1012,8 @@
                   </td>
                   <td>
                     <span class="badge-tag"
-                      [ngClass]="tc.executionStatus === 'PASS' ? 'badge-pass' : tc.executionStatus === 'FAIL' ? 'badge-fail' : 'badge-idle'">
-                      {{ tc.executionStatus || 'UNEXECUTED' }}
+                      [ngClass]="getNormalizedExecutionStatus(tc) === 'PASS' ? 'badge-pass' : getNormalizedExecutionStatus(tc) === 'FAIL' ? 'badge-fail' : getNormalizedExecutionStatus(tc) === 'BLOCK' ? 'badge-block' : getNormalizedExecutionStatus(tc) === 'IN_PROGRESS' ? 'badge-inprogress' : getNormalizedExecutionStatus(tc) === 'DESCOPE' ? 'badge-descope' : 'badge-idle'">
+                      {{ getNormalizedExecutionStatus(tc) || 'UNEXECUTED' }}
                     </span>
                   </td>
                   <td style="text-align: right;" (click)="$event.stopPropagation()">

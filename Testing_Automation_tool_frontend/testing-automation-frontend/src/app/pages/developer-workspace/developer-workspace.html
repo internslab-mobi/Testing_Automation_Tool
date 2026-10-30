@@ -11,6 +11,12 @@
     </div>
 
     <div class="header-right">
+      <!-- In-App Notifications Bell -->
+      <button class="btn-header-icon" (click)="openNotificationsModal()" title="System Notifications">
+        <i class="fa-regular fa-bell"></i>
+        <span class="notification-badge" *ngIf="unreadNotificationCount > 0">{{ unreadNotificationCount }}</span>
+      </button>
+
       <!-- User Profile Link (Click to view and edit profile details) -->
       <a routerLink="/profile" (click)="goToProfile($event)" class="user-chip" title="Click to view and edit profile details">
         <div class="user-avatar">{{ userInitials }}</div>
@@ -18,7 +24,6 @@
           <span class="user-name">{{ userName }}</span>
           <span class="user-role">{{ userRole }} (DEV)</span>
         </div>
-
       </a>
 
       <!-- Sign Out Button -->
@@ -149,6 +154,7 @@
               <tr
                 *ngFor="let b of paginatedBugs; trackBy: trackByBugId"
                 class="clickable-row"
+                [id]="'dev-bug-row-' + b.bugId"
                 (click)="viewDefectDetail(b)"
                 title="Click to view full bug & test case details"
               >
@@ -452,6 +458,57 @@
               <div class="spec-label">Tester Execution Notes</div>
               <p class="spec-desc-text">{{ activeBugForDetail.comments }}</p>
             </div>
+
+            <!-- Defect Status Change History & Audit Log -->
+            <div class="detail-section audit-history-section" style="margin-top: 14px;">
+              <div class="section-sub-header">
+                <label class="field-label">
+                  <i class="fa-solid fa-clock-rotate-left text-amber"></i>
+                  Defect Status History ({{ bugAuditHistory.length }})
+                </label>
+                <button class="btn btn-secondary btn-xs btn-refresh-audit" (click)="loadBugAuditHistory(activeBugForDetail.bugId)" title="Refresh defect status history">
+                  <i class="fa-solid fa-arrows-rotate" [class.fa-spin]="isLoadingBugHistory"></i> Refresh
+                </button>
+              </div>
+
+              <div *ngIf="isLoadingBugHistory" class="audit-loading-hint">
+                <i class="fa-solid fa-spinner fa-spin"></i> Loading defect history...
+              </div>
+
+              <div *ngIf="!isLoadingBugHistory && bugAuditHistory.length === 0" class="empty-audit-hint">
+                <i class="fa-regular fa-clock"></i> No defect status changes recorded yet.
+              </div>
+
+              <div class="audit-timeline" *ngIf="!isLoadingBugHistory && bugAuditHistory.length > 0">
+                <div *ngFor="let item of bugAuditHistory; let i = index; let last = last" class="timeline-item" [class.timeline-current]="last">
+                  <div class="timeline-indicator">
+                    <div class="timeline-dot" [ngClass]="'dot-' + (item.bugStatus.toLowerCase() || 'open')"></div>
+                    <div class="timeline-line" *ngIf="!last"></div>
+                  </div>
+                  <div class="timeline-content">
+                    <div class="timeline-header-row">
+                      <div class="status-transition">
+                        <span *ngIf="item.previousStatus" class="badge-status-subtle prev-status">{{ item.previousStatus }}</span>
+                        <i *ngIf="item.previousStatus" class="fa-solid fa-arrow-right text-muted transition-arrow"></i>
+                        <span class="badge-tag" [ngClass]="'badge-status-' + item.bugStatus.toLowerCase()">{{ item.bugStatus }}</span>
+                        <span class="badge-current-pill" *ngIf="last">Current</span>
+                      </div>
+                      <span class="timeline-timestamp" [title]="(item.createdAt || item.resolvedAt) | date:'medium'">
+                        <i class="fa-regular fa-clock"></i> {{ (item.createdAt || item.resolvedAt) | date:'short' }}
+                      </span>
+                    </div>
+                    <div class="timeline-details-row">
+                      <span class="timeline-user">
+                        <i class="fa-solid fa-user-circle"></i> Changed by <strong>{{ item.executedByName || (item.executedBy ? ('User #' + item.executedBy) : 'System') }}</strong>
+                      </span>
+                      <span *ngIf="item.assignedToName || item.assignedTo" class="timeline-assignee">
+                        • Assigned: <strong>{{ item.assignedToName || ('Dev #' + item.assignedTo) }}</strong>
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Right Column: Linked TestCase Details (Read-Only GET) -->
@@ -525,6 +582,57 @@
                 </div>
                 <pre class="tc-code-view">{{ selectedTestCase.testData }}</pre>
               </div>
+
+              <!-- Test Case Status History & Audit Log -->
+              <div class="detail-section audit-history-section" style="margin-top: 14px;">
+                <div class="section-sub-header">
+                  <label class="field-label">
+                    <i class="fa-solid fa-clock-rotate-left text-cyan"></i>
+                    Test Case Status History ({{ testCaseAuditLogs.length }})
+                  </label>
+                  <button class="btn btn-secondary btn-xs btn-refresh-audit" (click)="loadTestCaseAuditHistory(selectedTestCase.testcaseId)" title="Refresh test case history">
+                    <i class="fa-solid fa-arrows-rotate" [class.fa-spin]="isLoadingTcHistory"></i> Refresh
+                  </button>
+                </div>
+
+                <div *ngIf="isLoadingTcHistory" class="audit-loading-hint">
+                  <i class="fa-solid fa-spinner fa-spin"></i> Loading test case history...
+                </div>
+
+                <div *ngIf="!isLoadingTcHistory && testCaseAuditLogs.length === 0" class="empty-audit-hint">
+                  <i class="fa-regular fa-clock"></i> No execution status history recorded yet.
+                </div>
+
+                <div class="audit-timeline" *ngIf="!isLoadingTcHistory && testCaseAuditLogs.length > 0">
+                  <div *ngFor="let log of testCaseAuditLogs; let i = index; let last = last" class="timeline-item" [class.timeline-current]="last">
+                    <div class="timeline-indicator">
+                      <div class="timeline-dot" [ngClass]="'dot-' + (log.status.toLowerCase() || 'norun')"></div>
+                      <div class="timeline-line" *ngIf="!last"></div>
+                    </div>
+                    <div class="timeline-content">
+                      <div class="timeline-header-row">
+                        <div class="status-transition">
+                          <span *ngIf="log.previousStatus" class="badge-status-subtle prev-status">{{ log.previousStatus }}</span>
+                          <i *ngIf="log.previousStatus" class="fa-solid fa-arrow-right text-muted transition-arrow"></i>
+                          <span class="badge-tag" [ngClass]="'badge-status-' + log.status.toLowerCase()">{{ log.status }}</span>
+                          <span class="badge-current-pill" *ngIf="last">Current</span>
+                        </div>
+                        <span class="timeline-timestamp" [title]="log.executedAt | date:'medium'">
+                          <i class="fa-regular fa-clock"></i> {{ log.executedAt | date:'short' }}
+                        </span>
+                      </div>
+                      <div class="timeline-details-row">
+                        <span class="timeline-user">
+                          <i class="fa-solid fa-user-circle"></i> Executed by <strong>{{ log.executedByName || ('Tester #' + log.executedBy) }}</strong>
+                        </span>
+                        <span *ngIf="log.bugFormatId" class="timeline-bug-link">
+                          • Defect: <strong class="clickable-bug-tag"><i class="fa-solid fa-bug text-rose"></i> {{ log.bugFormatId }}</strong>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <!-- No TestCase Found State -->
@@ -588,9 +696,14 @@
                   <span *ngIf="att.uploaderName">• By {{ att.uploaderName }}</span>
                 </div>
               </div>
-              <button class="btn-action-icon" (click)="downloadAttachment(att)" title="Download Attachment">
-                <i class="fa-solid fa-download"></i> Download
-              </button>
+              <div class="att-actions-group">
+                <button class="btn-action-icon btn-action-view" (click)="viewAttachment(att)" title="View file content without download">
+                  <i class="fa-solid fa-eye"></i> View
+                </button>
+                <button class="btn-action-icon" (click)="downloadAttachment(att)" title="Download Attachment">
+                  <i class="fa-solid fa-download"></i> Download
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -793,15 +906,129 @@
                 <span *ngIf="att.uploaderName">• By {{ att.uploaderName }}</span>
               </div>
             </div>
-            <button class="btn-action-icon" (click)="downloadAttachment(att)" title="Download">
-              <i class="fa-solid fa-download"></i> Download
-            </button>
+            <div class="att-actions-group">
+              <button class="btn-action-icon btn-action-view" (click)="viewAttachment(att)" title="View file content without download">
+                <i class="fa-solid fa-eye"></i> View
+              </button>
+              <button class="btn-action-icon" (click)="downloadAttachment(att)" title="Download">
+                <i class="fa-solid fa-download"></i> Download
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
       <div class="modal-footer-row">
         <button class="btn btn-secondary btn-sm" (click)="closeAttachmentsModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- In-App Notifications Modal -->
+  <app-notifications-modal
+    [isOpen]="isNotificationsModalOpen"
+    [notifications]="notifications"
+    [unreadCount]="unreadNotificationCount"
+    (close)="closeNotificationsModal()"
+    (toggleRead)="handleToggleNotificationRead($event)"
+    (selectNotification)="onSelectNotification($event)"
+    (dismiss)="handleDismissNotification($event)"
+    (markAllRead)="handleMarkAllNotificationsRead()"
+  ></app-notifications-modal>
+
+  <!-- In-Browser File Preview Lightbox Overlay -->
+  <div class="file-preview-overlay" *ngIf="isPreviewOpen" (click)="closePreview()">
+    <div class="file-preview-card" (click)="$event.stopPropagation()">
+      <div class="preview-header">
+        <div class="preview-title-info">
+          <i class="fa-solid" [ngClass]="getPreviewIconClass()"></i>
+          <div class="preview-names">
+            <span class="preview-filename" [title]="previewFile?.fileName">{{ previewFile?.fileName }}</span>
+            <span class="preview-filesize" *ngIf="previewFile?.fileSize">{{ (previewFile!.fileSize! / 1024) | number:'1.0-1' }} KB</span>
+          </div>
+        </div>
+
+        <div class="preview-header-actions">
+          <!-- Text Copy Button -->
+          <button *ngIf="previewFileType === 'text' && !isLoadingPreview && !previewError"
+                  class="btn-preview-icon" (click)="copyPreviewText()" [title]="previewCopySuccess ? 'Copied to clipboard!' : 'Copy file content'">
+            <i class="fa-solid" [ngClass]="previewCopySuccess ? 'fa-check text-emerald' : 'fa-copy'"></i>
+            <span>{{ previewCopySuccess ? 'Copied' : 'Copy' }}</span>
+          </button>
+
+          <!-- Image Zoom Controls -->
+          <div class="zoom-controls-group" *ngIf="previewFileType === 'image' && !isLoadingPreview && !previewError">
+            <button class="btn-preview-icon" (click)="zoomOutPreview()" title="Zoom out"><i class="fa-solid fa-minus"></i></button>
+            <span class="zoom-level-text">{{ (previewImageZoom * 100) | number:'1.0-0' }}%</span>
+            <button class="btn-preview-icon" (click)="zoomInPreview()" title="Zoom in"><i class="fa-solid fa-plus"></i></button>
+            <button class="btn-preview-icon" (click)="resetPreviewZoom()" title="Reset zoom"><i class="fa-solid fa-arrows-rotate"></i></button>
+          </div>
+
+          <!-- Download Button -->
+          <button class="btn-preview-icon btn-preview-download" (click)="previewFile && downloadAttachment(previewFile)" title="Download file to computer">
+            <i class="fa-solid fa-download"></i>
+            <span>Download</span>
+          </button>
+
+          <!-- Close Button -->
+          <button class="btn-preview-close" (click)="closePreview()" title="Close preview">&times;</button>
+        </div>
+      </div>
+
+      <div class="preview-body">
+        <!-- Loading State -->
+        <div *ngIf="isLoadingPreview" class="preview-state-box">
+          <i class="fa-solid fa-spinner fa-spin preview-loading-spinner"></i>
+          <span>Loading file content for preview...</span>
+        </div>
+
+        <!-- Error State -->
+        <div *ngIf="!isLoadingPreview && previewError" class="preview-state-box preview-error-box">
+          <i class="fa-solid fa-circle-exclamation text-rose"></i>
+          <span class="preview-error-text">{{ previewError }}</span>
+          <button class="btn btn-secondary btn-sm" (click)="previewFile && downloadAttachment(previewFile)">
+            <i class="fa-solid fa-download"></i> Download File Instead
+          </button>
+        </div>
+
+        <!-- Content: Image -->
+        <div *ngIf="!isLoadingPreview && !previewError && previewFileType === 'image'" class="preview-image-container">
+          <img [src]="previewBlobUrl" [alt]="previewFile?.fileName" class="preview-img" [style.transform]="'scale(' + previewImageZoom + ')'" />
+        </div>
+
+        <!-- Content: PDF -->
+        <div *ngIf="!isLoadingPreview && !previewError && previewFileType === 'pdf'" class="preview-iframe-container">
+          <iframe [src]="previewBlobUrl" class="preview-iframe" title="PDF Preview"></iframe>
+        </div>
+
+        <!-- Content: Text / Logs / Code -->
+        <div *ngIf="!isLoadingPreview && !previewError && previewFileType === 'text'" class="preview-text-container">
+          <pre class="preview-code-block"><code>{{ previewTextContent }}</code></pre>
+        </div>
+
+        <!-- Content: Audio -->
+        <div *ngIf="!isLoadingPreview && !previewError && previewFileType === 'audio'" class="preview-media-container">
+          <audio controls [src]="previewBlobUrl" class="preview-audio-player"></audio>
+        </div>
+
+        <!-- Content: Video -->
+        <div *ngIf="!isLoadingPreview && !previewError && previewFileType === 'video'" class="preview-media-container">
+          <video controls [src]="previewBlobUrl" class="preview-video-player"></video>
+        </div>
+
+        <!-- Content: Unsupported / Binary Format -->
+        <div *ngIf="!isLoadingPreview && !previewError && previewFileType === 'unsupported'" class="preview-state-box preview-unsupported-box">
+          <div class="unsupported-icon-badge">
+            <i class="fa-solid fa-file-zipper"></i>
+          </div>
+          <h4>In-browser preview is not available for this format</h4>
+          <p class="unsupported-desc">
+            The file <strong>{{ previewFile?.fileName }}</strong> cannot be rendered directly in the browser. You can download the file to inspect it.
+          </p>
+          <button class="btn btn-primary" (click)="previewFile && downloadAttachment(previewFile)">
+            <i class="fa-solid fa-download"></i> Download File ({{ previewFile?.fileName }})
+          </button>
+        </div>
       </div>
     </div>
   </div>

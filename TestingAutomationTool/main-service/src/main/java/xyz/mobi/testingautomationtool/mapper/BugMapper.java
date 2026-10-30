@@ -72,8 +72,21 @@ public interface BugMapper {
                 .resolvedAt(bug.getResolvedAt())
                 .build();
 
+        String updatedByName = null;
+        if (bug.getUpdatedBy() != null) {
+            updatedByName = (bug.getUpdatedBy().getFullName() != null && !bug.getUpdatedBy().getFullName().isEmpty())
+                    ? bug.getUpdatedBy().getFullName()
+                    : bug.getUpdatedBy().getUsername();
+        } else if (bug.getReportedBy() != null) {
+            updatedByName = (bug.getReportedBy().getFullName() != null && !bug.getReportedBy().getFullName().isEmpty())
+                    ? bug.getReportedBy().getFullName()
+                    : bug.getReportedBy().getUsername();
+        } else if (bug.getExecutedBy() != null) {
+            updatedByName = bug.getExecutedBy().getUsername();
+        }
+
         BugResponse.AuditResponse audit = BugResponse.AuditResponse.builder()
-                .updatedBy(bug.getUpdatedBy() != null ? bug.getUpdatedBy().getUsername() : null)
+                .updatedBy(updatedByName)
                 .createdAt(bug.getCreatedAt())
                 .updatedAt(bug.getUpdatedAt())
                 .build();

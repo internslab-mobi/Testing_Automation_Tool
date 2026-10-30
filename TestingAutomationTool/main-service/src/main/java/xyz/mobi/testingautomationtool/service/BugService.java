@@ -50,4 +50,5 @@ public interface BugService {
             String updatedBy
     );
 
+    List<BugHistoryResponse> getBugHistory(Integer bugId);
 }

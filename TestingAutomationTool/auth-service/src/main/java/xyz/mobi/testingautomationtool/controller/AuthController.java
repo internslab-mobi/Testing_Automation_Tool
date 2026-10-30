@@ -41,7 +41,7 @@ public class AuthController {
     private String cookieSameSite;
 
 
-    @Operation(summary = "Register a new user", description = "Allows user registration with specific roles: MANAGER, TESTER, DEVELOPER, ADMIN")
+    @Operation(summary = "Register a new user", description = "Allows user registration with specific roles: TESTER, DEVELOPER")
     @PostMapping("/register")
     public ResponseEntity<ApiResponse<AuthResponse>> register(@Valid @RequestBody RegisterRequest request) {
         AuthResponse response = authService.register(request);
@@ -56,7 +56,6 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<ApiResponse<AuthResponse>> login(
             @Valid @RequestBody LoginRequest request,
-            HttpServletRequest httpRequest,
             HttpServletResponse httpResponse
     ) {
         AuthResponse response = authService.login(request);

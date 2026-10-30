@@ -3,7 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { map, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { Bug, BugRequest, BugCreateRequest, BugPutRequest, BugPatchRequest, AttachmentItem, BugComment } from '../../model/workspace/workspace.model';
+import { Bug, BugRequest, BugCreateRequest, BugPutRequest, BugPatchRequest, AttachmentItem, BugComment, BugAuditHistory } from '../../model/workspace/workspace.model';
 
 export interface DeveloperUser {
   userId: number;
@@ -32,8 +32,8 @@ export class BugService {
 
   getAllBugs(assignedTo?: number): Observable<Bug[]> {
     const url = assignedTo != null
-      ? `${this.baseUrl}/bug?assignedTo=${assignedTo}&page=0&size=100`
-      : `${this.baseUrl}/bug?page=0&size=100`;
+      ? `${this.baseUrl}/bug?assignedTo=${assignedTo}&page=0&size=2000`
+      : `${this.baseUrl}/bug?page=0&size=2000`;
     return this.http.get<any>(url).pipe(
       map(res => {
         const pageData = res?.data || res;
@@ -50,6 +50,7 @@ export class BugService {
     const wf = item.workflow || b.workflow || {};
     const assignedUser = b.assignedTo || {};
     const reporterUser = b.reportedBy || b.executedBy || {};
+    const audit = item.audit || b.audit || {};
 
     const tcId = tc.testcaseId || b.testcaseId;
     const tcFormat = tc.testcaseFormatId || b.testcaseFormatId || (tcId ? `TC_${tcId}` : undefined);
@@ -62,6 +63,8 @@ export class BugService {
     const reportedId = wf.reportedById || (typeof reporterUser === 'object' ? reporterUser.userId : undefined) || b.reportedById;
     const assignedName = typeof assignedUser === 'string' ? assignedUser : (assignedUser.fullName || assignedUser.username || wf.assignedTo || '');
     const reportedName = typeof reporterUser === 'string' ? reporterUser : (reporterUser.fullName || reporterUser.username || wf.reportedBy || 'Tester');
+    const updatedName = audit.updatedBy || (typeof b.updatedBy === 'string' ? b.updatedBy : (b.updatedBy?.fullName || b.updatedBy?.username)) || wf.updatedBy || reportedName || 'Tester';
+    const updatedAtVal = audit.updatedAt || b.updatedAt || b.createdAt;
 
     return {
       bugId: b.bugId,
@@ -85,6 +88,13 @@ export class BugService {
       reportedBy: reportedName,
       reportedById: reportedId ? Number(reportedId) : undefined,
       createdAt: b.createdAt || item.audit?.createdAt,
+      updatedBy: updatedName,
+      updatedAt: updatedAtVal,
+      audit: {
+        updatedBy: updatedName,
+        createdAt: b.createdAt || item.audit?.createdAt,
+        updatedAt: updatedAtVal
+      },
       workflow: {
         workflowId: wf.workflowId,
         assignedTo: assignedName || 'Unassigned',
@@ -126,6 +136,12 @@ export class BugService {
 
   downloadSingleAttachment(attachmentId: number): Observable<Blob> {
     return this.http.get(`${this.baseUrl}/attachments/${attachmentId}/download`, {
+      responseType: 'blob'
+    });
+  }
+
+  viewSingleAttachment(attachmentId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/attachments/${attachmentId}/view`, {
       responseType: 'blob'
     });
   }
@@ -243,6 +259,13 @@ export class BugService {
           map(res => res?.data || res)
         );
       })
+    );
+  }
+
+  getBugHistory(bugId: number): Observable<BugAuditHistory[]> {
+    return this.http.get<any>(`${this.baseUrl}/bug/${bugId}/history`).pipe(
+      map(res => res?.data || res || []),
+      catchError(() => of([]))
     );
   }
 }

@@ -270,53 +270,262 @@
 
           <div class="header-actions qa-dashboard-header-actions">
             <!-- Compact Dashboard-Level Filters -->
+            <!-- Compact Dashboard-Level Filters -->
             <div class="qa-filter-controls">
-              <!-- Project Dropdown -->
-              <div class="qa-filter-wrapper" title="Filter by Project">
-                <i class="fa-solid fa-folder-tree qa-filter-icon"></i>
-                <select
-                  class="qa-filter-select"
-                  [ngModel]="selectedProjectId"
-                  (ngModelChange)="onProjectSelectAndReload($event)"
-                  aria-label="Filter by Project"
+              <!-- Module Multi-Select Dropdown -->
+              <div class="qa-filter-multi-wrapper" title="Filter by Modules">
+                <button
+                  type="button"
+                  class="qa-filter-multi-btn"
+                  [class.has-selection]="selectedModules.length > 0"
+                  (click)="toggleFilterDropdown('module', $event)"
+                  aria-label="Filter by Modules"
                 >
-                  <option [ngValue]="null">All Projects</option>
-                  <option *ngFor="let proj of allProjects" [ngValue]="proj.projectId">
-                    {{ proj.projectName }}
-                  </option>
-                </select>
+                  <i class="fa-solid fa-cubes qa-filter-icon"></i>
+                  <span class="qa-filter-label-text">{{ moduleFilterButtonLabel }}</span>
+                  <span class="qa-filter-badge" *ngIf="selectedModules.length > 0">{{ selectedModules.length }}</span>
+                  <i class="fa-solid fa-chevron-down qa-filter-caret" [class.open]="isModuleDropdownOpen"></i>
+                </button>
+
+                <div class="qa-filter-dropdown-menu" *ngIf="isModuleDropdownOpen" (click)="$event.stopPropagation()">
+                  <div class="qa-dropdown-header">
+                    <span class="qa-dropdown-title">Select Modules</span>
+                    <div class="qa-dropdown-actions">
+                      <button type="button" class="qa-dropdown-action-btn" (click)="selectAllModules()">All</button>
+                      <span class="qa-dropdown-divider">|</span>
+                      <button type="button" class="qa-dropdown-action-btn" (click)="clearModules()">Clear</button>
+                    </div>
+                  </div>
+                  <div class="qa-dropdown-search-box" *ngIf="availableModules.length > 5">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input
+                      type="text"
+                      class="qa-dropdown-search-input"
+                      placeholder="Search modules..."
+                      [(ngModel)]="moduleFilterSearch"
+                    />
+                  </div>
+                  <div class="qa-dropdown-list">
+                    <label class="qa-dropdown-item" *ngFor="let mod of filteredDropdownModules">
+                      <input
+                        type="checkbox"
+                        class="qa-dropdown-checkbox"
+                        [checked]="isModuleSelected(mod)"
+                        (change)="toggleModule(mod)"
+                      />
+                      <span class="qa-dropdown-item-label">{{ mod }}</span>
+                      <span class="qa-dropdown-item-count" *ngIf="getProjectCountForModule(mod) > 0">
+                        ({{ getProjectCountForModule(mod) }} {{ getProjectCountForModule(mod) === 1 ? 'proj' : 'projs' }})
+                      </span>
+                    </label>
+                    <div class="qa-dropdown-empty" *ngIf="filteredDropdownModules.length === 0">
+                      No modules found
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <!-- Feature Dropdown -->
-              <div class="qa-filter-wrapper" title="Filter by Feature">
-                <i class="fa-regular fa-folder qa-filter-icon"></i>
-                <select
-                  class="qa-filter-select"
-                  [ngModel]="selectedFeatureId"
-                  (ngModelChange)="onFeatureSelectAndReload($event)"
-                  aria-label="Filter by Feature"
+              <!-- Submodule Multi-Select Dropdown -->
+              <div class="qa-filter-multi-wrapper" title="Filter by Submodules">
+                <button
+                  type="button"
+                  class="qa-filter-multi-btn"
+                  [class.has-selection]="selectedSubModules.length > 0"
+                  (click)="toggleFilterDropdown('submodule', $event)"
+                  aria-label="Filter by Submodules"
                 >
-                  <option [ngValue]="null">All Features</option>
-                  <option *ngFor="let feat of availableFeatures" [ngValue]="feat.featureId">
-                    {{ feat.featureName }}
-                  </option>
-                </select>
+                  <i class="fa-solid fa-layer-group qa-filter-icon"></i>
+                  <span class="qa-filter-label-text">{{ subModuleFilterButtonLabel }}</span>
+                  <span class="qa-filter-badge" *ngIf="selectedSubModules.length > 0">{{ selectedSubModules.length }}</span>
+                  <i class="fa-solid fa-chevron-down qa-filter-caret" [class.open]="isSubModuleDropdownOpen"></i>
+                </button>
+
+                <div class="qa-filter-dropdown-menu" *ngIf="isSubModuleDropdownOpen" (click)="$event.stopPropagation()">
+                  <div class="qa-dropdown-header">
+                    <span class="qa-dropdown-title">Select Submodules</span>
+                    <div class="qa-dropdown-actions">
+                      <button type="button" class="qa-dropdown-action-btn" (click)="selectAllSubModules()">All</button>
+                      <span class="qa-dropdown-divider">|</span>
+                      <button type="button" class="qa-dropdown-action-btn" (click)="clearSubModules()">Clear</button>
+                    </div>
+                  </div>
+                  <div class="qa-dropdown-search-box" *ngIf="availableSubModules.length > 5">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input
+                      type="text"
+                      class="qa-dropdown-search-input"
+                      placeholder="Search submodules..."
+                      [(ngModel)]="subModuleFilterSearch"
+                    />
+                  </div>
+                  <div class="qa-dropdown-list">
+                    <label class="qa-dropdown-item" *ngFor="let sub of filteredDropdownSubModules">
+                      <input
+                        type="checkbox"
+                        class="qa-dropdown-checkbox"
+                        [checked]="isSubModuleSelected(sub)"
+                        (change)="toggleSubModule(sub)"
+                      />
+                      <span class="qa-dropdown-item-label">{{ sub }}</span>
+                      <span class="qa-dropdown-item-count" *ngIf="getProjectCountForSubModule(sub) > 0">
+                        ({{ getProjectCountForSubModule(sub) }} {{ getProjectCountForSubModule(sub) === 1 ? 'proj' : 'projs' }})
+                      </span>
+                    </label>
+                    <div class="qa-dropdown-empty" *ngIf="filteredDropdownSubModules.length === 0">
+                      No submodules available
+                    </div>
+                  </div>
+                </div>
               </div>
 
-              <!-- Sprint Dropdown -->
-              <div class="qa-filter-wrapper" title="Filter by Sprint">
-                <i class="fa-solid fa-bolt qa-filter-icon"></i>
-                <select
-                  class="qa-filter-select"
-                  [ngModel]="selectedSprint"
-                  (ngModelChange)="onSprintSelectAndReload($event)"
-                  aria-label="Filter by Sprint"
+              <!-- Project Multi-Select Dropdown -->
+              <div class="qa-filter-multi-wrapper" title="Filter by Projects">
+                <button
+                  type="button"
+                  class="qa-filter-multi-btn"
+                  [class.has-selection]="selectedProjectIds.length > 0"
+                  (click)="toggleFilterDropdown('project', $event)"
+                  aria-label="Filter by Projects"
                 >
-                  <option [ngValue]="null">All Sprints</option>
-                  <option *ngFor="let sprint of availableSprints" [ngValue]="sprint">
-                    Sprint {{ sprint }}
-                  </option>
-                </select>
+                  <i class="fa-solid fa-folder-tree qa-filter-icon"></i>
+                  <span class="qa-filter-label-text">{{ projectFilterButtonLabel }}</span>
+                  <span class="qa-filter-badge" *ngIf="selectedProjectIds.length > 0">{{ selectedProjectIds.length }}</span>
+                  <i class="fa-solid fa-chevron-down qa-filter-caret" [class.open]="isProjectDropdownOpen"></i>
+                </button>
+
+                <div class="qa-filter-dropdown-menu" *ngIf="isProjectDropdownOpen" (click)="$event.stopPropagation()">
+                  <div class="qa-dropdown-header">
+                    <span class="qa-dropdown-title">Select Projects</span>
+                    <div class="qa-dropdown-actions">
+                      <button type="button" class="qa-dropdown-action-btn" (click)="selectAllProjects()">All</button>
+                      <span class="qa-dropdown-divider">|</span>
+                      <button type="button" class="qa-dropdown-action-btn" (click)="clearProjects()">Clear</button>
+                    </div>
+                  </div>
+                  <div class="qa-dropdown-search-box" *ngIf="availableProjects.length > 5">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input
+                      type="text"
+                      class="qa-dropdown-search-input"
+                      placeholder="Search projects..."
+                      [(ngModel)]="projectFilterSearch"
+                    />
+                  </div>
+                  <div class="qa-dropdown-list">
+                    <label class="qa-dropdown-item" *ngFor="let proj of filteredDropdownProjects">
+                      <input
+                        type="checkbox"
+                        class="qa-dropdown-checkbox"
+                        [checked]="isProjectSelected(proj.projectId)"
+                        (change)="toggleProject(proj.projectId)"
+                      />
+                      <span class="qa-dropdown-item-label">{{ proj.projectName }}</span>
+                      <span class="qa-dropdown-item-count" *ngIf="getFeatureCountForProject(proj.projectId) > 0">
+                        ({{ getFeatureCountForProject(proj.projectId) }} {{ getFeatureCountForProject(proj.projectId) === 1 ? 'feat' : 'feats' }})
+                      </span>
+                    </label>
+                    <div class="qa-dropdown-empty" *ngIf="filteredDropdownProjects.length === 0">
+                      No projects available
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Feature Multi-Select Dropdown -->
+              <div class="qa-filter-multi-wrapper" title="Filter by Features">
+                <button
+                  type="button"
+                  class="qa-filter-multi-btn"
+                  [class.has-selection]="selectedFeatureIds.length > 0"
+                  (click)="toggleFilterDropdown('feature', $event)"
+                  aria-label="Filter by Features"
+                >
+                  <i class="fa-regular fa-folder qa-filter-icon"></i>
+                  <span class="qa-filter-label-text">{{ featureFilterButtonLabel }}</span>
+                  <span class="qa-filter-badge" *ngIf="selectedFeatureIds.length > 0">{{ selectedFeatureIds.length }}</span>
+                  <i class="fa-solid fa-chevron-down qa-filter-caret" [class.open]="isFeatureDropdownOpen"></i>
+                </button>
+
+                <div class="qa-filter-dropdown-menu" *ngIf="isFeatureDropdownOpen" (click)="$event.stopPropagation()">
+                  <div class="qa-dropdown-header">
+                    <span class="qa-dropdown-title">Select Features</span>
+                    <div class="qa-dropdown-actions">
+                      <button type="button" class="qa-dropdown-action-btn" (click)="selectAllFeatures()">All</button>
+                      <span class="qa-dropdown-divider">|</span>
+                      <button type="button" class="qa-dropdown-action-btn" (click)="clearFeatures()">Clear</button>
+                    </div>
+                  </div>
+                  <div class="qa-dropdown-search-box" *ngIf="availableFeatures.length > 5">
+                    <i class="fa-solid fa-magnifying-glass"></i>
+                    <input
+                      type="text"
+                      class="qa-dropdown-search-input"
+                      placeholder="Search features..."
+                      [(ngModel)]="featureFilterSearch"
+                    />
+                  </div>
+                  <div class="qa-dropdown-list">
+                    <label class="qa-dropdown-item" *ngFor="let feat of filteredDropdownFeatures">
+                      <input
+                        type="checkbox"
+                        class="qa-dropdown-checkbox"
+                        [checked]="isFeatureSelected(feat.featureId)"
+                        (change)="toggleFeature(feat.featureId)"
+                      />
+                      <span class="qa-dropdown-item-label">{{ feat.featureName }}</span>
+                      <span class="qa-dropdown-item-count" *ngIf="feat.sprint != null">
+                        (S{{ feat.sprint }})
+                      </span>
+                    </label>
+                    <div class="qa-dropdown-empty" *ngIf="filteredDropdownFeatures.length === 0">
+                      No features available
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Sprint Multi-Select Dropdown -->
+              <div class="qa-filter-multi-wrapper" title="Filter by Sprints">
+                <button
+                  type="button"
+                  class="qa-filter-multi-btn"
+                  [class.has-selection]="selectedSprints.length > 0"
+                  (click)="toggleFilterDropdown('sprint', $event)"
+                  aria-label="Filter by Sprints"
+                >
+                  <i class="fa-solid fa-bolt qa-filter-icon"></i>
+                  <span class="qa-filter-label-text">{{ sprintFilterButtonLabel }}</span>
+                  <span class="qa-filter-badge" *ngIf="selectedSprints.length > 0">{{ selectedSprints.length }}</span>
+                  <i class="fa-solid fa-chevron-down qa-filter-caret" [class.open]="isSprintDropdownOpen"></i>
+                </button>
+
+                <div class="qa-filter-dropdown-menu" *ngIf="isSprintDropdownOpen" (click)="$event.stopPropagation()">
+                  <div class="qa-dropdown-header">
+                    <span class="qa-dropdown-title">Select Sprints</span>
+                    <div class="qa-dropdown-actions">
+                      <button type="button" class="qa-dropdown-action-btn" (click)="selectAllSprints()">All</button>
+                      <span class="qa-dropdown-divider">|</span>
+                      <button type="button" class="qa-dropdown-action-btn" (click)="clearSprints()">Clear</button>
+                    </div>
+                  </div>
+                  <div class="qa-dropdown-list">
+                    <label class="qa-dropdown-item" *ngFor="let sprint of availableSprints">
+                      <input
+                        type="checkbox"
+                        class="qa-dropdown-checkbox"
+                        [checked]="isSprintSelected(sprint)"
+                        (change)="toggleSprint(sprint)"
+                      />
+                      <span class="qa-dropdown-item-label">Sprint {{ sprint }}</span>
+                      <span class="qa-dropdown-item-count" *ngIf="getFeatureCountForSprint(sprint) > 0">
+                        ({{ getFeatureCountForSprint(sprint) }} {{ getFeatureCountForSprint(sprint) === 1 ? 'feat' : 'feats' }})
+                      </span>
+                    </label>
+                    <div class="qa-dropdown-empty" *ngIf="availableSprints.length === 0">
+                      No sprints available
+                    </div>
+                  </div>
+                </div>
               </div>
 
               <!-- Compact Reset Action (Visible when any filter is active) -->
@@ -1908,21 +2117,33 @@
           <table class="recent-bugs-table">
             <thead>
               <tr>
-                <th style="width: 85px;">Bug ID</th>
+                <th style="width: 100px;">Bug ID</th>
                 <th>Defect Summary</th>
                 <th style="width: 85px;">Severity</th>
                 <th style="width: 95px;">Status</th>
                 <th style="width: 105px;">Assignee</th>
+                <th style="width: 135px;">Last Updated By</th>
+                <th style="width: 140px; text-align: center;">Actions</th>
               </tr>
             </thead>
             <tbody>
               <tr *ngFor="let b of paginatedRecentBugs">
                 <td>
-                  <code class="text-bug-id">{{ b.bugFormatId || ('BUG-' + b.bugId) }}</code>
+                  <a
+                    class="recent-bug-link"
+                    (click)="goToBugInTester(b)"
+                    role="button"
+                    tabindex="0"
+                    (keydown.enter)="goToBugInTester(b)"
+                    title="Open defect in Tester Workspace"
+                  >
+                    <code class="text-bug-id">{{ b.bugFormatId || ('BUG-' + b.bugId) }}</code>
+                    <i class="fa-solid fa-arrow-up-right-from-square bug-link-icon"></i>
+                  </a>
                 </td>
                 <td>
                   <div class="recent-bug-summary-cell">
-                    <div class="recent-bug-title line-clamp-1" [title]="b.title">
+                    <div class="recent-bug-title line-clamp-1" [title]="b.title" (click)="goToBugInTester(b)">
                       {{ b.title }}
                     </div>
                     <div class="recent-bug-meta" *ngIf="b.featureName || b.projectName">
@@ -1962,6 +2183,38 @@
                     <i class="fa-regular fa-user"></i>
                     <span class="assignee-text">{{ b.assignedTo ? b.assignedTo : 'Unassigned' }}</span>
                   </span>
+                </td>
+                <td>
+                  <div class="recent-bug-updater" [title]="b.updatedBy ? ('Updated by ' + b.updatedBy + (b.updatedAt ? ' on ' + (b.updatedAt | date:'mediumDate') : '')) : 'Updated by Tester'">
+                    <div class="updater-icon-circle">
+                      <i class="fa-solid fa-user-pen"></i>
+                    </div>
+                    <div class="updater-details">
+                      <span class="updater-name">{{ b.updatedBy || 'Tester' }}</span>
+                      <span class="updater-time" *ngIf="b.updatedAt">{{ b.updatedAt | date:'shortDate' }}</span>
+                    </div>
+                  </div>
+                </td>
+                <td style="text-align: center;">
+                  <div class="bug-action-btns">
+                    <button
+                      type="button"
+                      class="btn-bug-action btn-bug-tester"
+                      (click)="goToBugInTester(b)"
+                      title="Open in Tester Workspace (View detailed card, chat, and test execution)"
+                    >
+                      <i class="fa-solid fa-vial-circle-check"></i>
+                      <span>In Tester</span>
+                    </button>
+                    <button
+                      type="button"
+                      class="btn-bug-action btn-bug-mgr"
+                      (click)="goToBugInManager(b)"
+                      title="View in Defect Management"
+                    >
+                      <i class="fa-solid fa-table-list"></i>
+                    </button>
+                  </div>
                 </td>
               </tr>
             </tbody>
@@ -2548,11 +2801,25 @@
                   <th>Status</th>
                   <th>Assignee</th>
                   <th>Reported By</th>
+                  <th>Last Updated By</th>
+                  <th style="width: 130px; text-align: center;">Actions</th>
                 </tr>
               </thead>
               <tbody>
-                <tr *ngFor="let b of filteredBugsList">
-                  <td><code class="text-bug-id">{{ b.bugFormatId }}</code></td>
+                <tr *ngFor="let b of filteredBugsList" [id]="'defect-row-' + b.bugId">
+                  <td>
+                    <a
+                      class="recent-bug-link"
+                      (click)="goToBugInTester(b)"
+                      role="button"
+                      tabindex="0"
+                      (keydown.enter)="goToBugInTester(b)"
+                      title="Open defect in Tester Workspace"
+                    >
+                      <code class="text-bug-id">{{ b.bugFormatId }}</code>
+                      <i class="fa-solid fa-arrow-up-right-from-square bug-link-icon"></i>
+                    </a>
+                  </td>
                   <td class="font-semibold">{{ b.title }}</td>
                   <td>
                     <span class="severity-tag" [class.sev-critical]="b.severity === 'CRITICAL'"
@@ -2579,9 +2846,21 @@
                     </select>
                   </td>
                   <td>{{ b.reportedBy || 'Tester' }}</td>
+                  <td>{{ b.updatedBy || b.reportedBy || 'Tester' }}</td>
+                  <td style="text-align: center;">
+                    <button
+                      type="button"
+                      class="btn-bug-action btn-bug-tester"
+                      (click)="goToBugInTester(b)"
+                      title="Open in Tester Workspace (View detailed card, chat, and test execution)"
+                    >
+                      <i class="fa-solid fa-vial-circle-check"></i>
+                      <span>In Tester</span>
+                    </button>
+                  </td>
                 </tr>
                 <tr *ngIf="filteredBugsList.length === 0">
-                  <td colspan="6" class="text-center py-4 text-muted">No defects matched your filter criteria.</td>
+                  <td colspan="8" class="text-center py-4 text-muted">No defects matched your filter criteria.</td>
                 </tr>
               </tbody>
             </table>

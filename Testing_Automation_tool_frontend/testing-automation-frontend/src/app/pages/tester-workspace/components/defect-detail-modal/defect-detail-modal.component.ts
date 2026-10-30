@@ -1,8 +1,8 @@
-import { Component, Input, Output, EventEmitter, ChangeDetectorRef, inject } from '@angular/core';
+import { Component, Input, Output, EventEmitter, ChangeDetectorRef, inject, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Bug, BugPutRequest, BugPatchRequest } from '../../../../model/workspace/workspace.model';
-import { DeveloperUser } from '../../../../core/services/bug.service';
+import { Bug, BugPutRequest, BugPatchRequest, BugAuditHistory } from '../../../../model/workspace/workspace.model';
+import { DeveloperUser, BugService } from '../../../../core/services/bug.service';
 
 @Component({
   selector: 'app-defect-detail-modal',
@@ -11,8 +11,9 @@ import { DeveloperUser } from '../../../../core/services/bug.service';
   templateUrl: './defect-detail-modal.component.html',
   styleUrl: './defect-detail-modal.component.css'
 })
-export class DefectDetailModalComponent {
+export class DefectDetailModalComponent implements OnChanges {
   readonly cdr = inject(ChangeDetectorRef);
+  private readonly bugService = inject(BugService);
 
   @Input() isOpen = false;
   @Input() bug: Bug | null = null;
@@ -41,6 +42,41 @@ export class DefectDetailModalComponent {
   selectedDeveloperId: number | null = null;
   selectedNewStatus = '';
   editForm: BugPutRequest = {};
+
+  // Audit Log State
+  auditHistory: BugAuditHistory[] = [];
+  isLoadingHistory = false;
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['isOpen'] && this.isOpen) {
+      this.isEditMode = false;
+      this.isAssigneeUnlocked = false;
+      this.isStatusUnlocked = false;
+      this.loadBugHistory();
+    } else if (changes['bug'] && this.isOpen) {
+      this.loadBugHistory();
+    }
+  }
+
+  loadBugHistory(): void {
+    if (!this.bug?.bugId) {
+      this.auditHistory = [];
+      return;
+    }
+    this.isLoadingHistory = true;
+    this.bugService.getBugHistory(this.bug.bugId).subscribe({
+      next: (history) => {
+        this.auditHistory = history || [];
+        this.isLoadingHistory = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.auditHistory = [];
+        this.isLoadingHistory = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
 
   get developerOptions(): DeveloperUser[] {
     return this.developers || [];

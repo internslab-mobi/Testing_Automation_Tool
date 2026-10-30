@@ -110,6 +110,57 @@
         <div class="field-value box-val comments-val">{{ bug?.comments }}</div>
       </div>
 
+      <!-- Defect Status Change History & Audit Log -->
+      <div class="detail-section audit-history-section">
+        <div class="section-sub-header">
+          <label class="field-label">
+            <i class="fa-solid fa-clock-rotate-left text-amber"></i>
+            Status Change History & Audit Log ({{ auditHistory.length }})
+          </label>
+          <button class="btn btn-secondary btn-xs btn-refresh-audit" (click)="loadBugHistory()" title="Refresh status change history">
+            <i class="fa-solid fa-arrows-rotate" [class.fa-spin]="isLoadingHistory"></i> Refresh
+          </button>
+        </div>
+
+        <div *ngIf="isLoadingHistory" class="audit-loading-hint">
+          <i class="fa-solid fa-spinner fa-spin"></i> Loading defect history...
+        </div>
+
+        <div *ngIf="!isLoadingHistory && auditHistory.length === 0" class="empty-audit-hint">
+          <i class="fa-regular fa-clock"></i> No defect status change history recorded yet.
+        </div>
+
+        <div class="audit-timeline" *ngIf="!isLoadingHistory && auditHistory.length > 0">
+          <div *ngFor="let item of auditHistory; let i = index; let last = last" class="timeline-item" [class.timeline-current]="last">
+            <div class="timeline-indicator">
+              <div class="timeline-dot" [ngClass]="'dot-' + (item.bugStatus.toLowerCase() || 'open')"></div>
+              <div class="timeline-line" *ngIf="!last"></div>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-header-row">
+                <div class="status-transition">
+                  <span *ngIf="item.previousStatus" class="badge-status-subtle prev-status">{{ item.previousStatus }}</span>
+                  <i *ngIf="item.previousStatus" class="fa-solid fa-arrow-right text-muted transition-arrow"></i>
+                  <span class="badge-tag" [ngClass]="'badge-status-' + item.bugStatus.toLowerCase()">{{ item.bugStatus }}</span>
+                  <span class="badge-current-pill" *ngIf="last">Current</span>
+                </div>
+                <span class="timeline-timestamp" [title]="(item.createdAt || item.resolvedAt) | date:'medium'">
+                  <i class="fa-regular fa-clock"></i> {{ (item.createdAt || item.resolvedAt) | date:'short' }}
+                </span>
+              </div>
+              <div class="timeline-details-row">
+                <span class="timeline-user">
+                  <i class="fa-solid fa-user-circle"></i> Changed by <strong>{{ item.executedByName || (item.executedBy ? ('User #' + item.executedBy) : 'System') }}</strong>
+                </span>
+                <span *ngIf="item.assignedToName || item.assignedTo" class="timeline-assignee">
+                  • Assigned to: <strong>{{ item.assignedToName || ('Dev #' + item.assignedTo) }}</strong>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="meta-info-grid">
         <div class="meta-item">
           <span class="meta-label">Reported By:</span>

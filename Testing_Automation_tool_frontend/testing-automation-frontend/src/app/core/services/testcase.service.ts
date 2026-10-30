@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
-import { TestCase, TestCaseExecutionRequest, TestCaseCreatePayload, TestCasePutRequest, TestCasePatchRequest } from '../../model/workspace/workspace.model';
+import { TestCase, TestCaseExecutionRequest, TestCaseCreatePayload, TestCasePutRequest, TestCasePatchRequest, TestCaseAuditLog } from '../../model/workspace/workspace.model';
 
 export interface TestCasePageResponse {
   content: TestCase[];
@@ -98,7 +98,13 @@ export class TestCaseService {
       testType: tc.testType || item.testType || 'UI',
       testPriority: tc.testPriority || item.testPriority || 'MEDIUM',
       testcaseStatus: tc.testcaseStatus || item.testcaseStatus || 'PASSED',
-      executionStatus: ex.executionStatus || item.executionStatus || tc.testcaseStatus || 'UNEXECUTED',
+      executionStatus: (() => {
+        let s = (ex.executionStatus || item.executionStatus || tc.testcaseStatus || 'UNEXECUTED').toUpperCase();
+        if (s === 'BLOCKED') return 'BLOCK';
+        if (s === 'PASSED') return 'PASS';
+        if (s === 'FAILED') return 'FAIL';
+        return s;
+      })(),
       comments: tc.comments || ex.comments || item.comments || '',
       testData: ex.testData || item.testData || '',
       automationFeasibility: auto.automationFeasibility || item.automationFeasibility || '',
@@ -174,7 +180,11 @@ export class TestCaseService {
   }
 
   executeTestCase(testcaseId: number, executionStatus: 'PASS' | 'FAIL' | 'DESCOPE' | 'IN_PROGRESS' | 'BLOCK' | string): Observable<any> {
-    return this.http.patch<any>(`${this.baseUrl}/testcase/${testcaseId}`, { executionStatus });
+    let s = (executionStatus || '').toUpperCase();
+    if (s === 'BLOCKED') s = 'BLOCK';
+    if (s === 'PASSED') s = 'PASS';
+    if (s === 'FAILED') s = 'FAIL';
+    return this.http.patch<any>(`${this.baseUrl}/testcase/${testcaseId}`, { executionStatus: s });
   }
 
   patchTestCase(testcaseId: number, req: TestCasePatchRequest): Observable<any> {
@@ -206,5 +216,11 @@ export class TestCaseService {
     return this.http.get(`${this.baseUrl}/feature/${featureId}/export`, {
       responseType: 'blob'
     });
+  }
+
+  getTestCaseHistory(testcaseId: number): Observable<TestCaseAuditLog[]> {
+    return this.http.get<any>(`${this.baseUrl}/testcase/${testcaseId}/history`).pipe(
+      map(res => res?.data || res || [])
+    );
   }
 }

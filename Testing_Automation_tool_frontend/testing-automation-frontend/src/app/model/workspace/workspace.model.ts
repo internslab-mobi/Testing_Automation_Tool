@@ -245,6 +245,13 @@ export interface Bug {
   reportedBy?: string;
   reportedById?: number;
   createdAt?: string;
+  updatedBy?: string;
+  updatedAt?: string;
+  audit?: {
+    updatedBy?: string;
+    createdAt?: string;
+    updatedAt?: string;
+  };
   dynamicFields?: Record<string, any>;
 }
 
@@ -346,4 +353,32 @@ export interface BugPatchRequest {
   comments?: string;
   dynamicFields?: Record<string, any>;
 }
+
+export interface TestCaseAuditLog {
+  logId?: number;
+  testcaseId: number;
+  testcaseFormatId?: string;
+  status: string;
+  previousStatus?: string | null;
+  executedBy?: number;
+  executedByName?: string;
+  executedAt: string;
+  bugId?: number;
+  bugFormatId?: string;
+}
+
+export interface BugAuditHistory {
+  bugLogId?: number;
+  bugId: number;
+  bugFormatId?: string;
+  bugStatus: string;
+  previousStatus?: string | null;
+  executedBy?: number;
+  executedByName?: string;
+  assignedTo?: number;
+  assignedToName?: string;
+  resolvedAt?: string | null;
+  createdAt: string;
+}
+
 

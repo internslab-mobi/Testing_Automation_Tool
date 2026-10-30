@@ -359,4 +359,30 @@ public class AttachmentServiceImpl implements AttachmentService {
 
         return "Attachment '" + attachment.getFileName() + "' deleted successfully.";
     }
+
+    @Override
+    @Transactional(readOnly = true)
+    public AttachmentDownloadResponse getAttachmentById(Integer attachmentId) {
+        if (attachmentId == null || attachmentId <= 0) {
+            throw new IllegalArgumentException("Attachment ID must be a positive integer");
+        }
+
+        Attachment attachment = attachmentRepository.findById(attachmentId)
+                .filter(a -> !a.isDeleted() && a.isActive())
+                .orElseThrow(() -> new ResourceNotFoundException("Attachment not found with ID: " + attachmentId));
+
+        if (attachment.getFileBlob() == null || attachment.getFileBlob().length == 0) {
+            throw new ResourceNotFoundException("Attachment content is empty for ID: " + attachmentId);
+        }
+
+        String contentType = attachment.getFileType() != null && !attachment.getFileType().isBlank()
+                ? attachment.getFileType()
+                : MediaType.APPLICATION_OCTET_STREAM_VALUE;
+
+        return AttachmentDownloadResponse.builder()
+                .file(attachment.getFileBlob())
+                .fileName(attachment.getFileName())
+                .contentType(contentType)
+                .build();
+    }
 }

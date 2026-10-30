@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, ChangeDetectorRef, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { Subject, Subscription, forkJoin, of } from 'rxjs';
 import { debounceTime, catchError } from 'rxjs/operators';
 
@@ -84,6 +84,9 @@ export class TesterWorkspace implements OnInit, OnDestroy {
   private readonly bugService = inject(BugService);
   private readonly notificationService = inject(NotificationService);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+
+  private routeSub?: Subscription;
 
   // User Profile
   isAuthenticated = false;
@@ -258,6 +261,8 @@ export class TesterWorkspace implements OnInit, OnDestroy {
   totalTestCasesCount = 0;
   passedCount = 0;
   failedCount = 0;
+  inProgressCount = 0;
+  blockedCount = 0;
   descopeCount = 0;
   totalDefectsCount = 0;
   openDefectsCount = 0;
@@ -420,6 +425,7 @@ export class TesterWorkspace implements OnInit, OnDestroy {
       this.loadDevelopers();
       this.loadProjects();
       this.loadNotifications();
+      this.checkInitialRouteBug();
     });
     this.tcSearchSub = this.tcSearchSubject.pipe(
       debounceTime(300)
@@ -437,6 +443,7 @@ export class TesterWorkspace implements OnInit, OnDestroy {
     }
     this.testCaseSub?.unsubscribe();
     this.tcSearchSub?.unsubscribe();
+    this.routeSub?.unsubscribe();
   }
 
   // ==========================================
@@ -1607,6 +1614,20 @@ export class TesterWorkspace implements OnInit, OnDestroy {
       }
     });
 
+    this.testCaseService.getTestCases(featureId, 0, 1, { status: 'IN_PROGRESS' }).subscribe({
+      next: (res) => {
+        this.inProgressCount = res.totalElements;
+        this.cdr.markForCheck();
+      }
+    });
+
+    this.testCaseService.getTestCases(featureId, 0, 1, { status: 'BLOCKED' }).subscribe({
+      next: (res) => {
+        this.blockedCount = res.totalElements;
+        this.cdr.markForCheck();
+      }
+    });
+
     this.testCaseService.getTestCases(featureId, 0, 1, { status: 'DESCOPE' }).subscribe({
       next: (res) => {
         this.descopeCount = res.totalElements;
@@ -1869,41 +1890,46 @@ export class TesterWorkspace implements OnInit, OnDestroy {
   }
 
   handleExecuteTestCase(event: { testcaseId: number; status: 'PASS' | 'FAIL' | 'DESCOPE' | 'IN_PROGRESS' | 'BLOCK' | string }): void {
+    let s = (event.status || '').toUpperCase();
+    if (s === 'BLOCKED') s = 'BLOCK';
+    if (s === 'PASSED') s = 'PASS';
+    if (s === 'FAILED') s = 'FAIL';
+
     const tc = this.testcases.find(t => t.testcaseId === event.testcaseId);
     if (tc) {
-      tc.executionStatus = event.status;
-      if (event.status === 'PASS') {
+      tc.executionStatus = s;
+      if (s === 'PASS') {
         tc.testcaseStatus = 'PASSED';
-      } else if (event.status === 'FAIL') {
+      } else if (s === 'FAIL') {
         tc.testcaseStatus = 'FAILED';
-      } else if (event.status === 'DESCOPE') {
+      } else if (s === 'DESCOPE') {
         tc.testcaseStatus = 'DESCOPE';
-      } else if (event.status === 'IN_PROGRESS') {
+      } else if (s === 'IN_PROGRESS') {
         tc.testcaseStatus = 'IN_PROGRESS';
-      } else if (event.status === 'BLOCK') {
+      } else if (s === 'BLOCK') {
         tc.testcaseStatus = 'BLOCKED';
       }
       this.updateMetrics();
       this.cdr.markForCheck();
     }
     if (this.activeTestCaseDetail && this.activeTestCaseDetail.testcaseId === event.testcaseId) {
-      this.activeTestCaseDetail.executionStatus = event.status;
-      if (event.status === 'PASS') {
+      this.activeTestCaseDetail.executionStatus = s;
+      if (s === 'PASS') {
         this.activeTestCaseDetail.testcaseStatus = 'PASSED';
-      } else if (event.status === 'FAIL') {
+      } else if (s === 'FAIL') {
         this.activeTestCaseDetail.testcaseStatus = 'FAILED';
-      } else if (event.status === 'DESCOPE') {
+      } else if (s === 'DESCOPE') {
         this.activeTestCaseDetail.testcaseStatus = 'DESCOPE';
-      } else if (event.status === 'IN_PROGRESS') {
+      } else if (s === 'IN_PROGRESS') {
         this.activeTestCaseDetail.testcaseStatus = 'IN_PROGRESS';
-      } else if (event.status === 'BLOCK') {
+      } else if (s === 'BLOCK') {
         this.activeTestCaseDetail.testcaseStatus = 'BLOCKED';
       }
     }
 
-    this.testCaseService.executeTestCase(event.testcaseId, event.status as any).subscribe({
+    this.testCaseService.executeTestCase(event.testcaseId, s as any).subscribe({
       next: () => {
-        this.showToast(`Test case marked as ${event.status}`, 'success');
+        this.showToast(`Test case marked as ${s}`, 'success');
         if (this.activeFeature) {
           this.testcaseCache.delete(this.activeFeature.featureId);
           this.loadTestCases(this.activeFeature.featureId, false);
@@ -1921,10 +1947,23 @@ export class TesterWorkspace implements OnInit, OnDestroy {
     });
   }
 
+  getNormalizedExecutionStatus(tc: TestCase | null | undefined): string {
+    if (!tc) return 'NO_RUN';
+    const s = (tc.executionStatus || tc.testcaseStatus || 'NO_RUN').toUpperCase();
+    if (s === 'BLOCKED') return 'BLOCK';
+    if (s === 'PASSED') return 'PASS';
+    if (s === 'FAILED') return 'FAIL';
+    return s;
+  }
+
   onTestCaseStatusChange(tc: TestCase, newStatus: string): void {
-    if (!tc || !newStatus || newStatus === 'NO_RUN') return;
-    if (tc.executionStatus === newStatus) return;
-    this.handleExecuteTestCase({ testcaseId: tc.testcaseId, status: newStatus as any });
+    if (!tc || !newStatus || newStatus === 'NO_RUN' || newStatus === 'UNEXECUTED') return;
+    let s = newStatus.toUpperCase();
+    if (s === 'BLOCKED') s = 'BLOCK';
+    if (s === 'PASSED') s = 'PASS';
+    if (s === 'FAILED') s = 'FAIL';
+    if (this.getNormalizedExecutionStatus(tc) === s) return;
+    this.handleExecuteTestCase({ testcaseId: tc.testcaseId, status: s as any });
   }
 
   // Export Test Cases & Bug Data via Summary Export Service (Download Testcase and Bug Data)
@@ -2156,6 +2195,7 @@ export class TesterWorkspace implements OnInit, OnDestroy {
         tc.testcaseStatus || tc.executionStatus || 'NO_RUN',
         tc.execution?.precondition || (tc as any).preCondition || '',
         tc.execution?.executionSteps || (tc as any).executionSteps || ''
+
       ].map(escapeCsv).join(','));
     });
 
@@ -2851,37 +2891,78 @@ export class TesterWorkspace implements OnInit, OnDestroy {
     }
   }
 
+  checkInitialRouteBug(): void {
+    this.routeSub = this.route.queryParams.subscribe((params) => {
+      const bugId = params['bugId'] ? Number(params['bugId']) : null;
+      const bugFormatId = params['bugFormatId'] || null;
+      if (bugId || bugFormatId) {
+        this.openBugFromParams(bugId, bugFormatId);
+      }
+    });
+  }
+
+  private openBugFromParams(bugId: number | null, bugFormatId: string | null): void {
+    if (bugId) {
+      this.bugService.getBugById(bugId).subscribe({
+        next: (bug) => {
+          if (bug) {
+            this.navigateToBug(bug);
+          }
+        },
+        error: () => {
+          this.bugService.getAllBugs().subscribe({
+            next: (bugs) => {
+              const found = bugs.find(
+                (b) => Number(b.bugId) === bugId || (bugFormatId && b.bugFormatId === bugFormatId)
+              );
+              if (found) {
+                this.navigateToBug(found);
+              }
+            }
+          });
+        }
+      });
+    } else if (bugFormatId) {
+      this.bugService.getAllBugs().subscribe({
+        next: (bugs) => {
+          const found = bugs.find((b) => b.bugFormatId === bugFormatId);
+          if (found) {
+            this.navigateToBug(found);
+          }
+        }
+      });
+    }
+  }
+
   navigateToBug(bug: Bug): void {
     if (!bug) return;
 
-    // Switch context to feature & defects tab if featureId is known
-    if (bug.featureId) {
-      if (this.allFeaturesList && this.allFeaturesList.length > 0) {
-        const foundFeat = this.allFeaturesList.find(f => f.featureId === bug.featureId);
-        if (foundFeat) {
-          const foundProj = this.projects.find(p => p.projectId === foundFeat.projectId);
-          if (foundProj) {
-            this.activeProject = foundProj;
-          }
-          if (!this.activeFeature || this.activeFeature.featureId !== foundFeat.featureId) {
-            this.selectFeature(foundFeat);
-          }
-        }
-      } else if (this.features && this.features.length > 0) {
-        const foundFeat = this.features.find(f => f.featureId === bug.featureId);
-        if (foundFeat) {
-          if (!this.activeFeature || this.activeFeature.featureId !== foundFeat.featureId) {
-            this.selectFeature(foundFeat);
-          }
-        }
-      }
+    const openModal = () => {
       this.isOverviewMode = false;
       this.activeSubTab = 'bugs';
-    }
+      this.viewDefectDetail(bug);
+      this.cdr.markForCheck();
+    };
 
-    // Open the defect detail card modal
-    this.viewDefectDetail(bug);
-    this.cdr.markForCheck();
+    if (bug.featureId) {
+      this.featureService.getFeatureById(bug.featureId).subscribe({
+        next: (feat: Feature) => {
+          if (feat) {
+            const foundProj = this.projects.find((p) => p.projectId === feat.projectId);
+            if (foundProj) {
+              this.activeProject = foundProj;
+            }
+            this.selectFeature(feat);
+          }
+          openModal();
+        },
+        error: () => {
+          openModal();
+        }
+      });
+    } else {
+      openModal();
+    }
   }
 
   handleToggleNotificationRead(n: InAppNotification): void {
@@ -3123,7 +3204,14 @@ export class TesterWorkspace implements OnInit, OnDestroy {
       const matchSearch = !s || tc.title.toLowerCase().includes(s) || (tc.testcaseFormatId && tc.testcaseFormatId.toLowerCase().includes(s)) || (tc.featureName && tc.featureName.toLowerCase().includes(s)) || (tc.projectName && tc.projectName.toLowerCase().includes(s));
       const matchType = this.allTcTypeFilter === 'ALL' || tc.testType === this.allTcTypeFilter;
       const matchPrio = this.allTcPrioFilter === 'ALL' || tc.testPriority === this.allTcPrioFilter;
-      const matchStatus = this.allTcStatusFilter === 'ALL' || tc.executionStatus === this.allTcStatusFilter || tc.testcaseStatus === this.allTcStatusFilter;
+      let matchStatus = this.allTcStatusFilter === 'ALL' || tc.executionStatus === this.allTcStatusFilter || tc.testcaseStatus === this.allTcStatusFilter;
+      if (!matchStatus && this.allTcStatusFilter === 'BLOCK') {
+        matchStatus = tc.executionStatus === 'BLOCKED' || tc.testcaseStatus === 'BLOCKED' || tc.executionStatus === 'BLOCK';
+      } else if (!matchStatus && this.allTcStatusFilter === 'PASS') {
+        matchStatus = tc.executionStatus === 'PASSED' || tc.testcaseStatus === 'PASSED' || tc.executionStatus === 'PASS';
+      } else if (!matchStatus && this.allTcStatusFilter === 'FAIL') {
+        matchStatus = tc.executionStatus === 'FAILED' || tc.testcaseStatus === 'FAILED' || tc.executionStatus === 'FAIL';
+      }
       return matchSearch && matchType && matchPrio && matchStatus;
     });
   }

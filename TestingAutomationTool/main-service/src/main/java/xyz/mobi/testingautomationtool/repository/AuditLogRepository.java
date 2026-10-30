@@ -5,6 +5,10 @@ import org.springframework.stereotype.Repository;
 import xyz.mobi.testingautomationtool.entity.TestingAuditLog;
 
 
+import java.util.List;
+
 @Repository
 public interface AuditLogRepository extends JpaRepository<TestingAuditLog, Integer> {
+    List<TestingAuditLog> findByTestCase_TestcaseIdOrderByExecutedAtAsc(Integer testcaseId);
+    List<TestingAuditLog> findByTestCase_TestcaseIdOrderByExecutedAtDesc(Integer testcaseId);
 }

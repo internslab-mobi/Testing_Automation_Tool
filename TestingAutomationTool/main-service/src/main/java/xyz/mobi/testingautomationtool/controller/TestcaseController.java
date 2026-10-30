@@ -162,4 +162,10 @@ public class TestcaseController {
         String response = testCaseService.hardDeleteTestCase(id);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
+
+    @GetMapping("/{id:\\d+}/history")
+    public ResponseEntity<ApiResponse<List<TestCaseAuditLogResponse>>> getTestCaseHistory(
+            @PathVariable("id") Integer id) {
+        return ResponseEntity.ok(ApiResponse.success("Test case audit history retrieved successfully", testCaseService.getTestCaseHistory(id)));
+    }
 }

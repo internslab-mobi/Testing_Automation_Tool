@@ -30,8 +30,8 @@
           {{ testCase?.testPriority }} Priority
         </span>
         <select class="exec-status-select-modal"
-          [ngClass]="'status-' + (testCase?.executionStatus?.toLowerCase() || 'unexecuted')"
-          [ngModel]="testCase?.executionStatus || 'UNEXECUTED'"
+          [ngClass]="'status-' + (normalizedStatus.toLowerCase() || 'unexecuted')"
+          [ngModel]="normalizedStatus"
           (ngModelChange)="onExecute($event)"
           title="Change execution status">
           <option value="UNEXECUTED" disabled>UNEXECUTED</option>
@@ -164,6 +164,57 @@
           </div>
         </div>
       </div>
+
+      <!-- Test Case Status History & Audit Log -->
+      <div class="detail-section audit-history-section">
+        <div class="section-sub-header">
+          <label class="field-label">
+            <i class="fa-solid fa-clock-rotate-left text-amber"></i>
+            Status Change History & Audit Log ({{ auditLogs.length }})
+          </label>
+          <button class="btn btn-secondary btn-xs btn-refresh-audit" (click)="loadAuditHistory()" title="Refresh status change history">
+            <i class="fa-solid fa-arrows-rotate" [class.fa-spin]="isLoadingAudit"></i> Refresh
+          </button>
+        </div>
+
+        <div *ngIf="isLoadingAudit" class="audit-loading-hint">
+          <i class="fa-solid fa-spinner fa-spin"></i> Loading status change audit history...
+        </div>
+
+        <div *ngIf="!isLoadingAudit && auditLogs.length === 0" class="empty-audit-hint">
+          <i class="fa-regular fa-clock"></i> No status change history recorded yet.
+        </div>
+
+        <div class="audit-timeline" *ngIf="!isLoadingAudit && auditLogs.length > 0">
+          <div *ngFor="let log of auditLogs; let i = index; let last = last" class="timeline-item" [class.timeline-current]="last">
+            <div class="timeline-indicator">
+              <div class="timeline-dot" [ngClass]="'dot-' + (log.status.toLowerCase() || 'norun')"></div>
+              <div class="timeline-line" *ngIf="!last"></div>
+            </div>
+            <div class="timeline-content">
+              <div class="timeline-header-row">
+                <div class="status-transition">
+                  <span *ngIf="log.previousStatus" class="badge-status-subtle prev-status">{{ log.previousStatus }}</span>
+                  <i *ngIf="log.previousStatus" class="fa-solid fa-arrow-right text-muted transition-arrow"></i>
+                  <span class="badge-tag" [ngClass]="'badge-status-' + log.status.toLowerCase()">{{ log.status }}</span>
+                  <span class="badge-current-pill" *ngIf="last">Current</span>
+                </div>
+                <span class="timeline-timestamp" [title]="log.executedAt | date:'medium'">
+                  <i class="fa-regular fa-clock"></i> {{ log.executedAt | date:'short' }}
+                </span>
+              </div>
+              <div class="timeline-details-row">
+                <span class="timeline-user">
+                  <i class="fa-solid fa-user-circle"></i> Changed by <strong>{{ log.executedByName || 'Tester #' + log.executedBy }}</strong>
+                </span>
+                <span *ngIf="log.bugFormatId" class="timeline-bug-link">
+                  • Linked Defect: <strong class="clickable-bug-tag"><i class="fa-solid fa-bug text-rose"></i> {{ log.bugFormatId }}</strong>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- EDIT MODE: FULL TESTCASE PUT REQUEST FORM -->
@@ -178,7 +229,7 @@
         <input type="text" class="form-control" [(ngModel)]="editForm.title" placeholder="Test case summary">
       </div>
 
-      <div class="form-grid-3">
+      <div class="form-grid-2">
         <div class="form-group">
           <label>Test Type</label>
           <select class="form-control" [(ngModel)]="editForm.testType">
@@ -197,12 +248,25 @@
             <option value="LOW">LOW</option>
           </select>
         </div>
+      </div>
+
+      <div class="form-grid-2">
         <div class="form-group">
           <label>Automation Feasibility</label>
           <select class="form-control" [(ngModel)]="editForm.automationFeasibility">
             <option value="YES">YES</option>
             <option value="NO">NO</option>
             <option value="PARTIALLY_FEASIBLE">PARTIALLY_FEASIBLE</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Execution Status</label>
+          <select class="form-control" [(ngModel)]="editForm.executionStatus">
+            <option value="PASS">PASS</option>
+            <option value="FAIL">FAIL</option>
+            <option value="IN_PROGRESS">IN_PROGRESS</option>
+            <option value="BLOCK">BLOCK</option>
+            <option value="DESCOPE">DESCOPE</option>
           </select>
         </div>
       </div>
@@ -290,16 +354,22 @@
     <div class="modal-footer" *ngIf="!isEditMode">
       <div class="execution-actions">
         <span class="action-label">Quick Run:</span>
-        <button class="btn btn-pass-sm" [class.btn-active-pass]="testCase?.executionStatus === 'PASS'" (click)="onExecute('PASS')">
+        <button class="btn btn-pass-sm" [class.btn-active-pass]="isStatus('PASS')" (click)="onExecute('PASS')" title="Mark as Passed">
           <i class="fa-solid fa-check"></i> Pass
         </button>
-        <button class="btn btn-fail-sm" [class.btn-active-fail]="testCase?.executionStatus === 'FAIL'" (click)="onExecute('FAIL')">
+        <button class="btn btn-fail-sm" [class.btn-active-fail]="isStatus('FAIL')" (click)="onExecute('FAIL')" title="Mark as Failed">
           <i class="fa-solid fa-xmark"></i> Fail
         </button>
-        <button class="btn btn-descope-sm" [class.btn-active-descope]="testCase?.executionStatus === 'DESCOPE'" (click)="onExecute('DESCOPE')">
+        <button class="btn btn-inprogress-sm" [class.btn-active-inprogress]="isStatus('IN_PROGRESS')" (click)="onExecute('IN_PROGRESS')" title="Mark as In Progress">
+          <i class="fa-solid fa-spinner"></i> In Progress
+        </button>
+        <button class="btn btn-block-sm" [class.btn-active-block]="isStatus('BLOCK')" (click)="onExecute('BLOCK')" title="Mark as Blocked">
+          <i class="fa-solid fa-hand"></i> Blocked
+        </button>
+        <button class="btn btn-descope-sm" [class.btn-active-descope]="isStatus('DESCOPE')" (click)="onExecute('DESCOPE')" title="Mark as Descoped">
           <i class="fa-solid fa-ban"></i> Descope
         </button>
-        <button *ngIf="testCase?.executionStatus === 'FAIL'" class="btn btn-rose-sm btn-create-bug" (click)="onLogDefect()" title="Create Bug for this failed test case">
+        <button *ngIf="isStatus('FAIL')" class="btn btn-rose-sm btn-create-bug" (click)="onLogDefect()" title="Create Bug for this failed test case">
           <i class="fa-solid fa-bug"></i> Create Bug
         </button>
       </div>

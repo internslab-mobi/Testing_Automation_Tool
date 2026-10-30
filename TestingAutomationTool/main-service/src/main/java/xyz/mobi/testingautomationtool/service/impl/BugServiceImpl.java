@@ -17,6 +17,7 @@ import xyz.mobi.testingautomationtool.dto.NotificationDTO.NotificationRequest;
 import xyz.mobi.testingautomationtool.entity.*;
 import xyz.mobi.testingautomationtool.enums.*;
 import xyz.mobi.testingautomationtool.event.BugFixedEvent;
+import xyz.mobi.testingautomationtool.event.BugAssignedEvent;
 import xyz.mobi.testingautomationtool.exception.ResourceNotFoundException;
 import xyz.mobi.testingautomationtool.mapper.BugMapper;
 import xyz.mobi.testingautomationtool.repository.*;
@@ -195,6 +196,7 @@ public class BugServiceImpl implements BugService {
                             .bugId(savedBug.getBugId())
                             .build()
             );
+            eventPublisher.publishEvent(new BugAssignedEvent(savedBug));
         }
 
         return bugMapper.toResponse(savedBug);
@@ -414,6 +416,8 @@ public class BugServiceImpl implements BugService {
                         bug.getBugId()
                 );
             }
+
+            eventPublisher.publishEvent(new BugAssignedEvent(bug));
         }
 
         return bugMapper.toResponse(bug);
@@ -651,6 +655,8 @@ public class BugServiceImpl implements BugService {
                         bug.getBugId()
                 );
             }
+
+            eventPublisher.publishEvent(new BugAssignedEvent(bug));
         }
 
         return "Bug with ID " + bugId
@@ -918,5 +924,89 @@ public class BugServiceImpl implements BugService {
         return users.stream()
                 .map(user->new DeveloperOptionResponse(user.getUserId(),user.getFullName(),user.getUsername()))
                 .toList();
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<BugHistoryResponse> getBugHistory(Integer bugId) {
+        Bug bug = bugRepository.findById(bugId)
+                .orElseThrow(() -> new ResourceNotFoundException("Bug not found with ID: " + bugId));
+
+        List<BugHistory> historyList = bugHistoryRepository.findByBug_BugIdOrderByCreatedAtAsc(bugId);
+
+        List<BugHistoryResponse> responses = new java.util.ArrayList<>();
+        String runningPreviousStatus = null;
+
+        if (historyList == null || historyList.isEmpty()) {
+            String reporterName = bug.getReportedBy() != null ? bug.getReportedBy().getUsername() : "QA Tester";
+            if (bug.getReportedBy() != null && bug.getReportedBy().getFullName() != null && !bug.getReportedBy().getFullName().isBlank()) {
+                reporterName = bug.getReportedBy().getFullName();
+            }
+            String assigneeName = null;
+            if (bug.getAssignedTo() != null) {
+                assigneeName = (bug.getAssignedTo().getFullName() != null && !bug.getAssignedTo().getFullName().isBlank())
+                        ? bug.getAssignedTo().getFullName()
+                        : bug.getAssignedTo().getUsername();
+            }
+
+            responses.add(BugHistoryResponse.builder()
+                    .bugLogId(0)
+                    .bugId(bug.getBugId())
+                    .bugFormatId(bug.getBugFormatId())
+                    .bugStatus(bug.getStatus())
+                    .previousStatus(null)
+                    .executedBy(bug.getReportedBy() != null ? bug.getReportedBy().getUserId() : null)
+                    .executedByName(reporterName)
+                    .assignedTo(bug.getAssignedTo() != null ? bug.getAssignedTo().getUserId() : null)
+                    .assignedToName(assigneeName)
+                    .resolvedAt(bug.getResolvedAt())
+                    .createdAt(bug.getCreatedAt() != null ? bug.getCreatedAt() : java.time.Instant.now())
+                    .build());
+            return responses;
+        }
+
+        java.util.Map<Integer, String> userNames = new java.util.HashMap<>();
+
+        for (int i = 0; i < historyList.size(); i++) {
+            BugHistory h = historyList.get(i);
+
+            String execName = null;
+            if (h.getExecutedBy() != null) {
+                execName = userNames.computeIfAbsent(h.getExecutedBy(), id ->
+                        userRepository.findById(id)
+                                .map(u -> (u.getFullName() != null && !u.getFullName().isBlank()) ? u.getFullName() : u.getUsername())
+                                .orElse("User #" + id)
+                );
+            }
+
+            String assignName = null;
+            if (h.getAssignedTo() != null) {
+                assignName = userNames.computeIfAbsent(h.getAssignedTo(), id ->
+                        userRepository.findById(id)
+                                .map(u -> (u.getFullName() != null && !u.getFullName().isBlank()) ? u.getFullName() : u.getUsername())
+                                .orElse("User #" + id)
+                );
+            }
+
+            String currentStatusStr = h.getBugStatus() != null ? h.getBugStatus().name() : null;
+
+            responses.add(BugHistoryResponse.builder()
+                    .bugLogId(h.getBugLogId())
+                    .bugId(bug.getBugId())
+                    .bugFormatId(bug.getBugFormatId())
+                    .bugStatus(h.getBugStatus())
+                    .previousStatus(runningPreviousStatus)
+                    .executedBy(h.getExecutedBy())
+                    .executedByName(execName != null ? execName : (i == 0 ? "QA Tester" : "System"))
+                    .assignedTo(h.getAssignedTo())
+                    .assignedToName(assignName)
+                    .resolvedAt(h.getResolvedAt())
+                    .createdAt(h.getCreatedAt())
+                    .build());
+
+            runningPreviousStatus = currentStatusStr;
+        }
+
+        return responses;
     }
 }

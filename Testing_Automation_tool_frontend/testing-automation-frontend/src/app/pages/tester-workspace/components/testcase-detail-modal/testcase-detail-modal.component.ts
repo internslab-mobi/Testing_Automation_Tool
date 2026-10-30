@@ -1,7 +1,8 @@
 import { Component, Input, Output, EventEmitter, ChangeDetectorRef, inject, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { TestCase, Feature, Bug, TestCasePutRequest, TestCasePatchRequest } from '../../../../model/workspace/workspace.model';
+import { TestCase, Feature, Bug, TestCasePutRequest, TestCasePatchRequest, TestCaseAuditLog } from '../../../../model/workspace/workspace.model';
+import { TestCaseService } from '../../../../core/services/testcase.service';
 
 @Component({
   selector: 'app-testcase-detail-modal',
@@ -12,6 +13,7 @@ import { TestCase, Feature, Bug, TestCasePutRequest, TestCasePatchRequest } from
 })
 export class TestCaseDetailModalComponent implements OnChanges {
   readonly cdr = inject(ChangeDetectorRef);
+  private readonly testCaseService = inject(TestCaseService);
 
   @Input() isOpen = false;
   @Input() testCase: TestCase | null = null;
@@ -31,6 +33,10 @@ export class TestCaseDetailModalComponent implements OnChanges {
   editForm: TestCasePutRequest = {};
   dynamicFieldsList: Array<{ key: string; value: string }> = [];
 
+  // Audit Log State
+  auditLogs: TestCaseAuditLog[] = [];
+  isLoadingAudit = false;
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['isOpen'] && this.isOpen) {
       if (this.startInEdit) {
@@ -38,7 +44,42 @@ export class TestCaseDetailModalComponent implements OnChanges {
       } else {
         this.isEditMode = false;
       }
+      this.loadAuditHistory();
+    } else if (changes['testCase'] && this.isOpen) {
+      this.loadAuditHistory();
     }
+  }
+
+  loadAuditHistory(): void {
+    if (!this.testCase?.testcaseId) {
+      this.auditLogs = [];
+      return;
+    }
+    this.isLoadingAudit = true;
+    this.testCaseService.getTestCaseHistory(this.testCase.testcaseId).subscribe({
+      next: (logs) => {
+        this.auditLogs = logs || [];
+        this.isLoadingAudit = false;
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.auditLogs = [];
+        this.isLoadingAudit = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  get normalizedStatus(): string {
+    const s = (this.testCase?.executionStatus || this.testCase?.testcaseStatus || 'UNEXECUTED').toUpperCase();
+    if (s === 'BLOCKED') return 'BLOCK';
+    if (s === 'PASSED') return 'PASS';
+    if (s === 'FAILED') return 'FAIL';
+    return s;
+  }
+
+  isStatus(target: string): boolean {
+    return this.normalizedStatus === target;
   }
 
   startEdit(): void {
@@ -48,6 +89,7 @@ export class TestCaseDetailModalComponent implements OnChanges {
       testType: this.testCase.testType || 'UI',
       testPriority: this.testCase.testPriority || 'MEDIUM',
       automationFeasibility: this.testCase.automationFeasibility || this.testCase.execution?.automationFeasibility || 'YES',
+      executionStatus: this.normalizedStatus !== 'UNEXECUTED' ? this.normalizedStatus : 'PASS',
       testExecution: this.testCase.testExecution || this.testCase.execution?.testExecution || '',
       testValidation: this.testCase.testValidation || this.testCase.execution?.testValidation || '',
       precondition: this.testCase.execution?.precondition || '',
@@ -126,13 +168,18 @@ export class TestCaseDetailModalComponent implements OnChanges {
   }
 
   onExecute(status: string): void {
-    if (!this.testCase || !status || status === 'UNEXECUTED') return;
-    this.testCase.executionStatus = status;
+    if (!this.testCase || !status || status === 'UNEXECUTED' || status === 'NO_RUN') return;
+    let s = status.toUpperCase();
+    if (s === 'BLOCKED') s = 'BLOCK';
+    if (s === 'PASSED') s = 'PASS';
+    if (s === 'FAILED') s = 'FAIL';
+    this.testCase.executionStatus = s;
     this.executeTestCase.emit({
       testcaseId: this.testCase.testcaseId,
-      status
+      status: s
     });
     this.cdr.markForCheck();
+    setTimeout(() => this.loadAuditHistory(), 600);
   }
 
   onLogDefect(): void {

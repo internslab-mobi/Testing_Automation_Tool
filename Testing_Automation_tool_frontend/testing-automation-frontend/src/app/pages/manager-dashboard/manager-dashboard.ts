@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, NavigationEnd, RouterModule } from '@angular/router';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { forkJoin, of, Subscription, Observable, interval } from 'rxjs';
-import { catchError, filter, map } from 'rxjs/operators';
+import { catchError, filter, map, switchMap } from 'rxjs/operators';
 import { AuthService } from '../../core/services/authService';
 import { ProjectService } from '../../core/services/project.service';
 import { TestCaseService } from '../../core/services/testcase.service';
@@ -14,7 +14,7 @@ import { NotificationService } from '../../core/services/notification.service';
 import { NotificationsModalComponent } from '../tester-workspace/components/notifications-modal/notifications-modal.component';
 import { environment } from '../../../environments/environment';
 import { UserProfile } from '../../model/auth/userProfile';
-import { Project, TestCase, Bug, InAppNotification, ProjectPatchRequest } from '../../model/workspace/workspace.model';
+import { Project, TestCase, Bug, InAppNotification, ProjectPatchRequest, ModuleItem, SubModuleItem } from '../../model/workspace/workspace.model';
 
 interface SidebarNavItem {
   id: string;
@@ -27,6 +27,10 @@ interface SidebarNavItem {
 export interface ProjectOption {
   projectId: number;
   projectName: string;
+  module?: string;
+  subModule?: string;
+  moduleId?: number;
+  subModuleId?: number;
 }
 
 export interface FeatureOption {
@@ -191,14 +195,99 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   // Filter Data Sources
   allProjects: ProjectOption[] = [];
   allFeatures: FeatureOption[] = [];
+  availableProjects: ProjectOption[] = [];
   availableFeatures: FeatureOption[] = [];
+  availableModules: string[] = [];
+  availableSubModules: string[] = [];
   availableSprints: number[] = [];
 
-  // Filter State
-  selectedProjectId: number | null = null;
-  selectedFeatureId: number | null = null;
-  selectedSprint: number | null = null;
+  // Multi-Select Filter States
+  selectedModules: string[] = [];
+  selectedSubModules: string[] = [];
+  selectedProjectIds: number[] = [];
+  selectedFeatureIds: number[] = [];
+  selectedSprints: number[] = [];
+
+  // Active open filter dropdown tracker
+  activeFilterDropdown: 'module' | 'submodule' | 'project' | 'feature' | 'sprint' | null = null;
   showFiltersDropdown = false;
+
+  // Search filter inputs inside dropdown menus
+  moduleFilterSearch = '';
+  subModuleFilterSearch = '';
+  projectFilterSearch = '';
+  featureFilterSearch = '';
+
+  // Backward-compatibility getters and setters
+  get selectedModule(): string | null {
+    return this.selectedModules.length === 1 ? this.selectedModules[0] : null;
+  }
+  set selectedModule(val: string | null) {
+    this.selectedModules = val ? [val] : [];
+  }
+
+  get selectedSubModule(): string | null {
+    return this.selectedSubModules.length === 1 ? this.selectedSubModules[0] : null;
+  }
+  set selectedSubModule(val: string | null) {
+    this.selectedSubModules = val ? [val] : [];
+  }
+
+  get selectedProjectId(): number | null {
+    return this.selectedProjectIds.length === 1 ? this.selectedProjectIds[0] : null;
+  }
+  set selectedProjectId(val: number | null) {
+    this.selectedProjectIds = val != null ? [val] : [];
+  }
+
+  get selectedFeatureId(): number | null {
+    return this.selectedFeatureIds.length === 1 ? this.selectedFeatureIds[0] : null;
+  }
+  set selectedFeatureId(val: number | null) {
+    this.selectedFeatureIds = val != null ? [val] : [];
+  }
+
+  get selectedSprint(): number | null {
+    return this.selectedSprints.length === 1 ? this.selectedSprints[0] : null;
+  }
+  set selectedSprint(val: number | null) {
+    this.selectedSprints = val != null ? [val] : [];
+  }
+
+  get isSprintDropdownOpen(): boolean {
+    return this.activeFilterDropdown === 'sprint';
+  }
+  set isSprintDropdownOpen(val: boolean) {
+    this.activeFilterDropdown = val ? 'sprint' : null;
+  }
+
+  get isModuleDropdownOpen(): boolean {
+    return this.activeFilterDropdown === 'module';
+  }
+  set isModuleDropdownOpen(val: boolean) {
+    this.activeFilterDropdown = val ? 'module' : null;
+  }
+
+  get isSubModuleDropdownOpen(): boolean {
+    return this.activeFilterDropdown === 'submodule';
+  }
+  set isSubModuleDropdownOpen(val: boolean) {
+    this.activeFilterDropdown = val ? 'submodule' : null;
+  }
+
+  get isProjectDropdownOpen(): boolean {
+    return this.activeFilterDropdown === 'project';
+  }
+  set isProjectDropdownOpen(val: boolean) {
+    this.activeFilterDropdown = val ? 'project' : null;
+  }
+
+  get isFeatureDropdownOpen(): boolean {
+    return this.activeFilterDropdown === 'feature';
+  }
+  set isFeatureDropdownOpen(val: boolean) {
+    this.activeFilterDropdown = val ? 'feature' : null;
+  }
 
   // User Profile
   currentUser = signal<UserProfile | null>(null);
@@ -512,6 +601,7 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     const profileWrapper = this.elementRef.nativeElement.querySelector('.profile-avatar-wrapper');
     const notifWrapper = this.elementRef.nativeElement.querySelector('.header-notif-wrapper');
     const exportWrapper = this.elementRef.nativeElement.querySelector('.export-dropdown-wrapper');
+    const qaFilterControls = this.elementRef.nativeElement.querySelector('.qa-filter-controls');
 
     if (filterWrapper && !filterWrapper.contains(target)) {
       this.showFiltersDropdown = false;
@@ -525,10 +615,16 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     if (exportWrapper && !exportWrapper.contains(target)) {
       this.showExportDropdown = false;
     }
+    if (qaFilterControls && !qaFilterControls.contains(target)) {
+      this.activeFilterDropdown = null;
+    }
   }
 
   @HostListener('document:keydown.escape')
   onKeydownEscape(): void {
+    if (this.activeFilterDropdown) {
+      this.activeFilterDropdown = null;
+    }
     if (this.isNotificationsDropdownOpen) {
       this.isNotificationsDropdownOpen = false;
     }
@@ -624,7 +720,14 @@ export class ManagerDashboard implements OnInit, OnDestroy {
       })
     );
 
-    forkJoin({ projects: projects$, features: features$ }).subscribe({
+    const modules$ = this.projectService.getModules().pipe(
+      catchError((err) => {
+        console.warn('Failed to load modules for filter:', err);
+        return of([]);
+      })
+    );
+
+    forkJoin({ projects: projects$, features: features$, dbModules: modules$ }).subscribe({
       next: (res) => {
         // Map Projects
         const rawProjects = res.projects?.data || res.projects || [];
@@ -632,7 +735,11 @@ export class ManagerDashboard implements OnInit, OnDestroy {
           const item = p.project || p;
           return {
             projectId: item.projectId || item.id,
-            projectName: item.projectName || `Project #${item.projectId}`
+            projectName: item.projectName || `Project #${item.projectId}`,
+            module: item.module || '',
+            subModule: item.subModule || '',
+            moduleId: item.moduleId,
+            subModuleId: item.subModuleId
           };
         });
 
@@ -650,39 +757,68 @@ export class ManagerDashboard implements OnInit, OnDestroy {
           };
         });
 
-        this.updateAvailableFeaturesAndSprints();
+        this.updateFilterOptions(res.dbModules);
         this.cdr.markForCheck();
       }
     });
   }
 
   /**
-   * Update dependent filter options when Project, Feature, or Sprint selections change
+   * Update dependent filter options when Module, SubModule, Project, Feature, or Sprint selections change
    */
-  private updateAvailableFeaturesAndSprints(): void {
-    // 1. Filter features by selected project
-    if (this.selectedProjectId != null) {
-      this.availableFeatures = this.allFeatures.filter(
-        (f) => f.projectId === this.selectedProjectId
-      );
-    } else {
-      this.availableFeatures = [...this.allFeatures];
+  private updateFilterOptions(dbModules?: ModuleItem[]): void {
+    // 1. Available Modules from allProjects and DB master
+    const moduleSet = new Set<string>();
+    if (dbModules && Array.isArray(dbModules)) {
+      dbModules.forEach((m) => {
+        if (m.moduleName && m.moduleName.trim()) {
+          moduleSet.add(m.moduleName.trim());
+        }
+      });
     }
+    this.allProjects.forEach((p) => {
+      if (p.module && p.module.trim()) {
+        moduleSet.add(p.module.trim());
+      }
+    });
+    this.availableModules = Array.from(moduleSet).sort((a, b) => a.localeCompare(b));
 
-    // If sprint is selected, further narrow features if needed
-    if (this.selectedSprint != null) {
-      this.availableFeatures = this.availableFeatures.filter(
-        (f) => f.sprint === this.selectedSprint
-      );
+    // 2. Available Submodules (filtered by selectedModules if any selected)
+    const subModuleSet = new Set<string>();
+    this.allProjects.forEach((p) => {
+      const matchMod =
+        this.selectedModules.length === 0 ||
+        (p.module && this.selectedModules.some((m) => m.trim().toLowerCase() === p.module?.trim().toLowerCase()));
+      if (matchMod && p.subModule && p.subModule.trim()) {
+        subModuleSet.add(p.subModule.trim());
+      }
+    });
+    this.availableSubModules = Array.from(subModuleSet).sort((a, b) => a.localeCompare(b));
+
+    // 3. Available Projects (filtered by selectedModules and selectedSubModules)
+    this.availableProjects = this.allProjects.filter((p) => {
+      if (this.selectedModules.length > 0) {
+        const matchMod = p.module && this.selectedModules.some((m) => m.trim().toLowerCase() === p.module?.trim().toLowerCase());
+        if (!matchMod) return false;
+      }
+      if (this.selectedSubModules.length > 0) {
+        const matchSub = p.subModule && this.selectedSubModules.some((s) => s.trim().toLowerCase() === p.subModule?.trim().toLowerCase());
+        if (!matchSub) return false;
+      }
+      return true;
+    });
+
+    // 4. Available Features (filtered by available projects and selectedProjectIds)
+    const validProjectIds = new Set(this.availableProjects.map((p) => p.projectId));
+    let featList = this.allFeatures.filter((f) => validProjectIds.has(f.projectId));
+    if (this.selectedProjectIds.length > 0) {
+      featList = featList.filter((f) => this.selectedProjectIds.includes(f.projectId));
     }
+    this.availableFeatures = featList;
 
-    // 2. Extract unique sprints from features matching the selected project
-    const featuresForSprints = this.selectedProjectId != null
-      ? this.allFeatures.filter((f) => f.projectId === this.selectedProjectId)
-      : this.allFeatures;
-
+    // 5. Available Sprints (from available features)
     const sprintSet = new Set<number>();
-    featuresForSprints.forEach((f) => {
+    featList.forEach((f) => {
       if (f.sprint != null) {
         sprintSet.add(f.sprint);
       }
@@ -690,112 +826,324 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     this.availableSprints = Array.from(sprintSet).sort((a, b) => a - b);
   }
 
+  // =========================================================================
+  // MULTI-SELECT DROPDOWN TOGGLERS & SEARCH FILTER GETTERS
+  // =========================================================================
+  toggleFilterDropdown(name: 'module' | 'submodule' | 'project' | 'feature' | 'sprint', event?: Event): void {
+    if (event) {
+      event.stopPropagation();
+    }
+    this.activeFilterDropdown = this.activeFilterDropdown === name ? null : name;
+    if (this.activeFilterDropdown) {
+      this.showFiltersDropdown = false;
+      this.showProfileMenu = false;
+      this.showExportDropdown = false;
+    }
+    this.cdr.markForCheck();
+  }
+
+  closeAllFilterDropdowns(): void {
+    this.activeFilterDropdown = null;
+    this.cdr.markForCheck();
+  }
+
+  get filteredDropdownModules(): string[] {
+    const s = this.moduleFilterSearch.toLowerCase().trim();
+    if (!s) return this.availableModules;
+    return this.availableModules.filter((m) => m.toLowerCase().includes(s));
+  }
+
+  get filteredDropdownSubModules(): string[] {
+    const s = this.subModuleFilterSearch.toLowerCase().trim();
+    if (!s) return this.availableSubModules;
+    return this.availableSubModules.filter((sub) => sub.toLowerCase().includes(s));
+  }
+
+  get filteredDropdownProjects(): ProjectOption[] {
+    const s = this.projectFilterSearch.toLowerCase().trim();
+    if (!s) return this.availableProjects;
+    return this.availableProjects.filter((p) => p.projectName.toLowerCase().includes(s));
+  }
+
+  get filteredDropdownFeatures(): FeatureOption[] {
+    const s = this.featureFilterSearch.toLowerCase().trim();
+    if (!s) return this.availableFeatures;
+    return this.availableFeatures.filter((f) => f.featureName.toLowerCase().includes(s));
+  }
+
+  // =========================================================================
+  // MULTI-SELECT HANDLERS FOR MODULE, SUBMODULE, PROJECT, FEATURE, SPRINT
+  // =========================================================================
+  isModuleSelected(mod: string): boolean {
+    return this.selectedModules.includes(mod);
+  }
+  toggleModule(mod: string): void {
+    if (this.selectedModules.includes(mod)) {
+      this.selectedModules = this.selectedModules.filter((m) => m !== mod);
+    } else {
+      this.selectedModules = [...this.selectedModules, mod].sort();
+    }
+    this.onFilterChange();
+  }
+  selectAllModules(): void {
+    this.selectedModules = [...this.availableModules];
+    this.onFilterChange();
+  }
+  clearModules(): void {
+    this.selectedModules = [];
+    this.onFilterChange();
+  }
+
+  isSubModuleSelected(sub: string): boolean {
+    return this.selectedSubModules.includes(sub);
+  }
+  toggleSubModule(sub: string): void {
+    if (this.selectedSubModules.includes(sub)) {
+      this.selectedSubModules = this.selectedSubModules.filter((s) => s !== sub);
+    } else {
+      this.selectedSubModules = [...this.selectedSubModules, sub].sort();
+    }
+    this.onFilterChange();
+  }
+  selectAllSubModules(): void {
+    this.selectedSubModules = [...this.availableSubModules];
+    this.onFilterChange();
+  }
+  clearSubModules(): void {
+    this.selectedSubModules = [];
+    this.onFilterChange();
+  }
+
+  isProjectSelected(projectId: number): boolean {
+    return this.selectedProjectIds.includes(projectId);
+  }
+  toggleProject(projectId: number): void {
+    if (this.selectedProjectIds.includes(projectId)) {
+      this.selectedProjectIds = this.selectedProjectIds.filter((p) => p !== projectId);
+    } else {
+      this.selectedProjectIds = [...this.selectedProjectIds, projectId];
+    }
+    this.onFilterChange();
+  }
+  selectAllProjects(): void {
+    this.selectedProjectIds = this.availableProjects.map((p) => p.projectId);
+    this.onFilterChange();
+  }
+  clearProjects(): void {
+    this.selectedProjectIds = [];
+    this.onFilterChange();
+  }
+
+  isFeatureSelected(featureId: number): boolean {
+    return this.selectedFeatureIds.includes(featureId);
+  }
+  toggleFeature(featureId: number): void {
+    if (this.selectedFeatureIds.includes(featureId)) {
+      this.selectedFeatureIds = this.selectedFeatureIds.filter((f) => f !== featureId);
+    } else {
+      this.selectedFeatureIds = [...this.selectedFeatureIds, featureId];
+    }
+    this.onFilterChange();
+  }
+  selectAllFeatures(): void {
+    this.selectedFeatureIds = this.availableFeatures.map((f) => f.featureId);
+    this.onFilterChange();
+  }
+  clearFeatures(): void {
+    this.selectedFeatureIds = [];
+    this.onFilterChange();
+  }
+
+  isSprintSelected(sprint: number): boolean {
+    return this.selectedSprints.includes(sprint);
+  }
+  toggleSprint(sprint: number): void {
+    if (this.selectedSprints.includes(sprint)) {
+      this.selectedSprints = this.selectedSprints.filter((s) => s !== sprint);
+    } else {
+      this.selectedSprints = [...this.selectedSprints, sprint].sort((a, b) => a - b);
+    }
+    this.onFilterChange();
+  }
+  selectAllSprints(): void {
+    this.selectedSprints = [...this.availableSprints].sort((a, b) => a - b);
+    this.onFilterChange();
+  }
+  clearSprints(): void {
+    this.selectedSprints = [];
+    this.onFilterChange();
+  }
+
+  toggleSprintDropdown(event?: Event): void {
+    this.toggleFilterDropdown('sprint', event);
+  }
+
+  onFilterChange(): void {
+    this.updateFilterOptions();
+
+    // Prune selections that no longer exist in available lists
+    if (this.selectedSubModules.length > 0) {
+      this.selectedSubModules = this.selectedSubModules.filter((s) => this.availableSubModules.includes(s));
+    }
+    if (this.selectedProjectIds.length > 0) {
+      const availProjIds = new Set(this.availableProjects.map((p) => p.projectId));
+      this.selectedProjectIds = this.selectedProjectIds.filter((id) => availProjIds.has(id));
+    }
+    if (this.selectedFeatureIds.length > 0) {
+      const availFeatIds = new Set(this.availableFeatures.map((f) => f.featureId));
+      this.selectedFeatureIds = this.selectedFeatureIds.filter((id) => availFeatIds.has(id));
+    }
+    if (this.selectedSprints.length > 0) {
+      this.selectedSprints = this.selectedSprints.filter((s) => this.availableSprints.includes(s));
+    }
+
+    this.loadDashboardMetrics();
+    this.cdr.markForCheck();
+  }
+
+  // =========================================================================
+  // BUTTON LABELS & ITEM COUNTERS
+  // =========================================================================
+  get moduleFilterButtonLabel(): string {
+    if (this.selectedModules.length === 0) return 'All Modules';
+    if (this.selectedModules.length === 1) return this.selectedModules[0];
+    if (this.selectedModules.length === 2) return `${this.selectedModules[0]}, ${this.selectedModules[1]}`;
+    return `${this.selectedModules.length} Modules`;
+  }
+
+  get subModuleFilterButtonLabel(): string {
+    if (this.selectedSubModules.length === 0) return 'All Submodules';
+    if (this.selectedSubModules.length === 1) return this.selectedSubModules[0];
+    if (this.selectedSubModules.length === 2) return `${this.selectedSubModules[0]}, ${this.selectedSubModules[1]}`;
+    return `${this.selectedSubModules.length} Submodules`;
+  }
+
+  get projectFilterButtonLabel(): string {
+    if (this.selectedProjectIds.length === 0) return 'All Projects';
+    if (this.selectedProjectIds.length === 1) return this.getProjectName(this.selectedProjectIds[0]);
+    if (this.selectedProjectIds.length === 2) {
+      return `${this.getProjectName(this.selectedProjectIds[0])}, ${this.getProjectName(this.selectedProjectIds[1])}`;
+    }
+    return `${this.selectedProjectIds.length} Projects`;
+  }
+
+  get featureFilterButtonLabel(): string {
+    if (this.selectedFeatureIds.length === 0) return 'All Features';
+    if (this.selectedFeatureIds.length === 1) return this.getFeatureName(this.selectedFeatureIds[0]);
+    if (this.selectedFeatureIds.length === 2) {
+      return `${this.getFeatureName(this.selectedFeatureIds[0])}, ${this.getFeatureName(this.selectedFeatureIds[1])}`;
+    }
+    return `${this.selectedFeatureIds.length} Features`;
+  }
+
+  get sprintFilterButtonLabel(): string {
+    if (this.selectedSprints.length === 0) return 'All Sprints';
+    if (this.selectedSprints.length === 1) return `Sprint ${this.selectedSprints[0]}`;
+    if (this.selectedSprints.length === 2) return `Sprint ${this.selectedSprints[0]}, Sprint ${this.selectedSprints[1]}`;
+    return `${this.selectedSprints.length} Sprints (${this.selectedSprints.map((s) => 'S' + s).join(', ')})`;
+  }
+
+  getProjectCountForModule(mod: string): number {
+    return this.allProjects.filter((p) => p.module && p.module.trim().toLowerCase() === mod.trim().toLowerCase()).length;
+  }
+
+  getProjectCountForSubModule(sub: string): number {
+    return this.allProjects.filter((p) => p.subModule && p.subModule.trim().toLowerCase() === sub.trim().toLowerCase()).length;
+  }
+
+  getFeatureCountForProject(projectId: number): number {
+    return this.allFeatures.filter((f) => f.projectId === projectId).length;
+  }
+
+  getFeatureCountForSprint(sprint: number): number {
+    return this.allFeatures.filter((f) => f.sprint === sprint).length;
+  }
+
+  // Legacy single selection wrappers
+  onModuleSelect(moduleName: string | null): void {
+    this.selectedModules = moduleName ? [moduleName] : [];
+    this.onFilterChange();
+  }
+  onSubModuleSelect(subModuleName: string | null): void {
+    this.selectedSubModules = subModuleName ? [subModuleName] : [];
+    this.onFilterChange();
+  }
   onProjectSelect(projectId: number | null): void {
-    this.selectedProjectId = projectId;
-
-    // Reset feature if it doesn't belong to the newly selected project
-    if (this.selectedFeatureId != null) {
-      const feat = this.allFeatures.find((f) => f.featureId === this.selectedFeatureId);
-      if (feat && projectId != null && feat.projectId !== projectId) {
-        this.selectedFeatureId = null;
-      }
-    }
-
-    this.updateAvailableFeaturesAndSprints();
-
-    // Reset sprint if not available in project
-    if (this.selectedSprint != null && !this.availableSprints.includes(this.selectedSprint)) {
-      this.selectedSprint = null;
-    }
+    this.selectedProjectIds = projectId != null ? [projectId] : [];
+    this.onFilterChange();
   }
-
   onFeatureSelect(featureId: number | null): void {
-    this.selectedFeatureId = featureId;
-
-    if (featureId != null) {
-      const feat = this.allFeatures.find((f) => f.featureId === featureId);
-      if (feat) {
-        // Auto-align project and sprint to this feature
-        if (this.selectedProjectId !== feat.projectId) {
-          this.selectedProjectId = feat.projectId;
-        }
-        if (this.selectedSprint !== feat.sprint) {
-          this.selectedSprint = feat.sprint;
-        }
-      }
-    }
-
-    this.updateAvailableFeaturesAndSprints();
+    this.selectedFeatureIds = featureId != null ? [featureId] : [];
+    this.onFilterChange();
   }
-
   onSprintSelect(sprint: number | null): void {
-    this.selectedSprint = sprint;
-
-    // Reset feature if it does not belong to the selected sprint
-    if (this.selectedFeatureId != null) {
-      const feat = this.allFeatures.find((f) => f.featureId === this.selectedFeatureId);
-      if (feat && sprint != null && feat.sprint !== sprint) {
-        this.selectedFeatureId = null;
-      }
-    }
-
-    this.updateAvailableFeaturesAndSprints();
+    this.selectedSprints = sprint != null ? [sprint] : [];
+    this.onFilterChange();
+  }
+  onModuleSelectAndReload(moduleName: string | null): void {
+    this.onModuleSelect(moduleName);
+  }
+  onSubModuleSelectAndReload(subModuleName: string | null): void {
+    this.onSubModuleSelect(subModuleName);
+  }
+  onProjectSelectAndReload(projectId: number | null): void {
+    this.onProjectSelect(projectId);
+  }
+  onFeatureSelectAndReload(featureId: number | null): void {
+    this.onFeatureSelect(featureId);
+  }
+  onSprintSelectAndReload(sprint: number | null): void {
+    this.onSprintSelect(sprint);
+  }
+  onSprintMultiChange(): void {
+    this.onFilterChange();
   }
 
   applyFilters(): void {
     this.showFiltersDropdown = false;
+    this.activeFilterDropdown = null;
     this.loadDashboardMetrics();
   }
 
   resetFilters(): void {
-    this.selectedProjectId = null;
-    this.selectedFeatureId = null;
-    this.selectedSprint = null;
-    this.updateAvailableFeaturesAndSprints();
+    this.selectedModules = [];
+    this.selectedSubModules = [];
+    this.selectedProjectIds = [];
+    this.selectedFeatureIds = [];
+    this.selectedSprints = [];
+    this.activeFilterDropdown = null;
     this.showFiltersDropdown = false;
-    this.loadDashboardMetrics();
-  }
-
-  removeProjectFilter(): void {
-    this.onProjectSelect(null);
-    this.loadDashboardMetrics();
-  }
-
-  removeFeatureFilter(): void {
-    this.onFeatureSelect(null);
-    this.loadDashboardMetrics();
-  }
-
-  removeSprintFilter(): void {
-    this.onSprintSelect(null);
-    this.loadDashboardMetrics();
-  }
-
-  onProjectSelectAndReload(projectId: number | null): void {
-    this.onProjectSelect(projectId);
-    this.loadDashboardMetrics();
-  }
-
-  onFeatureSelectAndReload(featureId: number | null): void {
-    this.onFeatureSelect(featureId);
-    this.loadDashboardMetrics();
-  }
-
-  onSprintSelectAndReload(sprint: number | null): void {
-    this.onSprintSelect(sprint);
-    this.loadDashboardMetrics();
+    this.onFilterChange();
   }
 
   hasActiveFilters(): boolean {
-    return this.selectedProjectId != null || this.selectedFeatureId != null || this.selectedSprint != null;
+    return (
+      this.selectedModules.length > 0 ||
+      this.selectedSubModules.length > 0 ||
+      this.selectedProjectIds.length > 0 ||
+      this.selectedFeatureIds.length > 0 ||
+      this.selectedSprints.length > 0
+    );
   }
 
   activeFilterCount(): number {
-    let count = 0;
-    if (this.selectedProjectId != null) count++;
-    if (this.selectedFeatureId != null) count++;
-    if (this.selectedSprint != null) count++;
-    return count;
+    return (
+      this.selectedModules.length +
+      this.selectedSubModules.length +
+      this.selectedProjectIds.length +
+      this.selectedFeatureIds.length +
+      this.selectedSprints.length
+    );
+  }
+
+  get activeFilterDescription(): string {
+    const parts: string[] = [];
+    if (this.selectedModules.length > 0) parts.push(`Modules: ${this.selectedModules.join(', ')}`);
+    if (this.selectedSubModules.length > 0) parts.push(`Submodules: ${this.selectedSubModules.join(', ')}`);
+    if (this.selectedProjectIds.length > 0) parts.push(`Projects: ${this.selectedProjectIds.map((id) => this.getProjectName(id)).join(', ')}`);
+    if (this.selectedFeatureIds.length > 0) parts.push(`Features: ${this.selectedFeatureIds.map((id) => this.getFeatureName(id)).join(', ')}`);
+    if (this.selectedSprints.length > 0) parts.push(`Sprints: ${this.selectedSprints.map((s) => 'Sprint ' + s).join(', ')}`);
+    return parts.join(' • ') || 'All Test Cases';
   }
 
   getProjectName(projectId: number | null | undefined): string {
@@ -814,14 +1162,41 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     this.showFiltersDropdown = !this.showFiltersDropdown;
     if (this.showFiltersDropdown) {
       this.showProfileMenu = false;
+      this.activeFilterDropdown = null;
     }
+  }
+
+  /**
+   * Helper that resolves matching features for all active filters (Modules, Submodules, Projects, Features, Sprints)
+   */
+  getScopedFeatures(): FeatureOption[] {
+    if (this.selectedFeatureIds.length > 0) {
+      return this.allFeatures.filter((f) => this.selectedFeatureIds.includes(f.featureId));
+    }
+
+    let matching = [...this.allFeatures];
+
+    // Filter by Project or Module/Submodule
+    if (this.selectedProjectIds.length > 0) {
+      matching = matching.filter((f) => this.selectedProjectIds.includes(f.projectId));
+    } else if (this.selectedModules.length > 0 || this.selectedSubModules.length > 0) {
+      const validProjectIds = new Set(this.availableProjects.map((p) => p.projectId));
+      matching = matching.filter((f) => validProjectIds.has(f.projectId));
+    }
+
+    // Filter by Multiple Sprints
+    if (this.selectedSprints.length > 0) {
+      matching = matching.filter((f) => f.sprint != null && this.selectedSprints.includes(f.sprint));
+    }
+
+    return matching;
   }
 
   /**
    * Main dashboard metric loader:
    * 1. Unfiltered: Queries global /testcase without featureId across all projects.
    * 2. Single Feature: Queries /testcase?featureId={id}.
-   * 3. Project / Sprint: Finds matching features and queries accurately.
+   * 3. Scoped: Queries matching features across Module, Submodule, Project, Sprints.
    */
   loadDashboardMetrics(): void {
     this.isLoading = true;
@@ -837,7 +1212,7 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     }
 
     // Case A: No filter selected (Default All Test Cases)
-    if (this.selectedProjectId == null && this.selectedFeatureId == null && this.selectedSprint == null) {
+    if (!this.hasActiveFilters()) {
       this.fetchGlobalMetrics();
       return;
     }
@@ -848,14 +1223,8 @@ export class ManagerDashboard implements OnInit, OnDestroy {
       return;
     }
 
-    // Case C: Project and/or Sprint selected
-    let matching = [...this.allFeatures];
-    if (this.selectedProjectId != null) {
-      matching = matching.filter((f) => f.projectId === this.selectedProjectId);
-    }
-    if (this.selectedSprint != null) {
-      matching = matching.filter((f) => f.sprint === this.selectedSprint);
-    }
+    // Case C: Scoped by Module, Submodule, Project, and/or Multiple Sprints
+    const matching = this.getScopedFeatures();
 
     if (matching.length === 0) {
       this.setMetrics(0, 0, 0, 0, 0);
@@ -1626,10 +1995,57 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   recentBugsPage = 0;
   recentBugsPageSize = 5;
 
+  /**
+   * Navigates directly to the defect in Tester Workspace with the bug open in its detail modal.
+   */
+  goToBugInTester(bug: Bug): void {
+    const bugIdStr = bug.bugFormatId || `BUG_${bug.bugId}`;
+    this.showToast(`Opening defect ${bugIdStr} in Tester Workspace...`);
+    this.router.navigate(['/tester-workspace'], {
+      queryParams: {
+        bugId: bug.bugId,
+        bugFormatId: bug.bugFormatId || `BUG_${bug.bugId}`
+      }
+    });
+  }
+
+  /**
+   * Navigates to Manager Dashboard Defect Management view with row highlighting.
+   */
+  goToBugInManager(bug: Bug): void {
+    const bugIdStr = bug.bugFormatId || `BUG_${bug.bugId}`;
+    this.bugSearchTerm = bugIdStr;
+    this.activeSidebarItem = 'Defect Management';
+    this.router.navigate(['/manager/defect-management']);
+    this.loadDefectManagementData();
+    this.showToast(`Viewing defect ${bugIdStr} in Defect Management.`);
+
+    setTimeout(() => {
+      const row = document.getElementById(`defect-row-${bug.bugId}`);
+      if (row) {
+        row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        row.classList.add('highlight-pulse');
+        setTimeout(() => row.classList.remove('highlight-pulse'), 3000);
+      }
+    }, 450);
+  }
+
+  /**
+   * Default bug navigation: opens in Tester Workspace.
+   */
+  goToBug(bug: Bug): void {
+    this.goToBugInTester(bug);
+  }
+
   get recentBugsFiltered(): Bug[] {
     const s = (this.recentBugsSearch || '').toLowerCase().trim();
     const sorted = [...this.bugsList].sort((a, b) => (b.bugId || 0) - (a.bugId || 0));
+    const scopedFeatureIds = this.hasActiveFilters() ? new Set(this.getScopedFeatures().map(f => f.featureId)) : null;
+
     return sorted.filter(b => {
+      if (scopedFeatureIds !== null && (!b.featureId || !scopedFeatureIds.has(b.featureId))) {
+        return false;
+      }
       const bSev = (b.severity || 'HIGH').toString().toUpperCase();
       const bStat = (b.status || 'OPEN').toString().toUpperCase();
       const matchSeverity = this.recentBugsSeverityFilter === 'ALL' || bSev === this.recentBugsSeverityFilter;
@@ -1639,7 +2055,8 @@ export class ManagerDashboard implements OnInit, OnDestroy {
         (b.title && b.title.toLowerCase().includes(s)) ||
         (b.featureName && b.featureName.toLowerCase().includes(s)) ||
         (b.assignedTo && b.assignedTo.toLowerCase().includes(s)) ||
-        (b.reportedBy && b.reportedBy.toLowerCase().includes(s));
+        (b.reportedBy && b.reportedBy.toLowerCase().includes(s)) ||
+        (b.updatedBy && b.updatedBy.toLowerCase().includes(s));
       return matchSeverity && matchStatus && matchSearch;
     });
   }
@@ -1772,20 +2189,11 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     this.cdr.markForCheck();
 
     let scopedFeatureIds: number[] | null = null;
-    if (this.selectedFeatureId != null) {
-      scopedFeatureIds = [this.selectedFeatureId];
-    } else if (this.selectedProjectId != null || this.selectedSprint != null) {
-      let matching = [...this.allFeatures];
-      if (this.selectedProjectId != null) {
-        matching = matching.filter(f => f.projectId === this.selectedProjectId);
-      }
-      if (this.selectedSprint != null) {
-        matching = matching.filter(f => f.sprint === this.selectedSprint);
-      }
-      scopedFeatureIds = matching.map(f => f.featureId);
+    if (this.hasActiveFilters()) {
+      scopedFeatureIds = this.getScopedFeatures().map(f => f.featureId);
     }
 
-    this.http.get<any>(`${this.apiBase}/bug?page=0&size=500`).pipe(
+    this.http.get<any>(`${this.apiBase}/bug?page=0&size=2000`).pipe(
       catchError(err => {
         console.warn('Failed to load defects for QA Dashboard chart:', err);
         return of({ data: { content: [] } });
@@ -2030,19 +2438,8 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     this.qaDrilldownTestCases = [];
     this.cdr.markForCheck();
 
-    if (this.selectedFeatureId != null) {
-      this.fetchTestCasesByUrl(`${this.apiBase}/testcase?featureId=${this.selectedFeatureId}&status=${status}&page=0&size=100`);
-      return;
-    }
-
-    if (this.selectedProjectId != null || this.selectedSprint != null) {
-      let matching = [...this.allFeatures];
-      if (this.selectedProjectId != null) {
-        matching = matching.filter(f => f.projectId === this.selectedProjectId);
-      }
-      if (this.selectedSprint != null) {
-        matching = matching.filter(f => f.sprint === this.selectedSprint);
-      }
+    if (this.hasActiveFilters()) {
+      const matching = this.getScopedFeatures();
 
       if (matching.length === 0) {
         this.qaDrilldownTestCases = [];
@@ -2052,12 +2449,12 @@ export class ManagerDashboard implements OnInit, OnDestroy {
       }
 
       if (matching.length === 1) {
-        this.fetchTestCasesByUrl(`${this.apiBase}/testcase?featureId=${matching[0].featureId}&status=${status}&page=0&size=100`);
+        this.fetchTestCasesByUrl(`${this.apiBase}/testcase?featureId=${matching[0].featureId}&status=${status}&page=0&size=500`);
         return;
       }
 
       const queries = matching.map(f =>
-        this.http.get<any>(`${this.apiBase}/testcase?featureId=${f.featureId}&status=${status}&page=0&size=50`).pipe(
+        this.http.get<any>(`${this.apiBase}/testcase?featureId=${f.featureId}&status=${status}&page=0&size=500`).pipe(
           catchError(() => of({ data: { content: [] } }))
         )
       );
@@ -2086,7 +2483,7 @@ export class ManagerDashboard implements OnInit, OnDestroy {
       return;
     }
 
-    this.fetchTestCasesByUrl(`${this.apiBase}/testcase?status=${status}&page=0&size=100`);
+    this.fetchTestCasesByUrl(`${this.apiBase}/testcase?status=${status}&page=0&size=500`);
   }
 
   private fetchTestCasesByUrl(url: string): void {
@@ -2310,20 +2707,6 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     return Math.min(a, b);
   }
 
-  get activeFilterDescription(): string {
-    const parts: string[] = [];
-    if (this.selectedProjectId != null) {
-      parts.push(this.getProjectName(this.selectedProjectId));
-    }
-    if (this.selectedFeatureId != null) {
-      parts.push(this.getFeatureName(this.selectedFeatureId));
-    }
-    if (this.selectedSprint != null) {
-      parts.push(`Sprint ${this.selectedSprint}`);
-    }
-    return parts.length > 0 ? parts.join(' • ') : 'All Projects, Features & Sprints';
-  }
-
   // =========================================================================
   // 7. CREATE DASHBOARD (Session Custom Dashboard Management)
   // =========================================================================
@@ -2473,9 +2856,11 @@ export class ManagerDashboard implements OnInit, OnDestroy {
   exportSummary(format: 'csv' | 'json'): void {
     this.showExportDropdown = false;
     const filterInfo = {
+      module: this.selectedModule || 'All Modules',
+      subModule: this.selectedSubModule || 'All Submodules',
       project: this.selectedProjectId ? this.getProjectName(this.selectedProjectId) : 'All Projects',
       feature: this.selectedFeatureId ? this.getFeatureName(this.selectedFeatureId) : 'All Features',
-      sprint: this.selectedSprint != null ? `Sprint ${this.selectedSprint}` : 'All Sprints'
+      sprints: this.selectedSprints.length > 0 ? this.selectedSprints.map((s) => `Sprint ${s}`).join(', ') : 'All Sprints'
     };
 
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
@@ -2484,9 +2869,11 @@ export class ManagerDashboard implements OnInit, OnDestroy {
       const csvLines = [
         'QA Manager Dashboard Summary Report',
         `Exported At,"${new Date().toLocaleString()}"`,
+        `Filter Module,"${filterInfo.module}"`,
+        `Filter Submodule,"${filterInfo.subModule}"`,
         `Filter Project,"${filterInfo.project}"`,
         `Filter Feature,"${filterInfo.feature}"`,
-        `Filter Sprint,"${filterInfo.sprint}"`,
+        `Filter Sprints,"${filterInfo.sprints}"`,
         '',
         'Metric,Count,Percentage',
         `Total Test Cases,${this.totalCount},100%`,
@@ -2584,70 +2971,95 @@ export class ManagerDashboard implements OnInit, OnDestroy {
     return 'TODO';
   }
 
+  /**
+   * Fetches all test cases for an optional featureId by querying with a high page size
+   * and iterating pages if totalPages > 1 to ensure zero test cases are omitted.
+   */
+  fetchAllTestCases(featureId?: number | null): Observable<any[]> {
+    const baseQuery = featureId != null
+      ? `${this.apiBase}/testcase?featureId=${featureId}&size=2000`
+      : `${this.apiBase}/testcase?size=2000`;
+
+    return this.http.get<any>(`${baseQuery}&page=0`).pipe(
+      switchMap((res) => {
+        const pageData = res?.data || res;
+        const initialContent = pageData?.content || (Array.isArray(pageData) ? pageData : []);
+        const totalPages = typeof pageData?.totalPages === 'number' ? pageData.totalPages : 1;
+
+        if (totalPages <= 1) {
+          return of(initialContent);
+        }
+
+        const remainingRequests: Observable<any[]>[] = [];
+        for (let p = 1; p < totalPages; p++) {
+          remainingRequests.push(
+            this.http.get<any>(`${baseQuery}&page=${p}`).pipe(
+              map((pageRes) => {
+                const subData = pageRes?.data || pageRes;
+                return subData?.content || (Array.isArray(subData) ? subData : []);
+              }),
+              catchError(() => of([]))
+            )
+          );
+        }
+
+        return forkJoin(remainingRequests).pipe(
+          map((extraPages) => [...initialContent, ...extraPages.flat()])
+        );
+      }),
+      catchError((err) => {
+        console.warn(`Failed to fetch all test cases for feature ${featureId}:`, err);
+        return of([]);
+      })
+    );
+  }
+
   loadTesterPerformanceMetrics(): void {
     this.isTesterMetricsLoading = true;
     this.testerMetricsError = '';
 
     const users$ = this.http.get<any>(`${this.apiBase}/manager/users/active`).pipe(
-  map((res) => ({
-    ...res,
-    data: (res?.data ?? []).filter(
-      (user: any) => user.role === 'TESTER'
-    )
-  })),
-  catchError((err) => {
-    console.warn('Failed to load active testers for tester performance:', err);
-    return of({ data: [] });
-  })
-);
+      map((res) => ({
+        ...res,
+        data: (res?.data ?? []).filter(
+          (user: any) => user.role === 'TESTER'
+        )
+      })),
+      catchError((err) => {
+        console.warn('Failed to load active testers for tester performance:', err);
+        return of({ data: [] });
+      })
+    );
 
     let testCases$: Observable<any[]>;
 
     if (this.selectedFeatureId != null) {
-      testCases$ = this.http
-        .get<any>(`${this.apiBase}/testcase?featureId=${this.selectedFeatureId}&page=0&size=200`)
-        .pipe(
-          map((res) => {
-            const pageData = res?.data || res;
-            return pageData?.content || (Array.isArray(pageData) ? pageData : []);
-          }),
-          catchError(() => of([]))
-        );
-    } else if (this.selectedProjectId != null || this.selectedSprint != null) {
-      let matching = [...this.allFeatures];
-      if (this.selectedProjectId != null) {
-        matching = matching.filter((f) => f.projectId === this.selectedProjectId);
-      }
-      if (this.selectedSprint != null) {
-        matching = matching.filter((f) => f.sprint === this.selectedSprint);
-      }
-
+      testCases$ = this.fetchAllTestCases(this.selectedFeatureId);
+    } else if (this.hasActiveFilters()) {
+      const matching = this.getScopedFeatures();
       if (matching.length === 0) {
         testCases$ = of([]);
+      } else if (matching.length === 1) {
+        testCases$ = this.fetchAllTestCases(matching[0].featureId);
       } else {
-        const featureQueries = matching.map((f) =>
-          this.http
-            .get<any>(`${this.apiBase}/testcase?featureId=${f.featureId}&page=0&size=200`)
-            .pipe(
-              map((res) => {
-                const pageData = res?.data || res;
-                return pageData?.content || (Array.isArray(pageData) ? pageData : []);
-              }),
-              catchError(() => of([]))
-            )
-        );
+        const featureQueries = matching.map((f) => this.fetchAllTestCases(f.featureId));
         testCases$ = forkJoin(featureQueries).pipe(
-          map((results) => results.flat())
+          map((results) => {
+            const combined = results.flat();
+            const seen = new Set<number>();
+            return combined.filter((tc: any) => {
+              const id = tc?.testcaseId || tc?.id;
+              if (id != null) {
+                if (seen.has(id)) return false;
+                seen.add(id);
+              }
+              return true;
+            });
+          })
         );
       }
     } else {
-      testCases$ = this.http.get<any>(`${this.apiBase}/testcase?page=0&size=200`).pipe(
-        map((res) => {
-          const pageData = res?.data || res;
-          return pageData?.content || (Array.isArray(pageData) ? pageData : []);
-        }),
-        catchError(() => of([]))
-      );
+      testCases$ = this.fetchAllTestCases(null);
     }
 
     forkJoin({ users: users$, testCases: testCases$ }).subscribe({
@@ -2957,16 +3369,9 @@ export class ManagerDashboard implements OnInit, OnDestroy {
         });
 
         let scopedBugs = bugs;
-        if (this.selectedFeatureId != null) {
-          scopedBugs = bugs.filter((b: Bug) => b.featureId === this.selectedFeatureId);
-        } else if (this.selectedProjectId != null) {
-          scopedBugs = bugs.filter((b: Bug) => {
-            if (b.projectName) {
-              const proj = this.allProjects.find(p => p.projectId === this.selectedProjectId);
-              return proj && b.projectName.toLowerCase() === proj.projectName.toLowerCase();
-            }
-            return true;
-          });
+        if (this.hasActiveFilters()) {
+          const scopedFeatureIds = new Set(this.getScopedFeatures().map((f) => f.featureId));
+          scopedBugs = bugs.filter((b: Bug) => b.featureId != null && scopedFeatureIds.has(b.featureId));
         }
 
         this.processDeveloperPerformanceData(Array.from(devMap.values()), scopedBugs);

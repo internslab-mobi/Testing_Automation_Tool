@@ -36,6 +36,27 @@ export class FeatureService {
     );
   }
 
+  getFeatureById(featureId: number): Observable<Feature> {
+    return this.http.get<any>(`${this.baseUrl}/feature/${featureId}`).pipe(
+      map(res => {
+        const f = res?.data?.feature || res?.data || res;
+        return {
+          featureId: f.featureId,
+          projectId: f.projectId,
+          featureName: f.featureName,
+          sprint: f.sprint || 1,
+          featureVersion: f.featureVersion || 'v1.0',
+          description: f.description || '',
+          comments: f.comments || '',
+          status: f.status || 'ACTIVE',
+          duration: f.duration != null ? f.duration : 0,
+          startTime: f.startTime || null,
+          createdDate: f.createdDate
+        } as Feature;
+      })
+    );
+  }
+
   createFeature(req: FeatureCreateRequest): Observable<Feature> {
     return this.http.post<any>(`${this.baseUrl}/feature`, req).pipe(
       map(res => res?.data || res)
@@ -101,6 +122,18 @@ export class FeatureService {
 
   downloadFeatureAttachments(featureId: number): Observable<Blob> {
     return this.http.get(`${this.baseUrl}/feature/${featureId}/attachments/download`, {
+      responseType: 'blob'
+    });
+  }
+
+  downloadSingleAttachment(attachmentId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/attachments/${attachmentId}/download`, {
+      responseType: 'blob'
+    });
+  }
+
+  viewSingleAttachment(attachmentId: number): Observable<Blob> {
+    return this.http.get(`${this.baseUrl}/attachments/${attachmentId}/view`, {
       responseType: 'blob'
     });
   }
